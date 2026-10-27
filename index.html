@@ -2120,12 +2120,20 @@ function crSpline(pts){const n=pts.length;const P=i=>pts[(i+n)%n];let d=`M${P(0)
   for(let i=0;i<n;i++){const p0=P(i-1),p1=P(i),p2=P(i+1),p3=P(i+2);const k1=p1[2]?0:1/6,k2=p2[2]?0:1/6;
     d+=` C${(p1[0]+(p2[0]-p0[0])*k1).toFixed(1)} ${(p1[1]+(p2[1]-p0[1])*k1).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])*k2).toFixed(1)} ${(p2[1]-(p3[1]-p1[1])*k2).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`}
   return d+'Z'}
+const HRS={hind:28,head:.8,piv:[312,82],lift:14,tweak:[['jawB',-2,9],['throat',-3,4],['jawL',-1,0],['chin',0,-4],['mzB',0,-3],['crest2',8,6],['crest3',6,4],['neckU',-2,-2],['crest1',2,2]]};
 const HB={withers:[240,104],back:[205,115],loin:[168,113],hip:[134,104],tail:[102,112],buttock:[90,132],thigh:[94,158],gaskB:[104,196],hock:[99,222,1],
   canHB:[107.5,233],fetHB:[109,259],pasHB:[112,268],hoofHB:[116,273,1],hoofHF:[134,273,1],pasHF:[128,266],fetHF:[120,258],canHF:[117.5,238],hockF:[121,225],gaskF:[131,204],stifle:[150,178],
   flank:[166,174],belly1:[195,183],belly2:[228,189],girth:[252,188],elbow:[262,186],
   forB:[267,212],kneeB:[270,232],canFB:[272,252],fetFB:[272.5,260],pasFB:[275,269],hoofFB:[278,273,1],hoofFF:[296,273,1],pasFF:[290,266],fetFF:[283,258],canFF:[281,244],kneeF:[285,232],forF:[289,210],
   chest:[297,175],neckB:[300,150],neckU:[303,128],throat:[307,108],jawB:[311,116],jawL:[326,134],chin:[349,144],mzB:[362,143],mzF:[368.5,132],nose:[364.5,119.5],face:[345,90],brow:[329,65],poll:[316,56,1],
   crest1:[300,62],crest2:[276,78],crest3:[255,94],eye:[330,84],ear:[318,58]};
+/* v67 anatomy pass: shorter back, longer legs, smaller wedge head, finer neck (compared against photo references) */
+(()=>{const P=HB;const HIND=['tail','buttock','thigh','gaskB','hock','canHB','fetHB','pasHB','hoofHB','hoofHF','pasHF','fetHF','canHF','hockF','gaskF','stifle','hip'];
+ for(const k of HIND)P[k][0]+=HRS.hind;P.loin[0]+=HRS.hind*.65;P.flank[0]+=HRS.hind*.7;P.back[0]+=HRS.hind*.3;P.belly1[0]+=HRS.hind*.4;
+ const HK=['throat','jawB','jawL','chin','mzB','mzF','nose','face','brow','poll','eye','ear'];const [cx,cy]=HRS.piv;
+ for(const k of HK){P[k][0]=cx+(P[k][0]-cx)*HRS.head;P[k][1]=cy+(P[k][1]-cy)*HRS.head}
+ for(const [k,dx,dy] of HRS.tweak){P[k][0]+=dx;P[k][1]+=dy}
+ for(const k of Object.keys(P)){const y=P[k][1];if(y>=273)continue;P[k][1]=y<=185?y-HRS.lift:y-HRS.lift*(273-y)/88}})();
 const HORDER=['withers','back','loin','hip','tail','buttock','thigh','gaskB','hock','canHB','fetHB','pasHB','hoofHB','hoofHF','pasHF','fetHF','canHF','hockF','gaskF','stifle','flank','belly1','belly2','girth','elbow','forB','kneeB','canFB','fetFB','pasFB','hoofFB','hoofFF','pasFF','fetFF','canFF','kneeF','forF','chest','neckB','neckU','throat','jawB','jawL','chin','mzB','mzF','nose','face','brow','poll','crest1','crest2','crest3'];
 const HEADK=['throat','jawB','jawL','chin','mzB','mzF','nose','face','brow','poll','eye','ear'];
 const HD=(()=>{const z=()=>Object.fromEntries(Object.keys(HB).map(k=>[k,[0,0]]));const hot=z(),draft=z();const mv=(o,k,dx,dy)=>{o[k][0]+=dx;o[k][1]+=dy};
@@ -2144,7 +2152,7 @@ function hexMix(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));co
 function horseAnchors(h,foal,st){const bt={hot:0,draft:0,tall:0,small:0};for(const [k,f] of Object.entries(bloodOf(h))){const b=BODYTYPE[k]||{};for(const x in bt)bt[x]+=(b[x]||0)*f}
   const A={};for(const k of Object.keys(HB))A[k]=[HB[k][0]+HD.hot[k][0]*bt.hot+HD.draft[k][0]*bt.draft,HB[k][1]+HD.hot[k][1]*bt.hot+HD.draft[k][1]*bt.draft,HB[k][2]];
   if(foal||st==='Yearling'){const f=foal?1:.5;for(const k of Object.keys(A)){A[k][0]=200+(A[k][0]-200)*(1-.12*f)}for(const k of HEADK){A[k][0]=310+(A[k][0]-310)*(1+.12*f);A[k][1]=100+(A[k][1]-100)*(1+.12*f)}}
-  const L=1+bt.tall*.12-bt.small*.06+(foal?.36:st==='Yearling'?.16:0);const top=178,sh=(273-top)*(L-1);
+  const L=1+bt.tall*.12-bt.small*.16+(foal?.36:st==='Yearling'?.16:0);const top=178,sh=(273-top)*(L-1);
   for(const k of Object.keys(A)){const y=A[k][1];A[k][1]=y>=273?y:y>top?top+(y-top)*L-sh:y-sh}
   return {A,bt,sh}}
 function horseSVG(h){
@@ -2201,7 +2209,7 @@ function horseSVG(h){
     return o};
   const hoof=(w,dx,far)=>{const b=w==='h'?A.hoofHB:A.hoofFB,f=w==='h'?A.hoofHF:A.hoofFF;const x0=b[0]+dx-1,x1=f[0]+dx+1;const hc=(mkk.socks[w==='h'?(far?0:2):(far?1:3)]||c.tob)&&!far?'#6b5a46':far?'#211a15':'#33291f';
     return `<path d="M${x0+1} 272 L${x1-2} 272 C${x1+2} 274 ${x1+4} 278 ${x1+5} 281 L${x0} 281 C${x0-1} 278 ${x0} 275 ${x0+1} 272 Z" fill="${hc}"/><path d="M${x0+2} 274 L${x1} 274 L${x1+3} 280 L${x0+1} 280Z" fill="url(#${id}hs)" opacity=".8"/><path d="M${x0+1} 272.5 L${x1-1.5} 272.5" stroke="#000" stroke-opacity=".4" stroke-width="1.3"/>${apS>=.5&&!far?[.25,.5,.75].map(k=>`<path d="M${(x0+1+(x1-x0)*k).toFixed(1)} 272.5 L${(x0+1+(x1-x0)*k+2).toFixed(1)} 281" stroke="#D8CBB0" stroke-width="1.6" opacity=".85"/>`).join(''):''}`};
-  const ear=(dx,dy,far)=>{const e=A.ear;const tipx=curlE?7:0;return `<path d="M${e[0]-8+dx} ${e[1]+4+dy} C${e[0]-12+dx} ${e[1]-10+dy} ${e[0]-8+dx+tipx*.4} ${e[1]-24+dy} ${e[0]-3+dx+tipx} ${e[1]-30+dy} C${e[0]+5+dx} ${e[1]-22+dy} ${e[0]+8+dx} ${e[1]-8+dy} ${e[0]+6+dx} ${e[1]+4+dy}Z" fill="${far?dark:body}"/>`+(far?'':`<path d="M${e[0]-6+dx} ${e[1]+dy} C${e[0]-8+dx} ${e[1]-10+dy} ${e[0]-6+dx} ${e[1]-20+dy} ${e[0]-3+dx+tipx*.8} ${e[1]-25+dy} C${e[0]+1+dx} ${e[1]-18+dy} ${e[0]+3+dx} ${e[1]-8+dy} ${e[0]+2+dx} ${e[1]+dy}Z" fill="${dark}" opacity=".55"/>`)};
+  const ear=(dx,dy,far)=>{const e=A.ear;const tipx=curlE?7:0;return `<g transform="translate(${e[0]+dx} ${e[1]+4+dy}) scale(.74) translate(${-e[0]-dx} ${-e[1]-4-dy})"><path d="M${e[0]-8+dx} ${e[1]+4+dy} C${e[0]-12+dx} ${e[1]-10+dy} ${e[0]-8+dx+tipx*.4} ${e[1]-24+dy} ${e[0]-3+dx+tipx} ${e[1]-30+dy} C${e[0]+5+dx} ${e[1]-22+dy} ${e[0]+8+dx} ${e[1]-8+dy} ${e[0]+6+dx} ${e[1]+4+dy}Z" fill="${far?dark:body}"/>`+(far?'':`<path d="M${e[0]-6+dx} ${e[1]+dy} C${e[0]-8+dx} ${e[1]-10+dy} ${e[0]-6+dx} ${e[1]-20+dy} ${e[0]-3+dx+tipx*.8} ${e[1]-25+dy} C${e[0]+1+dx} ${e[1]-18+dy} ${e[0]+3+dx} ${e[1]-8+dy} ${e[0]+2+dx} ${e[1]+dy}Z" fill="${dark}" opacity=".55"/>`)+'</g>'};
   // white markings & patterns (inside the body clip)
   const nearHX=[A.hock[0]-12,A.stifle[0]-8],nearFX=[A.elbow[0]-10,A.chest[0]+12];
   const sockY=k=>k==='h'?A.fetHB[1]-6:A.fetFB[1]-6,stockY=k=>k==='h'?A.canHB[1]+6:A.kneeB[1]+4,pointY=Math.min(A.hock[1],A.kneeB[1])-4;
@@ -2210,7 +2218,7 @@ function horseSVG(h){
   {const yh=legWhite('h',2),yf=legWhite('f',3);if(yh!=null)white+=`<rect x="${nearHX[0]}" y="${yh}" width="${nearHX[1]-nearHX[0]}" height="60" fill="${WH}"/>`;if(yf!=null)white+=`<rect x="${nearFX[0]}" y="${yf}" width="${nearFX[1]-nearFX[0]}" height="60" fill="${WH}"/>`}
   let patches='';
   if(spotS>=.2){const k2=Math.min(1,spotS);patches+=`<path d="${blob(A.hip[0]+4-(1-k2)*6,A.hip[1]+26,46*(.5+.5*k2),32*(.5+.5*k2),rnd,10)}" fill="${WH}" filter="url(#${id}b3)"/>`;for(let i=0;i<Math.round(26*k2);i++){const x=A.hip[0]-30+rnd()*70,y=A.hip[1]+4+rnd()*50;patches+=`<path d="${blob(x,y,3.4+rnd()*2.6,2.8+rnd()*2,rnd,6)}" fill="#2E2219"/>`}}
-  if(c.tob){patches+=`<path d="${blob(A.loin[0]+20+rnd()*16,A.loin[1]+38,22+rnd()*8,44,rnd,9)}" fill="${WH}"/><path d="${blob(A.hip[0]+12,A.hip[1]+44,18+rnd()*6,30,rnd,8)}" fill="${WH}"/><path d="${blob(A.neckB[0]-8,A.neckB[1]+4,14,22,rnd,8)}" fill="${WH}"/>`}
+  if(c.tob){const tw=.7+rnd()*.6;patches+=`<path d="${blob(A.loin[0]+6+rnd()*18,A.loin[1]+18,17*tw+7,52,rnd,15)}" fill="${WH}"/><path d="${blob(A.hip[0]-4+rnd()*10,A.hip[1]+26,13+rnd()*8,34,rnd,13)}" fill="${WH}"/><path d="${blob(A.withers[0]+10+rnd()*10,A.withers[1]+26,10+rnd()*7,34,rnd,12)}" fill="${WH}"/>${rnd()<.6?`<path d="${blob(A.crest3[0]+14,A.crest3[1]+14,14,26,rnd,11)}" fill="${WH}"/>`:''}`}
   if(c.grey)patches+=S(36,()=>{const x=A.tail[0]+10+rnd()*190,y=A.back[1]+4+rnd()*72,r=4+rnd()*6;return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#${id}dp)"/>`});
   if(leoFull)patches+=S(90,()=>{const x=60+rnd()*320,y=20+rnd()*260;return `<path d="${blob(x,y,2.4+rnd()*3,2+rnd()*2.4,rnd,6)}" fill="${spotC}"/>`});
   if(wildS>=.25)patches+=`<path d="M${A.withers[0]} ${A.withers[1]+2} C${A.back[0]} ${A.back[1]+2} ${A.loin[0]} ${A.loin[1]+2} ${A.hip[0]} ${A.hip[1]+2} L${A.tail[0]+4} ${A.tail[1]+2}" stroke="${wildFull&&fjordS<.5?mane:'#2A2018'}" stroke-width="${wildFull?4:2.6}" fill="none" stroke-linecap="round" opacity="${wildFull?.85:.55}"/>`+(wildFull?`<ellipse cx="${A.mzB[0]}" cy="${A.mzB[1]-8}" rx="16" ry="12" fill="#EADBB8" opacity=".9" filter="url(#${id}b2)"/><ellipse cx="${A.belly1[0]+20}" cy="${A.belly1[1]-2}" rx="50" ry="8" fill="#E8D6B0" opacity=".45" filter="url(#${id}b2)"/>`:'');
@@ -2239,6 +2247,7 @@ function horseSVG(h){
 <filter id="${id}b2" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>
 <filter id="${id}b3" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.1"/></filter>
 <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".25" stop-color="#fff" stop-opacity=".05"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+${points?`<linearGradient id="${id}pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${points}" stop-opacity="0"/><stop offset=".22" stop-color="${points}" stop-opacity=".85"/><stop offset=".32" stop-color="${points}"/></linearGradient>`:''}
 <linearGradient id="${id}hs" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <radialGradient id="${id}e" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#5a3a26"/><stop offset=".55" stop-color="#1d120c"/><stop offset="1" stop-color="#080505"/></radialGradient>
 <radialGradient id="${id}dp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F4F4F0" stop-opacity=".8"/><stop offset=".6" stop-color="#E8E8E2" stop-opacity=".4"/><stop offset="1" stop-color="#E8E8E2" stop-opacity="0"/></radialGradient>
@@ -2248,7 +2257,7 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
 <ellipse cx="205" cy="283" rx="${foal?110:150}" ry="9" fill="var(--ground)"/>`}<ellipse cx="205" cy="281" rx="${foal?96:136}" ry="6" fill="#000" opacity=".16" filter="url(#${id}b2)"/>
 <g transform="translate(${tx} ${ty}) scale(${sc.toFixed(3)}) translate(${-tx} ${-ty})">
  <g><path d="${farH}" fill="${dark}"/><path d="${farF}" fill="${dark}"/>
-  ${points?`<g clip-path="url(#${id}fh)"><rect x="0" y="${pointY}" width="400" height="90" fill="${points}"/></g><g clip-path="url(#${id}ff)"><rect x="0" y="${pointY}" width="400" height="90" fill="${points}"/></g>`:''}
+  ${points?`<g clip-path="url(#${id}fh)"><rect x="0" y="${pointY-16}" width="400" height="120" fill="url(#${id}pg)"/></g><g clip-path="url(#${id}ff)"><rect x="0" y="${pointY-16}" width="400" height="120" fill="url(#${id}pg)"/></g>`:''}
   ${leoFull?`<g clip-path="url(#${id}fh)">${patches}</g>`:''}
   ${legWhite('h',0)!=null?`<g clip-path="url(#${id}fh)"><rect x="0" y="${legWhite('h',0)}" width="400" height="60" fill="#d9d3c6"/></g>`:''}${legWhite('f',1)!=null?`<g clip-path="url(#${id}ff)"><rect x="0" y="${legWhite('f',1)}" width="400" height="60" fill="#d9d3c6"/></g>`:''}
   ${boo?`<g clip-path="url(#${id}fh)">${boots}</g><g clip-path="url(#${id}ff)">${boots}</g>`:''}
@@ -2258,7 +2267,7 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
  <g>${tailSVG}</g>
  <path d="${O}" fill="${body}"/>
  <g clip-path="url(#${id}c)">
-  ${points?`<rect x="0" y="${pointY+4}" width="400" height="90" fill="${points}"/><rect x="0" y="${pointY-8}" width="400" height="14" fill="${points}" opacity=".5" filter="url(#${id}b2)"/>`:''}
+  ${points?`<rect x="0" y="${pointY-16}" width="400" height="120" fill="url(#${id}pg)"/>`:''}
   ${patches}${white}
   <path d="${O}" fill="url(#${id}t)"/>
   <g filter="url(#${id}b)">
@@ -2304,8 +2313,9 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   <path d="M${E[0]-8} ${E[1]-.5} C${E[0]-4} ${E[1]-7} ${E[0]+4} ${E[1]-7.5} ${E[0]+9} ${E[1]-.5}" stroke="#120b07" stroke-width="1.6" fill="none"/>
   <path d="M${E[0]-9} ${E[1]-4} C${E[0]-3} ${E[1]-11} ${E[0]+5} ${E[1]-11} ${E[0]+11} ${E[1]-4}" stroke="#000" stroke-opacity=".22" stroke-width="1.3" fill="none"/>
  </g>
- <path d="M${N[0]-3} ${N[1]+5} C${N[0]-7} ${N[1]+1} ${N[0]-6} ${N[1]-5} ${N[0]-2} ${N[1]-5} C${N[0]+.5} ${N[1]-5} ${N[0]+1} ${N[1]-2} ${N[0]-.5} ${N[1]+1}" stroke="#1a0f0a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".8"/>
- <ellipse cx="${N[0]-3}" cy="${N[1]}" rx="4" ry="5" fill="#000" opacity=".16" filter="url(#${id}b2)"/>
+ <ellipse cx="${N[0]-4}" cy="${N[1]+1}" rx="5" ry="6" fill="#000" opacity=".14" filter="url(#${id}b2)"/>
+ <path d="M${N[0]-2} ${N[1]-4.5} C${N[0]-6.5} ${N[1]-4} ${N[0]-8} ${N[1]+1} ${N[0]-5.5} ${N[1]+4.5} C${N[0]-4} ${N[1]+2} ${N[0]-3.5} ${N[1]-1} ${N[0]-2} ${N[1]-4.5}Z" fill="#160d08" opacity=".7"/>
+ <path d="M${N[0]-1.5} ${N[1]-5} C${N[0]-7.5} ${N[1]-5} ${N[0]-9.5} ${N[1]+1} ${N[0]-6.5} ${N[1]+6}" stroke="#fff" stroke-opacity=".18" stroke-width="1.1" fill="none"/>
  <path d="M${A.mzB[0]-8} ${A.mzB[1]-4} C${A.mzB[0]-3} ${A.mzB[1]-3} ${A.mzB[0]+2} ${A.mzB[1]-4} ${A.mzF[0]-1} ${A.mzF[1]+4}" stroke="#1a0f0a" stroke-width="1.2" fill="none" opacity=".55"/>
  ${blanket}${saddle}
  ${ear(0,0,0)}
