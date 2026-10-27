@@ -1142,13 +1142,30 @@ function startTitleAnim(){stopTitleAnim();const reduce=window.matchMedia&&matchM
   const pz=els.map(e=>[...e.querySelectorAll('.pz')]);const sp=[150,170,140,160],y=[236,244,236,244];let t0=performance.now();
   const step=now=>{const t=Math.max(0,(now-t0)/1000);els.forEach((e,i)=>{const x=reduce?120+i*230:((t*sp[i]+i*300)%1300)-120;const k=reduce?0:Math.floor(t*12+i)%4;pz[i].forEach(n=>n.style.display=(+n.dataset.k===k)?'':'none');e.setAttribute('transform',`translate(${x.toFixed(1)} ${(y[i]+POSE_BOB.gallop[k]).toFixed(1)})`)});if(!reduce)TITLE_ANIM.raf=requestAnimationFrame(step)};
   TITLE_ANIM={raf:requestAnimationFrame(step)}}
+const BUG_EMAIL='bloodline.ranch.game@gmail.com';const BUGLOG=[];
+window.addEventListener('error',e=>{BUGLOG.push((e.message||'error')+(e.lineno?' @'+e.lineno:''));if(BUGLOG.length>5)BUGLOG.shift()});
+window.addEventListener('unhandledrejection',e=>{BUGLOG.push('promise: '+String(e.reason&&e.reason.message||e.reason));if(BUGLOG.length>5)BUGLOG.shift()});
+function bugInfo(){const a=S&&S.horses?S:hasAutosave();const L=[`Build ${BUILD}`];
+  if(a&&a.horses)L.push(`Ranch: ${a.ranchName||'?'} · Year ${dateParts(a.day).year}, day ${a.day} · ${money(a.money)} · ${a.horses.length} horses`);
+  L.push('Browser: '+navigator.userAgent,'Screen: '+innerWidth+'x'+innerHeight);if(BUGLOG.length)L.push('Recent errors: '+BUGLOG.join(' | '));return L.join('\n')}
+function bugBody(){const w=(UI.bugText||'').trim();return `What happened:\n${w||'(describe the problem here)'}\n\n${UI.bugInfo===false?'':'---- Game info (helps fix it) ----\n'+bugInfo()}`}
+function bugPanel(){return `<div class="panel tpanel"><h2>Report a Bug</h2>
+  <p>Tell us what went wrong. Pressing <b>Send email</b> opens your email app with the report filled in. You just press send.</p>
+  <label class="note" for="bugText">What happened? What were you doing when it happened?</label>
+  <textarea id="bugText" rows="6" style="width:100%;margin:4px 0 8px;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);font:inherit" placeholder="Example: I clicked Breed her and the screen went blank.">${esc(UI.bugText||'')}</textarea>
+  <label class="note" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="bugInfo" ${UI.bugInfo===false?'':'checked'}> Include game info (build, day, browser, recent errors). No personal info.</label>
+  <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="bugsend">Send email</button><button class="btn" data-a="bugcopy">Copy report</button><button class="btn" data-a="tview" data-v="main">Back</button></div>
+  <p class="note" style="margin-top:10px">Email not opening? Press <b>Copy report</b> and paste it into an email to <b>${BUG_EMAIL}</b>.</p></div>`}
+function bugGrab(){const t=document.getElementById('bugText'),c=document.getElementById('bugInfo');if(t)UI.bugText=t.value;if(c)UI.bugInfo=c.checked}
 function renderTitle(){const v=UI.tview||'main';const auto=hasAutosave();
   let panel='';
   if(v==='main')panel=`<div class="tmenu">
      ${auto?`<button class="tbtn primary" data-a="tcontinue"><span class="tb1">Continue</span><span class="tb2">${esc(auto.ranchName)} · Year ${dateParts(auto.day).year}, day ${auto.day} · ${money(auto.money)} · ${auto.horses.length} horse${auto.horses.length===1?'':'s'}</span></button>`:''}
      <button class="tbtn ${auto?'':'primary'}" data-a="tnew"><span class="tb1">New Game</span><span class="tb2">Make your rancher and start a new story</span></button>
      <button class="tbtn" data-a="tview" data-v="load"><span class="tb1">Load Game</span><span class="tb2">Save slots, save files and transfer codes</span></button>
-     <button class="tbtn" data-a="tview" data-v="settings"><span class="tb1">Settings</span><span class="tb2">Look, event watching and saves</span></button></div>`;
+     <button class="tbtn" data-a="tview" data-v="settings"><span class="tb1">Settings</span><span class="tb2">Look, event watching and saves</span></button>
+     <button class="tbtn" data-a="tview" data-v="bug"><span class="tb1">🐞 Report a Bug</span><span class="tb2">Something broken or odd? Tell the developer</span></button></div>`;
+  if(v==='bug')panel=bugPanel();
   if(v==='new')panel=`<div class="panel tpanel"><h2>Start a new game?</h2><p>Your current ranch, <b>${esc(auto?auto.ranchName:'')}</b>, is in the autosave. Starting over replaces it.</p><p class="note">Want to keep it? Save it to a slot first. You can load it again any time.</p>
      <div class="actions">${[1,2,3].map(n=>`<button class="btn small" data-a="tkeep" data-n="${n}">Keep it in slot ${n}${slotInfo(n)?' (replaces '+esc(slotInfo(n).name)+')':''}</button>`).join('')}</div>
      <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="tnewyes">Start a new game</button><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
@@ -3451,6 +3468,9 @@ const ACT={
   loadcode:async()=>{const v=($('#pasteBox')||{}).value||'';if(!v.trim()){toast('Paste a transfer code in the box first.');return 'skip'}try{const x=await readCode(v);loadState(x,'Loaded '+x.ranchName+', day '+x.day+'.');render()}catch(e){toast('That code didn’t work. Make sure you copied all of it.')}return 'skip'},
   download:()=>{downloadSave();return 'skip'},
   tview:d=>{UI.tview=d.v},
+  bugsend:()=>{bugGrab();const url=`mailto:${BUG_EMAIL}?subject=${encodeURIComponent('Bloodline Ranch bug report (build '+BUILD+')')}&body=${encodeURIComponent(bugBody().slice(0,1800))}`;
+    const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();toast('Opening your email app… If nothing opens, use Copy report.');return 'skip'},
+  bugcopy:async()=>{bugGrab();const ok=await copyText('To: '+BUG_EMAIL+'\nSubject: Bloodline Ranch bug report\n\n'+bugBody());toast(ok?'Report copied. Paste it into an email to '+BUG_EMAIL+'.':'Could not copy. Please type the report into an email to '+BUG_EMAIL+'.');return 'skip'},
   tcontinue:()=>{const x=load();if(!x){toast('No autosave found.');return}S=x;UI={tab:'stable',modal:null,breedMare:'',breedSire:'',compHorse:''};enterGame()},
   tnew:()=>{if(hasAutosave()){UI.tview='new';return}startNewLife();UI.screen='game';stopTitleAnim()},
   tnewyes:()=>{startNewLife();UI.screen='game';UI.tview='main';stopTitleAnim()},
