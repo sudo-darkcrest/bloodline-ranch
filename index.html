@@ -1120,21 +1120,45 @@ function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l]
 let TITLE_ANIM=null;
 function stopTitleAnim(){if(TITLE_ANIM){cancelAnimationFrame(TITLE_ANIM.raf);TITLE_ANIM=null}}
 function titleArt(){const rs=srng(7);const run=[['#7A3D1C','#1E1A18',0],['#D7AC57','#F2E6C3',1],['#211D1B','#141211',2],['#BEBEB8','#8C8C87',3]];
+  const ridge=(y0,amp,step,seed,jag)=>{const r=srng(seed);let d=`M0 ${y0}`,pk=[];for(let x=0;x<=1000;x+=step){const h=y0-amp*(.35+.65*r());const mx=x+step/2;d+=` L${mx.toFixed(0)} ${h.toFixed(1)} L${(x+step).toFixed(0)} ${(y0-amp*.25*r()+jag*(r()-.5)).toFixed(1)}`;pk.push([mx,h])}return {d:d+' V300 H0Z',pk}};
+  const far=ridge(170,78,74,11,10),mid=ridge(182,44,52,23,8);
+  const snow=far.pk.filter(p=>p[1]<128).map(([x,y])=>`<path d="M${x} ${y.toFixed(1)} L${x-11} ${(y+13).toFixed(1)} L${x-5} ${(y+10).toFixed(1)} L${x-1} ${(y+15).toFixed(1)} L${x+4} ${(y+10).toFixed(1)} L${x+12} ${(y+14).toFixed(1)} Z" fill="#F4F1EC" opacity=".9"/>`).join('');
+  const pine=(x,y,h,c)=>`<path d="M${x} ${(y-h).toFixed(1)} L${(x-h*.32).toFixed(1)} ${y} L${(x+h*.32).toFixed(1)} ${y}Z" fill="${c}"/>`;
+  const r2=srng(31);let pines='';for(let x=-6;x<1010;x+=7+r2()*8){const y=196-(Math.sin(x/90)*5)+r2()*3;pines+=pine(x,y,10+r2()*14,r2()<.5?'#3E5B3B':'#466645')}
+  const r3=srng(43);let tufts='';for(let i=0;i<70;i++){const x=r3()*1000,y=268+r3()*30;if(x>400&&x<600&&y<290)continue;tufts+=`<path d="M${x.toFixed(0)} ${y.toFixed(0)} l-2 -6 M${x.toFixed(0)} ${y.toFixed(0)} l1 -7 M${x.toFixed(0)} ${y.toFixed(0)} l4 -5" stroke="${r3()<.5?'#6F8746':'#7F9852'}" stroke-width="1.3" stroke-linecap="round"/>`}
+  const rail=(x0,x1,y,sl)=>`<path d="M${x0} ${y} L${x1} ${y+sl}" stroke="#6B4A2C" stroke-width="3.4" stroke-linecap="round"/><path d="M${x0} ${y-1} L${x1} ${y+sl-1}" stroke="#9A7650" stroke-width="1" opacity=".7"/>`;
   return `<svg viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid slice" id="titleSvg" aria-hidden="true"><defs>
-  <linearGradient id="tiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E9FCF"/><stop offset=".55" stop-color="#F3C99B"/><stop offset="1" stop-color="#F7E2BC"/></linearGradient>
-  <radialGradient id="tiSun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6D8"/><stop offset=".4" stop-color="#FFE3A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFD58A" stop-opacity="0"/></radialGradient>
-  <linearGradient id="tiLog" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A3A22"/><stop offset=".5" stop-color="#7B532F"/><stop offset="1" stop-color="#4A2F1C"/></linearGradient></defs>
-  <rect width="1000" height="300" fill="url(#tiSky)"/><circle cx="500" cy="170" r="130" fill="url(#tiSun)"/><circle cx="500" cy="168" r="34" fill="#FFF1C9"/>
-  <g fill="#fff" opacity=".55">${[[150,50,70],[300,80,50],[760,46,80],[880,90,46]].map(([x,y,w])=>`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="10"/><ellipse cx="${x+w*.3}" cy="${y-6}" rx="${w*.5}" ry="9"/>`).join('')}</g>
-  <path d="M0 175 L70 128 L120 150 L190 104 L260 150 L330 124 L400 160 L470 120 L540 158 L620 112 L690 150 L760 118 L840 156 L910 126 L1000 150 V300 H0Z" fill="#B48C8E" opacity=".55"/>
-  <path d="M0 190 C120 170 220 186 340 176 S 560 168 700 180 S 900 170 1000 178 V300 H0Z" fill="#B7A671"/>
-  <path d="M0 214 C150 200 300 212 500 204 S 850 200 1000 208 V300 H0Z" fill="#9BAA62"/>
-  <path d="M0 238 C200 230 400 240 600 232 S 900 236 1000 232 V300 H0Z" fill="#879A55"/>
-  ${[...Array(18)].map((_,i)=>{const x=i*58+10,s=.6+((i*7)%5)/10;return `<g transform="translate(${x} ${200-(i%3)*4}) scale(${s})"><rect x="-2" y="-6" width="4" height="10" fill="#4a3424"/><circle cx="0" cy="-14" r="12" fill="${i%2?'#5E7E3E':'#6C8A48'}"/></g>`}).join('')}
-  <path d="M0 262 H1000" stroke="#5A3A22" stroke-width="4"/><path d="M0 248 H1000" stroke="#5A3A22" stroke-width="3"/>${[...Array(26)].map((_,i)=>`<rect x="${i*40}" y="240" width="5" height="32" fill="#4A2F1C"/>`).join('')}
+  <linearGradient id="tiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5F93C8"/><stop offset=".5" stop-color="#E9C6A0"/><stop offset="1" stop-color="#F8E1B6"/></linearGradient>
+  <radialGradient id="tiSun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6D8"/><stop offset=".35" stop-color="#FFE3A0" stop-opacity=".85"/><stop offset="1" stop-color="#FFD58A" stop-opacity="0"/></radialGradient>
+  <linearGradient id="tiFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8D93B4"/><stop offset="1" stop-color="#B9A9AE"/></linearGradient>
+  <linearGradient id="tiMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6D7F86"/><stop offset="1" stop-color="#8E9A86"/></linearGradient>
+  <linearGradient id="tiField" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A6AE68"/><stop offset="1" stop-color="#7E9449"/></linearGradient>
+  <linearGradient id="tiRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9BF8E"/><stop offset="1" stop-color="#C29B69"/></linearGradient>
+  <linearGradient id="tiLog" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A3A22"/><stop offset=".45" stop-color="#86603A"/><stop offset="1" stop-color="#4A2F1C"/></linearGradient>
+  <linearGradient id="tiBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A643D"/><stop offset="1" stop-color="#4E331E"/></linearGradient></defs>
+  <rect width="1000" height="300" fill="url(#tiSky)"/><circle cx="500" cy="168" r="150" fill="url(#tiSun)"/><circle cx="500" cy="166" r="30" fill="#FFF1C9"/>
+  <g fill="#fff">${[[140,48,80,.55],[320,86,52,.4],[760,40,90,.55],[900,92,50,.4],[600,64,40,.3]].map(([x,y,w,o])=>`<g opacity="${o}"><ellipse cx="${x}" cy="${y}" rx="${w}" ry="9"/><ellipse cx="${x-w*.25}" cy="${y-6}" rx="${w*.45}" ry="10"/><ellipse cx="${x+w*.3}" cy="${y-8}" rx="${w*.38}" ry="11"/></g>`).join('')}</g>
+  <path d="${far.d}" fill="url(#tiFar)"/>${snow}
+  <path d="${mid.d}" fill="url(#tiMid)"/>
+  <path d="M0 196 C150 186 300 194 500 190 S 850 186 1000 192 V300 H0Z" fill="#8C9A62"/>${pines}
+  <g transform="translate(838 196)"><path d="M-22 0 V-16 L-11 -26 L0 -16 V0Z" fill="#9E3B2E"/><path d="M-24 -15 L-11 -28 L2 -15" stroke="#5A2A20" stroke-width="2" fill="none"/><rect x="-14" y="-10" width="6" height="10" fill="#5A2A20"/><path d="M4 0 V-8 H18 V0Z" fill="#B9A57C"/></g>
+  <g transform="translate(150 200)" stroke="#5B4A3A" stroke-width="1.3" fill="none"><path d="M-4 0 L0 -34 L4 0 M-3 -10 H3 M-2 -22 H2"/><g transform="translate(0 -35)"><path d="M0 0 L-9 -5 M0 0 L9 -5 M0 0 L-5 9 M0 0 L6 8 M0 0 L0 -10" stroke-width="1.6"/></g></g>
+  <path d="M0 206 C200 198 400 206 600 200 S 900 198 1000 204 V300 H0Z" fill="url(#tiField)"/>
+  <path d="M492 201 L508 201 L640 300 L360 300Z" fill="url(#tiRoad)"/><path d="M492 201 L360 300 M508 201 L640 300" stroke="#A9895E" stroke-width="2" opacity=".6"/><path d="M500 210 L497 300" stroke="#B48B5C" stroke-width="7" opacity=".35"/>
+  ${[0,1,2].map(k=>rail(0,452,226+k*13,-8+k*1.5)+rail(548,1000,218+k*13-.5,8-k*1.5)).join('')}
+  ${[...Array(12)].map((_,i)=>{const x=i*40+6,y=212+i*.6;return `<rect x="${x}" y="${y}" width="5" height="${52-i*.6}" fill="#4A2F1C"/><rect x="${x}" y="${y}" width="1.6" height="${52-i*.6}" fill="#7B5636" opacity=".7"/>`}).join('')}
+  ${[...Array(12)].map((_,i)=>{const x=990-i*40,y=212+i*.6;return `<rect x="${x}" y="${y}" width="5" height="${52-i*.6}" fill="#4A2F1C"/><rect x="${x}" y="${y}" width="1.6" height="${52-i*.6}" fill="#7B5636" opacity=".7"/>`}).join('')}
   <g id="tiRun">${run.map(([c,m,i])=>`<g id="tr${i}" transform="translate(${-80-i*150} ${236+(i%2)*8})"><g transform="scale(1.05)">${rSprite(c,m,'#000',{})}</g></g>`).join('')}</g>
-  <g transform="translate(500 0)"><rect x="-212" y="70" width="22" height="200" fill="url(#tiLog)"/><rect x="190" y="70" width="22" height="200" fill="url(#tiLog)"/><rect x="-236" y="62" width="472" height="22" rx="10" fill="url(#tiLog)"/><circle cx="-236" cy="73" r="11" fill="#6B4528"/><circle cx="236" cy="73" r="11" fill="#6B4528"/><circle cx="-236" cy="73" r="6" fill="#8A6040" opacity=".7"/><circle cx="236" cy="73" r="6" fill="#8A6040" opacity=".7"/>
-   <path d="M-120 84 V96 M120 84 V96" stroke="#2B1B10" stroke-width="2.4"/><rect x="-170" y="94" width="340" height="56" rx="6" fill="#EFE2C2" stroke="#5A3A22" stroke-width="4"/><rect x="-162" y="101" width="324" height="42" rx="3" fill="none" stroke="#A8382B" stroke-width="1.4"/>
+  ${tufts}
+  <g transform="translate(500 0)">
+   <rect x="-214" y="66" width="24" height="210" fill="url(#tiLog)"/><rect x="190" y="66" width="24" height="210" fill="url(#tiLog)"/>
+   <path d="M-214 70 V276 M-207 80 V270 M197 76 V272 M206 90 V266" stroke="#3E2716" stroke-width=".8" opacity=".5"/>
+   <path d="M-190 110 L-150 84 L-138 84 L-190 122Z M190 110 L150 84 L138 84 L190 122Z" fill="url(#tiLog)" stroke="#3E2716" stroke-width=".8"/>
+   <rect x="-244" y="58" width="488" height="26" rx="4" fill="url(#tiBeam)"/><path d="M-240 66 H236 M-236 74 H240" stroke="#3E2716" stroke-width=".8" opacity=".45"/>
+   <path d="M-244 58 h12 v26 h-12z M232 58 h12 v26 h-12z" fill="#5E3E24"/><circle cx="-226" cy="71" r="2" fill="#2B1B10"/><circle cx="226" cy="71" r="2" fill="#2B1B10"/>
+   <path d="M-120 84 L-122 96 M-118 84 L-120 96 M120 84 L122 96 M118 84 L120 96" stroke="#3A3A3A" stroke-width="1.2"/>
+   <rect x="-170" y="96" width="340" height="54" rx="5" fill="#EFE2C2" stroke="#5A3A22" stroke-width="4"/><rect x="-162" y="102" width="324" height="42" rx="3" fill="none" stroke="#A8382B" stroke-width="1.4"/>
+   <path d="M-166 140 C-80 146 80 136 166 142" stroke="#C9B48A" stroke-width="1" fill="none" opacity=".6"/>
    <text y="132" font-size="30" text-anchor="middle" fill="#6B2E1E" font-family="Rye, Georgia, serif" letter-spacing="2">BLOODLINE RANCH</text>
    <g transform="translate(0 40) rotate(180) scale(.9)"><path d="M0 -24 C-16 -24 -18 4 -10 16 L-4 16 C-10 4 -8 -16 0 -16 C8 -16 10 4 4 16 L10 16 C18 4 16 -24 0 -24Z" fill="#B9C1C4" stroke="#5E676A" stroke-width="1.4"/><circle cx="-12" cy="-4" r="1.4" fill="#4a4f52"/><circle cx="12" cy="-4" r="1.4" fill="#4a4f52"/><circle cx="-13" cy="6" r="1.4" fill="#4a4f52"/><circle cx="13" cy="6" r="1.4" fill="#4a4f52"/></g></g>
   </svg>`}
@@ -2575,7 +2599,7 @@ function ranchMap(){
     <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${wall}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mSiding)"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mWall)"/>
     <polygon points="${x-5},${y} ${x+w/2},${y-rh} ${x+w+5},${y}" fill="${roof}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="${wall}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="url(#mWall)"/><path d="M${x} ${y+.8} H${x+w}" stroke="#000" stroke-opacity=".25" stroke-width="1.6"/>
     ${wins(x,y,w,h,o.win||0)}${o.door?`<rect x="${x+w/2-6}" y="${y+h-17}" width="12" height="17" fill="#F7F3EA"/><rect x="${x+w/2-5}" y="${y+h-16}" width="10" height="16" fill="${C.wood}"/><path d="M${x+w/2-3} ${y+h-13} h6 v5 h-6z M${x+w/2-3} ${y+h-7} h6 v5 h-6z" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".7"/><circle cx="${x+w/2+3}" cy="${y+h-8}" r=".9" fill="#E8C76A"/>`:''}`};
-  const pony=(x,y,col,mane,flip)=>`<g transform="translate(${x} ${y}) scale(${flip?-1:1} 1) scale(.95)"><ellipse cx="0" cy="4.5" rx="9" ry="1.8" fill="rgba(25,35,15,.3)"/><path d="M-6.5 -1 L-7 4.4 L-5.6 4.4 L-5 1 M-3.5 0 L-3.6 4.4 L-2.2 4.4 L-2 0 M4 0 L3.8 4.4 L5.2 4.4 L5.4 0 M6.2 -1 L6.8 4.4 L8.2 4.4 L7.6 -1" fill="${col}" stroke="${col}" stroke-width="1.1" stroke-linejoin="round"/><path d="M-7.5 -3 C-7.5 -6 -5 -6.8 -2 -6.4 C1 -6 4 -6.4 6 -6.6 L8 -10.5 C9 -12.3 10.5 -12.6 11.4 -11.8 L13.4 -9.2 C13.8 -8.5 13.4 -7.9 12.6 -8 L10.4 -8.6 L9 -4 C8.4 -1.4 6.5 0 4 0 L-4.5 0 C-6.5 0 -7.5 -1.2 -7.5 -3Z" fill="${col}"/><path d="M6.4 -6.8 L8.2 -10.6 C9 -12 10 -12.6 10.8 -12.2 L8.6 -7.8 Z" fill="${mane}"/><path d="M-7.4 -4.8 C-10 -4 -10.4 0 -9.4 3" stroke="${mane}" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M-6 -5.6 C-2 -6.6 3 -6.6 6 -6.6" stroke="#fff" stroke-opacity=".25" stroke-width="1" fill="none"/></g>`;
+  const pony=(x,y,col,mane,flip)=>`<g transform="translate(${x} ${y+4.6}) scale(${flip?-1:1} 1) scale(.44)">${rSprite(col,mane,'#000',{gait:'trot',pose:(Math.round(x+y)%2)*2+1})}</g>`;
   const fence=(x,y,w,h,col=C.white)=>{let o=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2.4" transform="translate(1 1.4)"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="${col}" stroke-width="1.6"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="none" stroke="${col}" stroke-width="1" transform="translate(0 -2.4)" opacity=".8"/>`;for(let i=x;i<=x+w;i+=12)o+=`<rect x="${i-1}" y="${y-4}" width="2.2" height="6" fill="${C.wood}"/><rect x="${i-1}" y="${y+h-4}" width="2.2" height="6" fill="${C.wood}"/>`;return o};
   const hot=(id,inner)=>`<g class="hot" data-a="facjump" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}"><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${inner}</g>`;
   const mx=id=>FACI[id].lv.length-1;
@@ -3092,50 +3116,89 @@ function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='dress')return {v:Math.min(86,52+s*.36),f:v=>v.toFixed(1)+'%',low:0};
   return {v:18+s*1.25,f:v=>v.toFixed(1)+' ft',low:0}}
 /* side-view running horse sprite. Facing right, hooves on y=0. Poses: gallop (4) or trot (4). */
+/* v68 event sprite: jointed legs from real gait sequences (gallop / trot), longer body, extended neck */
 const GALLOP=[
- [[[11,-15],[18,-9],[24,-6]],[[10,-15],[15,-8],[19,-3]],[[-12,-16],[-19,-11],[-26,-7]],[[-11,-16],[-17,-9],[-22,-4]]],
- [[[11,-15],[15,-8],[12,-4]],[[10,-15],[13,-8],[9,-5]],[[-12,-16],[-11,-8],[-8,0]],[[-11,-16],[-15,-8],[-17,0]]],
- [[[11,-15],[13,-7],[15,0]],[[10,-15],[9,-8],[5,-4]],[[-12,-16],[-6,-9],[-2,-3]],[[-11,-16],[-9,-8],[-6,-1]]],
- [[[11,-15],[11,-7],[8,0]],[[10,-15],[14,-7],[17,0]],[[-12,-16],[-16,-9],[-20,-4]],[[-11,-16],[-11,-8],[-13,-3]]]];
+ {nF:[55,38,28],fF:[28,-12,-30],nH:[-70,-48,-22],fH:[-52,-22,0]},
+ {nF:[18,6,28],fF:[46,26,20],nH:[-78,-72,-58],fH:[-58,-40,-18]},
+ {nF:[-30,-20,-42],fF:[6,2,26],nH:[-12,26,32],fH:[-30,10,22]},
+ {nF:[38,-58,-88],fF:[22,-48,-78],nH:[6,14,30],fH:[-16,4,22]}];
 const TROT=[
- [[[11,-15],[16,-9],[18,-3]],[[10,-15],[9,-7],[6,0]],[[-12,-16],[-15,-8],[-18,0]],[[-11,-16],[-8,-9],[-6,-2]]],
- [[[11,-15],[13,-7],[13,0]],[[10,-15],[11,-7],[10,0]],[[-12,-16],[-12,-8],[-12,0]],[[-11,-16],[-10,-8],[-10,0]]],
- [[[11,-15],[10,-7],[7,0]],[[10,-15],[15,-9],[17,-3]],[[-12,-16],[-8,-9],[-6,-2]],[[-11,-16],[-15,-8],[-18,0]]],
- [[[11,-15],[12,-7],[11,0]],[[10,-15],[12,-7],[12,0]],[[-12,-16],[-11,-8],[-11,0]],[[-11,-16],[-11,-8],[-12,0]]]];
-const POSE_BOB={gallop:[-1.6,0,.6,0],trot:[-1,0,-1,0]};
-function rSprite(col,mane,silk,o={}){const gait=o.gait==='trot'?TROT:GALLOP;const dk=hexMix(col,'#000000',.32),lt=hexMix(col,'#ffffff',.28),far=hexMix(col,'#000000',.22),hoof='#2a221c';
-  const P=pts=>`M${pts.map(p=>p.join(' ')).join(' L')}`;
-  const leg=(pts,c)=>`<path d="${P(pts)}" stroke="${c}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M${pts[0].join(' ')} L${pts[1].join(' ')}" stroke="${c}" stroke-width="4.4" stroke-linecap="round"/><circle cx="${pts[2][0]}" cy="${pts[2][1]}" r="1.7" fill="${hoof}"/>`;
+ {nF:[35,20,25],fH:[-5,20,25],fF:[-16,-8,-22],nH:[-40,-12,0]},
+ {nF:[5,0,20],fH:[-25,0,20],fF:[30,-22,-45],nH:[-18,-36,-20]},
+ {nF:[-16,-8,-22],fH:[-40,-12,0],fF:[35,20,25],nH:[-5,20,25]},
+ {nF:[30,-22,-45],fH:[-18,-36,-20],fF:[5,0,20],nH:[-25,0,20]}];
+const POSE_BOB={gallop:[0,.2,.4,-1],trot:[0,-.4,0,-.4]};
+function rsLeg(o,ang,L){const p=[o];let x=o[0],y=o[1];for(let i=0;i<3;i++){const r=ang[i]*Math.PI/180;x+=Math.sin(r)*L[i];y+=Math.cos(r)*L[i];p.push([x,y])}const r=ang[2]*Math.PI/180;p.push([x+Math.sin(r)*1.3,y+Math.cos(r)*1.3]);return p}
+const RS_FO=[10,-15.5],RS_HO=[-11.5,-16.2],RS_FL=[6.4,5.4,2.4],RS_HL=[6.4,6,2.4];
+function rsPose(g){const L={nF:rsLeg(RS_FO,g.nF,RS_FL),fF:rsLeg([RS_FO[0]-1.2,RS_FO[1]],g.fF,RS_FL),nH:rsLeg(RS_HO,g.nH,RS_HL),fH:rsLeg([RS_HO[0]-1.2,RS_HO[1]],g.fH,RS_HL)};
+  const low=Math.max(...Object.values(L).map(p=>p[4][1]));return {L,dy:-low}}
+function rSprite(col,mane,silk,o={}){const trot=o.gait==='trot';const gait=trot?TROT:GALLOP;const dk=hexMix(col,'#000000',.32),lt=hexMix(col,'#ffffff',.3),far=hexMix(col,'#000000',.24),hoof='#2a221c';
+  const f=v=>v.toFixed(1);
+  const legSvg=(p,c,hind)=>{const w=hind?[3.6,2.1,1.7]:[3.4,2,1.7];let q='';for(let i=0;i<3;i++)q+=`<path d="M${f(p[i][0])} ${f(p[i][1])} L${f(p[i+1][0])} ${f(p[i+1][1])}" stroke="${c}" stroke-width="${w[i]}" stroke-linecap="round"/>`;
+    return q+`<circle cx="${f(p[1][0])}" cy="${f(p[1][1])}" r="${hind?1.35:1.2}" fill="${c}"/><circle cx="${f(p[2][0])}" cy="${f(p[2][1])}" r="1.1" fill="${c}"/><path d="M${f(p[3][0])} ${f(p[3][1])} L${f(p[4][0])} ${f(p[4][1])}" stroke="${hoof}" stroke-width="2.4" stroke-linecap="round"/>`};
   const poses=o.pose!=null?[o.pose]:[0,1,2,3];
-  const grp=(cls,fn)=>poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${fn(gait[k],k)}</g>`).join('');
-  const tail=k=>{const s=[0,2,-1,1][k];return `<path d="M-16.5 -22 C-22 ${-22+s} -27 ${-19+s} -31 ${-13+s*1.5}" stroke="${mane}" stroke-width="3.6" stroke-linecap="round" fill="none"/><path d="M-17 -20.5 C-22 ${-19+s} -25 ${-15+s} -27 ${-9+s}" stroke="${mane}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`};
+  const PZ=gait.map(rsPose);
+  const grp=fn=>poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}><g transform="translate(0 ${f(PZ[k].dy)})">${fn(PZ[k].L,k)}</g></g>`).join('');
+  const tail=k=>{const s=[0,2,-1,1][k];const tp=trot?[-27,-15+s*.6,-29,-9+s]:[-27,-24+s,-34,-19+s*1.5];
+    return `<path d="M-17.2 -25.6 C-21 -26 ${tp[0]+2} ${tp[1]-2} ${tp[2]} ${tp[3]}" stroke="${mane}" stroke-width="3.8" stroke-linecap="round" fill="none"/><path d="M-17.4 -24.6 C-21 -24 ${tp[0]} ${tp[1]+2} ${tp[2]+2} ${tp[3]+3.5}" stroke="${mane}" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M-18 -25 C-22 -25.4 ${tp[0]+1} ${tp[1]-3} ${tp[2]-1} ${tp[3]-2}" stroke="${hexMix(mane,'#ffffff',.25)}" stroke-width=".7" stroke-linecap="round" fill="none" opacity=".6"/>`};
   const dust=o.dust?poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${k===1||k===3?`<ellipse cx="-20" cy="-1" rx="7" ry="2.4" fill="#E9D6AE" opacity=".7"/><ellipse cx="-29" cy="-3" rx="4.5" ry="2" fill="#E9D6AE" opacity=".45"/>`:''}</g>`).join(''):'';
-  const farLegs=grp('f',g=>leg(g[1],far)+leg(g[3],far));const nearLegs=grp('n',g=>leg(g[0],col)+leg(g[2],col));const tails=grp('t',(g,k)=>tail(k));
+  const farLegs=grp(L=>legSvg(L.fF,far,0)+legSvg(L.fH,far,1));const nearLegs=grp(L=>legSvg(L.nF,col,0)+legSvg(L.nH,col,1));
+  const bodyG=k=>`<g transform="translate(0 ${f(PZ[k].dy)})">`;
+  // head & neck geometry: galloping horses stretch the neck forward, trotting/dressage horses carry it higher
+  const G=trot?{neck:'M6.5 -27.4 C11 -32 15 -38 19.6 -41.6 L23.2 -39 C20.6 -34 19 -27 17.4 -19 L9.6 -19.6 Z',
+     head:'M18.8 -41.8 C21.4 -43.6 24 -42.2 25.2 -39.6 L28.6 -33.2 C29.3 -31.6 28.3 -30.2 26.7 -30.6 L24.6 -31.4 C23 -32 22 -33.8 21.6 -35.4 L19.4 -39 Z',
+     jowl:[21.8,-36.4,2.7],ear:'M19.6 -41.4 L19.6 -46.2 L21.8 -42 Z',eye:[22.8,-39.1],nos:[27.6,-32.2],bit:[26.6,-31.4],
+     crest:[[6.8,-27.8],[11.2,-32.4],[15.4,-38.2],[19.8,-41.8]]}
+    :{neck:'M6.5 -27.4 C12.6 -29.8 18.8 -33.8 23.6 -37 L26.8 -33.4 C22.4 -29 19.4 -24.4 17.2 -18.6 L9.6 -19.6 Z',
+     head:'M22.6 -37.4 C25.2 -38.8 28.2 -37.2 30.2 -34.4 L34.2 -29.8 C35.2 -28.3 34.2 -26.8 32.6 -27.1 L29.2 -27.8 C27.2 -28.3 25.8 -29.8 24.8 -31.4 L22.2 -34.2 Z',
+     jowl:[25.2,-32.4,2.8],ear:'M22.8 -37.1 L21.4 -41.6 L24.9 -37.9 Z',eye:[26.2,-34.6],nos:[33.2,-28.9],bit:[31.8,-28.3],
+     crest:[[6.8,-27.8],[12.8,-30.4],[18.6,-33.8],[23.6,-37.3]]};
+  const cr=G.crest;const mc=`C${cr[1][0]} ${cr[1][1]} ${cr[2][0]} ${cr[2][1]} ${cr[3][0]} ${cr[3][1]}`;const maneSvg=`<path d="M${cr[0][0]} ${cr[0][1]} ${mc}" stroke="${mane}" stroke-width="2.6" stroke-linecap="round" fill="none"/>`+
+    [0,1,2,3,4].map(i=>{const t=.1+i*.19,u=1-t,x=u*u*u*cr[0][0]+3*u*u*t*cr[1][0]+3*u*t*t*cr[2][0]+t*t*t*cr[3][0],y=u*u*u*cr[0][1]+3*u*u*t*cr[1][1]+3*u*t*t*cr[2][1]+t*t*t*cr[3][1];
+      return trot?`<path d="M${f(x)} ${f(y)} q-1.2 1.6 -1 3.2" stroke="${mane}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`:`<path d="M${f(x)} ${f(y)} q-2.2 -.6 -3.8 ${i%2?.2:-.8}" stroke="${mane}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`}).join('')+
+    `<path d="M${cr[3][0]} ${cr[3][1]+.4} l${trot?2:2.4} ${trot?2.2:1.6}" stroke="${mane}" stroke-width="1.3" stroke-linecap="round"/>`;
+    [0,1,2,3].map(i=>{const t=.15+i*.22,x=cr[0][0]+(cr[3][0]-cr[0][0])*t,y=cr[0][1]+(cr[3][1]-cr[0][1])*t;return `<path d="M${f(x)} ${f(y-.6)} q-2.6 -1.4 -${trot?3.2:4.6} -${trot?.4:1.6}" stroke="${mane}" stroke-width="1.3" stroke-linecap="round" fill="none"/>`}).join('')+
+    `<path d="M${cr[3][0]} ${cr[3][1]+.2} l${trot?2.2:2.6} ${trot?2.4:1.8}" stroke="${mane}" stroke-width="1.5" stroke-linecap="round"/>`;
   let rider='';
   if(o.rider==='race')rider=`<path d="M-5 -27.6 h10 l-1 5 h-8z" fill="#F7F4EC"/><path d="M2 -27.5 L6.2 -23.2 L3.4 -20.6" stroke="#F2EFE8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M3.4 -20.6 l2.4 1" stroke="#1d1b1a" stroke-width="2.4" stroke-linecap="round"/>
    <path d="M1 -28.6 C3 -32 6 -34.6 9.6 -35.6" stroke="${silk}" stroke-width="5.6" stroke-linecap="round" fill="none"/><path d="M7.6 -33.6 L12.6 -31 L15.6 -31.6" stroke="${silk}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-   <circle cx="11.2" cy="-37.8" r="3.4" fill="${silk}"/><path d="M13.6 -37.4 l3 .7" stroke="#1d1b1a" stroke-width=".9"/><circle cx="13.4" cy="-35.4" r="1.3" fill="#E8B98E"/><path d="M15.6 -31.6 L27 -34.4" stroke="#2a1d14" stroke-width=".6"/>`;
+   <circle cx="11.2" cy="-37.8" r="3.4" fill="${silk}"/><path d="M13.6 -37.4 l3 .7" stroke="#1d1b1a" stroke-width=".9"/><circle cx="13.4" cy="-35.4" r="1.3" fill="#E8B98E"/><path d="M15.6 -31.6 L${G.bit[0]} ${G.bit[1]}" stroke="#2a1d14" stroke-width=".6"/>`;
   if(o.rider==='up'){const hat=o.hat==='top'?`<rect x="-1.2" y="-48.6" width="5" height="5.4" rx=".6" fill="#16161a"/><path d="M-2.6 -43.2 h7.8" stroke="#16161a" stroke-width="1.3"/>`:o.hat==='helmet'?`<path d="M-1.6 -42.6 C-1.6 -46.6 4.2 -46.6 4.2 -42.6Z" fill="${silk}"/>`:`<path d="M-3.6 -43.2 C-1 -42.2 3.6 -42.2 6.2 -43.2" stroke="#6B4423" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M-.8 -43 C-1 -47 3.6 -47 3.6 -43Z" fill="#7A4E2A"/>`;
     rider=`<path d="M-5 -27.6 h10 l-1 5 h-8z" fill="${hexMix(silk,'#ffffff',.25)}"/><path d="M0 -27.4 L2.4 -21.6 L1.4 -17.8" stroke="${o.hat==='top'?'#F2EFE8':'#3A4A6A'}" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M1.4 -17.8 l2.6 .4" stroke="#1d1b1a" stroke-width="2.6" stroke-linecap="round"/>
-     <path d="M0 -28.2 L.9 -38.4" stroke="${o.hat==='top'?'#17171c':silk}" stroke-width="5.4" stroke-linecap="round"/><path d="M1 -35.4 L5.2 -31.4 L9 -31.8" stroke="${o.hat==='top'?'#17171c':silk}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="1.4" cy="-41.2" r="2.6" fill="#E8B98E"/>${hat}<path d="M9 -31.8 L27 -34.4" stroke="#2a1d14" stroke-width=".6"/>`}
-  const harness=o.harness?`<path d="M12.4 -27.6 C10.4 -24 10.6 -19.4 13 -16.6" stroke="#3E2716" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M12.8 -27.4 C11.2 -24 11.4 -19.6 13.4 -17" stroke="#D4A62A" stroke-width=".9" fill="none"/><path d="M-4 -27.3 C-1 -28.2 3 -28.2 6 -27.6 L6 -24.6 C3 -25 -1 -25 -4 -24.4Z" fill="#3E2716"/><path d="M1 -24.8 L1.4 -13.6" stroke="#3E2716" stroke-width="1.4"/><path d="M12 -19 L-21 -6" stroke="#3a2616" stroke-width="1.1"/><path d="M27 -35 L18 -30 L-4 -28" stroke="#3a2616" stroke-width=".6" fill="none"/>`:'';
-  return `<g class="rs">${dust}<ellipse cx="0" cy="0.6" rx="20" ry="2.6" fill="rgba(0,0,0,.2)"/>${tails}${farLegs}
-  <ellipse cx="-11" cy="-20" rx="7.4" ry="7.2" fill="${col}"/><path d="M-17 -20 C-17 -26 -11 -28 -4 -27 C2 -26.4 8 -28 12 -27.5 C16.5 -27 19 -23.5 18.4 -18.5 C17.8 -14.5 13 -13 7 -13.4 L-8 -13.4 C-13.5 -13.4 -17 -15.5 -17 -20Z" fill="${col}"/>
-  <path d="M9 -25 C12 -31 15 -36 19 -39.5 L24.5 -36.5 C21.5 -32 19.5 -26 18 -19 Z" fill="${col}"/><path d="M18.5 -40 C21 -42.5 24.5 -41.5 27 -38.5 L32.2 -32.8 C33.4 -31.2 32.4 -29.4 30.4 -29.8 L25.4 -31.4 C22.6 -32.4 20.6 -34 19 -36 Z" fill="${col}"/>
-  <path d="M-14 -15.2 C-6 -12.8 6 -12.8 15 -15.4 L14 -13.6 L-12 -13.6Z" fill="${dk}" opacity=".45"/><path d="M-15 -24 C-8 -27.4 2 -26.6 11 -27.4" stroke="${lt}" stroke-width="1.6" fill="none" opacity=".45" stroke-linecap="round"/>
-  <path d="M20.5 -40.5 L20.6 -45.2 L23.4 -41Z" fill="${dk}"/><circle cx="25" cy="-37.2" r=".8" fill="#111"/><circle cx="31" cy="-31.5" r=".55" fill="#111"/>
-  <path d="M10 -25.5 C13 -31 16 -36 19.5 -40.5 C17.4 -37 14.6 -33 12.6 -29 C11.6 -27 10.6 -26 10 -25.5 Z" fill="${mane}"/><path d="M20.4 -41 L18.6 -37.6" stroke="${mane}" stroke-width="1.6" stroke-linecap="round"/>
-  ${nearLegs}${harness}${rider}${o.me?`<path d="M-1 -${o.rider?56:50} l3 4.6 l3 -4.6z" fill="#E2B007" stroke="#7a5a00" stroke-width=".6"/>`:''}</g>`}
+     <path d="M0 -28.2 L.9 -38.4" stroke="${o.hat==='top'?'#17171c':silk}" stroke-width="5.4" stroke-linecap="round"/><path d="M1 -35.4 L5.2 -31.4 L9 -31.8" stroke="${o.hat==='top'?'#17171c':silk}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="1.4" cy="-41.2" r="2.6" fill="#E8B98E"/>${hat}<path d="M9 -31.8 L${G.bit[0]} ${G.bit[1]}" stroke="#2a1d14" stroke-width=".6"/>`}
+  const harness=o.harness?`<path d="M12.4 -27.6 C10.4 -24 10.6 -19.4 13 -16.6" stroke="#3E2716" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M12.8 -27.4 C11.2 -24 11.4 -19.6 13.4 -17" stroke="#D4A62A" stroke-width=".9" fill="none"/><path d="M-4 -27.3 C-1 -28.2 3 -28.2 6 -27.6 L6 -24.6 C3 -25 -1 -25 -4 -24.4Z" fill="#3E2716"/><path d="M1 -24.8 L1.4 -13.6" stroke="#3E2716" stroke-width="1.4"/><path d="M12 -19 L-21 -6" stroke="#3a2616" stroke-width="1.1"/><path d="M${G.bit[0]} ${G.bit[1]} L18 -30 L-4 -28" stroke="#3a2616" stroke-width=".6" fill="none"/>`:'';
+  const bodySvg=`<path d="M-18 -22 C-19.2 -27 -14.6 -28.8 -10 -28.2 C-5 -27.7 -1.2 -25.8 3 -26.1 C6 -26.4 8 -27.8 10.4 -27.6 L17 -22 C18.2 -19 17 -15.6 13 -14.1 C6 -12.7 -3 -13 -8 -14.5 C-12 -15.2 -16 -16.2 -17.7 -18.6 Z" fill="${col}"/>
+   <path d="${G.neck}" fill="${col}"/><circle cx="${G.jowl[0]}" cy="${G.jowl[1]}" r="${G.jowl[2]}" fill="${col}"/><path d="${G.head}" fill="${col}"/>
+   <path d="M-14 -15.6 C-6 -13.2 6 -13 14 -15.4 L13 -13.8 C6 -12.6 -3 -12.8 -8 -14.3Z" fill="${dk}" opacity=".5"/>
+   <path d="M-16.4 -24.6 C-10 -28.4 0 -26.2 9.4 -27.3" stroke="${lt}" stroke-width="1.5" fill="none" opacity=".5" stroke-linecap="round"/>
+   <ellipse cx="-11.6" cy="-22.4" rx="4.6" ry="3.6" fill="${lt}" opacity=".22"/><ellipse cx="11.2" cy="-21" rx="3" ry="4" fill="${lt}" opacity=".18" transform="rotate(-20 11.2 -21)"/>
+   <path d="M-14.6 -18 C-12.4 -16 -9.6 -15.4 -7.6 -15.8" stroke="${dk}" stroke-width=".8" fill="none" opacity=".5"/>
+   <path d="${G.ear}" fill="${dk}"/><circle cx="${G.eye[0]}" cy="${G.eye[1]}" r=".85" fill="#111"/><ellipse cx="${G.nos[0]}" cy="${G.nos[1]}" rx=".7" ry=".5" fill="#111" opacity=".8"/>
+   ${maneSvg}`;
+  return `<g class="rs">${dust}<ellipse cx="2" cy="0.6" rx="21" ry="2.6" fill="rgba(0,0,0,.2)"/>${grp((L,k)=>tail(k))}${farLegs}
+  ${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${bodySvg}</g></g>`).join('')}
+  ${nearLegs}${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${harness}${rider}${o.me?`<path d="M-1 -${o.rider?56:50} l3 4.6 l3 -4.6z" fill="#E2B007" stroke="#7a5a00" stroke-width=".6"/>`:''}</g></g>`).join('')}</g>`}
 function watchSetup(m){const ev=EVENTS[m.res.ev],T=TIERS[m.res.t];const myH=H(m.res.h)||{};const c=myH.genes?coat(myH.genes):null;const myP=c?(c.grey?GREYPAL:PAL[c.base+c.cr]):{b:'#7A3D1C',m:'#1E1A18'};
   const rs=srng(m.wid*31+7);const field=m.res.field.map((f,i)=>{const met=evMetric(ev.id,f.score);const col=f.me?[myP.b,myP.m]:RUNNER_COLS[Math.floor(rs()*RUNNER_COLS.length)];return {...f,rank:i,met,col,silk:f.me?'#E2B007':SILKS[(i*3+1)%SILKS.length],ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
   const lanes=field.map((f,i)=>i);for(let i=lanes.length-1;i>0;i--){const j=Math.floor(rs()*(i+1));[lanes[i],lanes[j]]=[lanes[j],lanes[i]]}field.forEach((f,i)=>f.lane=lanes[i]);
   return {ev,T,field,me:field.find(f=>f.me),rs}}
-function crowdRows(x0,x1,y0,rows,gap,rs,op=.9){let o='';for(let r=0;r<rows;r++)for(let x=x0+(r%2)*5;x<x1;x+=gap){const c=SILKS[Math.floor(rs()*SILKS.length)],sk=['#F2D3B8','#E2B48C','#B98157','#7C5236'][Math.floor(rs()*4)];o+=`<rect x="${(x-3.4).toFixed(1)}" y="${y0+r*gap*1.1+3}" width="6.8" height="7" rx="2.4" fill="${c}" opacity="${op}"/><circle cx="${x.toFixed(1)}" cy="${y0+r*gap*1.1+1}" r="2.6" fill="${sk}"/>`}return o}
+const CROWD_SHIRTS=['#F2F0EA','#E8E4DA','#3F5F8F','#5B7DB1','#8FA9CC','#B03A2E','#D2694F','#2F3E52','#6E8B5A','#C9A15A','#7A4E8A','#DCC9A6','#2B2B2B','#A0A7AD','#E0B84C','#4E8C8A'];
+function crowdRows(x0,x1,y0,rows,gap,rs,op=.9){let o='';const sk=['#F2D3B8','#E2B48C','#C68E62','#9A6640','#6E4628'];
+  for(let r=0;r<rows;r++){const y=y0+r*gap*1.1,dk=(rows-1-r)*.06;o+=`<path d="M${x0-4} ${(y+9.4).toFixed(1)} H${x1+4}" stroke="#000" stroke-opacity=".14" stroke-width="1.4"/>`;
+    for(let x=x0+(r%2)*gap*.5+rs()*2;x<x1;x+=gap*(.72+rs()*.4)){const c=hexMix(CROWD_SHIRTS[Math.floor(rs()*CROWD_SHIRTS.length)],'#1a1a1a',dk),k=sk[Math.floor(rs()*sk.length)],up=rs()<.08,hy=y+1+(rs()-.5)*1.2,hat=rs()<.22;
+      o+=`<path d="M${(x-3.6).toFixed(1)} ${(y+10).toFixed(1)} L${(x-3.2).toFixed(1)} ${(hy+3.4).toFixed(1)} Q${x.toFixed(1)} ${(hy+1.8).toFixed(1)} ${(x+3.2).toFixed(1)} ${(hy+3.4).toFixed(1)} L${(x+3.6).toFixed(1)} ${(y+10).toFixed(1)}Z" fill="${c}" opacity="${op}"/>`+
+      (up?`<path d="M${(x-2.6).toFixed(1)} ${(hy+4).toFixed(1)} l-1.6 -5.4 M${(x+2.6).toFixed(1)} ${(hy+4).toFixed(1)} l1.6 -5.4" stroke="${c}" stroke-width="1.3" stroke-linecap="round"/>`:'')+
+      `<circle cx="${x.toFixed(1)}" cy="${hy.toFixed(1)}" r="2.3" fill="${k}"/>`+(hat?`<path d="M${(x-3.4).toFixed(1)} ${(hy-.8).toFixed(1)} h6.8 M${(x-1.8).toFixed(1)} ${(hy-.9).toFixed(1)} q1.8 -2.8 3.6 0" stroke="${rs()<.5?'#6B4423':'#E9DFC6'}" stroke-width="1.2" fill="${rs()<.5?'#6B4423':'#E9DFC6'}"/>`:'')}}
+  return o}
 function sceneDefs(){return `<defs><linearGradient id="wSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FB9DA"/><stop offset="1" stop-color="#DCE7E6"/></linearGradient>
  <linearGradient id="wDirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B98C5E"/><stop offset="1" stop-color="#D2A878"/></linearGradient>
  <linearGradient id="wGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FA85A"/><stop offset="1" stop-color="#9CC273"/></linearGradient>
  <radialGradient id="wSand" cx=".5" cy=".5" r=".7"><stop offset="0" stop-color="#E4CC9C"/><stop offset="1" stop-color="#CBAE7C"/></radialGradient>
  <linearGradient id="wRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5D46"/><stop offset="1" stop-color="#244A37"/></linearGradient></defs>`}
+function wTree(x,y,r,seed){const t=srng(seed);const c=['#5A8A43','#4E7C3B','#679A4D'][Math.floor(t()*3)],d=hexMix(c,'#1d2a14',.35),l=hexMix(c,'#e8f2c0',.3);let o=`<rect x="${(x-r*.09).toFixed(1)}" y="${(y-r*.3).toFixed(1)}" width="${(r*.18).toFixed(1)}" height="${(r*.55).toFixed(1)}" fill="#5C4330"/>`;
+  const B=[[0,-.65,.62],[-.45,-.35,.5],[.45,-.38,.52],[-.2,-.95,.45],[.25,-.9,.42]];o+=B.map(([dx,dy,k])=>`<circle cx="${(x+dx*r).toFixed(1)}" cy="${(y+dy*r).toFixed(1)}" r="${(k*r*(.9+t()*.2)).toFixed(1)}" fill="${d}"/>`).join('');
+  o+=B.map(([dx,dy,k])=>`<circle cx="${(x+dx*r-r*.06).toFixed(1)}" cy="${(y+dy*r-r*.08).toFixed(1)}" r="${(k*r*.82).toFixed(1)}" fill="${c}"/>`).join('');
+  return o+`<circle cx="${(x-r*.25).toFixed(1)}" cy="${(y-r*1.05).toFixed(1)}" r="${(r*.22).toFixed(1)}" fill="${l}" opacity=".55"/>`}
 function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.ev;const rs=srng(m.wid*17+3);
   const dur={race:9,barrel:8,endur:10,dress:10,pull:8,jump:9,xc:10,rein:9}[ev.id]||9;
   WATCH={wid:m.wid,t:0,dur,speed:[1,2,4].includes(PREF.speed)?PREF.speed:1,last:performance.now(),done:false,said:{}};sfx('bell');hoovesStart(['race','barrel','jump','xc'].includes(ev.id)?'gallop':ev.id==='pull'?'walk':'trot');hoovesRate(WATCH.speed);
@@ -3186,7 +3249,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     const reinBooth=`<g transform="translate(400 50)"><rect x="-36" y="0" width="72" height="22" fill="#7A5434"/><path d="M-42 0 L0 -12 L42 0Z" fill="#5A3A22"/><rect x="-28" y="6" width="56" height="10" fill="#3a2a1e"/>${[-16,0,16].map(x=>`<circle cx="${x}" cy="11" r="3.2" fill="#E2B48C"/><path d="M${x-5} 8.5 h10" stroke="#6B4423" stroke-width="1.6"/>`).join('')}<rect x="-30" y="-24" width="60" height="11" rx="2" fill="#F4E7C4"/><text x="0" y="-15.5" font-size="7.5" text-anchor="middle" fill="#6B2E1E" font-family="Rye,Georgia,serif">REINING</text></g>`;
     const reinFence=(q,prj)=>`<path d="M${q(120,40)} L${q(680,40)} L${q(680,260)} L${q(120,260)}Z" fill="none" stroke="#5A3A22" stroke-width="5"/><path d="M${q(120,40)} L${q(680,40)} L${q(680,260)} L${q(120,260)}Z" fill="none" stroke="#9A7650" stroke-width="2" transform="translate(0 -6)"/>`+[...Array(9)].map((_,i)=>{const [X,Y,S2]=prj(120+i*70,260);return `<rect x="${(X-2*S2).toFixed(1)}" y="${(Y-10*S2).toFixed(1)}" width="${(4*S2).toFixed(1)}" height="${(14*S2).toFixed(1)}" fill="#5A3A22"/>`}).join('');
     const reinMarkers=prj=>[[400,70],[400,150],[400,230],[160,150],[640,150]].map(([x,y])=>{const [X,Y,S2]=prj(x,y);return `<g transform="translate(${X.toFixed(1)} ${Y.toFixed(1)}) scale(${S2.toFixed(2)})"><path d="M-5 4 L0 -10 L5 4Z" fill="#E67E22"/><rect x="-6" y="3" width="12" height="2.6" fill="#E67E22"/><path d="M-3 -2 h6" stroke="#fff" stroke-width="1.4"/></g>`}).join('')+[[110,270],[690,270]].map(([x,y])=>{const [X,Y,S2]=prj(x,y);return `<g transform="translate(${X.toFixed(1)} ${Y.toFixed(1)}) scale(${S2.toFixed(2)})"><rect x="-16" y="-10" width="32" height="14" rx="3" fill="#D9B95E"/><path d="M-6 -10 V4 M6 -10 V4" stroke="#9E7E32" stroke-width="1.4"/></g>`}).join('');
-    scene+=`<rect width="800" height="300" fill="url(#wSky)"/>${ev.id==='rein'?reinBg:`${hills(62,'#A9C08E',20,21)}${[...Array(14)].map((_,i)=>`<circle cx="${i*62+20}" cy="${60-(i%3)*4}" r="${16+(i%2)*5}" fill="${i%2?'#5E8C44':'#6C9A50'}"/>`).join('')}<rect y="66" width="800" height="234" fill="url(#wGrass)"/>`}
+    scene+=`<rect width="800" height="300" fill="url(#wSky)"/>${ev.id==='rein'?reinBg:`${hills(62,'#A9C08E',20,21)}${[...Array(16)].map((_,i)=>wTree(i*54+10+(i%3)*6,70,20+(i%3)*5,i*13+1)).join('')}<rect y="66" width="800" height="234" fill="url(#wGrass)"/>`}
     ${ev.id==='rein'?reinBooth:`<g transform="translate(400 46)"><rect x="-34" y="0" width="68" height="26" fill="#F4F0E6"/><path d="M-40 0 L0 -14 L40 0Z" fill="#2F5D46"/><rect x="-26" y="8" width="52" height="10" fill="#3a3a3a"/>${[-16,0,16].map(x=>`<circle cx="${x}" cy="12" r="3.2" fill="#E2B48C"/>`).join('')}<text x="0" y="-3" font-size="6.5" text-anchor="middle" fill="#fff" font-family="system-ui" font-weight="700">JUDGES</text></g>`}
     <path d="M${q(120,40)} L${q(680,40)} L${q(680,260)} L${q(120,260)}Z" fill="${ev.id==='rein'?'#C49A68':'url(#wSand)'}"/>
     ${[...Array(8)].map((_,i)=>`<path d="M${q(120,40+i*28)} L${q(680,40+i*28)}" stroke="#B99A6A" stroke-width="1" opacity=".25"/>`).join('')}
@@ -3272,7 +3335,7 @@ function eventArt(id){const n='ea'+id;const sky=`<defs><linearGradient id="${n}s
     <g transform="translate(108 96) rotate(-10) scale(1.2)">${rSprite('#C89955','#231D19','#C0392B',{rider:'up',hat:'cowboy',pose:3,dust:1})}</g><path d="M60 98 C70 90 80 96 88 92" stroke="#C9A877" stroke-width="3" fill="none" opacity=".7"/>`;
   if(id==='endur')o=sky+`<path d="M0 50 L40 22 L70 40 L110 12 L150 42 L190 20 L240 44 V110 H0Z" fill="#9FA9B8"/><path d="M110 12 L120 20 L100 20Z" fill="#F4F6F8"/>`+hill(64,'#9DBB7C')+`<rect y="70" width="240" height="40" fill="#8DB46A"/><path d="M-10 108 C60 100 90 80 140 82 S 220 70 250 64" stroke="#C9A877" stroke-width="12" fill="none"/>
     ${[[24,82],[200,92],[60,70],[226,66]].map(([x,y])=>`<path d="M${x} ${y-22} L${x+8} ${y-4} L${x-8} ${y-4}Z" fill="#3F7A45"/>`).join('')}<g transform="translate(130 84) scale(1.1)">${rSprite('#D6B886','#EFE4CB','#2D8A4E',{rider:'up',hat:'cowboy',gait:'trot',pose:0})}</g>`;
-  if(id==='dress')o=sky+`${[...Array(8)].map((_,i)=>`<circle cx="${i*34+10}" cy="40" r="${12+(i%2)*4}" fill="${i%2?'#5E8C44':'#6C9A50'}"/>`).join('')}<rect y="46" width="240" height="64" fill="#E2CB9C"/><path d="M0 50 H240" stroke="#fff" stroke-width="3"/><g transform="translate(40 44)"><rect x="-8" y="-12" width="16" height="16" rx="2" fill="#fff" stroke="#999" stroke-width=".8"/><text x="0" y="1" font-size="11" font-weight="700" text-anchor="middle" fill="#2B2A26" font-family="system-ui">C</text></g>
+  if(id==='dress')o=sky+`${[...Array(9)].map((_,i)=>wTree(i*30+6,48,12+(i%2)*4,i*7+3)).join('')}<rect y="46" width="240" height="64" fill="#E2CB9C"/><path d="M0 50 H240" stroke="#fff" stroke-width="3"/><g transform="translate(40 44)"><rect x="-8" y="-12" width="16" height="16" rx="2" fill="#fff" stroke="#999" stroke-width=".8"/><text x="0" y="1" font-size="11" font-weight="700" text-anchor="middle" fill="#2B2A26" font-family="system-ui">C</text></g>
     <g transform="translate(200 54)"><rect x="-16" y="0" width="32" height="7" fill="#8A6542"/>${[-11,-4,3,10].map((dx,k)=>`<circle cx="${dx}" cy="-1" r="4" fill="${['#E25B7A','#F2C14E','#fff','#C0392B'][k]}"/>`).join('')}</g><g transform="translate(118 98) scale(1.3)">${rSprite('#211D1B','#141211','#17171c',{rider:'up',hat:'top',gait:'trot',pose:0})}</g>`;
   if(id==='pull')o=sky+`<path d="M0 30 H240 V60 H0Z" fill="#8C6B4E"/>${crowdRows(6,236,34,2,12,srng(4),.85)}<rect y="58" width="240" height="6" fill="#F4F0E6"/><rect y="64" width="240" height="46" fill="#C49A68"/>
     <g transform="translate(46 96)"><path d="M-4 8 L44 8 C50 8 52 4 50 0 L-4 0Z" fill="#7A5434"/>${[[2,-12],[18,-12],[34,-12],[10,-24],[26,-24]].map(([x,y])=>`<rect x="${x}" y="${y}" width="14" height="12" fill="#9C9890" stroke="#7a766e" stroke-width=".8"/>`).join('')}</g><g transform="translate(150 100) scale(1.4)">${rSprite('#9A4822','#EFE2BD','#000',{harness:1,gait:'trot',pose:0})}</g>`;
@@ -3334,7 +3397,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';if(BANNER_CACHE[
     ${[...Array(18)].map((_,i)=>{const a=Math.PI*(i/17);return `<rect x="${(620-Math.cos(a)*210-1.5).toFixed(1)}" y="${(84-Math.sin(a)*22).toFixed(1)}" width="3" height="16" fill="#fff"/>`}).join('')}
     ${bPerson(620,98,'#2D8A4E',{s:1.15,arm:`<path d="M4.4 -24 L14 -20" stroke="#2D8A4E" stroke-width="2.6" stroke-linecap="round"/>`})}<path d="M636 76 Q680 70 722 82" stroke="#3a2a1e" stroke-width="1" fill="none"/>
     <g transform="translate(740 108) scale(1.25)">${rSprite('#3C322B','#201B18','#000',{gait:'trot',pose:0})}</g>
-    ${[...Array(9)].map((_,i)=>`<circle cx="${880+i*16}" cy="${66-(i%3)*5}" r="${10+(i%2)*4}" fill="${i%2?'#5E8C44':'#6C9A50'}"/>`).join('')}`}
+    ${[...Array(9)].map((_,i)=>wTree(880+i*16,78-(i%3)*4,12+(i%2)*4,i*5+2)).join('')}`}
   if(t==='bank'){defs=bSky(p+'s','#9CC3E0','#EFE6D2');
     o=`<rect width="1000" height="120" fill="url(#${p}s)"/><rect y="98" width="1000" height="22" fill="#C9A97A"/><rect y="94" width="1000" height="6" fill="#A98A5F"/>
     <path d="M60 94 V36 H230 V94Z" fill="#C9AE8A" opacity=".8"/><path d="M770 94 V40 H950 V94Z" fill="#B9A58F" opacity=".8"/>${[90,140,190,800,850,900].map(x=>`<rect x="${x}" y="54" width="22" height="28" fill="#6E5A44" opacity=".7"/>`).join('')}
