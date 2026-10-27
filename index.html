@@ -1014,7 +1014,7 @@ async function crowdRender(sec,mode){const sr=22050,oc=new OfflineAudioContext(2
   const buf=await oc.startRendering();const d0=buf.getChannelData(0),d1=buf.getChannelData(1);let pk=0;for(let i=0;i<d0.length;i++)pk=Math.max(pk,Math.abs(d0[i]),Math.abs(d1[i]));const k=.9/(pk||1);const fade=Math.floor(sr*.25);
   for(const d of [d0,d1])for(let i=0;i<d.length;i++){let m=k;if(mode!=='murmur'&&i>d.length-fade)m*=(d.length-i)/fade;if(mode==='murmur'){if(i<fade)m*=i/fade;if(i>d.length-fade)m*=(d.length-i)/fade}d[i]*=m}
   return buf}
-function crowdPrep(){if(AU.crowdP||typeof OfflineAudioContext==='undefined')return;AU.crowd={};AU.crowdP=Promise.all([['murmur',8],['cheer',3.2],['big',4.6],['aww',1.8]].map(([m,s])=>crowdRender(s,m).then(b=>{AU.crowd[m]=b}))).catch(()=>{})}
+function crowdPrep(){if(AU.crowdP||typeof OfflineAudioContext==='undefined')return;AU.crowd={};AU.crowdP=Promise.all([['cheer',3.2],['big',4.6],['aww',1.8]].map(([m,s])=>crowdRender(s,m).then(b=>{AU.crowd[m]=b}))).catch(()=>{})}
 function crowdPlay(m,vol,loop){if(!AU.ready||!AU.crowd||!AU.crowd[m])return null;const c=AU.ctx,s=c.createBufferSource(),g=c.createGain();s.buffer=AU.crowd[m];s.loop=!!loop;s.connect(g);g.connect(AU.sfx);g.gain.value=vol;s.start();return {s,g}}
 
 /* hoofbeats during events */
@@ -1022,7 +1022,7 @@ function hoovesStart(gait){hoovesStop();if(!auOk())return;const c=AU.ctx;const p
   let next=c.currentTime+.05;const st={on:true,rate:1,timer:null,crowd:null};
   st.timer=setInterval(()=>{if(!st.on||!auOk())return;const now=c.currentTime;const per=pat.per/Math.min(2.5,st.rate);while(next<now+.35){pat.hits.forEach((h,i)=>{const t=next+h/Math.min(2.5,st.rate),s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=AU.hoof;s.playbackRate.value=.85+Math.random()*.3;f.type='lowpass';f.frequency.value=1400;s.connect(f);f.connect(g);g.connect(AU.sfx);g.gain.value=.55*pat.acc[i]*(.85+Math.random()*.3);s.start(t)});next+=per}},100);
   // crowd murmur
-  st.crowd=crowdPlay('murmur',.0001,true);if(st.crowd)st.crowd.g.gain.setTargetAtTime(.32,c.currentTime,.4);
+  st.crowd=null;
   AU.hooves=st;AU.duck=true;auVolumes()}
 function resultSound(r){if(!r)return;if(r.place<=3)sfx('cheer',r.place===1);else sfx('aww');if(r.prize)setTimeout(()=>sfx('coin'),700);if(r.drop)setTimeout(()=>sfx('sparkle'),1300)}
 function hoovesRate(r){if(AU.hooves)AU.hooves.rate=r}
