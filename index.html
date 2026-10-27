@@ -169,6 +169,10 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .shinyfx i:nth-child(1){left:6px;top:6px}.shinyfx i:nth-child(2){right:8px;top:10px;animation-delay:.4s;width:10px;height:10px}.shinyfx i:nth-child(3){left:10px;bottom:10px;animation-delay:.9s;width:10px;height:10px}.shinyfx i:nth-child(4){right:6px;bottom:6px;animation-delay:1.3s}.shinyfx i:nth-child(5){left:48%;top:4px;animation-delay:1.7s;width:8px;height:8px}.shinyfx i:nth-child(6){left:30%;bottom:5px;animation-delay:2s;width:8px;height:8px}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(20deg)}}@media (prefers-reduced-motion:reduce){.shinyfx i{animation:none;opacity:.9}}
 .shinytag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;color:#5a4300;background:linear-gradient(90deg,#FFE27A,#FFF4C2,#F2C94C);box-shadow:0 0 0 1px #D9A92A inset;white-space:nowrap}
+.crategrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.crateitem{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);border-left:4px solid var(--r-common);background:var(--card)}.crateitem.r-rare{border-left-color:var(--r-rare)}.crateitem.r-epic{border-left-color:var(--r-epic)}.crateitem.r-legendary{border-left-color:var(--r-legendary)}
+.studbook{margin:4px 0 0;padding-left:0;list-style:none;font-size:13px;display:grid;gap:3px}
+.tackgrp{border-bottom:1px solid var(--line);padding:6px 0}.tackgrp summary{cursor:pointer;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.wornline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line)}.wchips{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}.wchip{font-size:11.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);font-weight:600;white-space:nowrap}
 .event h3{font-size:16px}.evart{border-radius:10px;overflow:hidden;margin-bottom:10px;line-height:0;aspect-ratio:240/110;max-width:320px}.evart svg{width:100%;height:100%;display:block}
 .event .w{font-size:12px;color:var(--muted);margin-top:3px}
 .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -501,6 +505,7 @@ const BREEDS={
   lusitano:{n:'Lusitano',r:'epic',b:{agi:7,smt:6,str:3},d:'Brave Portuguese horse of the bullring, often grey.',coat:'greyish'},
   przewalski:{n:'Przewalski’s Horse',r:'legendary',b:{sta:10,str:7,spd:5,smt:4},d:'The last truly wild horse. Dun coat, a dark back stripe and a stiff, upright mane.',look:'wild',coat:'dun'},
   starfall:{n:'Starfall Horse',r:'mythical',b:{spd:9,sta:9,agi:9,smt:9,str:7},d:'A horse out of old campfire legends, said to be born the night a star falls. Silver-blue coat dusted with star dapples and a moonlight mane. Lives about 8 years longer and gets hurt 25% less. Almost never for sale: look for one once you have 150+ reputation, or win at the Olympics or Internationals.',look:'star',coat:'grey'},
+  shetland:{n:'Shetland Pony',r:'epic',hidden:true,b:{str:7,sta:6,smt:4},d:'A tiny, tough pony from the Shetland Isles, stronger than she looks. Never sold in shops: only won.',look:'shaggy'},
   curly:{n:'Bashkir Curly',r:'legendary',b:{sta:8,str:6,smt:6,agi:5},d:'A rare curly-coated horse, hardy in any weather and famously calm.',look:'curly'},
   spottedsaddle:{n:'Spotted Saddle Horse',r:'common',cross:['paint','walker'],b:{sta:3,smt:2},d:'Paint Horse × Tennessee Walker. A smooth-gaited trail horse with flashy spots.',coat:'tobiano'},
   appendix:{n:'Appendix Quarter Horse',r:'rare',cross:['thoroughbred','quarter'],b:{spd:6,agi:2,sta:2},d:'Thoroughbred × Quarter Horse. Taller and faster than a Quarter Horse, still level-headed.'},
@@ -539,8 +544,8 @@ function breedLabel(h){const b=BREEDS[h.breed]||BREEDS.grade;return b.n+(h.cross
 function rbadge(r){return `<span class="rbadge rb-${r}">${RARITY[r].n}</span>`}
 function bonusText(k){const b=BREEDS[k].b;const t=Object.keys(b).map(x=>STATS.find(y=>y.k===x).s+' +'+b[x]);return t.length?t.join(' · '):'No stat bonus'}
 function rollRarity(w){let tot=0;for(const r of HRORDER)tot+=w[r]||0;let x=R()*tot;for(const r of HRORDER){x-=w[r]||0;if(x<=0)return r}return 'common'}
-function rarityWeights(boost=1){const rp=Math.min(S.rep,200);return {common:52,uncommon:(26+rp/10)*boost,rare:(16+rp/8)*boost,epic:(5+rp/20)*boost*boost,legendary:(.8+rp/60)*boost*boost,mythical:rp>=150?(rp-140)/400*boost*boost:0}}
-function pickBreed(r){return pick(Object.keys(BREEDS).filter(k=>BREEDS[k].r===r))}
+function rarityWeights(boost=1){const rp=Math.min(S.rep,200);return {common:52,uncommon:(26+rp/10)*boost,rare:(16+rp/8)*boost,epic:(5+rp/20)*boost*boost,legendary:(.8+rp/60)*boost*boost,mythical:rp>=150?(rp-140)/1600*boost*boost:0}}
+function pickBreed(r){return pick(Object.keys(BREEDS).filter(k=>BREEDS[k].r===r&&!BREEDS[k].hidden))}
 function applyBreedCoat(h){const b=BREEDS[h.breed];if(b.coat==='black')h.genes={E:['E','E'],A:['a','a'],Cr:['n','n'],G:['g','g'],TO:['n','n']};if(b.coat==='grey')h.genes.G=['G','G'];if(b.coat==='greyish'&&R()<.65)h.genes.G=['G',R()<.5?'G':'g'];if(b.coat==='tobiano')h.genes.TO=['TO',R()<.4?'TO':'n'];if(b.coat==='chestnut'){h.genes.E=['e','e'];h.genes.Cr=['n','n'];h.genes.G=['g','g']}if(b.coat==='dun'){h.genes={E:['E','E'],A:['A','A'],Cr:['n','n'],G:['g','g'],TO:['n','n']}}}
 function foalBreedText(s,d){const bl=mixBlood(s,d),r=breedFromBlood(bl),b=BREEDS[r.breed]||BREEDS.grade;const bits=[];
   if(b.cross)bits.push('named crossbreed, +2 on breed stats');else if(!r.cross&&r.breed!=='grade')bits.push('purebred, +2 on breed stats');
@@ -689,7 +694,7 @@ function stockIncome(sIdx){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+(
 function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)}
 function houseMult(){return [1,1.05,1.1,1.2][L('house')]}
 function vetCost(h){return Math.round(80*(1-(psk('care')-1)*.04)*(S.staff.vet?1-(.3+.05*sk('vet')):1)*[1,.75,.5,.3][L('clinic')])}
-const FEE_RATE=[.06,.07,.07,.075,.08,.08,.08,.08];
+const FEE_RATE=[.06,.07,.07,.075,.08,.08,.08,.08,0];
 const r10=x=>Math.max(10,Math.round(x/10)*10);
 function prizesFor(ev,t){return t.prize.map(p=>r10(p*(ev?ev.purse||1:1)))}
 function baseFee(ev,t){const ti=TIERS.indexOf(t);return r10(prizesFor(ev,t).reduce((a,b)=>a+b,0)*FEE_RATE[ti])}
@@ -701,7 +706,7 @@ function facLevels(){return FAC.reduce((a,f)=>a+L(f.id),0)}
 /* ---------- ribbons & horse awards ---------- */
 const RIBBON_COL=['#2D5BB8','#C23A2B','#E0B530'];
 const RIBBON_NAME=['Blue','Red','Yellow'];
-function ribbonSVG(place,ti,sz=26,title=''){ti=ti||0;const col=RIBBON_COL[place-1],rim=ti>=4?({4:'#D4A62A',5:'#2BA3A0',6:'#E8B10A',7:'#8440C9'}[ti]||'#D4A62A'):'#FFFFFF',txt=place===3?'#5A4500':'#FFFFFF';
+function ribbonSVG(place,ti,sz=26,title=''){ti=ti||0;const col=RIBBON_COL[place-1],rim=ti>=4?({4:'#D4A62A',5:'#2BA3A0',6:'#E8B10A',7:'#8440C9',8:'#7A5434'}[ti]||'#D4A62A'):'#FFFFFF',txt=place===3?'#5A4500':'#FFFFFF';
   return `<svg viewBox="0 0 30 42" width="${sz}" height="${Math.round(sz*1.4)}" overflow="visible" role="img" aria-label="${esc(title||RIBBON_NAME[place-1]+' ribbon')}">${title?`<title>${esc(title)}</title>`:''}
 <path d="M10 20 L5 40 L10 36 L13 41 L15.5 22 Z" fill="${col}"/><path d="M20 20 L25 40 L20 36 L17 41 L14.5 22 Z" fill="${col}" opacity=".82"/>
 ${ti>=2?`<circle cx="15" cy="14" r="13" fill="${col}" stroke="${rim}" stroke-width="${ti===6?3.4:2.4}" stroke-dasharray="2.6 1.6"/>`:''}${ti===1?`<circle cx="15" cy="14" r="12.6" fill="none" stroke="${col}" stroke-width="1.6" stroke-dasharray="1.6 1.2"/>`:''}${ti===3||ti>=5?`<circle cx="15" cy="14" r="10.6" fill="${hexMix(col,'#ffffff',.3)}" stroke="#fff" stroke-width="1" stroke-dasharray="1.8 1.2"/>`:''}
@@ -709,7 +714,7 @@ ${ti>=2?`<circle cx="15" cy="14" r="13" fill="${col}" stroke="${rim}" stroke-wid
 ${ti===6?`<path d="M15 -2.2 l1.3 2.7 3 .4 -2.2 2 .5 2.9 -2.6 -1.4 -2.6 1.4 .5 -2.9 -2.2 -2 3 -.4z" fill="#E8B10A" stroke="#8A6A00" stroke-width=".5"/>`:''}<text x="15" y="17.6" text-anchor="middle" font-size="9.5" font-weight="700" fill="${ti>=2?(place===3?'#8A6A00':col):txt}" font-family="system-ui,sans-serif">${place}</text></svg>`}
 const HAWARDS=[
   {id:'olympic',n:'Olympic Champion',d:'Won gold at the Olympics.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===6)},
-  {id:'hof',n:'Hall of Fame',d:'Won 3 National-level or higher events.',t:h=>h.ribbons.filter(r=>r.p===1&&r.t>=4).length>=3},
+  {id:'hof',n:'Hall of Fame',d:'Won 3 National-level or higher events.',t:h=>h.ribbons.filter(r=>r.p===1&&r.t>=4&&r.t<=7).length>=3},
   {id:'international',n:'International Champion',d:'Won an International event.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===5)},
   {id:'invitational',n:'Invitational Champion',d:'Won an invitation-only event.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===7)},
   {id:'national',n:'National Champion',d:'Won at Nationals.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===4)},
@@ -1517,6 +1522,8 @@ function seasonEnd(){return (seasonIdx()+1)*4+1}
 function vetDoneSeason(h){return h.vetSeason===seasonIdx()}
 function vetClear(h){return h.lastVet!=null&&S.day-h.lastVet<=8}
 function vaccinated(h){return (h.vacc||0)>S.day}
+function studBookHtml(h){const b=h.studBook||[];if(!b.length)return '';const born=b.filter(x=>x.st==='born').length,miss=b.filter(x=>x.st==='miss').length;
+  return `<div class="note" style="margin-top:4px"><b>${born} foal${born===1?'':'s'} born</b>${miss?' · '+miss+' mare'+(miss>1?'s':'')+' didn’t take':''}${born+miss?' · '+Math.round(born/(born+miss)*100)+'% success':''}</div><ul class="studbook">${b.slice(0,8).map(x=>`<li>${x.st==='born'?'🐴 <b>'+esc(x.foal)+'</b> ('+(x.sex==='M'?'colt':'filly')+', '+esc(x.coat)+', potential ~'+x.pa+') out of '+esc(x.mare)+', '+esc(x.farm)+' Ranch · day '+x.bd:x.st==='miss'?'✗ '+esc(x.mare)+' ('+esc(x.farm)+' Ranch) didn’t take':'⏳ '+esc(x.mare)+' ('+esc(x.farm)+' Ranch) is in foal · due about day '+x.due}</li>`).join('')}</ul>`}
 function fertOf(h){if(h.fert==null)h.fert=Math.round((.82+R()*.36)*100)/100;return h.fert}
 function vet(h){
   const cost=vetCost(h);
@@ -1552,11 +1559,14 @@ function remember(h,kind,reason){if(h.client){if(kind==='died'){loseRep(8,'A cli
 function hofReasons(r){const o=[];if(r.awards.includes('Hall of Fame'))o.push('Hall of Fame award');else{if(r.awards.includes('Olympic Champion'))o.push('Olympic Champion');if(r.awards.includes('International Champion'))o.push('International Champion');if(r.awards.includes('Invitational Champion'))o.push('Invitational Champion');if(r.awards.includes('National Champion'))o.push('National Champion')}
   if(r.wins>=10)o.push(r.wins+' career wins');if(r.earnings>=50000)o.push(money(r.earnings)+' earned');if(r.foals>=6)o.push('Foundation '+(r.sex==='M'?'sire':'dam')+' ('+r.foals+' foals)');
   if(r.gen>0&&r.bestPot>=85)o.push('Exceptional bloodline (potential '+r.bestPot+')');return o}
-function sell(h,amt,why){remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
+function sell(h,amt,why){if(!h.client){S.soldBack=S.soldBack||[];const c=JSON.parse(JSON.stringify(h));S.soldBack.unshift({h:c,price:Math.round(amt*1.15/10)*10,until:S.day+7});if(S.soldBack.length>10)S.soldBack.length=10}remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
   S.money+=amt;pxp('biz',4);freeGear(h.id);S.studReq=S.studReq.filter(r=>r.id!==h.id);S.horses=S.horses.filter(x=>x.id!==h.id);S.offers=S.offers.filter(o=>o.id!==h.id);
   log('info','Sold '+h.name+' for '+money(amt)+(why?' ('+why+')':'')+'.');toast('Sold '+h.name+' for '+money(amt)+'.');
   if(UI.modal&&UI.modal.id===h.id)UI.modal=null;
 }
+function buyBack(i){const r=(S.soldBack||[])[i];if(!r)return;if(r.until<S.day)return toast('That buy-back offer has expired.');if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<r.price)return toast('Not enough money.');
+  S.money-=r.price;const h=r.h;h.acted=S.day;h.groomed=0;h.lastCare=S.day;h.happy=clamp((h.happy||60)-5,0,100);S.horses.push(h);S.soldBack.splice(i,1);
+  const mi=(S.memorial||[]).map(m=>m.id).lastIndexOf(h.id);if(mi>=0)S.memorial.splice(mi,1);log('good','You bought '+h.name+' back for '+money(r.price)+'. Welcome home!');toast(h.name+' is back in your barn.')}
 function buy(i){
   const h=S.market[i];if(!h)return;
   if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');
@@ -1573,6 +1583,9 @@ const EVENTS=[
   {id:'endur',purse:0.9,n:'Endurance Ride',w:{sta:.6,str:.2,smt:.2},b:'Fifty miles of trail with vet checks.'},
   {id:'dress',purse:1.15,n:'Dressage Show',w:{agi:.4,smt:.4,str:.2},b:'Precision, poise and obedience.'},
   {id:'pull',purse:0.8,n:'Draft Pull',w:{str:.7,sta:.3},b:'Drag the loaded sled the farthest.'},
+  {id:'jump',purse:1.1,n:'Show Jumping',w:{agi:.4,str:.3,spd:.3},b:'A course of colorful fences against the clock. Rails down cost time.'},
+  {id:'xc',purse:1,n:'Cross-Country',w:{sta:.4,spd:.3,agi:.3},b:'Gallop a long outdoor course over logs, ditches and water.'},
+  {id:'rein',purse:1.05,n:'Reining',w:{agi:.45,smt:.4,spd:.15},b:'A western pattern of fast circles, spins and sliding stops.'},
 ];
 const TIERS=[
   {n:'Local Show',base:18,spread:6,prize:[200,100,50],rep:[1,1,0],repCap:20,req:0,when:'Every day'},
@@ -1583,6 +1596,7 @@ const TIERS=[
   {n:'International',base:76,spread:6,prize:[12000,6000,2500],rep:[22,13,6],req:120,win:[{s:[1],d:[3,4]}],when:'Once a year, last 2 days of Summer'},
   {n:'Olympics',base:86,spread:5,prize:[40000,20000,8000],rep:[40,25,12],req:160,win:[{s:[1],d:[1,4],every:4}],when:'Every 4th year, all of Summer'},
   {n:'Invitational',base:78,spread:6,prize:[15000,7000,3000],rep:[24,14,7],req:100,invite:true,when:'By invitation'},
+  {n:'Ranch Show',base:30,spread:7,prize:[700,350,170],rep:[3,2,1],repCap:120,req:0,invite:true,ranch:true,when:'When another ranch invites you'},
 ];
 const INV=7,T_NAT=4;
 function tierOpen(ti,day=S.day){const t=TIERS[ti];if(t.invite)return true;if(!t.win)return true;const dp=dateParts(day);return t.win.some(w=>w.s.includes(dp.sIdx)&&dp.sday>=w.d[0]&&dp.sday<=w.d[1]&&(!w.every||dp.year%w.every===0))}
@@ -1594,7 +1608,7 @@ function compMult(h,ev){
   if(hasS(h,'ringsavvy'))m*=1.05;if(hasS(h,'steadynerves')&&ev.id==='dress')m*=1.05;if(hasS(h,'startinggate')&&ev.id==='race')m*=1.08;if(hasS(h,'cattlesense')&&ev.id==='barrel')m*=1.1;
   if(has(h,'hotblood')&&(ev.id==='race'||ev.id==='barrel'))m*=1.08;
   if(ev.id==='dress'){if(has(h,'showstopper'))m*=1.12;if(has(h,'calm'))m*=1.06;m*=[1,1,1.03,1.05][L('ring')]}
-  if(ev.id==='race'||ev.id==='barrel')m*=[1,1.04,1.08,1.12][L('track')];if(ev.id==='endur')m*=1+[0,.05,.1][L('trails')];
+  if(ev.id==='race'||ev.id==='barrel')m*=[1,1.04,1.08,1.12][L('track')];if(ev.id==='endur'||ev.id==='xc')m*=1+[0,.05,.1][L('trails')];if(ev.id==='jump'||ev.id==='rein')m*=[1,1,1.03,1.05][L('ring')];
   m*=1+(gearSum(h,'comp')+gearEv(h,ev.id))/100;
   return m;
 }
@@ -1602,14 +1616,16 @@ function baseScore(h,ev){let s=0;for(const k in ev.w)s+=ev.w[k]*h.tr[k];return s
 function rollScore(h,ev){return baseScore(h,ev)*compMult(h,ev)*(.88+R()*.24)}
 function npc(t){return Math.max(5,t.base+gauss()*t.spread)}
 function odds(h,ev,t){const pl=[0,0,0];const N=300;for(let i=0;i<N;i++){const me=rollScore(h,ev);let b=0;for(let j=0;j<7;j++)if(npc(t)>me)b++;if(b<3)pl[b]++}const pz=prizesFor(ev,t);return{win:pl[0]/N,top3:(pl[0]+pl[1]+pl[2])/N,avg:Math.round((pl[0]*pz[0]+pl[1]*pz[1]+pl[2]*pz[2])/N)}}
+function ranchInvPanel(h,ok){const L0=(S.ranchInv||[]).filter(v=>v.until>=S.day);if(!L0.length)return '';const elig=S.horses.filter(canCompete);
+  return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Ranch show invitations</div><p class="note">Other ranches invite you to their own shows. No entry fee. Pick a horse to send.</p>${L0.map(v=>{const ev=EVENTS[v.ei];const sel=UI['rinv'+v.id]||'';return `<div class="staff"><div class="grow"><b>${esc(v.who)} Ranch ${esc(ev.n)}</b><div class="note">Purse ${v.prize.map(p=>money(r10(p*(ev.purse||1)))).join(' / ')} · field strength about ${Math.round(v.base)} · good through day ${v.until}</div></div><select data-c="rinvsel" data-v="${v.id}" aria-label="Horse to send"><option value="">Pick a horse…</option>${elig.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${esc(x.name)} (${ev.n.split(' ')[0]} ${Math.round(baseScore(x,ev))})</option>`).join('')}</select><button class="btn small primary" data-a="rinvgo" data-v="${v.id}" ${sel?'':'disabled'}>Send</button></div>`}).join('')}</div>`}
 function canCompete(h){return h&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
 function compete(h,ei,ti){
   const ev=EVENTS[ei],t=TIERS[ti];
   if(!canCompete(h))return toast('That horse can’t compete today. They need '+compEnergy(h||{})+' energy and 50 health.');
   if(S.rep<t.req)return toast(t.n+' events need '+t.req+' reputation.');
-  if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
+  const rinv=t.ranch?(S.ranchInv||[]).find(v=>v.ei===ei&&v.until>=S.day):null;if(t.ranch){if(!rinv)return toast('That ranch show invitation has expired.');t.base=rinv.base;t.prize=rinv.prize}else if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
   if(!tierOpen(ti))return toast(t.n+' events aren’t running right now. '+openText(ti)+'.');
-  if(ti>=T_NAT&&!vetClear(h))return toast(t.n+' events need a clean bill of health: a vet checkup in the last 8 days.');
+  if(ti>=T_NAT&&!t.ranch&&!vetClear(h))return toast(t.n+' events need a clean bill of health: a vet checkup in the last 8 days.');
   const fee=entryFee(t,ev);if(S.money<fee)return toast('Not enough money for the entry fee.');
   if(R()<refuseChance(h))return sulk(h,'load into the trailer for the '+t.n+' (no entry fee charged)');
   S.money-=fee;const shown={money:S.money,rep:S.rep};
@@ -1617,11 +1633,11 @@ function compete(h,ei,ti){
   for(let j=0;j<7;j++)field.push({name:randName(),farm:pick(FARMS),score:npc(t)});
   field.sort((a,b)=>b.score-a.score);
   const place=field.findIndex(f=>f.me)+1;
-  h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts++;pxp('show',2);tutMark('show');const moodTxt=workDone(h,'ev:'+ei);S.weekStarts=(S.weekStarts||0)+1;if(t.invite)S.invites=S.invites.filter(v=>v.ei!==ei);
+  h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts++;pxp('show',2);tutMark('show');const moodTxt=workDone(h,'ev:'+ei);S.weekStarts=(S.weekStarts||0)+1;if(t.ranch)S.ranchInv=S.ranchInv.filter(v=>v!==rinv);else if(t.invite)S.invites=S.invites.filter(v=>v.ei!==ei);
   let prize=0,rep=0;
   if(place<=3&&h.client)h.client.places++;
   if(place<=3){prize=prizesFor(ev,t)[place-1];rep=(t.repCap&&S.rep>=t.repCap)?0:gainRep(t.rep[place-1]*pskM('show',.06));S.money+=prize;h.earnings+=prize}
-  if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.3)){S.starOffer=1}if(ti===7)unlock('invitational')}
+  if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.15)){S.starOffer=1}if(ti===7)unlock('invitational')}
   else if(place>=7)h.happy=clamp(h.happy-4,0,100);
   if(place<=3&&gearSum(h,'rep'))rep+=gainRep(1);
   let awardMsg='';
@@ -1629,10 +1645,11 @@ function compete(h,ei,ti){
   let drop=null;
   if(place===1){if(ti===6)drop=grantItem(rollRarity({epic:60,legendary:40}));else if(ti===5)drop=grantItem(rollRarity({rare:40,epic:45,legendary:15}));else if(ti===7)drop=grantItem(rollRarity({rare:40,epic:45,legendary:15}));else if(ti===4)drop=grantItem(rollRarity({rare:58,epic:34,legendary:8}));else if(ti===3&&R()<.28)drop=grantItem(rollRarity({rare:76,epic:22,legendary:2}));else if(ti===2&&R()<.15)drop=grantItem(rollRarity({common:55,rare:40,epic:5}));else if(ti===1&&R()<.08)drop=grantItem(rollRarity({common:76,rare:22,epic:2}))}
   if(drop)log('good','Prize gear: '+ITEMS[drop.id].n+' ('+RARITY[ITEMS[drop.id].r].n+').');
+  let gift='';if(place===1&&!S.guinevere&&!t.ranch&&ti>=T_NAT&&R()<(ti===6?.15:.05)){S.guinevere=1;const g=genHorse({breed:'shetland',sex:'F',ageDays:ADULT+DPY*2,potMid:58,trFrac:[.5,.7],nTraits:2,origin:'Special prize at the '+t.n+' '+ev.n});g.name='Guinivere';g.traits=['calm','easykeeper'];g.genes={E:['e','e'],A:['A','a'],Cr:['Cr','n'],G:['g','g'],TO:['TO','n']};g.happy=90;g.bond=40;g.lastCare=S.day;S.horses.push(g);register(g);gift='Guinivere, a golden-and-white Shetland Pony, was given to you as a special prize!';log('good','✦ '+gift);setTimeout(()=>{sfx('sparkle');sfx('whinny')},1600)}
   let hurt=false;if(R()<injuryRisk(h,has(h,'calm')?.02:.04)){injure(h);hurt=true}
   const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
   log(place===1?'good':place<=3?'info':'warn',h.name+' placed '+ord[place-1]+' in the '+t.n+' '+ev.n+(prize?' and won '+money(prize):'')+'.'+moodTxt);
-  const res={type:'result',h:h.id,ev:ei,t:ti,field:field.map(f=>({...f,score:Math.round(f.score*10)/10})),place,prize,rep,hurt,drop:drop&&drop.id,awards:awardMsg};
+  const res={type:'result',h:h.id,ev:ei,t:ti,field:field.map(f=>({...f,score:Math.round(f.score*10)/10})),place,prize,rep,hurt,drop:drop&&drop.id,awards:awardMsg,gift};
   UI.modal=PREF.watch===0?res:{type:'watch',wid:++watchN,res,shown,lock:1};if(PREF.watch===0)resultSound(res);
   checkAch();
 }
@@ -2037,9 +2054,14 @@ function endDay(){
       S.sponsor.weeks--;if(S.sponsor.strikes>=2){S.sponsor=null;loseRep(3,sp.n+' dropped your sponsorship.',ev)}else if(S.sponsor.weeks<=0){S.sponsor=null;ev.push(['info',sp.n+'’s sponsorship has ended. A new offer may come.'])}}}
     if(!S.sponsor){const b=bestSponsor();if(b&&S.sponsorOffer!==b.id){S.sponsorOffer=b.id;ev.push(['good',b.n+' wants to sponsor your ranch for '+money(b.pay)+' a week. See the Office tab.'])}}
     S.weekStarts=0;
-    S.invites=[];if(S.rep>=100){const n=S.rep>=150?2:1;const pool=[0,1,2,3,4].sort(()=>R()-.5);for(let i=0;i<n;i++)S.invites.push({ei:pool[i],until:S.day+3});ev.push(['good','You’ve been invited to '+S.invites.map(v=>'the '+EVENTS[v.ei].n+' Invitational').join(' and ')+'! See the Compete tab (good for 4 days).'])}
+    S.invites=[];if(S.rep>=100){const n=S.rep>=150?2:1;const pool=EVENTS.map((e,i)=>i).sort(()=>R()-.5);for(let i=0;i<n;i++)S.invites.push({ei:pool[i],until:S.day+3});ev.push(['good','You’ve been invited to '+S.invites.map(v=>'the '+EVENTS[v.ei].n+' Invitational').join(' and ')+'! See the Compete tab (good for 4 days).'])}
     refreshMarket();refreshShop();refreshApplicants();ev.push(['info','New job applicants are looking for ranch work. See the Staff tab.']);if(L('house')>=2){const hr=gainRep(L('house')-1);ev.push(['good','Word of your fine ranch house spread. Reputation +'+hr+'.'])}ev.push(['info','New horses, outside studs and fresh tack arrived in town.'])}
   S.offers=S.offers.filter(o=>o.exp>=S.day&&H(o.id));
+  S.soldBack=(S.soldBack||[]).filter(r=>r.until>=S.day);
+  S.ranchInv=(S.ranchInv||[]).filter(v=>v.until>=S.day);if(S.ranchInv.length<2&&R()<.1+Math.min(.15,S.rep/800)){const base=Math.min(72,22+S.rep*.22+R()*6),k=Math.max(.6,base/30);S.ranchInv.push({id:(S.rinvN=(S.rinvN||0)+1),who:pick(FARMS),ei:Math.floor(R()*EVENTS.length),base,prize:[600,300,150].map(p=>Math.round(p*k*k/10)*10),until:S.day+3});const v=S.ranchInv[S.ranchInv.length-1];ev.push(['good',v.who+' Ranch invited you to their '+EVENTS[v.ei].n+' show. No entry fee. See the Compete tab (good for 4 days).'])}
+  for(const h of S.horses)for(const x of (h.studBook||[]))if(x.st==='wait'&&x.due<=S.day){if(R()<.72*fertOf(h)){const dg={};for(const k in GENES){const{a,p}=GENES[k];dg[k]=[R()<p?a[0]:a[1],R()<p?a[0]:a[1]]}const g={};for(const k in GENES)g[k]=[pick(h.genes[k]),pick(dg[k])];
+      x.st='born';x.bd=S.day;x.sex=R()<.5?'M':'F';x.coat=coat(g).full;x.foal=h.name.split(' ')[0]+' '+pick(N2);x.pa=Math.round(clamp(avg(h.pot)*.5+40*.5+gauss()*5,15,95));h.studFoals=(h.studFoals||0)+1;ev.push(['good',x.farm+' Ranch’s mare '+x.mare+' foaled a '+x.coat.toLowerCase()+' '+(x.sex==='M'?'colt':'filly')+' by '+h.name+': '+x.foal+'.'])}
+    else{x.st='miss';ev.push(['info',x.farm+' Ranch’s mare '+x.mare+' didn’t take to '+h.name+'.'])}}
   S.studReq=S.studReq.filter(r=>r.exp>=S.day&&H(r.id));
   for(const h of S.horses){if(h.client||S.studReq.some(r=>r.id===h.id))continue;if(R()<studDemand(h)){const r={id:h.id,fee:studFee(h),exp:S.day+3,who:pick(FARMS)};S.studReq.push(r);
     ev.push(['good',r.who+' Ranch wants to breed their mare to '+h.name+' and will pay '+money(r.fee)+'. See the Stable tab.'])}}
@@ -2085,7 +2107,7 @@ const HD=(()=>{const z=()=>Object.fromEntries(Object.keys(HB).map(k=>[k,[0,0]]))
   mv(draft,'face',10,0);mv(draft,'nose',2,0);mv(draft,'crest1',-2,0);
   for(const k of ['canHB','fetHB','pasHB','canFB','fetFB','pasFB','kneeB','forB','hoofHB','hoofFB'])mv(draft,k,-3,0);for(const k of ['canHF','fetHF','pasHF','canFF','fetFF','pasFF','kneeF','forF','hoofHF','hoofFF'])mv(draft,k,3,0);
   return {hot,draft}})();
-const BODYTYPE={grade:{},foxtrotter:{tall:.15},connemara:{small:.45},icelandic:{small:.6,draft:.2},fjord:{small:.4,draft:.45},quarter:{},paint:{},appaloosa:{hot:.1},mustang:{hot:.1,small:.2},morgan:{draft:.15,small:.15},thoroughbred:{hot:.55,tall:.6},percheron:{draft:.9,tall:.2},arabian:{hot:1,small:.15},akhalteke:{hot:.8,tall:.7},
+const BODYTYPE={grade:{},shetland:{small:1,draft:.55},foxtrotter:{tall:.15},connemara:{small:.45},icelandic:{small:.6,draft:.2},fjord:{small:.4,draft:.45},quarter:{},paint:{},appaloosa:{hot:.1},mustang:{hot:.1,small:.2},morgan:{draft:.15,small:.15},thoroughbred:{hot:.55,tall:.6},percheron:{draft:.9,tall:.2},arabian:{hot:1,small:.15},akhalteke:{hot:.8,tall:.7},
   friesian:{draft:.45,tall:.35},lipizzaner:{draft:.3,small:.1},marwari:{hot:.6,tall:.3},walker:{hot:.25,tall:.3},standardbred:{hot:.3,tall:.2},haflinger:{draft:.45,small:.45},welsh:{draft:.25,small:.55},saddlebred:{hot:.5,tall:.5},
   andalusian:{draft:.25},clydesdale:{draft:1,tall:.3},hanoverian:{draft:.25,tall:.6},pasofino:{hot:.4,small:.5},knabstrupper:{draft:.1},vanner:{draft:.7,small:.25},lusitano:{draft:.25},przewalski:{draft:.4,small:.4},curly:{draft:.25,small:.2}};
 function hexMix(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
@@ -2277,6 +2299,7 @@ function horseCard(h,mode){
     const w=canWork(h)&&h.energy>=25;
     actions=groomBtn(h,true);
     if(canTurnout(h))actions+=`<button class="btn small" data-a="rest" data-id="${h.id}" title="Turn out to pasture">Pasture</button>`;
+    if(canCompete(h)&&!h.client)actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">🏆 Event</button>`;
     if(stage(h)!=='Foal'&&pregOk(h)){actions+=`<span class="lbl">Train</span>`+STATS.map(s=>`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'} title="Train ${s.n}">${s.s}</button>`).join('')}
     if(canWork(h))actions+=jobSelect(h);
   }
@@ -2450,6 +2473,7 @@ function renderCompete(){
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+status(x)[1]}</option>`).join('')}</select></div>
    ${h?`<div class="note">${esc(h.name)}: Energy ${Math.round(h.energy)} · Happy ${Math.round(h.happy)} · Health ${Math.round(h.health)} · Record ${h.wins} wins / ${h.starts} starts${refuseChance(h)?` · <span class="bad">Sulking: ${Math.round(refuseChance(h)*100)}% chance to refuse</span>`:''}</div>`:'<div class="note">Odds appear once you pick a horse. Energy 40+ and health 50+ needed.</div>'}
   </div>
+  ${ranchInvPanel(h,ok)}
   ${(S.invites||[]).filter(v=>v.until>=S.day).length?`<div class="invites">${S.invites.filter(v=>v.until>=S.day).map(v=>{const ev=EVENTS[v.ei],t=TIERS[INV];let o='';if(ok){const od=odds(h,ev,t);const fe=entryFee(t,ev),net=od.avg-fe;o=`<span class="o ${od.win>.3?'good':od.top3>.3?'warn':'bad'}">Win ${pct(od.win)} · Top 3 ${pct(od.top3)}</span><span class="s ${net>=0?'good':'bad'}">Avg payout ${money(od.avg)} (${net>=0?'+':''}${money(net)} after fee)</span>`}
     return `<div class="invite"><div><span class="invtag">By invitation only</span><h3>The ${esc(ev.n)} Invitational</h3><div class="note">Only the best ranches are asked. Invitation good through day ${v.until}. One entry.</div></div><button class="tierbtn" data-a="compete" data-e="${v.ei}" data-t="${INV}" ${!ok||!vetClear(h)||S.money<entryFee(t,ev)?'disabled':''}><span class="t">Enter</span><span class="s">Entry ${money(entryFee(t,ev))}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${o}</button></div>`}).join('')}</div>`:(S.rep>=100?'<p class="note" style="margin:-6px 0 14px">No invitations this week. New ones arrive with the weekly market.</p>':'')}
   <div class="events">${EVENTS.map((ev,ei)=>`<div class="event"><div><div class="evart">${eventArt(ev.id)}</div><h3>${ev.n}</h3><div class="w">${ev.b}</div><div class="w mono">${Object.entries(ev.w).map(([k,v])=>STATS.find(s=>s.k===k).s+' '+Math.round(v*100)+'%').join(' · ')}</div></div>
@@ -2461,8 +2485,9 @@ function renderMarket(){
   const days=7-((S.day-1)%7);
   return `<div class="section-head"><h2>Sale Barn</h2><span class="sub">New stock arrives every 7 days (next in ${days} day${days>1?'s':''}). Better horses show up as your reputation grows.</span></div>
   ${S.market.length?`<div class="grid">${S.market.map(h=>horseCard(h,'market')).join('')}</div>`:'<div class="empty">Sold out. New stock arrives in '+days+' days.</div>'}
+  ${(S.soldBack||[]).filter(r=>r.until>=S.day).length?`<div class="section-head" style="margin-top:26px"><h2>Buy back</h2><span class="sub">Horses you sold recently. Their buyers will sell them back for a little more, for 7 days.</span></div><div class="panel">${S.soldBack.map((r,i)=>r.until<S.day?'':`<div class="staff"><div class="portrait" style="width:110px;aspect-ratio:200/120;flex:none">${horseSVG(r.h)}</div><div class="grow"><b>${esc(r.h.name)}</b> ${rbadge(rarityOf(r.h))}${shinyTag(r.h)}<div class="note">${breedLabel(r.h)} · ${sexLabel(r.h)} · ${r.until-S.day+1} day${r.until-S.day?'s':''} left</div></div><button class="btn small primary" data-a="buyback" data-i="${i}" ${S.money<r.price?'disabled':''}>Buy back · ${money(r.price)}</button></div>`).join('')}</div>`:''}
   <div class="section-head" style="margin-top:26px"><h2>Breed Guide</h2><span class="sub">Rarer breeds start with higher potential and sell for more. They turn up more often as your reputation grows.</span></div>
-  <div class="breedgrid">${HRORDER.flatMap(r=>Object.entries(BREEDS).filter(([k,b])=>b.r===r)).map(([k,b])=>`<div class="breedcard r-${b.r}">${rbadge(b.r)}<b>${b.n}</b>${b.cross?`<span class="note good">Crossbreed: ${BREEDS[b.cross[0]].n} × ${BREEDS[b.cross[1]].n}</span>`:''}<span class="note">${b.d}</span><span class="mono note">${bonusText(k)}</span></div>`).join('')}</div>
+  <div class="breedgrid">${HRORDER.flatMap(r=>Object.entries(BREEDS).filter(([k,b])=>b.r===r&&!b.hidden)).map(([k,b])=>`<div class="breedcard r-${b.r}">${rbadge(b.r)}<b>${b.n}</b>${b.cross?`<span class="note good">Crossbreed: ${BREEDS[b.cross[0]].n} × ${BREEDS[b.cross[1]].n}</span>`:''}<span class="note">${b.d}</span><span class="mono note">${bonusText(k)}</span></div>`).join('')}</div>
   <p class="note" style="margin-top:10px">Breed two of the same breed for a purebred foal (+2 on that breed's bonus stats). Mixing breeds makes a cross, which ranks one rarity lower.</p>`;
 }
 const UPKEEP_RATE={home:.002,care:.0025,train:.0025,farm:.002,stock:.004};
@@ -2720,33 +2745,44 @@ ${[214,780].map(x=>`<rect x="${x}" y="112" width="8" height="102" fill="#6E4C30"
 ${rail}${trough}${horse}${props}
 </svg>`}
 function horseSVGInner(){return `<path d="M54 58 C40 60 34 80 36 104 C37 114 33 122 30 126 C40 122 44 112 44 100 C45 84 48 72 56 64 Z" fill="#2A211C"/><path d="M66 80 L80 84 C78 96 76 104 76 112 L76 128 L70 128 L68 112 C64 104 62 92 66 80 Z M134 82 L146 82 C145 96 144 104 144 112 L144 128 L138 128 L136 112 C135 104 133 94 134 82 Z" fill="#6A3A1C"/><path d="M118 46 C104 50 86 52 72 49 C64 47 56 47 50 52 C44 57 42 66 45 74 C48 80 55 84 64 85 C78 87 98 88 116 86 C126 85 134 84 140 81 C147 78 151 71 150 64 C151 56 154 46 160 36 C166 38 168 46 174 50 C180 54 184 58 188 57 C192 56 193 51 190 48 C184 38 176 26 168 18 C165 14 161 13 158 15 C150 18 138 27 128 37 C124 41 121 44 118 46 Z" fill="#7A3D1C"/><path d="M160 13 C152 15 140 24 128 36 C124 40 120 44 116 47 C121 50 126 49 129 46 C132 43 136 42 139 41 C143 38 146 35 150 33 C153 29 156 26 159 24 C161 21 162 19 163 18 Z" fill="#1E1A18"/><path d="M160 17 L157 4 C160 6 163 10 165 14 Z" fill="#7A3D1C"/><path d="M168 29 C170 27 174 27 176 29.5 C174 31.5 170 31.5 168 29 Z" fill="#15110F"/>`}
+function extrasList(){const r=UI.sxR??0,k=UI.sxK??1,g={};for(const x of S.inv)if(x.on==null&&RORDER.indexOf(ITEMS[x.id].r)<=r)(g[x.id]=g[x.id]||[]).push(x);return Object.values(g).flatMap(l=>l.slice(k))}
 function renderTack(){
   const days=7-((S.day-1)%7);
   const shop=S.shop.map((id,i)=>{const it=ITEMS[id];return itemRow(it,`<span class="mono">${money(it.p)}</span><button class="btn small primary" data-a="buyitem" data-i="${i}" ${S.money<it.p?'disabled':''}>Buy</button>`)}).join('');
   const rk=id=>RORDER.indexOf(ITEMS[id].r);
   // unworn, stacked by item id
   const groups={};for(const x of S.inv)if(x.on==null)(groups[x.id]=groups[x.id]||[]).push(x);
-  const free=Object.keys(groups).sort((a,b)=>rk(b)-rk(a)||ITEMS[a].s.localeCompare(ITEMS[b].s)).map(id=>{const it=ITEMS[id],list=groups[id],x=list[0];
+  const freeRow=id=>{const it=ITEMS[id],list=groups[id],x=list[0];
     const sel=`<select data-c="equipto" data-u="${x.uid}" aria-label="Put ${esc(it.n)} on a horse"><option value="">Put on a horse…</option>${S.horses.map(h=>{const cur=gearOf(h).find(g=>g.s===it.s);return `<option value="${h.id}">${esc(h.name)}${cur?' (swap for '+esc(cur.n)+')':''}</option>`}).join('')}</select>`;
-    return itemRow(it,`${list.length>1?`<span class="stack">×${list.length}</span>`:''}${sel}<button class="btn small" data-a="sellitem" data-u="${x.uid}">Sell${list.length>1?' one':''} · ${money(it.p*sellRate())}</button>`)}).join('');
+    return itemRow(it,`${list.length>1?`<span class="stack">×${list.length}</span>`:''}${sel}<button class="btn small" data-a="sellitem" data-u="${x.uid}">Sell${list.length>1?' one':''} · ${money(it.p*sellRate())}</button>`)};
+  const free=Object.keys(groups).sort((a,b)=>rk(b)-rk(a)||ITEMS[a].s.localeCompare(ITEMS[b].s)).map(freeRow).join('');
   // worn, grouped by horse
   const worn=S.horses.map(h=>{const items=S.inv.filter(x=>x.on===h.id);if(!items.length)return '';
     return `<div class="wornhorse"><div class="wornhead"><b>${esc(h.name)}</b><span class="note">${items.length} of ${SLOTS.length} slots · ${gearRole(h)==='active'?'best at '+EVENTS[bestEventOf(h)].n:gearRole(h)==='young'?'young, still learning':'retired'}</span><button class="btn small" data-a="open" data-id="${h.id}">Papers</button></div>${items.sort((a,b)=>SLOTS.findIndex(s=>s.k===ITEMS[a.id].s)-SLOTS.findIndex(s=>s.k===ITEMS[b.id].s)).map(x=>itemRow(ITEMS[x.id],`<button class="btn small" data-a="unequip" data-u="${x.uid}">Take off</button>`)).join('')}</div>`}).join('');
-  const nFree=S.inv.filter(x=>x.on==null).length,nWorn=S.inv.length-nFree;
+  const nFree=S.inv.filter(x=>x.on==null).length,nWorn=S.inv.length-nFree;const compact=S.inv.length>20||S.horses.length>8;
+  const freeHtml=compact?SLOTS.map(sl=>{const ids=Object.keys(groups).filter(id=>ITEMS[id].s===sl.k).sort((a,b)=>rk(b)-rk(a));if(!ids.length)return '';const n=ids.reduce((a,id)=>a+groups[id].length,0);const best=ids[0];
+      return `<details class="tackgrp"><summary><b>${sl.n}</b> <span class="note">${n} piece${n>1?'s':''} · best: <span class="rc-${ITEMS[best].r}">${ITEMS[best].n}</span></span></summary>${ids.map(id=>freeRow(id)).join('')}</details>`}).join(''):free;
+  const wornHtml=compact?S.horses.map(h=>{const items=S.inv.filter(x=>x.on===h.id);if(!items.length)return '';return `<div class="wornline"><b>${esc(h.name)}</b><span class="wchips">${items.sort((a,b)=>SLOTS.findIndex(s=>s.k===ITEMS[a.id].s)-SLOTS.findIndex(s=>s.k===ITEMS[b.id].s)).map(x=>`<span class="wchip rc-${ITEMS[x.id].r}" title="${esc(SLOTN[ITEMS[x.id].s]+': '+ITEMS[x.id].n)}">${esc(ITEMS[x.id].n)}</span>`).join('')}</span><button class="btn small" data-a="open" data-id="${h.id}">Papers</button></div>`}).join(''):worn;
+  const sxR=UI.sxR??0,sxK=UI.sxK??1,exL=extrasList(),exT=exL.reduce((a,x)=>a+Math.round(ITEMS[x.id].p*sellRate()),0);
+  const sellPanel=`<div class="panel"><div class="subh" style="margin-top:0">Sell extra gear</div><p class="note">Clear out spare tack-room gear. Worn gear is never sold.</p>
+    <div class="row" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label class="note">Rarity up to <select data-c="sxr">${RORDER.map((r,i)=>`<option value="${i}" ${sxR===i?'selected':''}>${RARITY[r].n}${i?' and below':' only'}</option>`).join('')}</select></label>
+    <label class="note">Keep <select data-c="sxk">${[0,1,2,3,5].map(k=>`<option value="${k}" ${sxK===k?'selected':''}>${k}</option>`).join('')}</select> of each item</label>
+    <button class="btn" data-a="sellextras" ${exL.length?'':'disabled'}>${exL.length?'Sell '+exL.length+' extra'+(exL.length>1?'s':'')+' · '+money(exT):'Nothing to sell'}</button></div></div>`;
   return `<div class="shopart">${tackShopArt()}</div>
   <div class="section-head"><h2>Tack Shop</h2><span class="sub">${Object.keys(ITEMS).length} kinds of gear for comfort and competition. Rare stock changes every 7 days (next in ${days} day${days>1?'s':''}).</span></div>
   <div class="cols"><div class="panel"><div class="subh" style="margin-top:0">For sale</div>${shop}<p class="note" style="margin-top:8px">Common gear is always in stock. Rare, epic and legendary pieces are one of a kind.</p></div>
   <div style="display:grid;gap:16px;min-width:0">
    <div class="panel"><div class="subh" style="margin-top:0">Mystery crate</div><p>A sealed crate from an old ranch estate sale. Could hold anything.</p>
     <div class="odds">${RORDER.map(r=>`<span>${rbadge(r)} <span class="mono">${CRATE[r]}%</span></span>`).join('')}</div>
-    <button class="btn primary" data-a="crate" ${S.money<crateCost()?'disabled':''}>Open a crate · ${money(crateCost())}</button>
+    <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn primary" data-a="crate" data-n="1" ${S.money<crateCost()?'disabled':''}>Open 1 · ${money(crateCost())}</button><button class="btn" data-a="crate" data-n="5" ${S.money<crateCost()*5?'disabled':''}>Open 5 · ${money(crateCost()*5)}</button><button class="btn" data-a="crate" data-n="10" ${S.money<crateCost()*10?'disabled':''}>Open 10 · ${money(crateCost()*10)}</button></div>
     <p class="note">Winning events can also earn gear. A National or Invitational win always does.</p></div>
    <div class="panel"><div class="subh" style="margin-top:0">Auto gear</div>
     <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-a="autogear" ${S.inv.some(x=>x.on==null)&&S.horses.length?'':'disabled'}>Fill empty slots</button><button class="btn primary" data-a="bestgear" ${S.inv.length&&S.horses.length?'':'disabled'}>Best gear for everyone</button></div>
     <p class="note" style="margin-top:6px"><b>Fill empty slots</b> puts spare tack-room gear on horses with open slots. <b>Best gear for everyone</b> reshuffles all gear, worn or not, so each horse gets what suits it: event gear for its best event, training gear for horses still learning, comfort and safety gear for retired horses. Top competitors get first pick.</p></div>
-   <div class="panel"><div class="subh" style="margin-top:0">In the tack room (${nFree})</div>${free||'<p class="note">Nothing unworn. Buy something or open a crate.</p>'}
+   ${sellPanel}
+   <div class="panel"><div class="subh" style="margin-top:0">In the tack room (${nFree})</div>${compact&&freeHtml?'<p class="note">Lots of gear, so it’s grouped by slot. Tap a slot to open it.</p>':''}${freeHtml||'<p class="note">Nothing unworn. Buy something or open a crate.</p>'}
     <p class="note" style="margin-top:8px">Duplicates stack. Each horse wears one item per slot: saddle, bridle, boots, blanket, bedding, stall toy and flair.</p></div>
-   <div class="panel"><div class="subh" style="margin-top:0">Worn by your horses (${nWorn})</div>${worn||'<p class="note">None of your horses are wearing gear yet.</p>'}</div>
+   <div class="panel"><div class="subh" style="margin-top:0">Worn by your horses (${nWorn})</div>${wornHtml||'<p class="note">None of your horses are wearing gear yet.</p>'}</div>
   </div></div>`;
 }
 
@@ -2868,7 +2904,7 @@ function papers(h,mode){
     ${h.prevCareer&&h.prevCareer.starts?`<dt>Previous ranch</dt><dd>${h.prevCareer.wins} wins in ${h.prevCareer.starts} starts and ${money(h.prevCareer.earn)} at ${esc(h.prevCareer.ranch)}</dd>`:''}
     <dt>Record</dt><dd>${h.wins} wins in ${h.starts} starts · ${money(h.earnings||0)} won</dd>
     ${own||(h.ribbons||[]).length?`<dt>Ribbons</dt><dd>${(()=>{const c=ribbonCounts(h);return c[0]+' blue · '+c[1]+' red · '+c[2]+' yellow · '+awardsOf(h).length+' awards'})()}</dd>`:''}
-    ${h.sex==='M'?`<dt>Stud book</dt><dd>${h.studCount||0} outside mares bred · ${money(h.studEarned||0)} earned${own?`<div class="note">${studDemand(h)?'About a '+(studDemand(h)*100).toFixed(1)+'% chance each night that a ranch asks for him. Rarer breeds, higher potential, good natural skills, wins and your reputation raise it.':isAdult(h)?'No ranch will ask while he’s injured or unwell.':'Ranches will start asking once he’s grown (2 years).'}</div>`:''}</dd>`:''}
+    ${h.sex==='M'?`<dt>Stud book</dt><dd>${h.studCount||0} outside mares bred · ${money(h.studEarned||0)} earned${studBookHtml(h)}${own?`<div class="note">${studDemand(h)?'About a '+(studDemand(h)*100).toFixed(1)+'% chance each night that a ranch asks for him. Rarer breeds, higher potential, good natural skills, wins and your reputation raise it.':isAdult(h)?'No ranch will ask while he’s injured or unwell.':'Ranches will start asking once he’s grown (2 years).'}</div>`:''}</dd>`:''}
     <dt>Value</dt><dd><span class="mono">${money(v)}</span> <span class="note">(happiness ${happyValueMult(h)>=1?'+':''}${Math.round((happyValueMult(h)-1)*100)}%)</span>${own&&repSaleMult()>1.005?`<div class="note">Sells for <b class="mono">${money(sv)}</b> thanks to your reputation (+${Math.round((repSaleMult()-1)*100)}%).</div>`:''}</dd>
     ${h.coi!=null&&h.sire!=null?`<dt>Inbreeding</dt><dd><span class="mono">${pctTxt(h.coi)}</span> · ${coiLabel(h.coi)}</dd>`:''}
     ${h.breakthrough&&h.breakthrough.length?`<dt>Breakthrough</dt><dd class="good">${h.breakthrough.map(k=>STATS.find(s=>s.k===k).n).join(', ')}</dd>`:''}
@@ -2947,7 +2983,7 @@ function renderModal(){
   }else if(m.type==='result'){
     const ev=EVENTS[m.ev],t=TIERS[m.t];const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
     title=t.n+' '+ev.n;
-    body=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(['A Local Show ribbon','A County Fair ribbon','A State Championship rosette','A Regional rosette','A gold-rimmed National rosette','A teal-rimmed International rosette','A gold Olympic rosette','A purple-rimmed Invitational rosette'][m.t]||'A ribbon')+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
+    body=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(['A Local Show ribbon','A County Fair ribbon','A State Championship rosette','A Regional rosette','A gold-rimmed National rosette','A teal-rimmed International rosette','A gold Olympic rosette','A purple-rimmed Invitational rosette','A Ranch Show rosette'][m.t]||'A ribbon')+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
     <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':''}"><td>${ord[i]}</td><td>${esc(f.name)}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button></div>`;
   }else if(m.type==='welcome'){
@@ -2956,9 +2992,13 @@ function renderModal(){
     <ol><li><b>Groom</b> your horses every day to keep them happy, or hire a Stable Hand to do it.</li><li><b>Train</b> their stats with the small buttons on each card.</li><li><b>Compete</b> for prize money and reputation.</li><li><b>Breed</b> your best horses. Foals can beat their parents.</li><li>Press <b>End Day</b> when everyone has worked.</li></ol>
     <p class="note">The blue bar is what a horse has trained. The pale bar behind it is its potential, the ceiling it can reach. Only breeding raises the ceiling.</p>
     <div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Let's ride</button></div>`;
+  }else if(m.type==='confirmSell'){const h=H(m.id);title='Sell '+(h?h.name:'this horse')+'?';
+    body=h?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="portrait${h.shiny?' shiny':''}" style="width:180px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><p style="margin:0 0 6px">Sell <b>${esc(h.name)}</b> ${m.why?'('+esc(m.why)+') ':''}for <b class="mono">${money(m.amt)}</b>?</p><p class="note">Changed your mind later? You can buy ${h.sex==='M'?'him':'her'} back from the Market for 7 days, for ${money(Math.round(m.amt*1.15/10)*10)}.</p></div></div>
+    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sellyes" data-id="${h.id}" data-amt="${m.amt}" data-why="${esc(m.why||'')}">Yes, sell for ${money(m.amt)}</button><button class="btn" data-a="sellno">Keep ${h.sex==='M'?'him':'her'}</button></div>`:'';
   }else if(m.type==='reveal'){
+    if(m.ids){title='You opened '+m.ids.length+' crates';const srt=[...m.ids].sort((a,b)=>RORDER.indexOf(ITEMS[b].r)-RORDER.indexOf(ITEMS[a].r));body=`<div class="crategrid">${srt.map(id=>{const it=ITEMS[id];return `<div class="crateitem r-${it.r}">${rbadge(it.r)}<b class="rc-${it.r}">${it.n}</b><span class="note">${SLOTN[it.s]}</span></div>`}).join('')}</div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put them in the tack room</button></div>`}else{
     const it=ITEMS[m.id];title='You opened the crate';
-    body=`<div class="reveal">${rbadge(it.r)}<div class="big rc-${it.r}">${it.n}</div><div class="note">${SLOTN[it.s]} · ${itemEffects(it)}</div></div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put it in the tack room</button>${S.money>=crateCost()?'<button class="btn" data-a="crate">Open another · '+money(crateCost())+'</button>':''}</div>`;
+    body=`<div class="reveal">${rbadge(it.r)}<div class="big rc-${it.r}">${it.n}</div><div class="note">${SLOTN[it.s]} · ${itemEffects(it)}</div></div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put it in the tack room</button>${S.money>=crateCost()?'<button class="btn" data-a="crate">Open another · '+money(crateCost())+'</button>':''}</div>`;}
   }else if(m.type==='creator'){title=m.mode==='edit'?'Change your look':'Create your rancher';body=creatorBody(m);
   }else if(m.type==='tutintro'){title='Spring at Hank’s Place';body=`<div class="tuthead">${hankSVG(72)}<p><b>Hank:</b> “Welcome, ${esc(S.player.name.split(' ')[0])}! I’m Hank. I’ve been raising horses on this land for forty years. Spend the spring with me and I’ll show you how it’s done. After that, you’ll be ready for a ranch of your own.”</p></div><p class="note">The tutorial lasts four game days (one spring). Hank gives you a short checklist each day. When it’s over, he’ll let you pick one of his horses to keep.</p><div class="actions"><button class="btn primary" data-a="close">Let’s get to work</button><button class="btn" data-a="tutskip">Skip the tutorial</button></div>`;
   }else if(m.type==='gift'){title='Hank’s parting gift';body=giftBody();
@@ -2980,6 +3020,9 @@ const RUNNER_COLS=[['#7A3D1C','#1E1A18'],['#9A4822','#B8672E'],['#211D1B','#1412
 const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480'];
 function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='race')return {v:24.5-s*.08,f:v=>v.toFixed(2)+'s',low:1};
+  if(evid==='jump')return {v:84-s*.36,f:v=>v.toFixed(2)+'s',low:1};
+  if(evid==='xc')return {v:11.8-s*.05,f:v=>{const mm=Math.floor(v),ss=Math.round((v-mm)*60);return mm+':'+String(ss).padStart(2,'0')},low:1};
+  if(evid==='rein')return {v:Math.min(78,61+s*.18),f:v=>v.toFixed(1)+' pts',low:0};
   if(evid==='barrel')return {v:19.8-s*.06,f:v=>v.toFixed(2)+'s',low:1};
   if(evid==='endur')return {v:9.4-s*.035,f:v=>{const hh=Math.floor(v),mm=Math.round((v-hh)*60);return hh+'h '+String(mm).padStart(2,'0')+'m'},low:1};
   if(evid==='dress')return {v:Math.min(86,52+s*.36),f:v=>v.toFixed(1)+'%',low:0};
@@ -3030,8 +3073,8 @@ function sceneDefs(){return `<defs><linearGradient id="wSky" x1="0" y1="0" x2="0
  <radialGradient id="wSand" cx=".5" cy=".5" r=".7"><stop offset="0" stop-color="#E4CC9C"/><stop offset="1" stop-color="#CBAE7C"/></radialGradient>
  <linearGradient id="wRoof" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2F5D46"/><stop offset="1" stop-color="#244A37"/></linearGradient></defs>`}
 function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.ev;const rs=srng(m.wid*17+3);
-  const dur={race:9,barrel:8,endur:10,dress:10,pull:8}[ev.id]||9;
-  WATCH={wid:m.wid,t:0,dur,speed:[1,2,4].includes(PREF.speed)?PREF.speed:1,last:performance.now(),done:false,said:{}};sfx('bell');hoovesStart(ev.id==='race'||ev.id==='barrel'?'gallop':ev.id==='pull'?'walk':'trot');hoovesRate(WATCH.speed);
+  const dur={race:9,barrel:8,endur:10,dress:10,pull:8,jump:9,xc:10,rein:9}[ev.id]||9;
+  WATCH={wid:m.wid,t:0,dur,speed:[1,2,4].includes(PREF.speed)?PREF.speed:1,last:performance.now(),done:false,said:{}};sfx('bell');hoovesStart(['race','barrel','jump','xc'].includes(ev.id)?'gallop':ev.id==='pull'?'walk':'trot');hoovesRate(WATCH.speed);
   const total=W.field.length;let scene=sceneDefs();
   const hills=(y,c,amp,seed)=>{const r2=srng(seed);let d=`M0 ${y}`;for(let x=0;x<=800;x+=80)d+=` Q${x+40} ${(y-amp*r2()).toFixed(1)} ${x+80} ${y}`;return `<path d="${d} V300 H0Z" fill="${c}"/>`};
   if(ev.id==='race'){
@@ -3045,7 +3088,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     <path d="M727 110 L736 286" stroke="#fff" stroke-width="2.4" opacity=".9"/><g transform="translate(742 96)"><rect x="-2" y="0" width="4" height="196" fill="#fff"/><rect x="-2" y="0" width="4" height="196" fill="url(#wDirt)" opacity="0"/><circle cx="0" cy="-6" r="9" fill="#C0392B" stroke="#fff" stroke-width="2"/><text x="0" y="-3" font-size="8" font-weight="700" text-anchor="middle" fill="#fff" font-family="system-ui">FIN</text></g>
     <g transform="translate(230 98)"><rect x="-1.5" y="0" width="3" height="14" fill="#fff"/><rect x="-7" y="-10" width="14" height="10" fill="#fff" stroke="#888" stroke-width=".6"/><text x="0" y="-2.4" font-size="7" text-anchor="middle" fill="#222" font-family="system-ui">⅛</text></g>`;
     scene+=W.field.map((f,i)=>({f,i})).sort((a,b)=>a.f.lane-b.f.lane).map(({f,i})=>{const sc=(.84+f.lane*.04).toFixed(3);return `<g id="wr${i}" transform="translate(40 ${142+f.lane*19})"><g transform="scale(${sc})">${rSprite(f.col[0],f.col[1],f.silk,{rider:'race',me:f.me,dust:1})}</g></g>`}).join('')}
-  if(ev.id==='endur'){
+  if(ev.id==='endur'||ev.id==='xc'){
     scene+=`<rect width="800" height="300" fill="url(#wSky)"/><path d="M0 70 L80 34 L130 58 L200 18 L280 60 L340 40 L420 66 L500 22 L580 58 L650 30 L720 56 L800 36 V300 H0Z" fill="#9FA9B8"/><path d="M200 18 L216 30 L208 30 L222 40 L186 40 L196 30 L188 30Z M500 22 L514 33 L494 33Z M650 30 L662 40 L640 40Z" fill="#F4F6F8"/>
     ${hills(84,'#9DBB7C',30,11)}<rect y="100" width="800" height="200" fill="url(#wGrass)"/>
     <path d="M300 300 C320 250 280 210 330 170 C370 140 360 110 420 100" stroke="#7FB3D1" stroke-width="16" fill="none"/><path d="M300 300 C320 250 280 210 330 170 C370 140 360 110 420 100" stroke="#A9D2E8" stroke-width="5" fill="none" opacity=".7"/>
@@ -3055,7 +3098,13 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     <g transform="translate(770 108)"><rect x="-26" y="-34" width="4" height="34" fill="#5a4030"/><rect x="22" y="-34" width="4" height="34" fill="#5a4030"/><rect x="-28" y="-40" width="56" height="10" fill="#111"/>${[...Array(7)].map((_,i)=>`<rect x="${-28+i*8}" y="${i%2?-40:-35}" width="8" height="5" fill="#fff"/>`).join('')}</g>
     ${[...Array(26)].map((_,i)=>{const x=(i*97+30)%800,y=110+((i*53)%180),s=.7+((i*7)%5)/8;return `<g transform="translate(${x} ${y}) scale(${s.toFixed(2)})"><ellipse cx="0" cy="2" rx="9" ry="3" fill="rgba(0,0,0,.15)"/><path d="M0 -26 L9 -6 L4 -6 L11 2 L-11 2 L-4 -6 L-9 -6Z" fill="${i%3?'#3F7A45':'#356B3C'}"/><rect x="-1.4" y="2" width="2.8" height="4" fill="#5a4030"/></g>`}).join('')}
     ${[...Array(10)].map((_,i)=>`<ellipse cx="${(i*131+60)%800}" cy="${150+(i*41)%140}" rx="${5+i%3*2}" ry="3.4" fill="#A9A49A"/>`).join('')}`;
-    scene+=W.field.map((f,i)=>`<g id="wr${i}"><g transform="scale(.62)">${rSprite(f.col[0],f.col[1],f.silk,{rider:'up',hat:'cowboy',gait:'trot',me:f.me})}</g></g>`).join('')}
+    scene+=W.field.map((f,i)=>`<g id="wr${i}"><g transform="scale(.62)">${rSprite(f.col[0],f.col[1],f.silk,ev.id==='xc'?{rider:'up',hat:'helmet',me:f.me}:{rider:'up',hat:'cowboy',gait:'trot',me:f.me})}</g></g>`).join('')}
+  if(ev.id==='jump'){
+    scene+=`<rect width="800" height="300" fill="#8DB46A"/><rect x="0" y="0" width="800" height="44" fill="#BFB6A4"/>${crowdRows(10,798,4,3,10,rs)}<path d="M0 44 H800" stroke="#7d7464" stroke-width="2"/><rect x="110" y="54" width="580" height="240" rx="10" fill="#9CC27A"/>${[...Array(8)].map((_,i)=>`<rect x="${110+i*72.5}" y="54" width="36" height="240" fill="#93BA71"/>`).join('')}<rect x="110" y="54" width="580" height="240" rx="10" fill="none" stroke="#fff" stroke-width="4"/>
+    ${[[130,70],[670,70],[130,276],[670,276]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="9" fill="#E25B7A"/><circle cx="${x}" cy="${y}" r="4" fill="#F2C14E"/>`).join('')}
+    <path id="wPath" d="M400 290 C400 240 200 250 190 200 C180 150 240 110 320 110 C400 110 420 170 480 170 C560 170 600 100 640 130 C690 170 640 250 560 250 C480 250 470 200 400 200 C330 200 300 260 260 270 C220 280 180 280 160 250" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-dasharray="4 6" fill="none"/><g id="wFences"></g>
+    <g transform="translate(676 58)"><rect width="112" height="40" rx="5" fill="#1a1a1a"/><text x="56" y="13" font-size="8" text-anchor="middle" fill="#bbb" font-family="system-ui" letter-spacing="1">TIME</text><text id="wClock" x="56" y="33" font-size="18" font-weight="700" fill="#FF5A3C" text-anchor="middle" font-family="ui-monospace,monospace">0.00</text></g>
+    <g id="wr0"><g transform="scale(1.15)">${rSprite(W.me.col[0],W.me.col[1],W.me.silk,{rider:'up',hat:'helmet',me:1})}</g></g>`}
   if(ev.id==='barrel'){
     scene+=`<rect width="800" height="300" fill="#8DB46A"/><rect x="0" y="0" width="800" height="44" fill="#BFB6A4"/>${crowdRows(10,798,4,3,10,rs)}<path d="M0 44 H800" stroke="#7d7464" stroke-width="2"/>
     <rect x="140" y="56" width="520" height="236" rx="26" fill="url(#wSand)"/>${[...Array(12)].map((_,i)=>`<path d="M${160+i*40} 64 C${150+i*40} 140 ${170+i*40} 220 ${158+i*40} 286" stroke="#B99A6A" stroke-width="1" opacity=".3" fill="none"/>`).join('')}
@@ -3065,7 +3114,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     <path id="wPath" d="M400 280 C400 210 330 140 282 140 C244 140 244 82 282 82 C318 82 330 140 400 140 C470 140 480 82 520 82 C558 82 558 140 520 140 C472 140 422 200 412 238 C406 262 378 262 378 236 C378 210 424 208 424 234 C424 256 400 268 400 296" stroke="#fff" stroke-opacity=".3" stroke-width="2" stroke-dasharray="4 6" fill="none"/>
     <g transform="translate(676 58)"><rect width="112" height="40" rx="5" fill="#1a1a1a"/><text x="56" y="13" font-size="8" text-anchor="middle" fill="#bbb" font-family="system-ui" letter-spacing="1">TIME</text><text id="wClock" x="56" y="33" font-size="18" font-weight="700" fill="#FF5A3C" text-anchor="middle" font-family="ui-monospace,monospace">0.00</text></g>
     <g id="wr0"><g transform="scale(1.15)">${rSprite(W.me.col[0],W.me.col[1],W.me.silk,{rider:'up',hat:'cowboy',me:1,dust:1})}</g></g>`}
-  if(ev.id==='dress'){
+  if(ev.id==='dress'||ev.id==='rein'){
     const prj=(x,y)=>{const t=(y-40)/220,S2=.72+t*.33;return [400+(x-400)*S2,80+t*175,S2]};const q=(x,y)=>prj(x,y).slice(0,2).map(v=>v.toFixed(1)).join(' ');
     scene+=`<rect width="800" height="300" fill="url(#wSky)"/>${hills(62,'#A9C08E',20,21)}${[...Array(14)].map((_,i)=>`<circle cx="${i*62+20}" cy="${60-(i%3)*4}" r="${16+(i%2)*5}" fill="${i%2?'#5E8C44':'#6C9A50'}"/>`).join('')}<rect y="66" width="800" height="234" fill="url(#wGrass)"/>
     <g transform="translate(400 46)"><rect x="-34" y="0" width="68" height="26" fill="#F4F0E6"/><path d="M-40 0 L0 -14 L40 0Z" fill="#2F5D46"/><rect x="-26" y="8" width="52" height="10" fill="#3a3a3a"/>${[-16,0,16].map(x=>`<circle cx="${x}" cy="12" r="3.2" fill="#E2B48C"/>`).join('')}<text x="0" y="-3" font-size="6.5" text-anchor="middle" fill="#fff" font-family="system-ui" font-weight="700">JUDGES</text></g>
@@ -3075,7 +3124,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     ${[['C',400,40],['A',400,260],['E',120,150],['B',680,150],['K',200,260],['F',600,260],['H',200,40],['M',600,40]].map(([l,x,y])=>{const [X,Y,S2]=prj(x,y);const dx=x===120?-14*S2:x===680?14*S2:0,dy=y===40?-8*S2:y===260?12*S2:0;return `<g transform="translate(${(X+dx).toFixed(1)} ${(Y+dy).toFixed(1)}) scale(${S2.toFixed(2)})"><rect x="-8" y="-9" width="16" height="16" rx="2" fill="#fff" stroke="#9a9a9a" stroke-width=".8"/><text x="0" y="4" font-size="11" font-weight="700" text-anchor="middle" fill="#2B2A26" font-family="system-ui">${l}</text></g>`}).join('')}
     ${[[150,268],[650,268],[110,90],[690,90]].map(([x,y])=>{const [X,Y,S2]=prj(x,y);return `<g transform="translate(${X.toFixed(1)} ${Y.toFixed(1)}) scale(${S2.toFixed(2)})"><rect x="-16" y="0" width="32" height="8" fill="#8A6542"/>${[-11,-4,3,10].map((dx,k)=>`<circle cx="${dx}" cy="-1" r="4" fill="${['#E25B7A','#F2C14E','#fff','#C0392B'][k]}"/>`).join('')}</g>`}).join('')}
     <path id="wPath" d="M400 255 L400 150 C400 100 300 90 260 120 C220 150 260 200 320 180 C380 160 420 140 480 120 C540 100 590 140 560 190 C530 240 460 230 400 200 L400 60 C400 45 560 50 600 60 L600 240 C560 252 240 252 200 240 L200 60 C240 50 380 45 400 60" fill="none" stroke="none"/>
-    <g id="wr0">${rSprite(W.me.col[0],W.me.col[1],W.me.silk,{rider:'up',hat:'top',gait:'trot',me:1})}</g>
+    <g id="wr0">${rSprite(W.me.col[0],W.me.col[1],W.me.silk,{rider:'up',hat:ev.id==='rein'?'cowboy':'top',gait:'trot',me:1})}</g>
     <g id="wJudges">${[0,1,2].map(i=>`<g transform="translate(${300+i*100} 292)"><rect x="-30" y="-13" width="60" height="16" rx="4" fill="#fff" opacity=".9"/><text id="wj${i}" x="0" y="-1" font-size="11" text-anchor="middle" fill="#2B2A26" font-family="ui-monospace,monospace">Judge ${i+1}</text></g>`).join('')}</g>`;
     W.prj=prj}
   if(ev.id==='pull'){
@@ -3097,6 +3146,8 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
   ov.hidden=false;
   const el=id=>document.getElementById(id);const say=(k,txt)=>{if(WATCH.said[k])return;WATCH.said[k]=1;const c=el('wComm');if(c)c.textContent=txt};
   const trail=el('wTrail'),path=el('wPath');const TL=trail?trail.getTotalLength():0,PL=path?path.getTotalLength():0;
+  if(ev.id==='jump'){const fg=el('wFences');const cols=['#C0392B','#2E6FD8','#E2B007','#2D8A4E','#8E44AD','#E67E22'];let o='';[.13,.28,.43,.58,.73,.88].forEach((f,i)=>{const P=path.getPointAtLength(f*PL);o+=`<g transform="translate(${P.x.toFixed(1)} ${P.y.toFixed(1)})"><rect x="-22" y="-20" width="4" height="22" fill="#fff"/><rect x="18" y="-20" width="4" height="22" fill="#fff"/>${[-16,-9].map(y=>`<rect x="-20" y="${y}" width="40" height="4" rx="2" fill="${cols[i]}" stroke="#fff" stroke-width=".8"/>`).join('')}</g>`});fg.innerHTML=o}
+  if(ev.id==='xc'){const svg=el('wSvg');let o='';[.2,.45,.7,.86].forEach((f,i)=>{const P=trail.getPointAtLength(f*TL);o+=i===2?`<ellipse cx="${P.x.toFixed(1)}" cy="${(P.y+2).toFixed(1)}" rx="22" ry="8" fill="#7FB3D1" opacity=".9"/>`:`<g transform="translate(${P.x.toFixed(1)} ${P.y.toFixed(1)})"><rect x="-16" y="-6" width="32" height="9" rx="4.5" fill="#7A5434"/><circle cx="-16" cy="-1.5" r="4.5" fill="#C9A06A" stroke="#7A5434"/></g>`});const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.innerHTML=o;const first=el('wr0');first.parentNode.insertBefore(g,first)}
   const prog=(f,u)=>{const fin=.78+f.rank*(.21/Math.max(1,total-1));let x=Math.max(0,Math.min(1,u/fin));x=Math.pow(x,f.pw)+Math.sin(u*9+f.ph)*f.amp*(1-x);return Math.max(0,Math.min(1,x))};
   const meIdx=W.field.indexOf(W.me);
   const sortBoard=ids=>{ids.slice().sort((a,b)=>a-b).forEach((i,k)=>{const li=el('wb'+i);if(li)li.style.order=k})};
@@ -3104,10 +3155,10 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
   // pose groups per runner
   const PZ=W.field.map((f,i)=>{const g=el('wr'+i);return g?[...g.querySelectorAll('.pz')]:[]});const curK=W.field.map(()=>0);
   const setPose=(i,k)=>{if(curK[i]===k)return;curK[i]=k;for(const n of PZ[i])n.style.display=(+n.dataset.k===k)?'':'none'};
-  const gaitRate={race:15,barrel:13,endur:9,dress:7,pull:5}[ev.id];const bobT=ev.id==='race'||ev.id==='barrel'?POSE_BOB.gallop:POSE_BOB.trot;
-  function frame(now){if(!WATCH||WATCH.wid!==m.wid||WATCH.done)return;const dt=Math.max(0,Math.min(.1,(now-WATCH.last)/1000))*WATCH.speed;WATCH.last=now;WATCH.t+=dt;const u=Math.min(1,WATCH.t/dur);
+  const gaitRate={race:15,barrel:13,endur:9,dress:7,pull:5,jump:13,xc:14,rein:8}[ev.id];const bobT=['race','barrel','jump','xc'].includes(ev.id)?POSE_BOB.gallop:POSE_BOB.trot;const FJ=[.13,.28,.43,.58,.73,.88];
+  function frame(now){if(!WATCH||WATCH.wid!==m.wid||WATCH.done)return;if(!UI.modal||UI.modal.type!=='watch'||!document.getElementById('wSvg')){WATCH=null;hoovesStop();return}const dt=Math.max(0,Math.min(.1,(now-WATCH.last)/1000))*WATCH.speed;WATCH.last=now;WATCH.t+=dt;const u=Math.min(1,WATCH.t/dur);
     const kOf=(i,moving)=>moving?Math.floor(WATCH.t*gaitRate+W.field[i].ph*3)%4:1;
-    if(ev.id==='race'||ev.id==='endur'){const ps=W.field.map(f=>prog(f,u));
+    if(ev.id==='race'||ev.id==='endur'||ev.id==='xc'){const ps=W.field.map(f=>prog(f,u));
       W.field.forEach((f,i)=>{const g=el('wr'+i);if(!g)return;const k=kOf(i,ps[i]<1);setPose(i,k);const bob=bobT[k];
         if(ev.id==='race'){const x=40+ps[i]*690+(ps[i]>=1?Math.min(40,(u-.78)*120):0);g.setAttribute('transform',`translate(${x.toFixed(1)} ${(142+f.lane*19+bob).toFixed(1)})`)}
         else{const P=trail.getPointAtLength(ps[i]*TL);const P2=trail.getPointAtLength(Math.min(TL,ps[i]*TL+2));const flip=P2.x<P.x-.2?-1:1;g.setAttribute('transform',`translate(${(P.x+((f.lane%3)-1)*5).toFixed(1)} ${(P.y+4+bob+((f.lane%2)*4-2)).toFixed(1)}) scale(${flip} 1)`)}});
@@ -3119,11 +3170,12 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
       else if(u<.7)say('mid',(ev.id==='race'?'Around the turn, ':'Through the vet checks, ')+W.me.name+' sits '+ord(myPos)+'.');
       else if(u<.95)say('late',(ev.id==='race'?'Down the stretch they come! ':'The finish is in sight! ')+lead.name+' leads, '+W.me.name+' is '+ord(myPos)+'!');
       if(u>=1)finishWatch(m,W)}
-    else if(ev.id==='barrel'||ev.id==='dress'){const g=el('wr0');const P=path.getPointAtLength(u*PL),P2=path.getPointAtLength(Math.min(PL,u*PL+2));const flip=P2.x<P.x-.1?-1:1;const k=kOf(meIdx,u<1);setPose(meIdx,k);const bob=bobT[k];
-      if(ev.id==='barrel')g.setAttribute('transform',`translate(${P.x.toFixed(1)} ${(P.y+8+bob).toFixed(1)}) scale(${flip} 1)`);
+    else if(['barrel','dress','jump','rein'].includes(ev.id)){const g=el('wr0');const P=path.getPointAtLength(u*PL),P2=path.getPointAtLength(Math.min(PL,u*PL+2));const flip=P2.x<P.x-.1?-1:1;const k=kOf(meIdx,u<1);setPose(meIdx,k);const bob=bobT[k];
+      if(ev.id==='barrel'||ev.id==='jump'){let hop=0;if(ev.id==='jump'){const d=Math.min(...FJ.map(f=>Math.abs(u-f)));if(d<.03){hop=-18*Math.cos(d/.03*Math.PI/2);setPose(meIdx,0)}}g.setAttribute('transform',`translate(${P.x.toFixed(1)} ${(P.y+8+bob+hop).toFixed(1)}) scale(${flip} 1)`)}
       else{const [X,Y,S2]=W.prj(P.x,P.y);g.setAttribute('transform',`translate(${X.toFixed(1)} ${(Y+bob).toFixed(1)}) scale(${(flip*S2*1.15).toFixed(3)} ${(S2*1.15).toFixed(3)})`)}
       const others=W.field.map((f,i)=>i).filter(i=>i!==meIdx);const nShow=Math.floor(Math.min(1,u*1.25)*others.length);others.slice(0,nShow).forEach(reveal);sortBoard(others.slice(0,nShow));
-      if(ev.id==='barrel'){el('wClock').textContent=(u*W.me.met.v).toFixed(2);if(u<.1)say('s',W.me.name+' charges into the arena!');else if(u<.4)say('b1','Around the first barrel…');else if(u<.65)say('b2','Second barrel, tight turn!');else if(u<.9)say('b3','Third barrel, now race for home!')}
+      if(ev.id==='jump'){el('wClock').textContent=(u*W.me.met.v).toFixed(2);const fi=FJ.filter(f=>u>f-.02).length;if(fi===0)say('j0',W.me.name+' canters toward the first fence…');else say('j'+fi,['','Clear over fence one!','Over the oxer!','A tight turn to fence three…','Clear at the wall!','Two to go…','Last fence… and clear!'][fi])}
+      else if(ev.id==='barrel'){el('wClock').textContent=(u*W.me.met.v).toFixed(2);if(u<.1)say('s',W.me.name+' charges into the arena!');else if(u<.4)say('b1','Around the first barrel…');else if(u<.65)say('b2','Second barrel, tight turn!');else if(u<.9)say('b3','Third barrel, now race for home!')}
       else{const jl=['Entry and halt','Working trot','Extended canter','Half-pass','Final halt and salute'];const kk=Math.min(4,Math.floor(u*5));say('d'+kk,W.me.name+': '+jl[kk]+'.');[0,1,2].forEach(j=>{const t=el('wj'+j);if(t&&u>.95)t.textContent=(W.me.met.v+(j-1)*.6).toFixed(1)+'%'})}
       if(u>=1){reveal(meIdx);finishWatch(m,W)}}
     else if(ev.id==='pull'){const g=el('wr0');const dist=W.me.met.v;const e=u<.85?u/.85:1;const cur=dist*(1-Math.pow(1-e,2));const k=kOf(meIdx,u<.85);setPose(meIdx,k);
@@ -3154,6 +3206,9 @@ function eventArt(id){const n='ea'+id;const sky=`<defs><linearGradient id="${n}s
     <g transform="translate(200 54)"><rect x="-16" y="0" width="32" height="7" fill="#8A6542"/>${[-11,-4,3,10].map((dx,k)=>`<circle cx="${dx}" cy="-1" r="4" fill="${['#E25B7A','#F2C14E','#fff','#C0392B'][k]}"/>`).join('')}</g><g transform="translate(118 98) scale(1.3)">${rSprite('#211D1B','#141211','#17171c',{rider:'up',hat:'top',gait:'trot',pose:0})}</g>`;
   if(id==='pull')o=sky+`<path d="M0 30 H240 V60 H0Z" fill="#8C6B4E"/>${crowdRows(6,236,34,2,12,srng(4),.85)}<rect y="58" width="240" height="6" fill="#F4F0E6"/><rect y="64" width="240" height="46" fill="#C49A68"/>
     <g transform="translate(46 96)"><path d="M-4 8 L44 8 C50 8 52 4 50 0 L-4 0Z" fill="#7A5434"/>${[[2,-12],[18,-12],[34,-12],[10,-24],[26,-24]].map(([x,y])=>`<rect x="${x}" y="${y}" width="14" height="12" fill="#9C9890" stroke="#7a766e" stroke-width=".8"/>`).join('')}</g><g transform="translate(150 100) scale(1.4)">${rSprite('#9A4822','#EFE2BD','#000',{harness:1,gait:'trot',pose:0})}</g>`;
+  if(id==='jump')o=sky+hill(52,'#A9C08E')+`<rect y="56" width="240" height="54" fill="#93BA71"/>${[...Array(6)].map((_,i)=>`<rect x="${i*40}" y="56" width="20" height="54" fill="#9CC27A"/>`).join('')}<g transform="translate(150 100)"><rect x="-26" y="-30" width="5" height="30" fill="#fff"/><rect x="22" y="-30" width="5" height="30" fill="#fff"/>${[-25,-17,-9].map((y,i)=>`<rect x="-24" y="${y}" width="50" height="4.5" rx="2" fill="${['#C0392B','#fff','#2E6FD8'][i]}" stroke="#ccc" stroke-width=".5"/>`).join('')}</g><g transform="translate(140 64) rotate(-14) scale(1.15)">${rSprite('#7A3D1C','#1E1A18','#2D8A4E',{rider:'up',hat:'helmet',pose:0})}</g>`;
+  if(id==='xc')o=sky+hill(50,'#9DBB7C')+`<rect y="58" width="240" height="52" fill="#8DB46A"/><path d="M-10 104 C60 96 120 92 250 86" stroke="#C9A877" stroke-width="12" fill="none"/><ellipse cx="70" cy="100" rx="30" ry="7" fill="#7FB3D1"/><g transform="translate(150 92)"><rect x="-22" y="-8" width="44" height="12" rx="6" fill="#7A5434"/><circle cx="-22" cy="-2" r="6" fill="#C9A06A" stroke="#7A5434"/></g>${[[20,70],[210,66],[100,62]].map(([x,y])=>`<path d="M${x} ${y-22} L${x+8} ${y-4} L${x-8} ${y-4}Z" fill="#3F7A45"/>`).join('')}<g transform="translate(150 70) rotate(-12) scale(1.1)">${rSprite('#3C322B','#201B18','#E67E22',{rider:'up',hat:'helmet',pose:0})}</g>`;
+  if(id==='rein')o=sky+hill(50,'#C9B48A')+`<rect y="56" width="240" height="54" fill="#C9A473"/><path d="M0 60 H240 M0 66 H240" stroke="#7A5434" stroke-width="2.4"/>${[...Array(9)].map((_,i)=>`<rect x="${i*30}" y="56" width="3" height="14" fill="#7A5434"/>`).join('')}<path d="M60 104 C80 100 100 100 112 100" stroke="#E9D6AE" stroke-width="6" stroke-linecap="round" opacity=".8"/><g transform="translate(135 100) rotate(8) scale(1.3)">${rSprite('#C89955','#231D19','#C0392B',{rider:'up',hat:'cowboy',gait:'trot',pose:2})}</g>`;
   return `<svg viewBox="0 0 240 110" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${o}</svg>`}
 /* ---------- page header banners ---------- */
 const BANNER_CACHE={};
@@ -3303,13 +3358,19 @@ const ACT={
   bailyes:()=>{bailout();UI.modal=null},
   gameover:()=>{S.phase='gameover';UI.modal={type:'gameover',lock:1}},
   buy:d=>buy(+d.i),
-  sell:(d,b)=>{const h=H(d.id);if(!h)return;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to sell for '+money(saleValue(h));return 'skip'}sell(h,saleValue(h))},
+  sell:d=>{const h=H(d.id);if(!h)return;UI.modal={type:'confirmSell',id:h.id,amt:saleValue(h),back:UI.modal}},
+  sellyes:d=>{const h=H(d.id);if(!h)return;UI.modal=null;sell(h,+d.amt,d.why||'')},
+  sellno:()=>{UI.modal=UI.modal&&UI.modal.back||null},
+  buyback:d=>{buyBack(+d.i)},
+  rinvgo:d=>{const v=(S.ranchInv||[]).find(x=>x.id===+d.v);const h=H(UI['rinv'+d.v]);if(!v||!h)return toast('Pick a horse to send first.');compete(h,v.ei,8)},
+  sellextras:(d,b)=>{const L0=extrasList();if(!L0.length)return toast('No extra gear matches.');const tot=L0.reduce((a,x)=>a+Math.round(ITEMS[x.id].p*sellRate()),0);if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again: sell '+L0.length+' for '+money(tot);return 'skip'}
+    const ids=new Set(L0.map(x=>x.uid));S.inv=S.inv.filter(x=>!ids.has(x.uid));S.money+=tot;log('info','Sold '+L0.length+' extra pieces of gear for '+money(tot)+'.');toast('Sold '+L0.length+' extra pieces of gear for '+money(tot)+'.')},
   studyes:d=>{const r=S.studReq.find(x=>x.id===+d.id);const h=H(d.id);if(!r||!h)return;if(!canWork(h)||h.energy<20)return toast(h.name+' can’t cover a mare today.');
-    h.acted=S.day;h.energy=clamp(h.energy-20,0,100);h.studCount=(h.studCount||0)+1;{const bonus=Math.round(r.fee*(mgrOf().inc-1));r.fee+=bonus}h.studEarned=(h.studEarned||0)+r.fee;h.earnings=(h.earnings||0)+r.fee;S.money+=r.fee;
+    h.acted=S.day;h.energy=clamp(h.energy-20,0,100);h.studCount=(h.studCount||0)+1;h.studBook=h.studBook||[];h.studBook.unshift({d:S.day,farm:r.who,mare:randName().split(' ')[0]+' '+pick(N2),due:S.day+11,st:'wait'});if(h.studBook.length>20)h.studBook.length=20;{const bonus=Math.round(r.fee*(mgrOf().inc-1));r.fee+=bonus}h.studEarned=(h.studEarned||0)+r.fee;h.earnings=(h.earnings||0)+r.fee;S.money+=r.fee;
     let extra='';if(r.fee>=800){gainRep(1);extra=' Your ranch’s name spreads (+1 reputation).'}
     S.studReq=S.studReq.filter(x=>x!==r);unlock('studsvc');log('good',h.name+' covered a mare from '+r.who+' Ranch for '+money(r.fee)+'.'+extra);toast('Earned '+money(r.fee)+' in stud fees.'+extra)},
   studno:d=>{S.studReq=S.studReq.filter(x=>x.id!==+d.id);toast('Request declined.')},
-  accept:d=>{const o=S.offers.find(x=>x.id===+d.id);const h=H(d.id);if(o&&h)sell(h,o.amt,'offer from '+o.who)},
+  accept:d=>{const o=S.offers.find(x=>x.id===+d.id);const h=H(d.id);if(o&&h)UI.modal={type:'confirmSell',id:h.id,amt:o.amt,why:'offer from '+o.who,back:UI.modal}},
   decline:d=>{S.offers=S.offers.filter(x=>x.id!==+d.id);toast('Offer declined.')},
   rename:d=>{const h=H(d.id);const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
   renameRanch:()=>{const v=($('#ranchInput')||{}).value;if(v&&v.trim()){S.ranchName=v.trim().slice(0,32);toast('Ranch renamed.')}},
@@ -3345,7 +3406,7 @@ const ACT={
   wipeall:(d,b)=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to erase';return 'skip'}try{[KEY,slotKey(1),slotKey(2),slotKey(3)].forEach(k=>localStorage.removeItem(k))}catch(e){}S=null;UI={tab:'stable',modal:null,screen:'title',tview:'main'};toast('All saves in this browser were erased.');render();return 'skip'},
   menu:()=>{save();UI.screen='title';UI.tview='main';UI.modal=null;UI.code=null},
   buyitem:d=>{const id=S.shop[+d.i];const it=ITEMS[id];if(!it)return;if(S.money<it.p)return toast('Not enough money.');S.money-=it.p;S.inv.push({uid:S.nextItem++,id,on:null});if(it.r!=='common')S.shop.splice(+d.i,1);log('info','Bought '+it.n+' ('+RARITY[it.r].n+') for '+money(it.p)+'.');toast('Bought the '+it.n+'. It’s in your tack room.')},
-  crate:()=>{if(S.money<crateCost())return toast('Not enough money.');S.money-=crateCost();const x=grantItem(rollRarity(CRATE));const it=ITEMS[x.id];log(it.r==='legendary'||it.r==='epic'?'good':'info','Opened a crate: '+it.n+' ('+RARITY[it.r].n+').');UI.modal={type:'reveal',id:x.id}},
+  crate:d=>{const n=+(d.n||1);if(S.money<crateCost()*n)return toast('Not enough money for '+n+' crate'+(n>1?'s':'')+'.');S.money-=crateCost()*n;const ids=[];for(let i=0;i<n;i++){const x=grantItem(rollRarity(CRATE));const it=ITEMS[x.id];ids.push(x.id);log(it.r==='legendary'||it.r==='epic'?'good':'info','Opened a crate: '+it.n+' ('+RARITY[it.r].n+').')}UI.modal=n===1?{type:'reveal',id:ids[0]}:{type:'reveal',ids}},
   autogear:()=>{const n=autoEquip();toast(n?'Put on '+n+' piece'+(n>1?'s':'')+' of spare gear.':'No spare gear fits any open slots.')},
   bestgear:()=>{const n=optimizeGear();toast(n?'Moved '+n+' piece'+(n>1?'s':'')+' of gear so every horse has its best fit.':'Everyone already has their best gear.')},
   autogear1:d=>{const h=H(d.id);if(!h)return;const n=autoEquip(h);toast(n?h.name+' put on '+n+' piece'+(n>1?'s':'')+' of spare gear.':'No spare gear fits '+h.name+'’s open slots.')},
@@ -3415,6 +3476,9 @@ document.addEventListener('change',e=>{
   if(c==='mare')UI.breedMare=e.target.value;
   if(c==='sire')UI.breedSire=e.target.value;
   if(c==='comp')UI.compHorse=e.target.value;
+  if(c==='rinvsel')UI['rinv'+e.target.dataset.v]=e.target.value;
+  if(c==='sxr')UI.sxR=+e.target.value;
+  if(c==='sxk')UI.sxK=+e.target.value;
   render();
 });
 
