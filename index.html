@@ -205,6 +205,12 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .papers{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px}
 @media (max-width:720px){.papers{grid-template-columns:1fr}}
 .papers .portrait{border-radius:12px;overflow:hidden}
+.papers2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 20px;margin-top:6px;border-top:1px solid var(--line);padding-top:4px}
+.papers2 .pcol{min-width:0}
+.papers3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:4px 16px}
+.papers3 .actions input{flex:1;min-width:0}
+.papers3>div:empty{display:none}
+@media (max-width:720px){.papers2{grid-template-columns:1fr}}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13.5px;margin-top:12px}
 .kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
 .statrow{display:grid;grid-template-columns:80px 1fr 64px auto;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:13.5px}
@@ -2937,6 +2943,13 @@ function papers(h,mode){
     ${own?`<div class="vitals" style="margin-top:12px">${vit('Energy',h.energy,vitColor(h.energy))}${vit('Happy',h.happy,vitColor(h.happy))}${vit('Health',h.health,vitColor(h.health))}</div><div class="vitals" style="margin-top:8px">${vit('Bond',h.bond,'var(--brass)')}${vit('Stall',stallOf(h),vitColor(stallOf(h)))}</div>
      <div class="moodbox"><div class="subh" style="margin:10px 0 4px">Mood &amp; workload</div>${moodNotes(h).map(([c,t])=>`<div class="note ${c}">• ${esc(t)}</div>`).join('')}${recentJobs(h).length?`<div class="note mono" style="margin-top:3px">Last 6 days: ${[...new Set(recentJobs(h).map(j=>j.k))].map(k=>jobName(k)+' ×'+Math.round(recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)*10)/10).join(' · ')}</div>`:''}</div>
      <p class="note" style="margin-top:6px">Last cared for: ${careAge(h)===0?'today':careAge(h)===1?'yesterday':careAge(h)+' days ago'}. Bond grows at ${Math.round(bondMult(h)*100)}% speed at this happiness. Bond speeds training by ${Math.round(h.bond/4)}%${skillChance(h)?' and gives a '+(skillChance(h)*100).toFixed(1)+'% nightly chance to learn a skill':h.skills.length>=MAXSKILLS?'. Skills are full ('+MAXSKILLS+')':'. Reach 70 bond for a chance to learn skills'}.</p>`:''}
+    <div class="pedwrap">
+    <div class="subh">Pedigree</div>
+    <div class="pedigree">${pedCell(h.sire,'m')}${pedCell(h.dam,'f')}
+     ${pedCell(sireR?sireR.sire:null,'m')}${pedCell(damR?damR.sire:null,'m')}
+     ${pedCell(sireR?sireR.dam:null,'f')}${pedCell(damR?damR.dam:null,'f')}</div>
+    <p class="note" style="margin-top:4px">Top row: sire and dam. Below: grandsires and granddams.</p>
+    </div>
    </div>
    <div style="min-width:0">
     ${own&&h.inj?injuryPanel(h):''}
@@ -2945,12 +2958,12 @@ function papers(h,mode){
     <div class="subh">Natural skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(born with, passed to foals)</span></div>${h.traits.length?`<div class="traitlist">${h.traits.map(t=>`<div><b class="${TRAITS[t].rare?'warn':TRAITS[t].good?'good':'bad'}">${TRAITS[t].n}</b>${TRAITS[t].d}</div>`).join('')}</div>`:'<p class="note">No natural skills.</p>'}
     <div class="subh">Learned skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(earned through bond, ${(h.skills||[]).length}/${MAXSKILLS}, not inherited)</span></div>${(h.skills||[]).length?`<div class="traitlist">${h.skills.map(k=>`<div><b style="color:var(--accent)">${SKILLS[k].n}</b>${SKILLS[k].d}</div>`).join('')}</div>`:'<p class="note">None yet. Horses with 70+ bond can pick up a skill overnight.</p>'}
     ${ribbonSection(h)}
-    <div class="subh">Pedigree</div>
-    <div class="pedigree">${pedCell(h.sire,'m')}${pedCell(h.dam,'f')}
-     ${pedCell(sireR?sireR.sire:null,'m')}${pedCell(damR?damR.sire:null,'m')}
-     ${pedCell(sireR?sireR.dam:null,'f')}${pedCell(damR?damR.dam:null,'f')}</div>
-    <p class="note" style="margin-top:4px">Top row: sire and dam. Below: grandsires and granddams.</p>
-    ${own?`<div class="subh">Care</div><div class="note" style="margin:-2px 0 6px">${groomStatus(h)}.</div><div class="actions">
+    ${mode==='market'?`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button></div>`:''}
+   </div></div>
+   ${own?`<div class="papers2">
+    <div class="pcol">     ${gearSection(h)}
+    </div>
+    <div class="pcol"><div class="subh">Care</div><div class="note" style="margin:-2px 0 6px">${groomStatus(h)}.</div><div class="actions">
      ${groomBtn(h,false)}
      <button class="btn" data-a="rest" data-id="${h.id}" ${canTurnout(h)?'':'disabled'}>Turn out to pasture</button>
      ${h.inj?'':vetDoneSeason(h)?`<button class="btn" disabled>Checked this season</button>`:`<button class="btn" data-a="vet" data-id="${h.id}">${h.preg?'Prenatal checkup':'Vet checkup'} · ${money(vetCost(h))}</button>`}
@@ -2960,15 +2973,15 @@ function papers(h,mode){
      <div class="note" style="margin:4px 0">${vetClear(h)?'<span class="good">Clean bill of health</span> (good for National and Invitational events and full sale price) until day '+(h.lastVet+8)+'.':'No recent checkup. National and Invitational events need one from the last 8 days.'}${vaccinated(h)?' · <span class="good">Vaccinated</span> until day '+h.vacc+'.':''} One checkup per season${vetDoneSeason(h)?' (done)':''}.</div>
      ${vetInfoPanel(h)}
      ${stage(h)!=='Foal'&&pregOk(h)?`<div class="subh">Other ways to spend the day</div><div class="traitlist">${JOBS.filter(j=>j.id!=='turnout'&&(!j.adult||isAdult(h))).map(j=>`<div style="display:flex;gap:10px;align-items:center"><button class="btn small" data-a="job" data-id="${h.id}" data-j="${j.id}" ${canWork(h)&&h.energy>=j.e?'':'disabled'}>${j.n}</button><span class="note">${j.d}${j.e?' Uses '+j.e+' energy.':''}</span></div>`).join('')}</div>`:''}
-     ${trainerPlan(h)}
-     ${gearSection(h)}
-     <div class="subh">Rename</div><div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>
-     ${h.client?`<div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}.<br>${h.client.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div>`:''}
-     ${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
-     ${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Stops competing for good (you can change your mind later). Still breeds, teaches lessons and works the ranch, gets +10 happiness now and +1 every night.</span>`}</div>`:''}
-     ${h.client?'':`<div class="subh">Sell</div><div class="actions">${sellBtn}</div>`}`:''}
-    ${mode==='market'?`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button></div>`:''}
-   </div></div>`;
+    </div>
+     ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}.<br>${h.client.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div>`:''}
+    <div class="pcol">     ${trainerPlan(h)}
+    </div>
+    <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div><div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>
+</div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
+</div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Stops competing for good (you can change your mind later). Still breeds, teaches lessons and works the ranch, gets +10 happiness now and +1 every night.</span>`}</div>`:''}
+</div><div>${h.client?'':`<div class="subh">Sell</div><div class="actions">${sellBtn}</div>`}</div></div></div>`:''}
+`;
 }
 
 function navList(mode){return mode==='market'?S.market:mode==='stud'?S.studs:mode==='past'?(S.memorial||[]):S.horses}
