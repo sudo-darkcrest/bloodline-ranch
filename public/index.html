@@ -1948,7 +1948,7 @@ function portraitSVG(look,size=96){const L0={skin:0,hair:0,hairC:0,hat:0,hatC:0,
   ${beard}${front}${ex==='glasses'?`<g fill="none" stroke="#2B2A26" stroke-width="1.3"><rect x="37.5" y="45.4" width="10" height="7.4" rx="3"/><rect x="52.5" y="45.4" width="10" height="7.4" rx="3"/><path d="M47.5 48.4 C49 47.2 51 47.2 52.5 48.4 M37.5 48 L33 46.8 M62.5 48 L67 46.8"/></g><path d="M39 47 l3 3" stroke="#fff" stroke-width=".8" opacity=".6"/>`:''}${hat}</g><circle cx="50" cy="50" r="48.5" fill="none" stroke="rgba(0,0,0,.08)"/></svg>`}
 function creatorBody(m){const d=UI.pdraft;d.look={skin:0,hair:0,hairC:0,hat:0,hatC:0,shirt:0,beard:0,top:0,neck:0,neckC:0,eye:0,extra:0,...d.look};const opt=(k,label,vals,sw)=>`<div class="pcrow"><span class="pclbl">${label}</span><div class="pcopts">${vals.map((v,i)=>`<button class="pcopt ${d.look[k]===i?'on':''}" data-a="pc" data-k="${k}" data-v="${i}" ${sw?`style="background:${v}"`:''} aria-label="${label} ${i+1}">${sw?'':v==='pony'?'ponytail':v}</button>`).join('')}</div></div>`;
   return `<div class="creator"><div class="pcprev">${portraitSVG(d.look,140)}</div><div class="pcform">
-   <div class="field"><label for="pName">Your name</label><input id="pName" data-c="pname" type="text" maxlength="24" value="${esc(d.name)}"></div>
+   <div class="field"><label for="pName">Your name</label><input id="pName" data-c="pname" type="text" maxlength="24" value="${esc(d.name)}"></div><div class="field"><label for="rNameC">Ranch name</label><input id="rNameC" data-c="rnamec" type="text" maxlength="28" value="${esc(d.ranch||'')}" placeholder="${esc(((d.name||'').trim().split(' ').pop()||'Rivers')+' Ranch')}"></div>
    ${opt('skin','Skin',LOOK.skin,1)}${opt('eye','Eyes',LOOK.eye,1)}${opt('hair','Hair',LOOK.hair,0)}${opt('hairC','Hair color',LOOK.hairC,1)}${opt('beard','Facial hair',LOOK.beard,0)}${opt('extra','Extras',LOOK.extra,0)}${opt('hat','Hat',LOOK.hat,0)}${opt('hatC','Hat color',LOOK.hatC,1)}${opt('top','Outfit',LOOK.top,0)}${opt('shirt','Shirt color',LOOK.shirt,1)}${opt('neck','Neckwear',LOOK.neck,0)}${opt('neckC','Neckwear color',LOOK.neckC,1)}</div></div>
    ${m.mode==='edit'?'':`<div class="subh">Your background</div><div class="bggrid">${Object.entries(BACKGROUNDS_P).map(([k,b])=>`<button class="bgcard ${d.bg===k?'on':''}" data-a="pbg" data-k="${k}"><b>${b.n}</b><span class="note">${b.d}</span><span class="note good">${Object.entries(b.sk).map(([s,l])=>PSKILLS.find(x=>x.k===s).n+' '+l).join(' · ')}</span></button>`).join('')}</div>
    <p class="note">Every skill starts at 1 except your background’s. All skills grow as you work, up to 5.</p>`}
@@ -1991,12 +1991,12 @@ const PATHS={
   purchase:{n:'Purchase',diff:'Hard',story:'You bought a good ranch on the open market: better buildings, but a big mortgage and no one knows your name.',money:2000,hay:60,rep:0,fac:{house:1,barn:2,pasture:1,training:1,ring:1,trails:1},horses:0,loan:{name:'Ranch mortgage',amt:22000,rate:.07,n:32}},
 };
 function pathBody(){return `<p>Spring is over and it’s time to start your own place. How did you come to own your ranch?</p>
-  <div class="field" style="max-width:360px"><label for="rName">Ranch name</label><input id="rName" data-c="rname" type="text" maxlength="28" value="${esc(UI.rname||((S.player?S.player.name.split(' ').pop():'Rivers')+' Ranch'))}"></div>
+  <div class="field" style="max-width:360px"><label for="rName">Ranch name</label><input id="rName" data-c="rname" type="text" maxlength="28" value="${esc(UI.rname||(S.player&&S.player.ranchWant)||((S.player?S.player.name.split(' ').pop():'Rivers')+' Ranch'))}"></div>
   <div class="pathgrid">${Object.entries(PATHS).map(([k,p])=>{const pay=p.loan?loanPayment(p.loan.amt,p.loan.rate,p.loan.n):0;return `<div class="pathcard p-${k}"><div class="subh" style="margin:0">${p.diff}</div><h3 style="margin:2px 0 6px">${p.n}</h3><p class="note">${p.story}</p>
    <ul class="note"><li>${p.horses?p.horses+' horses':'No horses'} + Hank’s gift</li><li>${money(p.money)} cash, ${p.hay} bales of hay</li><li>Reputation ${p.rep}</li><li>${Object.entries(p.fac).map(([f,l])=>FACI[f].lv[l].n).join(', ')}</li>
    <li>${p.loan?`<b>Debt ${money(p.loan.amt)}</b> at ${(p.loan.rate*100).toFixed(1)}%: ${money(pay)} every season (4 days) for ${p.loan.n/4} years. First payment after 2 seasons.`:'<b>No debt</b>'}</li></ul>
    <button class="btn ${k==='inherit'?'primary':''}" data-a="pathpick" data-p="${k}">Choose ${p.n}</button></div>`}).join('')}</div>`}
-function buildRanch(pk,gift){const P=PATHS[pk];const keep={player:S.player,registry:S.registry,nextId:S.nextId,ach:S.ach};const name=(UI.rname||'').trim()||(S.player.name.split(' ').pop()+' Ranch');
+function buildRanch(pk,gift){const P=PATHS[pk];const keep={player:S.player,registry:S.registry,nextId:S.nextId,ach:S.ach};const name=(UI.rname||'').trim()||(S.player.ranchWant||'').trim()||(S.player.name.split(' ').pop()+' Ranch');
   S={ver:1,day:1,money:P.money,hay:P.hay,hayPrice:7,stalls:6,stallLevel:0,rep:P.rep,nextId:keep.nextId,horses:[],registry:keep.registry,market:[],studs:[],offers:[],log:[],ach:keep.ach,
      stats:{wins:0,foals:0},ranchName:name,welcomed:true,phase:'play',player:keep.player,path:pk};
   migrate(S);S.fac={...S.fac,...P.fac};S.stalls=Math.max(S.stalls,STALLS[L('barn')]);
@@ -3675,11 +3675,11 @@ const ACT={
   close:()=>{UI.modal=null},
   pc:d=>{UI.pdraft.look[d.k]=+d.v},
   pbg:d=>{UI.pdraft.bg=d.k},
-  pcdone:()=>{const m=UI.modal||{};const el=document.getElementById('pName');const d=UI.pdraft;d.name=((el&&el.value)||d.name||'').trim()||'Sam Rivers';
-    if(m.mode==='edit'){S.player.look={...d.look};S.player.name=d.name;UI.modal=null;return}
-    S.player=newPlayer(d);if(m.mode==='existing'){S.needChar=0;UI.modal=null;log('good','Meet '+S.player.name+', owner of '+S.ranchName+'.');return}
+  pcdone:()=>{const m=UI.modal||{};const el=document.getElementById('pName');const d=UI.pdraft;d.name=((el&&el.value)||d.name||'').trim()||'Sam Rivers';const re=document.getElementById('rNameC');d.ranch=((re&&re.value)||d.ranch||'').trim()||(d.name.split(' ').pop()+' Ranch');const setR=()=>{if(S.phase==='tutorial'){UI.rname=d.ranch;S.player.ranchWant=d.ranch}else S.ranchName=d.ranch};
+    if(m.mode==='edit'){S.player.look={...d.look};S.player.name=d.name;setR();UI.modal=null;return}
+    S.player=newPlayer(d);setR();if(m.mode==='existing'){S.needChar=0;UI.modal=null;log('good','Meet '+S.player.name+', owner of '+S.ranchName+'.');return}
     UI.modal={type:'tutintro',lock:1}},
-  editlook:()=>{UI.pdraft={name:S.player.name,bg:S.player.bg,look:{top:0,neck:0,neckC:0,eye:0,extra:0,...S.player.look}};UI.modal={type:'creator',mode:'edit'}},
+  editlook:()=>{UI.pdraft={name:S.player.name,ranch:S.phase==='tutorial'?(UI.rname||S.player.ranchWant||''):S.ranchName,bg:S.player.bg,look:{top:0,neck:0,neckC:0,eye:0,extra:0,...S.player.look}};UI.modal={type:'creator',mode:'edit'}},
   tocreator:()=>{UI.pdraft=defaultDraft();UI.modal={type:'creator',lock:1,mode:'existing'}},
   tutskip:()=>{UI.modal={type:'gift',lock:1}},
   giftpick:d=>{const h=H(d.id);if(!h)return;freeGear(h.id);const g=JSON.parse(JSON.stringify(h));g.ageDays=age(h);UI.gift=g;UI.modal={type:'path',lock:1}},
@@ -3808,6 +3808,7 @@ document.addEventListener('change',e=>{
   if(c==='awayh'){UI.awayH=e.target.value;render();return}
   if(c==='awayd'){UI.awayD=e.target.value;render();return}
   if(c==='pname'){UI.pdraft.name=e.target.value;return}
+  if(c==='rnamec'){UI.pdraft.ranch=e.target.value;return}
   if(c==='rname'){UI.rname=e.target.value;return}
   if(c==='equip'){if(e.target.value)equip(e.target.value,e.target.dataset.id);save();render();return}
   if(c==='equipto'){if(e.target.value)equip(e.target.dataset.u,e.target.value);save();render();return}
