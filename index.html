@@ -1044,14 +1044,14 @@ const SONG=[['G','G','C','G','D','D','G','G'],['Em','C','G','D','Em','C','D','G'
 // three tunes that rotate: the easy fingerpicked guitar, a slow prairie waltz with a harmonica, and an upbeat campfire shuffle with banjo rolls
 const WALTZ={ch:['D','D','G','D','D','Bm','A','A','G','D','A','Bm','G','A','D','D'],mel:[[66,69,71],[69,-1,66],[67,71,74],[69,-1,-1],[66,69,71],[74,71,69],[69,-1,64],[64,-1,-1],[71,69,67],[66,-1,69],[64,66,67],[66,-1,62],[67,69,71],[69,67,64],[62,-1,-1],[-1,-1,-1]]};
 const SHUFFLE={ch:['A','A','D','A','E','E','A','A','D','D','A','Fsm','D','E','A','A']};
-function musicLead(c,m,t,dur,v){const o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain(),l=c.createOscillator(),lg=c.createGain();
+function musicLead(c,m,t,dur,v,out){const o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain(),l=c.createOscillator(),lg=c.createGain();
   o.type='sawtooth';o2.type='square';o.frequency.value=MIDI(m);o2.frequency.value=MIDI(m)*1.003;f.type='lowpass';f.frequency.value=1500;f.Q.value=2.5;
   l.frequency.value=5.2;lg.gain.value=7;l.connect(lg);lg.connect(o.detune);lg.connect(o2.detune);
   g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+.06);g.gain.setValueAtTime(v*.85,t+Math.max(.08,dur-.12));g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-  o.connect(f);o2.connect(f);f.connect(g);g.connect(AU.mus);g.connect(AU.rev);[o,o2,l].forEach(x=>{x.start(t);x.stop(t+dur+.05)})}
+  o.connect(f);o2.connect(f);f.connect(g);g.connect(out||AU.mus);[o,o2,l].forEach(x=>{x.start(t);x.stop(t+dur+.05)})}
 function musicStart(){if(!AU.ready||AU.music||PREF.music<=0)return;const c=AU.ctx;let next=c.currentTime+.3,bar=0,sec=0;
-  const fixed=PREF.song!=null&&PREF.song>=0;const st={timer:null,track:fixed?PREF.song:(AU.trackNext||0)};
-  const play=(m,t,v,pan=0,rate=1)=>{const s=c.createBufferSource(),g=c.createGain(),p=c.createStereoPanner?c.createStereoPanner():null;s.buffer=pluckBuf(m);s.playbackRate.value=rate;g.gain.value=v;s.connect(g);if(p){p.pan.value=pan;g.connect(p);p.connect(AU.mus);p.connect(AU.rev)}else{g.connect(AU.mus);g.connect(AU.rev)}s.start(t);return {s,g}};
+  const fixed=PREF.song!=null&&PREF.song>=0;const st={timer:null,track:fixed?PREF.song:(AU.trackNext||0)};const bus=c.createGain();bus.gain.value=1;bus.connect(AU.mus);bus.connect(AU.rev);st.bus=bus;
+  const play=(m,t,v,pan=0,rate=1)=>{const s=c.createBufferSource(),g=c.createGain(),p=c.createStereoPanner?c.createStereoPanner():null;s.buffer=pluckBuf(m);s.playbackRate.value=rate;g.gain.value=v;s.connect(g);if(p){p.pan.value=pan;g.connect(p);p.connect(bus)}else{g.connect(bus)}s.start(t);return {s,g}};
   const mute=(n,t,len)=>{n.g.gain.setValueAtTime(n.g.gain.value,t+len);n.g.gain.exponentialRampToValueAtTime(.0001,t+len+.06)};
   const TR=[
    {name:'Easy Country Guitar',bars:48,bar(t0){const e8=60/92/2,ch=CHORDS[SONG[sec%SONG.length][bar%8]],sw=k=>t0+k*e8+(k%2?e8*.08:0);
@@ -1061,7 +1061,7 @@ function musicStart(){if(!AU.ready||AU.music||PREF.music<=0)return;const c=AU.ct
       let d=e8*8;if((bar+1)%8===0&&(sec+1)%3===0)d+=e8*4;return d}},
    {name:'Prairie Waltz',bars:32,bar(t0){const q=60/84,i=bar%16,ch=CHORDS[WALTZ.ch[i]];
       play(ch.r,t0,.42,-.15);[1,2].forEach(k=>ch.t.forEach((m,j)=>play(m,t0+k*q+j*.018,.12,.2)));
-      WALTZ.mel[i].forEach((m,k)=>{if(m<0)return;let len=q*.95;for(let j=k+1;j<3&&WALTZ.mel[i][j]===-1;j++)len+=q;musicLead(c,m,t0+k*q,len,.075)});
+      WALTZ.mel[i].forEach((m,k)=>{if(m<0)return;let len=q*.95;for(let j=k+1;j<3&&WALTZ.mel[i][j]===-1;j++)len+=q;musicLead(c,m,t0+k*q,len,.075,bus)});
       return q*3}},
    {name:'Campfire Shuffle',bars:32,bar(t0){const e8=60/112/2,i=bar%16,ch=CHORDS[SHUFFLE.ch[i]],sw=k=>t0+k*e8+(k%2?e8*.16:0);
       [0,4].forEach(k=>play(ch.r,sw(k),.42,-.2));[2,6].forEach(k=>play(ch.a,sw(k),.36,-.2));
@@ -1071,7 +1071,7 @@ function musicStart(){if(!AU.ready||AU.music||PREF.music<=0)return;const c=AU.ct
       return e8*8}}];
   st.timer=setInterval(()=>{if(c.state!=='running')return;while(next<c.currentTime+.8){const T=TR[st.track];next+=T.bar(next);bar++;if(bar%8===0)sec++;
       if(bar>=T.bars){bar=0;sec=0;if(!(PREF.song!=null&&PREF.song>=0)){st.track=(st.track+1)%TR.length;AU.trackNext=st.track}next+=1.2}}},150);AU.music=st}
-function musicStop(){if(AU.music){clearInterval(AU.music.timer);AU.music=null}}
+function musicStop(){const m=AU.music;if(m){clearInterval(m.timer);AU.music=null;if(m.bus&&AU.ctx){const t=AU.ctx.currentTime;m.bus.gain.cancelScheduledValues(t);m.bus.gain.setValueAtTime(m.bus.gain.value,t);m.bus.gain.linearRampToValueAtTime(0,t+.25);setTimeout(()=>{try{m.bus.disconnect()}catch(e){}},400)}}}
 let lastSaveOk=false,lastSaveAt=0,saveWarned=false;
 // Keep the family-tree registry from growing forever: keep only horses that matter
 // (yours, for sale, boarding, past horses) plus all of their ancestors.
@@ -1136,7 +1136,7 @@ function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l]
   return `<div class="setrow"><div><b>Look</b><div class="note">Auto follows your device.</div></div>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']])}</div>
   <div class="setrow"><div><b>Sound effects</b><div class="note">Hoofbeats, crowds, coins and horse sounds.</div></div>${seg('sfx',[[0,'Off'],[.35,'Low'],[.7,'Medium'],[1,'High']])}</div>
   <div class="setrow"><div><b>Music</b><div class="note">Three tunes take turns: Easy Country Guitar, Prairie Waltz and Campfire Shuffle.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
-  <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate'],[0,'Guitar'],[1,'Waltz'],[2,'Shuffle']])}</div>
+  <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz (new)'],[2,'Campfire Shuffle (new)']])}</div>
   <div class="setrow"><div><b>Watch events</b><div class="note">Play the race or show before the results.</div></div>${seg('watch',[[1,'Watch'],[0,'Skip']])}</div>
   <div class="setrow"><div><b>Event speed</b><div class="note">How fast events play when you watch.</div></div>${seg('speed',[[1,'1×'],[2,'2×'],[4,'4×']])}</div>
   <div class="setrow"><div><b>Saving</b><div class="note">${S?saveStatus():(()=>{try{localStorage.setItem(KEY+'-t','1');localStorage.removeItem(KEY+'-t');return '<span class="good">✓ This browser can save games.</span>'}catch(e){return '<span class="bad">⚠ This browser is blocking saves.</span> Use save files instead.'}})()}</div></div></div>
