@@ -474,6 +474,13 @@ const N1=['Dusty','Midnight','Copper','Silver','Prairie','Thunder','Whiskey','Ju
 const N2=['Comet','Rain','Spur','Dancer','Bandit','Rose','Arrow','Ghost','Belle','Drifter','Sky','Outlaw','Mustang','Lady','Dollar','Storm','Ranger','Biscuit','Moon','Jack','Song','Trail','Blaze','Pepper','Sundance','Wren','Rebel','Echo','Flicker','Whisper','Lark','Ace','Mesquite','Ridge','Poppy','Bolt'];
 const FARMS=['Cedar Hollow','Two Forks','Red Mesa','Lone Pine','Bitterroot','Dry Creek','Silver Sage','High Plains','Coyote Run','Big Sky'];
 const randName=()=>pick(N1)+' '+pick(N2);
+const PFIRST=['Sam','Jo','Cody','Wyatt','Hank','Luke','Clay','Wade','Travis','Colt','Dale','Rhett','Owen','Eli','Jesse','Casey','Riley','Avery','Morgan','Dakota','Tess','June','Lacey','Annie','Callie','Maggie','Ruby','Hattie','Rosa','Mae','Lena','Della','Carmen','Josie','Nora','Mateo','Diego','Ben','Will','Grady'];
+const PLAST=['Rivers','Walker','Hollister','McCoy','Dalton','Harlan','Brooks','Garrett','Sutton','Carver','Bennett','Lowry','Tate','Whitaker','Delgado','Ramirez','Yates','Calloway','Prescott','Wheeler','Barlow','Haskell','Morrow','Kincaid','Ellison','Crane','Hart','Rowe','Pruitt','Doyle'];
+const RFIRST=['Thunder','Silver','Cedar','Red','Lone','Whispering','Sundown','Copper','Painted','Broken','Twin','High','Crooked','Big','Wild','Golden','Blue','Iron','Willow','Coyote','Eagle','Prairie','Sage','Juniper','Rattlesnake','Dusty','Bear','Elk','Aspen','Clear'];
+const RSECOND=['Creek','Ridge','Valley','Mesa','Springs','Hollow','Canyon','Butte','Meadow','Bend','River','Flats','Pines','Hills','Rock','Spur','Gulch','Trail','Bluff','Prairie'];
+const RLAST=['Ranch','Ranch','Ranch','Stables','Farm','Horse Co.','Quarter Horses','Livestock','Equine'];
+const randPerson=()=>pick(PFIRST)+' '+pick(PLAST);
+const randRanch=()=>{const a=pick(RFIRST);let b=pick(RSECOND);if(a===b)b='Creek';return a+' '+b+' '+pick(RLAST)};
 
 /* ---------- rarity, breeds, items ---------- */
 const RARITY={common:{n:'Common',m:1},uncommon:{n:'Uncommon',m:1.15},rare:{n:'Rare',m:1.35},epic:{n:'Epic',m:1.8},legendary:{n:'Legendary',m:2.6},mythical:{n:'Mythical',m:4.2}};
@@ -1584,7 +1591,7 @@ function doJob(h,id){
     if(R()<injuryRisk(h,.015)){injure(h);msg+=' But got hurt.'}}
   toast(msg+wd);
 }
-function makeOffer(h,mult){if(S.offers.some(o=>o.id===h.id))return null;const o={id:h.id,amt:Math.round(saleValue(h)*mult*houseMult()/10)*10,exp:S.day+2,who:pick(FARMS)};S.offers.push(o);return o}
+function makeOffer(h,mult){if(!h||h.client||S.offers.some(o=>o.id===h.id))return null;const o={id:h.id,amt:Math.round(saleValue(h)*mult*houseMult()/10)*10,exp:S.day+2,who:pick(FARMS)};S.offers.push(o);return o}
 function doChore(id){
   if(S.choreDay!==S.day){S.choreDay=S.day;S.choresToday=[]}
   if(choresLeft()<=0)return toast('You’ve done two things today. Time to rest.');
@@ -1594,7 +1601,7 @@ function doChore(id){
   else if(id==='town'){const pay=ri(100,200);S.money+=pay;msg='You picked up odd jobs in town and earned '+money(pay)+'.'}
   else if(id==='fix'){for(const h of S.horses){h.happy=clamp(h.happy+5,0,100);h.health=clamp(h.health+5,0,100)}msg='You mended fences and mucked out the stalls. The herd is more comfortable.'}
   else if(id==='openhouse'){const n=S.horses.length,ah=n?S.horses.reduce((a,h)=>a+h.happy,0)/n:0;
-    if(n&&ah>=70){const r=gainRep(ri(1,3)+L('house'));msg='Your open house was a hit. Reputation +'+r+'.';const ad=S.horses.filter(isAdult);if(ad.length&&R()<.5){const o=makeOffer(pick(ad),1.2+R()*.3);if(o)msg+=' A visitor made an offer on '+H(o.id).name+'.'}}
+    if(n&&ah>=70){const r=gainRep(ri(1,3)+L('house'));msg='Your open house was a hit. Reputation +'+r+'.';const ad=S.horses.filter(h=>isAdult(h)&&!h.client);if(ad.length&&R()<.5){const o=makeOffer(pick(ad),1.2+R()*.3);if(o)msg+=' A visitor made an offer on '+H(o.id).name+'.'}}
     else msg='Visitors came, but the horses looked glum. Get average happiness to 70 first.'}
   else if(id==='show'){if(L('ring')<3)return toast('You need a Show Arena first.');const pay=ri(400,900),r=gainRep(ri(1,2));S.money+=pay;msg='You hosted a horse show in your arena. Entry fees brought in '+money(pay)+' and your reputation grew by '+r+'.'}
   else if(id==='muck'){if(!S.horses.length)return toast('No horses, no mess.');const before=dirtyStalls(100);const r=muckStalls(PLAYER_MUCK*pskM('ranch',.12));for(const h of S.horses)h.happy=clamp(h.happy+2,0,100);msg=r.n?(dirtyStalls(100)?'You mucked out '+r.n+' stalls (the dirtiest first) and laid fresh bedding. You ran out of daylight before finishing '+dirtyStalls(100)+' more.':'You mucked out all '+r.n+' dirty stalls and laid fresh bedding. The barn smells sweet again.'):'The stalls were already spotless. You spread fresh bedding anyway.'}
@@ -1948,7 +1955,7 @@ function portraitSVG(look,size=96){const L0={skin:0,hair:0,hairC:0,hat:0,hatC:0,
   ${beard}${front}${ex==='glasses'?`<g fill="none" stroke="#2B2A26" stroke-width="1.3"><rect x="37.5" y="45.4" width="10" height="7.4" rx="3"/><rect x="52.5" y="45.4" width="10" height="7.4" rx="3"/><path d="M47.5 48.4 C49 47.2 51 47.2 52.5 48.4 M37.5 48 L33 46.8 M62.5 48 L67 46.8"/></g><path d="M39 47 l3 3" stroke="#fff" stroke-width=".8" opacity=".6"/>`:''}${hat}</g><circle cx="50" cy="50" r="48.5" fill="none" stroke="rgba(0,0,0,.08)"/></svg>`}
 function creatorBody(m){const d=UI.pdraft;d.look={skin:0,hair:0,hairC:0,hat:0,hatC:0,shirt:0,beard:0,top:0,neck:0,neckC:0,eye:0,extra:0,...d.look};const opt=(k,label,vals,sw)=>`<div class="pcrow"><span class="pclbl">${label}</span><div class="pcopts">${vals.map((v,i)=>`<button class="pcopt ${d.look[k]===i?'on':''}" data-a="pc" data-k="${k}" data-v="${i}" ${sw?`style="background:${v}"`:''} aria-label="${label} ${i+1}">${sw?'':v==='pony'?'ponytail':v}</button>`).join('')}</div></div>`;
   return `<div class="creator"><div class="pcprev">${portraitSVG(d.look,140)}</div><div class="pcform">
-   <div class="field"><label for="pName">Your name</label><input id="pName" data-c="pname" type="text" maxlength="24" value="${esc(d.name)}"></div><div class="field"><label for="rNameC">Ranch name</label><input id="rNameC" data-c="rnamec" type="text" maxlength="28" value="${esc(d.ranch||'')}" placeholder="${esc(((d.name||'').trim().split(' ').pop()||'Rivers')+' Ranch')}"></div>
+   <div class="field"><label for="pName">Your name</label><input id="pName" data-c="pname" type="text" maxlength="24" value="${esc(d.name)}"><button type="button" class="btn small" data-a="rndpname" title="Random name" style="margin-top:6px;width:auto">🎲 Random name</button></div><div class="field"><label for="rNameC">Ranch name</label><input id="rNameC" data-c="rnamec" type="text" maxlength="28" value="${esc(d.ranch||'')}" placeholder="${esc(((d.name||'').trim().split(' ').pop()||'Rivers')+' Ranch')}"><button type="button" class="btn small" data-a="rndrname" title="Random ranch name" style="margin-top:6px;width:auto">🎲 Random ranch name</button></div>
    ${opt('skin','Skin',LOOK.skin,1)}${opt('eye','Eyes',LOOK.eye,1)}${opt('hair','Hair',LOOK.hair,0)}${opt('hairC','Hair color',LOOK.hairC,1)}${opt('beard','Facial hair',LOOK.beard,0)}${opt('extra','Extras',LOOK.extra,0)}${opt('hat','Hat',LOOK.hat,0)}${opt('hatC','Hat color',LOOK.hatC,1)}${opt('top','Outfit',LOOK.top,0)}${opt('shirt','Shirt color',LOOK.shirt,1)}${opt('neck','Neckwear',LOOK.neck,0)}${opt('neckC','Neckwear color',LOOK.neckC,1)}</div></div>
    ${m.mode==='edit'?'':`<div class="subh">Your background</div><div class="bggrid">${Object.entries(BACKGROUNDS_P).map(([k,b])=>`<button class="bgcard ${d.bg===k?'on':''}" data-a="pbg" data-k="${k}"><b>${b.n}</b><span class="note">${b.d}</span><span class="note good">${Object.entries(b.sk).map(([s,l])=>PSKILLS.find(x=>x.k===s).n+' '+l).join(' · ')}</span></button>`).join('')}</div>
    <p class="note">Every skill starts at 1 except your background’s. All skills grow as you work, up to 5.</p>`}
@@ -2477,6 +2484,7 @@ function renderHeader(){
 }
 
 function renderStable(){
+  S.offers=S.offers.filter(o=>{const h=H(o.id);return h&&!h.client});
   const offers=S.offers.map(o=>{const h=H(o.id);return h?`<div class="offer"><div class="grow"><b>${esc(o.who)}</b> wants to buy <b>${esc(h.name)}</b> for <b class="mono">${money(o.amt)}</b> <span class="note">(worth about ${money(saleValue(h))}, offer ends day ${o.exp})</span></div><button class="btn primary small" data-a="accept" data-id="${h.id}">Accept</button><button class="btn small" data-a="decline" data-id="${h.id}">Decline</button></div>`:''}).join('');
   const studs=S.studReq.map(r=>{const h=H(r.id);if(!h)return '';const ok=canWork(h)&&h.energy>=20;
     return `<div class="offer"><div class="grow"><b>${esc(r.who)} Ranch</b> wants to breed their mare to <b>${esc(h.name)}</b> ${rbadge(rarityOf(h))} and will pay <b class="mono">${money(r.fee)}</b> <span class="note">(stud service, uses ${esc(h.name)}’s day and 20 energy, offer ends day ${r.exp})</span>${ok?'':'<div class="note bad">'+esc(h.name)+' can’t do it today. Accept tomorrow before the offer ends.</div>'}</div><button class="btn primary small" data-a="studyes" data-id="${h.id}" ${ok?'':'disabled'}>Accept</button><button class="btn small" data-a="studno" data-id="${h.id}">Decline</button></div>`}).join('');
@@ -3149,7 +3157,7 @@ function papers(h,mode){
      ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}.<br>${h.client.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div>`:''}
     <div class="pcol">     ${trainerPlan(h)}
     </div>
-    <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div><div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>
+    <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div>${h.client?`<p class="note">${esc(h.name)} belongs to ${esc(h.client.owner)}. Only the owner can rename a client’s horse.</p>`:`<div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>`}
 </div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
 </div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Stops competing for good (you can change your mind later). Still breeds, teaches lessons and works the ranch, gets +10 happiness now and +1 every night.</span>`}</div>`:''}
 </div><div>${h.client?'':`<div class="subh">Sell</div><div class="actions">${sellBtn}</div>`}</div></div></div>`:''}
@@ -3675,6 +3683,8 @@ const ACT={
   close:()=>{UI.modal=null},
   pc:d=>{UI.pdraft.look[d.k]=+d.v},
   pbg:d=>{UI.pdraft.bg=d.k},
+  rndpname:()=>{const el=document.getElementById('rNameC');if(el)UI.pdraft.ranch=el.value;UI.pdraft.name=randPerson()},
+  rndrname:()=>{const el=document.getElementById('pName');if(el)UI.pdraft.name=el.value;UI.pdraft.ranch=randRanch()},
   pcdone:()=>{const m=UI.modal||{};const el=document.getElementById('pName');const d=UI.pdraft;d.name=((el&&el.value)||d.name||'').trim()||'Sam Rivers';const re=document.getElementById('rNameC');d.ranch=((re&&re.value)||d.ranch||'').trim()||(d.name.split(' ').pop()+' Ranch');const setR=()=>{if(S.phase==='tutorial'){UI.rname=d.ranch;S.player.ranchWant=d.ranch}else S.ranchName=d.ranch};
     if(m.mode==='edit'){S.player.look={...d.look};S.player.name=d.name;setR();UI.modal=null;return}
     S.player=newPlayer(d);setR();if(m.mode==='existing'){S.needChar=0;UI.modal=null;log('good','Meet '+S.player.name+', owner of '+S.ranchName+'.');return}
@@ -3702,9 +3712,9 @@ const ACT={
     let extra='';if(r.fee>=800){gainRep(1);extra=' Your ranch’s name spreads (+1 reputation).'}
     S.studReq=S.studReq.filter(x=>x!==r);unlock('studsvc');log('good',h.name+' covered a mare from '+r.who+' Ranch for '+money(r.fee)+'.'+extra);toast('Earned '+money(r.fee)+' in stud fees.'+extra)},
   studno:d=>{S.studReq=S.studReq.filter(x=>x.id!==+d.id);toast('Request declined.')},
-  accept:d=>{const o=S.offers.find(x=>x.id===+d.id);const h=H(d.id);if(o&&h)UI.modal={type:'confirmSell',id:h.id,amt:o.amt,why:'offer from '+o.who,back:UI.modal}},
+  accept:d=>{const o=S.offers.find(x=>x.id===+d.id);const h=H(d.id);if(h&&h.client){S.offers=S.offers.filter(x=>x.id!==h.id);toast(h.name+' belongs to a client, so it can’t be sold.');return}if(o&&h)UI.modal={type:'confirmSell',id:h.id,amt:o.amt,why:'offer from '+o.who,back:UI.modal}},
   decline:d=>{S.offers=S.offers.filter(x=>x.id!==+d.id);toast('Offer declined.')},
-  rename:d=>{const h=H(d.id);const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
+  rename:d=>{const h=H(d.id);if(h&&h.client){toast('You can’t rename a client’s horse.');return}const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
   renameRanch:()=>{const v=($('#ranchInput')||{}).value;if(v&&v.trim()){S.ranchName=v.trim().slice(0,32);toast('Ranch renamed.')}},
   hay:d=>{const n=+d.n;const cost=Math.round(S.hayPrice*n*(n>=150?.9:n>=50?.95:1)*(1-(psk('biz')-1)*.03));pxp('biz',1);tutMark('hay');if(S.money<cost)return toast('Not enough money.');S.money-=cost;S.hay=Math.round((S.hay+n)*10)/10;toast('Bought '+n+' bales for '+money(cost)+'.')},
   stalls:()=>{const c=1200+S.stallLevel*800;if(S.money<c)return;S.money-=c;S.stalls+=2;S.stallLevel++;log('info','Built 2 new stalls for '+money(c)+'.');toast('Two new stalls built.')},
