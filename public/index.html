@@ -1047,11 +1047,14 @@ function pluckBuf(m){AU.pl=AU.pl||{};if(AU.pl[m])return AU.pl[m];const c=AU.ctx,
   let idx=0,peak=0;const decay=m<50?.9975:.9965;for(let i=0;i<len;i++){const a=ring[idx],nx=ring[(idx+1)%N];ring[idx]=(a+nx)*.5*decay;d[i]=a;peak=Math.max(peak,Math.abs(a));idx=(idx+1)%N}
   for(let i=0;i<len;i++)d[i]/=peak||1;for(let i=0;i<200;i++)d[len-1-i]*=i/200;return AU.pl[m]=b}
 const CHORDS={G:{r:43,a:50,t:[59,62,67]},C:{r:48,a:43,t:[60,64,67]},D:{r:50,a:45,t:[57,62,66]},Em:{r:40,a:47,t:[55,59,64]},Am:{r:45,a:52,t:[57,60,64]},
-  A:{r:45,a:40,t:[57,61,64]},E:{r:40,a:47,t:[56,59,64]},Bm:{r:47,a:42,t:[59,62,66]},Fsm:{r:42,a:49,t:[57,61,66]}};
+  A:{r:45,a:40,t:[57,61,64]},F:{r:41,a:48,t:[57,60,65]},B:{r:47,a:42,t:[59,63,66]},Dm:{r:50,a:45,t:[57,62,65]},E:{r:40,a:47,t:[56,59,64]},Bm:{r:47,a:42,t:[59,62,66]},Fsm:{r:42,a:49,t:[57,61,66]}};
 const SONG=[['G','G','C','G','D','D','G','G'],['Em','C','G','D','Em','C','D','G'],['C','G','Am','D','G','C','D','G']];
 // three tunes that rotate: the easy fingerpicked guitar, a slow prairie waltz with a harmonica, and an upbeat campfire shuffle with banjo rolls
 const WALTZ={ch:['D','D','G','D','D','Bm','A','A','G','D','A','Bm','G','A','D','D'],mel:[[66,69,71],[69,-1,66],[67,71,74],[69,-1,-1],[66,69,71],[74,71,69],[69,-1,64],[64,-1,-1],[71,69,67],[66,-1,69],[64,66,67],[66,-1,62],[67,69,71],[69,67,64],[62,-1,-1],[-1,-1,-1]]};
 const SHUFFLE={ch:['A','A','D','A','E','E','A','A','D','D','A','Fsm','D','E','A','A']};
+const BALLAD={ch:['C','G','Am','F','C','F','G','G','Am','Em','F','C','F','G','C','C'],mel:[[72,-1,71,69],[67,-1,-1,-1],[69,71,72,-1],[69,-1,65,-1],[67,-1,72,-1],[69,-1,67,65],[67,-1,-1,-1],[-1,-1,-1,-1],[69,-1,72,-1],[71,-1,67,-1],[69,-1,65,67],[64,-1,-1,-1],[65,69,72,-1],[74,-1,71,-1],[72,-1,-1,-1],[-1,-1,-1,-1]]};
+const DRIVE={ch:['Em','Em','D','D','C','C','B','B','Em','Em','D','D','C','B','Em','Em'],mel:[[-1,-1,-1,-1],[-1,-1,-1,-1],[74,-1,71,69],[67,-1,-1,-1],[67,69,71,-1],[72,-1,71,-1],[71,-1,66,-1],[63,-1,-1,-1],[64,67,71,-1],[76,-1,74,71],[74,-1,71,69],[66,-1,-1,-1],[67,-1,72,71],[69,-1,66,-1],[64,-1,-1,-1],[-1,-1,-1,-1]]};
+const TRAIL={ch:['Am','Am','C','G','Am','F','E','E','Am','C','G','Am','F','G','E','Am'],mel:[[76,72],[74,-1],[72,67],[71,-1],[72,76],[77,72],[71,-1],[68,-1],[69,72],[76,72],[74,71],[69,-1],[72,69],[71,67],[68,71],[69,-1]]};
 function musicLead(c,m,t,dur,v,out){const o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain(),l=c.createOscillator(),lg=c.createGain();
   o.type='sawtooth';o2.type='square';o.frequency.value=MIDI(m);o2.frequency.value=MIDI(m)*1.003;f.type='lowpass';f.frequency.value=1500;f.Q.value=2.5;
   l.frequency.value=5.2;lg.gain.value=7;l.connect(lg);lg.connect(o.detune);lg.connect(o2.detune);
@@ -1076,7 +1079,22 @@ function musicStart(){if(!AU.ready||AU.music||PREF.music<=0)return;const c=AU.ct
       [2,6].forEach(k=>ch.t.forEach((m,j)=>mute(play(m,sw(k)+j*.012,.13,.1),sw(k),e8*.6)));
       const roll=[ch.t[0]+12,ch.t[1]+12,ch.t[2]+12,ch.t[1]+12];[1,3,5,7].forEach((k,j)=>mute(play(roll[j%4],sw(k),.14,.35,1),sw(k),e8*1.4));
       if(i%4===3)[0,1,2].forEach(j=>mute(play(ch.t[2-j]+12,sw(5)+j*e8*.5,.12,.35),sw(5)+j*e8*.5,e8));
-      return e8*8}}];
+      return e8*8}},
+   {name:'Sunset Ballad',bars:32,bar(t0){const q=60/72,e8=q/2,i=bar%16,ch=CHORDS[BALLAD.ch[i]],T=ch.t;
+      play(ch.r,t0,.4,-.15);play(ch.a,t0+q*2,.3,-.15);[T[0],T[1],T[2],T[1]+12,T[2],T[1],T[0],T[1]].forEach((m,k)=>{if(k)play(m,t0+k*e8,.15+(k%2?0:.03),.2)});
+      BALLAD.mel[i].forEach((m,k)=>{if(m<0)return;let len=q*.95;for(let j=k+1;j<4&&BALLAD.mel[i][j]===-1;j++)len+=q;musicLead(c,m,t0+k*q,len,.055,bus)});
+      return q*4}},
+   {name:'Cattle Drive',bars:32,bar(t0){const e8=60/128/2,i=bar%16,ch=CHORDS[DRIVE.ch[i]];
+      play(ch.r,t0,.45,-.2);play(ch.a,t0+e8*4,.38,-.2);
+      [2,6].forEach(k=>ch.t.forEach((m,j)=>mute(play(m,t0+k*e8+j*.01,.15,.1),t0+k*e8,e8*.45)));
+      for(let k=0;k<8;k++)noiseHit(t0+k*e8,.05,k%2?.05:.09,5200,.8,bus,'highpass');
+      DRIVE.mel[i].forEach((m,k)=>{if(m<0)return;let len=e8*1.9;for(let j=k+1;j<4&&DRIVE.mel[i][j]===-1;j++)len+=e8*2;musicLead(c,m,t0+k*e8*2,len,.06,bus)});
+      return e8*8}},
+   {name:'Lonesome Trail',bars:32,bar(t0){const e8=60/52/3,i=bar%16,ch=CHORDS[TRAIL.ch[i]],T=ch.t;
+      play(ch.r,t0,.42,-.2);[T[0],T[1],T[2],T[1],T[0]].forEach((m,k)=>play(m,t0+(k+1)*e8,.14+(k===2?.04:0),.15));
+      TRAIL.mel[i].forEach((m,k)=>{if(m<0)return;const t=t0+k*e8*3,n=play(m,t,.26,.35);n.s.playbackRate.setValueAtTime(Math.pow(2,-2/12),t);n.s.playbackRate.linearRampToValueAtTime(1,t+.09);
+        if(TRAIL.mel[i][k+1]===-1&&Math.random()<.6){const n2=play(m,t+e8*3,.12,.35);n2.s.playbackRate.setValueAtTime(1,t+e8*3)}});
+      return e8*6}}];
   st.timer=setInterval(()=>{if(c.state!=='running')return;while(next<c.currentTime+.8){const T=TR[st.track];next+=T.bar(next);bar++;if(bar%8===0)sec++;
       if(bar>=T.bars){bar=0;sec=0;if(!(PREF.song!=null&&PREF.song>=0)){st.track=(st.track+1)%TR.length;AU.trackNext=st.track}next+=1.2}}},150);AU.music=st}
 function musicStop(){const m=AU.music;if(m){clearInterval(m.timer);AU.music=null;if(m.bus&&AU.ctx){const t=AU.ctx.currentTime;m.bus.gain.cancelScheduledValues(t);m.bus.gain.setValueAtTime(m.bus.gain.value,t);m.bus.gain.linearRampToValueAtTime(0,t+.25);setTimeout(()=>{try{m.bus.disconnect()}catch(e){}},400)}}}
@@ -1143,8 +1161,8 @@ function savePanel(){
 function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button class="btn small ${PREF[k]===v?'primary':''}" data-a="pref" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
   return `<div class="setrow"><div><b>Look</b><div class="note">Auto follows your device.</div></div>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']])}</div>
   <div class="setrow"><div><b>Sound effects</b><div class="note">Hoofbeats, crowds, coins and horse sounds.</div></div>${seg('sfx',[[0,'Off'],[.35,'Low'],[.7,'Medium'],[1,'High']])}</div>
-  <div class="setrow"><div><b>Music</b><div class="note">Three tunes take turns: Easy Country Guitar, Prairie Waltz and Campfire Shuffle.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
-  <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz (new)'],[2,'Campfire Shuffle (new)']])}</div>
+  <div class="setrow"><div><b>Music</b><div class="note">Six tunes take turns: Easy Country Guitar, Prairie Waltz, Campfire Shuffle, Sunset Ballad, Cattle Drive and Lonesome Trail.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
+  <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz'],[2,'Campfire Shuffle'],[3,'Sunset Ballad (new)'],[4,'Cattle Drive (new)'],[5,'Lonesome Trail (new)']])}</div>
   <div class="setrow"><div><b>Watch events</b><div class="note">Play the race or show before the results.</div></div>${seg('watch',[[1,'Watch'],[0,'Skip']])}</div>
   <div class="setrow"><div><b>Event speed</b><div class="note">How fast events play when you watch.</div></div>${seg('speed',[[1,'1×'],[2,'2×'],[4,'4×']])}</div>
   <div class="setrow"><div><b>Saving</b><div class="note">${S?saveStatus():(()=>{try{localStorage.setItem(KEY+'-t','1');localStorage.removeItem(KEY+'-t');return '<span class="good">✓ This browser can save games.</span>'}catch(e){return '<span class="bad">⚠ This browser is blocking saves.</span> Use save files instead.'}})()}</div></div></div>
