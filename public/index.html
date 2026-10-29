@@ -790,15 +790,16 @@ function recentJobs(h,days=6){return (h.jobs||[]).filter(j=>j.d>S.day-days)}
 function jobCount(h,k){return recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)}
 const AUTO_WIN=.8;
 /* ---------- balance (Build 70) ---------- */
-const BAL={topPrize:0.6,classMax:{0:6,1:10,2:16},taxRate:.05,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={gradPay:.5,topPrize:0.6,classMax:{0:6,1:10,2:16},taxRate:.05,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
-function classNote(h,ti){const m=BAL.classMax[ti];if(m==null||!h)return '';const w=tierWins(h,ti);return w>=m?'Graduated: '+w+' wins here. Time to move up!':w>=m-2?'Class limit: '+(m-w)+' more win'+(m-w>1?'s':'')+' here':''}
+function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
+function classNote(h,ti){const m=BAL.classMax[ti];if(m==null||!h)return '';const w=tierWins(h,ti);return w>=m?'Graduated ('+w+' wins here): prize money is halved':w>=m-2?(m-w)+' more win'+(m-w>1?'s':'')+' here before prizes are halved':''}
 function propValue(){return FAC.reduce((a,f)=>a+f.lv.slice(1,L(f.id)+1).reduce((x,l)=>x+(l.c||0),0),0)}
 function propTax(){return Math.round(Math.max(0,propValue()-BAL.taxFree)*BAL.taxRate/10)*10}
 function maxClients(){return Math.floor(S.stalls/BAL.clientPer)}
 function autoPick(h){let best=null,top=null,sour=null;
-  EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti)||!classOk(h,ti))return;if(ti>=T_NAT&&!vetClear(h))return;if(S.money<entryFee(t,ev))return;
+  EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti))return;if(ti>=T_NAT&&!vetClear(h))return;if(S.money<entryFee(t,ev))return;
     const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
     if(od.win>=AUTO_WIN){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-entryFee(t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
   return {best,sour,top}}
@@ -1022,7 +1023,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='70';
 const CHANGELOG=[
  {b:'70',d:'Oct 29, 2026',t:'Balance pass: a real late game',c:[
-  'Show class limits: a horse can win 6 Local Shows, 10 County Fairs and 16 State Championships, then it graduates and has to move up. The event buttons warn you when a horse is close.',
+  'Show class limits: after a horse wins 6 Local Shows, 10 County Fairs or 16 State Championships, it has graduated from that level. It can still enter, but its prize money there is halved. The event buttons warn you when a horse is close.',
   'Property tax: once your buildings are worth more than $25,000, you pay 5% of the value above that each season. It shows on the Facilities tab.',
   'Boarding pays less, you can board 1 client horse for every 3 stalls, and owners now keep 40% of their horse’s prize money.',
   'Bigger shows cost more to enter, and National-level purses and up are smaller.',
@@ -1908,7 +1909,7 @@ function odds(h,ev,t){const pl=[0,0,0];const N=500;
   // same horse + event + level on the same day always gives the same numbers (no re-rolling by clicking)
   let st=((h.id*2654435761)^(EVENTS.indexOf(ev)*97+TIERS.indexOf(t)*7919+S.day*104729))>>>0;const rr=()=>{st=(st+0x6D2B79F5)>>>0;let z=st;z=Math.imul(z^(z>>>15),z|1);z^=z+Math.imul(z^(z>>>7),z|61);return((z^(z>>>14))>>>0)/4294967296};
   const gs=()=>{let u=0,v=0;while(!u)u=rr();while(!v)v=rr();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};const base=baseScore(h,ev)*compMult(h,ev);
-  for(let i=0;i<N;i++){const me=base*(.88+rr()*.24);let b=0;for(let j=0;j<7;j++)if(Math.max(5,t.base+gs()*t.spread)>me)b++;if(b<3)pl[b]++}const pz=prizesFor(ev,t);return{win:pl[0]/N,top3:(pl[0]+pl[1]+pl[2])/N,avg:Math.round((pl[0]*pz[0]+pl[1]*pz[1]+pl[2]*pz[2])/N)}}
+  for(let i=0;i<N;i++){const me=base*(.88+rr()*.24);let b=0;for(let j=0;j<7;j++)if(Math.max(5,t.base+gs()*t.spread)>me)b++;if(b<3)pl[b]++}const gm=gradMult(h,TIERS.indexOf(t)),pz=prizesFor(ev,t).map(x=>x*gm);return{win:pl[0]/N,top3:(pl[0]+pl[1]+pl[2])/N,avg:Math.round((pl[0]*pz[0]+pl[1]*pz[1]+pl[2]*pz[2])/N)}}
 function ranchInvPanel(h,ok){const L0=(S.ranchInv||[]).filter(v=>v.until>=S.day);if(!L0.length)return '';const elig=S.horses.filter(canCompete);
   return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Ranch show invitations</div><p class="note">Other ranches invite you to their own shows. No entry fee. Pick a horse to send.</p>${L0.map(v=>{const ev=EVENTS[v.ei];const sel=UI['rinv'+v.id]||'';return `<div class="staff"><div class="grow"><b>${esc(v.who)} Ranch ${esc(ev.n)}</b><div class="note">Purse ${v.prize.map(p=>money(r10(p*(ev.purse||1)))).join(' / ')} · field strength about ${Math.round(v.base)} · good through day ${v.until}</div></div><select data-c="rinvsel" data-v="${v.id}" aria-label="Horse to send"><option value="">Pick a horse…</option>${elig.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${esc(x.name)} (${ev.n.split(' ')[0]} ${Math.round(baseScore(x,ev))})</option>`).join('')}</select><button class="btn small primary" data-a="rinvgo" data-v="${v.id}" ${sel?'':'disabled'}>Send</button></div>`}).join('')}</div>`}
 function canCompete(h){return h&&!trainerHeld(h)&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
@@ -1916,7 +1917,6 @@ function compete(h,ei,ti){
   const ev=EVENTS[ei],t=TIERS[ti];if(trainerHeld(h))return toast(h.name+' is reserved for the trainer. Tap the 📌 chip on the card to free them up.');
   if(!canCompete(h))return toast('That horse can’t compete today. They need '+compEnergy(h||{})+' energy and 50 health.');
   if(S.rep<t.req)return toast(t.n+' events need '+t.req+' reputation.');
-  if(!classOk(h,ti))return toast(h.name+' has won '+tierWins(h,ti)+' '+t.n+' events and has graduated from that level. Enter a higher level.');
   const rinv=t.ranch?(S.ranchInv||[]).find(v=>v.ei===ei&&v.until>=S.day):null;if(t.ranch){if(!rinv)return toast('That ranch show invitation has expired.');t.base=rinv.base;t.prize=rinv.prize}else if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
   if(!tierOpen(ti))return toast(t.n+' events aren’t running right now. '+openText(ti)+'.');
   if(ti>=T_NAT&&!t.ranch&&!vetClear(h))return toast(t.n+' events need a clean bill of health: a vet checkup in the last 8 days.');
@@ -1930,7 +1930,7 @@ function compete(h,ei,ti){
   h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts++;pxp('show',2);tutMark('show');const moodTxt=workDone(h,'ev:'+ei);S.weekStarts=(S.weekStarts||0)+1;if(t.ranch)S.ranchInv=S.ranchInv.filter(v=>v!==rinv);else if(t.invite)S.invites=S.invites.filter(v=>v.ei!==ei);
   let prize=0,rep=0;
   if(place<=3&&h.client)h.client.places++;
-  let cut=0;if(place<=3){prize=prizesFor(ev,t)[place-1];rep=(t.repCap&&S.rep>=t.repCap)?0:gainRep(t.rep[place-1]*pskM('show',.06));cut=h.client?Math.round(prize*CLIENT_CUT):0;S.money+=prize-cut;h.earnings+=prize;if(cut)h.client.paidOut=(h.client.paidOut||0)+cut}
+  let cut=0;if(place<=3){prize=r10(prizesFor(ev,t)[place-1]*gradMult(h,ti));rep=(t.repCap&&S.rep>=t.repCap)?0:gainRep(t.rep[place-1]*pskM('show',.06));cut=h.client?Math.round(prize*CLIENT_CUT):0;S.money+=prize-cut;h.earnings+=prize;if(cut)h.client.paidOut=(h.client.paidOut||0)+cut}
   if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.15)){S.starOffer=1}if(ti===7)unlock('invitational')}
   else if(place>=7)h.happy=clamp(h.happy-4,0,100);
   if(place<=3&&gearSum(h,'rep'))rep+=gainRep(1);
@@ -2862,7 +2862,7 @@ function renderCompete(){
     return `<div class="invite"><div><span class="invtag">By invitation only</span><h3>The ${esc(ev.n)} Invitational</h3><div class="note">Only the best ranches are asked. Invitation good through day ${v.until}. One entry.</div></div><button class="tierbtn" data-a="compete" data-e="${v.ei}" data-t="${INV}" ${!ok||!vetClear(h)||S.money<entryFee(t,ev)?'disabled':''}><span class="t">Enter</span><span class="s">Entry ${money(entryFee(t,ev))}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${o}</button></div>`}).join('')}</div>`:(S.rep>=100?'<p class="note" style="margin:-6px 0 14px">No invitations this week. New ones arrive with the weekly market.</p>':'')}
   <div class="events">${EVENTS.map((ev,ei)=>`<div class="event"><div><div class="evart">${eventArt(ev.id)}</div><h3>${ev.n}</h3><div class="w">${ev.b}</div><div class="w mono">${Object.entries(ev.w).map(([k,v])=>STATS.find(s=>s.k===k).s+' '+Math.round(v*100)+'%').join(' · ')}</div></div>
    <div class="tiers">${TIERS.map((t,ti)=>{if(t.invite)return '';const locked=S.rep<t.req,closed=!tierOpen(ti);if(locked||closed)return '';let o='';if(ok&&!locked&&!closed){const od=odds(h,ev,t);const fe=entryFee(t,ev),net=od.avg-fe;o=`<span class="o ${od.win>.3?'good':od.top3>.3?'warn':'bad'}">Win ${pct(od.win)} · Top 3 ${pct(od.top3)}</span><span class="s ${net>=0?'good':'bad'}">Avg payout ${money(od.avg)} (${net>=0?'+':''}${money(net)} after fee)</span>`}
-     const nv=ti>=T_NAT&&h&&!vetClear(h),grad=!classOk(h,ti),cn=classNote(h,ti);return `<button class="tierbtn ${closed?'closed':''}" data-a="compete" data-e="${ei}" data-t="${ti}" ${!ok||locked||closed||nv||grad||S.money<entryFee(t,ev)?'disabled':''}><span class="t">${t.n}</span><span class="s">Entry ${money(entryFee(t,ev))}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${locked?`<span class="o note">Needs ${t.req} reputation</span>`:closed?`<span class="o note">${openText(ti)}</span>`:grad?`<span class="o note bad">${cn}</span>`:nv?`<span class="o note bad">Needs a vet checkup (last 8 days)</span>`:o+(cn?`<span class="o note warn">${cn}</span>`:'')}</button>`}).join('')}</div></div>`).join('')}</div>`;
+     const nv=ti>=T_NAT&&h&&!vetClear(h),grad=!classOk(h,ti),cn=classNote(h,ti);return `<button class="tierbtn ${closed?'closed':''}" data-a="compete" data-e="${ei}" data-t="${ti}" ${!ok||locked||closed||nv||S.money<entryFee(t,ev)?'disabled':''}><span class="t">${t.n}</span><span class="s">Entry ${money(entryFee(t,ev))}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${locked?`<span class="o note">Needs ${t.req} reputation</span>`:closed?`<span class="o note">${openText(ti)}</span>`:nv?`<span class="o note bad">Needs a vet checkup (last 8 days)</span>`:o+(cn?`<span class="o note ${grad?'bad':'warn'}">${cn}</span>`:'')}</button>`}).join('')}</div></div>`).join('')}</div>`;
 }
 
 function renderMarket(){
