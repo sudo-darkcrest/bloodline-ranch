@@ -735,20 +735,23 @@ ${ti===6?`<path d="M15 -2.2 l1.3 2.7 3 .4 -2.2 2 .5 2.9 -2.6 -1.4 -2.6 1.4 .5 -2
 const HAWARDS=[
   {id:'olympic',n:'Olympic Champion',d:'Won gold at the Olympics.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===6)},
   {id:'hof',n:'Hall of Fame',d:'Won 3 National-level or higher events.',t:h=>h.ribbons.filter(r=>r.p===1&&r.t>=4&&r.t<=7).length>=3},
-  {id:'international',n:'International Champion',d:'Won an International event.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===5)},
   {id:'invitational',n:'Invitational Champion',d:'Won an invitation-only event.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===7)},
+  {id:'international',n:'International Champion',d:'Won an International event.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===5)},
   {id:'national',n:'National Champion',d:'Won at Nationals.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===4)},
-  {id:'ten',n:'Ten-Time Champion',d:'Won 10 events.',t:h=>h.wins>=10},
   {id:'regional',n:'Regional Champion',d:'Won at Regionals.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===3)},
   {id:'state',n:'State Champion',d:'Won a State Championship.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===2)},
+  {id:'county',n:'County Champion',d:'Won at a County Fair.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===1)},
+  {id:'ten',n:'Ten-Time Champion',d:'Won 10 events.',t:h=>h.wins>=10},
+  {id:'five',n:'Five-Time Winner',d:'Won 5 events.',t:h=>h.wins>=5},
+  {id:'blue',n:'Blue Ribbon Winner',d:'Won an event.',t:h=>h.wins>=1},
   {id:'earner',n:'Big Earner',d:'Earned $10,000.',t:h=>(h.earnings||0)>=10000},
   {id:'allround',n:'All-Rounder',d:'Won 3 different kinds of event.',t:h=>new Set(h.ribbons.filter(r=>r.p===1).map(r=>r.e)).size>=3},
-  {id:'five',n:'Five-Time Winner',d:'Won 5 events.',t:h=>h.wins>=5},
-  {id:'county',n:'County Champion',d:'Won at a County Fair.',t:h=>h.ribbons.some(r=>r.p===1&&r.t===1)},
   {id:'iron',n:'Iron Horse',d:'Started 25 events.',t:h=>h.starts>=25},
-  {id:'blue',n:'Blue Ribbon Winner',d:'Won an event.',t:h=>h.wins>=1},
   {id:'first',n:'First Ribbon',d:'Placed in the top 3 at an event.',t:h=>h.ribbons.length>=1},
 ];
+/* prestige of each tier: Local < County < Ranch Show < State < Regional < National < International < Invitational < Olympics */
+const TIER_RANK=[0,1,3,4,5,6,8,7,2];function tierRank(t){return TIER_RANK[t]??0}
+function rankRibbons(rb){return [...rb].sort((x,y)=>tierRank(y.t)-tierRank(x.t)||x.p-y.p||(y.d||0)-(x.d||0))}
 function rankAwards(names){return [...names].sort((a,b)=>{const ia=HAWARDS.findIndex(x=>x.n===a),ib=HAWARDS.findIndex(x=>x.n===b);return (ia<0?99:ia)-(ib<0?99:ib)})}
 function awardsOf(h){h.ribbons=h.ribbons||[];return HAWARDS.filter(a=>a.t(h))}
 function newAwards(h){h.awardsSeen=h.awardsSeen||[];const got=awardsOf(h).filter(a=>!h.awardsSeen.includes(a.id));got.forEach(a=>h.awardsSeen.push(a.id));return got}
@@ -756,9 +759,9 @@ function ribbonCounts(h){const c=[0,0,0];for(const r of (h.ribbons||[]))c[r.p-1]
 function ribbonSection(h){
   const rb=h.ribbons||[];const aw=awardsOf(h);const c=ribbonCounts(h);
   if(!rb.length&&!aw.length)return `<div class="subh">Ribbons &amp; awards</div><p class="note">No ribbons yet. Place in the top 3 at any event to earn one.</p>`;
-  const wall=[...rb].reverse().slice(0,30).map(r=>ribbonSVG(r.p,r.t,22,['1st','2nd','3rd'][r.p-1]+' · '+TIERS[r.t].n+' '+EVENTS[r.e].n+' · day '+r.d+(r.prev?' (at '+r.prev+')':''))).join('');
+  const wall=rankRibbons(rb).slice(0,30).map(r=>ribbonSVG(r.p,r.t,22,['1st','2nd','3rd'][r.p-1]+' · '+TIERS[r.t].n+' '+EVENTS[r.e].n+' · day '+r.d+(r.prev?' (at '+r.prev+')':''))).join('');
   return `<div class="subh">Ribbons &amp; awards</div>
-  <div class="note">${c[0]} blue (1st) · ${c[1]} red (2nd) · ${c[2]} yellow (3rd)${rb.length>30?' · showing the latest 30':''}. Local and County ribbons are plain, State and Regional ones are rosettes, and rosettes from Nationals (gold rim), Internationals (teal), the Olympics (bright gold) and Invitationals (purple) have colored rims.</div>
+  <div class="note">${c[0]} blue (1st) · ${c[1]} red (2nd) · ${c[2]} yellow (3rd)${rb.length>30?' · showing the best 30':''}. Local and County ribbons are plain, State and Regional ones are rosettes, and rosettes from Nationals (gold rim), Internationals (teal), the Olympics (bright gold) and Invitationals (purple) have colored rims.</div>
   <div class="ribbonwall">${wall}</div>
   ${aw.length?`<div class="awardlist">${aw.map(a=>`<span class="award" title="${esc(a.d)}">${a.n}</span>`).join('')}</div>`:''}
   <div class="note" style="margin-top:6px">${aw.length} of ${HAWARDS.length} awards earned.</div>`;
@@ -1030,7 +1033,7 @@ const CHANGELOG=[
   'Clients pay a big bonus for new skills and a small bonus for extra stat points.',
   'Facilities map: chickens, goats, sheep and cattle each have their own pen.',
   'The truck and trailer park on a gravel pull-off by the gate.',
-  'The Compete tab scoreboard stands on the ground now.']},
+  'The Compete tab scoreboard stands on the ground now.','Ribbons and awards are now listed best first: Olympics, Invitational, International, National, Regional, State, Ranch Show, County, then Local. A State ribbon never shows below a County one.']},
  {b:'68',d:'Oct 28, 2026',t:'Favorites, offers and new music',c:[
   'Mark horses as favorites with the star button.',
   'The Stable picture shows your own top and favorite horses; the Hall of Fame picture shows your real champions.',
@@ -1824,7 +1827,7 @@ function snapHorse(h,kind,reason){const c=ribbonCounts(h);const full=kind==='her
     ageYrs:+(age(h)/DPY).toFixed(1),bornDay:h.born,gen:h.gen,origin:h.origin,wins:h.wins||0,starts:h.starts||0,earnings:h.earnings||0,ribbons:c,awards:awardsOf(h).map(a=>a.n),
     foals:foalCount(h.id),stud:h.studCount||0,bestPot:Math.max(...Object.values(h.pot)),avgPot:Math.round(avg(h.pot)),retired:h.retired||null,kind,reason,day:S.day}}
 function remember(h,kind,reason){if(h.client){if(kind==='died'){loseRep(8,'A client’s horse died in your care.',null)}return}S.memorial=S.memorial||[];S.memorial.push(snapHorse(h,kind,reason))}
-function hofReasons(r){const o=[];if(r.awards.includes('Hall of Fame'))o.push('Hall of Fame award');else{if(r.awards.includes('Olympic Champion'))o.push('Olympic Champion');if(r.awards.includes('International Champion'))o.push('International Champion');if(r.awards.includes('Invitational Champion'))o.push('Invitational Champion');if(r.awards.includes('National Champion'))o.push('National Champion')}
+function hofReasons(r){const o=[];if(r.awards.includes('Hall of Fame'))o.push('Hall of Fame award');else{if(r.awards.includes('Olympic Champion'))o.push('Olympic Champion');if(r.awards.includes('Invitational Champion'))o.push('Invitational Champion');if(r.awards.includes('International Champion'))o.push('International Champion');if(r.awards.includes('National Champion'))o.push('National Champion')}
   if(r.wins>=10)o.push(r.wins+' career wins');if(r.earnings>=50000)o.push(money(r.earnings)+' earned');if(r.foals>=6)o.push('Foundation '+(r.sex==='M'?'sire':'dam')+' ('+r.foals+' foals)');
   if(r.gen>0&&r.bestPot>=85)o.push('Exceptional bloodline (potential '+r.bestPot+')');return o}
 function sell(h,amt,why){if(!h.client){S.soldBack=S.soldBack||[];const c=JSON.parse(JSON.stringify(h));S.soldBack.unshift({h:c,price:Math.round(amt*1.15/10)*10,until:S.day+7});if(S.soldBack.length>10)S.soldBack.length=10}remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
