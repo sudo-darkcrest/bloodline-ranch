@@ -778,6 +778,15 @@ function compEnergy(h){return Math.max(15,(hasS(h,'easyloader')?24:40)-[0,8,15][
 function jobName(k){if(k.startsWith('train:'))return STATS.find(x=>x.k===k.slice(6)).n+' drills';if(k.startsWith('ev:'))return (EVENTS[+k.slice(3)]||{n:'Shows'}).n;return {lesson:'Riding lessons',trail:'Trail rides',ground:'Groundwork',ranchwork:'Ranch work'}[k]||k}
 function recentJobs(h,days=6){return (h.jobs||[]).filter(j=>j.d>S.day-days)}
 function jobCount(h,k){return recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)}
+function sourRisk(h,ei){const o=[];if(!h)return o;const lazy=has(h,'lazy');
+  if(!has(h,'workaholic')&&(h.streak||0)+1>=(lazy?3:5))o.push('This would be day '+((h.streak||0)+1)+' of work in a row. '+h.name+' would sour (−3 happiness).');
+  if(!has(h,'workaholic')&&!has(h,'habit')&&!has(h,'showoff')){let n=jobCount(h,'ev:'+ei);if(has(h,'easilybored'))n*=2;const pen=boredPen(n);if(pen)o.push(h.name+' is getting sick of '+jobName('ev:'+ei).toLowerCase()+' (−'+pen+' happiness).')}
+  if(!has(h,'showoff')&&recentJobs(h).filter(j=>j.k.startsWith('ev:')).length>=4)o.push(h.name+' is worn out from so many shows (−3 happiness).');
+  return o}
+function offerAsk(m){if(m.kind==='market'){const h=S.market[m.i];return h?h.price:0}const h=H(m.id);return h?Math.round(saleValue(h)*1.35/10)*10:0}
+function offerChance(m,amt){const ask=offerAsk(m);if(!ask)return 0;const r=amt/ask;const bz=(psk('biz')-1)*.025+Math.max(0,S.rep-30)*.001;
+  if(m.kind==='market'){if(r>=1)return 1;return clamp(1/(1+Math.exp(-(r-.88)*16))+bz,0,.99)}
+  const h=H(m.id);const c=h&&h.client;const att=c&&c.goals&&c.goals.length>=3?.04:0;return clamp(1/(1+Math.exp(-(r-(1+att))*9))+bz,0,.97)}
 function boredPen(n){return n<2?0:n<3?2:n<4?4:n<5?7:10}
 function workDone(h,k,w=1){h.jobs=(h.jobs||[]).filter(j=>j.d>S.day-7);let n=jobCount(h,k);if(has(h,'easilybored'))n*=2;const kinds=new Set(recentJobs(h).map(j=>j.k));h.jobs.push({d:S.day,k,w});
   let dh=0;const notes=[];const ev=k.startsWith('ev:');
@@ -1899,7 +1908,7 @@ function renderBoarding(){
      <div class="subh" style="margin:4px 0">What the owner expects</div><ul class="note" style="margin:0 0 8px;padding-left:18px">${r.goals.map(g=>`<li>${goalText(g,h)}</li>`).join('')}</ul>
      <div class="actions"><button class="btn primary" data-a="acceptclient" data-i="${i}" ${S.horses.length>=S.stalls?'disabled':''}>Take them in</button><button class="btn" data-a="declineclient" data-i="${i}">Turn down</button><span class="note">Offer ends in ${r.exp-S.day} day${r.exp-S.day===1?'':'s'}</span></div></div>`}).join('');
   const act=S.horses.filter(h=>h.client).map(h=>{const c=h.client;return `<div class="awayrow"><div><b>${esc(h.name)}</b> <span class="note">${esc(c.owner)} · ${money(c.pay)}/day · leaves in ${c.until-S.day} day${c.until-S.day===1?'':'s'}</span>
-     <div class="note">${c.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div><button class="btn small" data-a="open" data-id="${h.id}">Papers</button></div>`}).join('');
+     <div class="note">${c.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="btn small" data-a="open" data-id="${h.id}">Papers</button><button class="btn small" data-a="offer" data-k="client" data-id="${h.id}">Offer to buy</button></div></div>`}).join('');
   return `<div class="section-head"><h2>Boarding</h2><span class="sub">Send your horses away for professional training, or take in other owners’ horses for pay.</span></div>
   <div class="subh">Send a horse to a training center</div>
   <div class="panel" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:12px"><div class="field"><label for="awayH">Horse</label><select id="awayH" data-c="awayh">${cands.length?cands.map(h=>`<option value="${h.id}" ${sel===h?'selected':''}>${esc(h.name)} · ${stage(h)} · avg ${Math.round(avg(h.tr))}/${Math.round(avg(h.pot))}</option>`).join(''):'<option>No horse can go right now</option>'}</select></div>
@@ -2472,7 +2481,7 @@ function horseCard(h,mode){
   const [sc,sl]=mode==='market'?['ready',money(h.price)]:status(h);
   const c=coat(h.genes);
   let actions='';
-  if(mode==='market'){actions=`<button class="btn primary small" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button><button class="btn small" data-a="open" data-id="${h.id}" data-m="market">View papers</button>`}
+  if(mode==='market'){actions=`<button class="btn primary small" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button><button class="btn small" data-a="offer" data-k="market" data-i="${S.market.indexOf(h)}">Make offer</button><button class="btn small" data-a="open" data-id="${h.id}" data-m="market">View papers</button>`}
   else{
     const w=canWork(h)&&h.energy>=25;
     actions=groomBtn(h,true);
@@ -2643,7 +2652,7 @@ function renderBreeding(){
 }
 
 function renderCompete(){
-  const elig=S.horses.filter(isAdult);
+  const elig=S.horses.filter(isAdult);if(UI.compHorse&&!canCompete(H(UI.compHorse))&&!(UI.modal&&UI.modal.type==='watch')){const nx=elig.find(x=>canCompete(x));if(nx)UI.compHorse=String(nx.id)}
   const h=H(UI.compHorse);
   const ok=canCompete(h);
   return `<div class="section-head"><h2>Show Grounds</h2><span class="sub">Each horse can enter one event per day. Entry fees are about 6–8% of the purse. Only Local Shows run every day. The rest follow the show calendar.</span></div>
@@ -3184,7 +3193,7 @@ function papers(h,mode){
     <div class="subh">Natural skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(born with, passed to foals)</span></div>${h.traits.length?`<div class="traitlist">${h.traits.map(t=>`<div><b class="${TRAITS[t].rare?'warn':TRAITS[t].good?'good':'bad'}">${TRAITS[t].n}</b>${TRAITS[t].d}</div>`).join('')}</div>`:'<p class="note">No natural skills.</p>'}
     <div class="subh">Learned skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(earned through bond, ${(h.skills||[]).length}/${MAXSKILLS}, not inherited)</span></div>${(h.skills||[]).length?`<div class="traitlist">${h.skills.map(k=>`<div><b style="color:var(--accent)">${SKILLS[k].n}</b>${SKILLS[k].d}</div>`).join('')}</div>`:'<p class="note">None yet. Horses with 70+ bond can pick up a skill overnight.</p>'}
     ${ribbonSection(h)}
-    ${mode==='market'?`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button></div>`:''}
+    ${mode==='market'?`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button><button class="btn" data-a="offer" data-k="market" data-i="${S.market.indexOf(h)}">Make an offer</button></div>`:''}
    </div></div>
    ${own?`<div class="papers2">
     <div class="pcol">     ${gearSection(h)}
@@ -3203,7 +3212,7 @@ function papers(h,mode){
      ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}.<br>${h.client.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div>`:''}
     <div class="pcol">     ${trainerPlan(h)}
     </div>
-    <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div>${h.client?`<p class="note">${esc(h.name)} belongs to ${esc(h.client.owner)}. Only the owner can rename a client’s horse.</p>`:`<div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>`}
+    <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div>${h.client?`<p class="note">${esc(h.name)} belongs to ${esc(h.client.owner)}. Only the owner can rename a client’s horse.</p><div class="actions"><button class="btn" data-a="offer" data-k="client" data-id="${h.id}">Offer to buy ${esc(h.name)}</button></div>`:`<div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>`}
 </div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
 </div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Stops competing for good (you can change your mind later). Still breeds, teaches lessons and works the ranch, gets +10 happiness now and +1 every night.</span>`}</div>`:''}
 </div><div>${h.client?'':`<div class="subh">Sell</div><div class="actions">${sellBtn}</div>`}</div></div></div>`:''}
@@ -3237,6 +3246,18 @@ function renderModal(){
     if(list.length>1){const pos=`<span class="navpos">${i+1} of ${list.length}</span>`;
       nav={side:`<button class="navside prev" data-a="hnav" data-d="-1" aria-label="Previous horse" title="Previous horse (←)">‹</button><button class="navside next" data-a="hnav" data-d="1" aria-label="Next horse" title="Next horse (→)">›</button>`,
         head:`<span class="navhead"><button class="btn" data-a="hnav" data-d="-1" aria-label="Previous horse">‹</button><button class="btn" data-a="hnav" data-d="1" aria-label="Next horse">›</button></span>`,pos}}
+  }else if(m.type==='offer'){const ask=offerAsk(m);const h=m.kind==='market'?S.market[m.i]:H(m.id);if(!h||!ask){UI.modal=null;return render()}
+    if(m.amt==null)m.amt=m.kind==='market'?Math.round(ask*.9/10)*10:ask;const lo=Math.round(ask*.5/10)*10,hi=m.kind==='market'?ask:Math.round(ask*2/10)*10;const ch=offerChance(m,m.amt);const who=m.kind==='market'?'The seller':h.client.owner;
+    title='Make an offer on '+h.name;
+    body=`<p>${m.kind==='market'?`Asking price: <b class="mono">${money(ask)}</b>. Offer less and see if the seller bites. Pay the full asking price and it’s yours for sure.`:`${esc(h.client.owner)} isn’t selling, but everyone has a price. Owners are attached, so a fair offer is about <b class="mono">${money(ask)}</b> and more money makes a yes more likely.`}</p>
+    <div class="field"><label for="offerAmt">Your offer: <b class="mono" id="offerVal">${money(m.amt)}</b> · <span id="offerPct">${Math.round(ch*100)}% chance ${who.toLowerCase()==='the seller'?'the seller':esc(who)} says yes</span></label><input id="offerAmt" type="range" data-c="offeramt" min="${lo}" max="${hi}" step="10" value="${m.amt}" style="width:100%"></div>
+    <p class="note">You have ${money(S.money)}. If they say no, they won’t hear another offer on ${esc(h.name)} today. Your Business skill and reputation help a little.</p>
+    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="offerok">Offer ${money(m.amt)}</button><button class="btn" data-a="close">Cancel</button></div>`;
+  }else if(m.type==='sourcomp'){const h=H(UI.compHorse);const ev=EVENTS[m.ei],t=TIERS[m.ti];
+    title='This could sour '+(h?h.name:'this horse');
+    body=`<p>Auto compete picked <b>${t.n} ${ev.n}</b> (${pct(m.win)} win chance), but every good option would hurt ${h?esc(h.name):'the horse'}’s mood:</p><ul class="report">${m.reasons.map(r=>`<li class="warn">${esc(r)}</li>`).join('')}</ul>
+    <p class="note">A day off in the pasture fixes most of this. Sour horses are less happy, and unhappy horses can refuse in the ring.</p>
+    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sourok">Run the race anyway</button><button class="btn" data-a="close">Not today</button></div>`;
   }else if(m.type==='foal'){const b=m.list[m.i]||{};const f=H(b.f),mo=H(b.m);if(!f){UI.modal={type:'report',ev:m.ev,day:m.day};return render()}
     const sireN=(S.registry[f.sire]||{}).name||'an unknown sire',best=Math.max(...Object.values(f.pot)),kid=f.sex==='M'?'colt':'filly';
     title=(mo?mo.name+' had a '+kid+'!':'A '+kid+' was born!');
@@ -3825,10 +3846,22 @@ const ACT={
   gobreed:d=>{UI.breedMare=String(d.id);UI.tab='breeding';UI.modal=null},
   gocomp:d=>{UI.compHorse=String(d.id);UI.tab='compete';UI.modal=null},
   compete:d=>compete(H(UI.compHorse),+d.e,+d.t),
-  autocomp:()=>{const h=H(UI.compHorse);if(!canCompete(h))return toast('Pick a horse that can compete today first.');let best=null,top=null;
+  offer:d=>{const m=d.k==='market'?{type:'offer',kind:'market',i:+d.i}:{type:'offer',kind:'client',id:+d.id};const h=m.kind==='market'?S.market[m.i]:H(m.id);if(!h)return;
+    if(h.noOffer===S.day)return toast((m.kind==='market'?'The seller':h.client?h.client.owner:'The owner')+' won’t take another offer on '+h.name+' today.');
+    if(m.kind==='client'&&!h.client)return;UI.modal=m},
+  offerok:()=>{const m=UI.modal;if(!m||m.type!=='offer')return;const amt=m.amt;if(S.money<amt)return toast('You don’t have '+money(amt)+'.');
+    const h=m.kind==='market'?S.market[m.i]:H(m.id);if(!h)return;if(m.kind==='market'&&S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');
+    const yes=R()<offerChance(m,amt);UI.modal=null;
+    if(!yes){h.noOffer=S.day;sfx('aww');return toast((m.kind==='market'?'The seller':h.client.owner)+' turned down '+money(amt)+' for '+h.name+'. Try again tomorrow.')}
+    if(m.kind==='market'){const ask=h.price;h.price=amt;buy(m.i);if(ask>amt)log('good','Haggled '+h.name+' down from '+money(ask)+' to '+money(amt)+'.');return}
+    const c=h.client;S.money-=amt;pxp('biz',4);delete h.client;h.origin='Bought from '+c.owner;h.noOffer=0;S.offers=S.offers.filter(o=>o.id!==h.id);sfx('coin');
+    log('good','You bought '+h.name+' from '+c.owner+' for '+money(amt)+'. '+h.name+' is yours now.');toast(c.owner+' said yes! '+h.name+' is yours for '+money(amt)+'.')},
+  sourok:()=>{const m=UI.modal;if(!m||m.type!=='sourcomp')return;UI.modal=null;const h=H(UI.compHorse);toast('Auto compete: '+h.name+' → '+TIERS[m.ti].n+' '+EVENTS[m.ei].n+' ('+pct(m.win)+' win chance)');return compete(h,m.ei,m.ti)},
+  autocomp:()=>{const h=H(UI.compHorse);if(!canCompete(h))return toast('Pick a horse that can compete today first.');let best=null,top=null,sour=null;
     EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti))return;if(ti>=T_NAT&&!vetClear(h))return;if(S.money<entryFee(t,ev))return;
       const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
-      if(od.win>=.85&&(!best||ti>best.ti||(ti===best.ti&&od.avg-entryFee(t,ev)>best.net)))best={ei,ti,win:od.win,net:od.avg-entryFee(t,ev)}}));
+      if(od.win>=.85){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-entryFee(t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
+    if(!best&&sour){UI.modal={type:'sourcomp',ei:sour.ei,ti:sour.ti,win:sour.win,reasons:sour.sr};return}
     if(!best)return toast(top?'No open event gives '+h.name+' an 85% chance to win. Best is '+TIERS[top.ti].n+' '+EVENTS[top.ei].n+' at '+pct(top.win)+'.':'No open events '+h.name+' can enter right now.');
     toast('Auto compete: '+h.name+' → '+TIERS[best.ti].n+' '+EVENTS[best.ei].n+' ('+pct(best.win)+' win chance)');return compete(h,best.ei,best.ti)},
   job:d=>{const h=H(d.id);if(h)doJob(h,d.j)},
@@ -3916,6 +3949,8 @@ document.addEventListener('keydown',e=>{
   if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&UI.modal&&UI.modal.type==='horse'&&!(e.target.closest&&e.target.closest('input,textarea,select'))){e.preventDefault();navHorse(e.key==='ArrowLeft'?-1:1);save();render();return}
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('horse')){e.preventDefault();e.target.click()}
 });
+document.addEventListener('input',e=>{if(!(e.target.dataset&&e.target.dataset.c==='offeramt'))return;const m=UI.modal;if(!m||m.type!=='offer')return;m.amt=+e.target.value;const ch=offerChance(m,m.amt);
+  const v=document.getElementById('offerVal'),pc=document.getElementById('offerPct'),bt=document.querySelector('[data-a="offerok"]');if(v)v.textContent=money(m.amt);if(pc)pc.textContent=pc.textContent.replace(/^\d+%/,Math.round(ch*100)+'%');if(bt)bt.textContent='Offer '+money(m.amt)});
 document.addEventListener('change',e=>{
   const c=e.target.dataset&&e.target.dataset.c;if(!c)return;
   if(c==='wpref'){PREF.watch=e.target.checked?0:1;savePref();return}
