@@ -3675,7 +3675,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
     ${bFence(86,'#F4F0E6',0,1000,70)}
     ${bHorse(BH(905,BG.bay,'morgan',60),330,16,126)}${bHorse(BH(906,BG.bay,'morgan',4),462,54,72)}
     ${bHorse(BH(907,BG.chestnut,'haflinger',60),700,18,122,{flip:1})}${bHorse(BH(908,BG.chestnut,'haflinger',6),636,56,66,{flip:1})}
-    ${[[300,30],[620,24],[880,40]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-6 -6 -10 2 0 6 C10 2 6 -6 0 0Z" fill="#F39BB5"/><path d="M0 0 C-6 6 -8 10 0 8 C8 10 6 6 0 0Z" fill="#F7C5D4"/></g>`).join('')}`}
+    ${SEAS<2?`<!--ns-->${[[300,30],[620,24],[880,40]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-6 -6 -10 2 0 6 C10 2 6 -6 0 0Z" fill="#F39BB5"/><path d="M0 0 C-6 6 -8 10 0 8 C8 10 6 6 0 0Z" fill="#F7C5D4"/></g>`).join('')}<!--/ns-->`:SEAS===2?`<!--ns-->${[[180,40,20],[300,62,-30],[560,30,50],[760,58,-15],[900,36,35]].map(([x,y,r],i)=>`<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -5 C4 -3 4 3 0 6 C-4 3 -4 -3 0 -5Z M0 -5 V6" fill="${['#D9822B','#C0562A','#E3A43A'][i%3]}" stroke="#7A3E1A" stroke-width=".5"/>`).join('')}<!--/ns-->`:''}`}
   if(t==='compete'){defs=bSky(p+'s','#8FB9DA','#E6ECE0');
     o=`<rect width="1000" height="120" fill="url(#${p}s)"/>${bHills(66,'#A9C08E',16,12)}
     <g><path d="M600 30 L1000 26 V84 H600Z" fill="#CFC6B4"/>${crowdRows(608,1000,34,4,10,srng(77))}<path d="M590 30 L1010 24 L1010 14 L596 20Z" fill="#9AA4AD"/><path d="M590 30 L1010 24" stroke="#6E777B" stroke-width="2"/>${[620,700,780,860,940].map(x=>`<path d="M${x} 28 V84" stroke="#8A949C" stroke-width="2"/>`).join('')}</g>
