@@ -1670,7 +1670,7 @@ function checkup(h){const lines=[];
   h.vetReport={day:S.day,lines};return lines}
 function autoVetRound(ev){const p=S.staff.vet;if(!p||!S.autoVet)return;let n=0,cost=0,caught=[],skipped=0;
   for(const h of S.horses){if(h.inj||vetDoneSeason(h))continue;const c=autoVetCost(h);if(S.money<c){skipped++;continue}S.money-=c;cost+=c;n++;const had=h.brew;checkup(h);if(had)caught.push(h.name)}
-  if(n)ev.push(['good',p.name+' (Vet) gave '+n+' horse'+(n>1?'s':'')+' their seasonal checkup for '+money(cost)+'. Everyone is vaccinated and has a clean bill of health.'+(caught.length?' Caught sickness early in '+caught.join(', ')+'.':'')]);
+  if(n){ev.push(['info',p.name+' (Vet) gave '+n+' horse'+(n>1?'s':'')+' their seasonal checkup. Cost: −'+money(cost)+'. Everyone is vaccinated and has a clean bill of health.']);if(caught.length)ev.push(['good',p.name+' caught sickness early in '+caught.join(', ')+'.'])}
   if(skipped)ev.push(['warn','Not enough money for '+skipped+' seasonal checkup'+(skipped>1?'s':'')+'.'])}
 function vetInfoPanel(h){if(!h.vetKnown&&psk('eye')<3)return '<p class="note">Get a vet checkup to learn this horse’s expected lifespan, true fertility and family risks.</p>';
   const ly=Math.round(h.life/DPY),rel=S.horses.filter(o=>o!==h&&o.sex!==h.sex&&!o.client&&isAdult(o)).map(o=>[o,h.sex==='M'?coiOf(h.id,o.id):coiOf(o.id,h.id)]).filter(x=>x[1]>=.0625);
