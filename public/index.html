@@ -790,7 +790,7 @@ function recentJobs(h,days=6){return (h.jobs||[]).filter(j=>j.d>S.day-days)}
 function jobCount(h,k){return recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)}
 const AUTO_WIN=.8;
 /* ---------- balance (Build 70) ---------- */
-const BAL={gradPay:.5,topPrize:0.6,classMax:{0:6,1:10,2:16},taxRate:.05,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.05,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
 function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
@@ -1023,7 +1023,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='70';
 const CHANGELOG=[
  {b:'70',d:'Oct 29, 2026',t:'Balance pass: a real late game',c:[
-  'Show class limits: after a horse wins 6 Local Shows, 10 County Fairs or 16 State Championships, it has graduated from that level. It can still enter, but its prize money there is halved. The event buttons warn you when a horse is close.',
+  'Show class limits: after a horse wins 30 Local Shows, 20 County Fairs or 16 State Championships, it has graduated from that level. It can still enter, but its prize money there is halved. The event buttons warn you when a horse is close.',
   'Property tax: once your buildings are worth more than $25,000, you pay 5% of the value above that each season. It shows on the Facilities tab.',
   'Boarding pays less, you can board 1 client horse for every 3 stalls, and owners now keep 40% of their horse’s prize money.',
   'Bigger shows cost more to enter, and National-level purses and up are smaller.',
