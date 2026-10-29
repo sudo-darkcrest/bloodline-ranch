@@ -161,7 +161,7 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .tbtn:hover{border-color:var(--accent)}.tbtn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.tbtn.primary .tb2{color:rgba(255,255,255,.85)}
 .tb1{font-size:18px;font-weight:700}.tb2{font-size:13px;color:var(--muted)}
 .tpanel{max-width:640px;width:100%;margin:6px auto 0}.tpanel h2{margin:0 0 10px}
-.tbuild{text-align:center;margin-top:16px}
+.tbuild{text-align:center;margin-top:16px}.linkbtn{background:none;border:0;padding:2px 4px;color:inherit;font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}.clog{border-bottom:1px solid var(--line);padding:8px 0}.clog summary{cursor:pointer;font-size:15px}.clog ul{margin:8px 0 4px 18px;padding:0;display:grid;gap:4px;font-size:14px}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line)}.setrow>div:first-child{flex:1;min-width:200px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .shinyfx{position:absolute;inset:0;pointer-events:none;border-radius:inherit;box-shadow:inset 0 0 0 2.5px #F2C94C,inset 0 0 0 4px rgba(255,255,255,.55),inset 0 0 22px rgba(255,214,102,.55)}
@@ -1003,7 +1003,76 @@ function gapStat(h){let best=null,g=.5;for(const x of STATS){const d=h.pot[x.k]-
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='63';
+const BUILD='69';
+const CHANGELOG=[
+ {b:'69',d:'Oct 29, 2026',t:'Fresh horses, fences and faster shows',c:[
+  'Click the build number to see what changed in every build (this list!).',
+  'Swipe left and right on a phone to move between tabs.',
+  'Pop-up messages stay on screen longer, and you can tap one to close it.',
+  'Horse heads redrawn with much more detail: round cheeks, brow and cheek bones, softer noses, nostrils, chin and lips, turned a little toward you.',
+  'Face-forward horse heads got ear hair, cheek ridges, whiskers and more.',
+  'Energy now means how fresh a horse is: fresh horses train and compete better, and they get less energy back each night.',
+  'Horses sour when they keep working on low energy (this replaces the old “5 days in a row” rule).',
+  'Happiness 80+ gives a training and show bonus, and each horse’s papers preview tonight’s happiness change.',
+  'Fences now wear down over time. Mend fences fixes them; worn fences weaken pasture days and can let a horse get out.',
+  'Tack Shop: “Buy missing gear” fills every empty gear slot from the shop.',
+  'Auto compete all: enter every ready horse at once and see all the results together.',
+  'Results screen: “Auto compete next horse” button.',
+  'Sour warning now offers to rest the horse in the pasture instead.',
+  'Auto compete now enters at an 80% or better chance to win (was 85%).',
+  'Client owners take 20% of prize money their horse wins.',
+  'Clients pay a big bonus for new skills and a small bonus for extra stat points.',
+  'Facilities map: chickens, goats, sheep and cattle each have their own pen.',
+  'The truck and trailer park on a gravel pull-off by the gate.',
+  'The Compete tab scoreboard stands on the ground now.']},
+ {b:'68',d:'Oct 28, 2026',t:'Favorites, offers and new music',c:[
+  'Mark horses as favorites with the star button.',
+  'The Stable picture shows your own top and favorite horses; the Hall of Fame picture shows your real champions.',
+  'Make an offer on market horses or client horses. Offer more or less to change the odds.',
+  'After a horse competes, the Compete tab picks the next horse that can go.',
+  'Auto compete tries not to sour your horses and asks first if it must.',
+  'Three new songs: Sunset Ballad, Cattle Drive and Lonesome Trail.',
+  'Swipe between horse papers on a phone.',
+  'Client horses show their goals under their stats, with gold goal lines on the stat bars.',
+  'Win chances no longer change every time you click.',
+  'Title screen: bigger sign and more realistic mountains.',
+  'Foal birth scene: cleaner shadows, the mare without tack, and your rancher watching.',
+  'Fixed: foals from paid studs sometimes showed an unknown father.',
+  'Fixed: seasonal vet checkups looked like income (they are a cost).',
+  'Fixed: the braid was in front of the face; the cross-country sign text didn’t fit; pink petals showed in fall and winter.',
+  'The Foaling Barn description now lists its safer births.']},
+ {b:'67',d:'Oct 27, 2026',t:'Seasons and new foals',c:[
+  'Pictures change with the seasons: green spring, golden fall, snowy winter with bare trees.',
+  'A foal birth scene where you meet and name each new foal.',
+  'Choose your ranch name in the character creator, with random name buttons for both.',
+  'Your character’s picture stays visible while you scroll the look options.',
+  'Front-facing horses in the stable, Hall of Fame, training barn and office window.',
+  'New 1970s/80s-style bank with a drive-up teller.',
+  'Grooming plays a brushing sound and a whinny every time.',
+  'Fixed: buyers made offers on client horses, and you could rename client horses.',
+  'Fixed: a title-screen horse popped in front of another one.']},
+ {b:'66',d:'Oct 27, 2026',t:'Bigger map and new art',c:[
+  'A larger, more detailed Facilities map with a truck and horse trailer.',
+  'New Tack Shop, Bank, Staff, Training Center and Compete pictures with a modern rural look.',
+  'Auto compete button on the Compete tab; closed or locked shows are hidden (still on the calendar).',
+  'Two new songs and a song picker in Settings.',
+  'More rancher look options: hair, hats, tops, neckwear, eyes, extras.',
+  'Fixed: two songs playing at once when switching songs; the race had two finish lines.']},
+ {b:'65',d:'Oct 27, 2026',t:'Horse redraw',c:[
+  'Horses redrawn with real-horse proportions.',
+  'Event horses gallop and trot with real leg movement.',
+  'New title screen, natural crowds and better trees.',
+  'Report a Bug button on the start menu.',
+  'Fixed: some event horses stood frozen.']},
+ {b:'64',d:'Oct 27, 2026',t:'New events and tools',c:[
+  'New events (Cross-Country and Reining), ranch show invitations and a hidden Shetland surprise.',
+  'Confirm before selling, with a 7-day buy-back.',
+  'Stud foal records, crate bundles and new tack tools.',
+  'More compact horse papers.',
+  'Crowd sounds made from voices and claps.',
+  'Fixed: a loan credit exploit and ribbon names at each level.']},
+ {b:'63',d:'Before Oct 27, 2026',t:'The beta build',c:['The version the first beta testers started with.']}];
+function changelogBody(){return CHANGELOG.map((x,i)=>`<details class="clog" ${i===0?'open':''}><summary><b>Build ${x.b}</b> · ${esc(x.t)} <span class="note">${x.d}${x.b===BUILD?' · you are here':''}</span></summary><ul>${x.c.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></details>`).join('')}
 const PKEY=KEY+'-prefs';
 let PREF=(()=>{const d={theme:'auto',watch:1,speed:1};try{return Object.assign(d,JSON.parse(localStorage.getItem(PKEY)||'{}'))}catch(e){return d}})();
 function applyTheme(){const r=document.documentElement;if(PREF.theme==='light'||PREF.theme==='dark')r.dataset.theme=PREF.theme;else delete r.dataset.theme}
@@ -1206,6 +1275,7 @@ function savePanel(){
 function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button class="btn small ${PREF[k]===v?'primary':''}" data-a="pref" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
   return `<div class="setrow"><div><b>Look</b><div class="note">Auto follows your device.</div></div>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']])}</div>
   <div class="setrow"><div><b>Sound effects</b><div class="note">Hoofbeats, crowds, coins and horse sounds.</div></div>${seg('sfx',[[0,'Off'],[.35,'Low'],[.7,'Medium'],[1,'High']])}</div>
+  <div class="setrow"><div><b>Version</b><div class="note">Build ${BUILD}</div></div><button class="btn small" data-a="changelog">What’s new</button></div>
   <div class="setrow"><div><b>Music</b><div class="note">Six tunes take turns: Easy Country Guitar, Prairie Waltz, Campfire Shuffle, Sunset Ballad, Cattle Drive and Lonesome Trail.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
   <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz'],[2,'Campfire Shuffle'],[3,'Sunset Ballad (new)'],[4,'Cattle Drive (new)'],[5,'Lonesome Trail (new)']])}</div>
   <div class="setrow"><div><b>Watch events</b><div class="note">Play the race or show before the results.</div></div>${seg('watch',[[1,'Watch'],[0,'Skip']])}</div>
@@ -1317,7 +1387,7 @@ function renderTitle(){const v=UI.tview||'main';const auto=hasAutosave();
      <p class="note" style="margin-top:12px">Saves from older builds load fine. New features get added to your ranch when it loads.</p>
      <div class="actions"><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
   if(v==='settings')panel=`<div class="panel tpanel"><h2>Settings</h2>${settingsPanel()}<div class="actions" style="margin-top:12px"><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
-  $('#main').innerHTML=`<div class="title"><div class="titleart">${titleArt()}</div><p class="tsub">Breed, train and show horses. Build a legacy.</p>${panel}<p class="note tbuild">Build ${BUILD}</p></div>`;
+  $('#main').innerHTML=`<div class="title"><div class="titleart">${titleArt()}</div><p class="tsub">Breed, train and show horses. Build a legacy.</p>${panel}<p class="note tbuild"><button class="linkbtn" data-a="changelog" title="See what changed in each build">Build ${BUILD} · What’s new</button></p></div>`;
   startTitleAnim()}
 
 let S=null;
@@ -3383,6 +3453,7 @@ function renderModal(){
     <div class="tablewrap"><table class="result"><tr><th>Horse</th><th>Slot</th><th>Item</th><th class="n">Cost</th></tr>${buy.map(r=>{const h=H(r.h),it=ITEMS[r.id];return `<tr><td>${esc(h?h.name:'?')}</td><td>${SLOTN[r.sl]}</td><td><b class="rc-${it.r}">${it.n}</b></td><td class="n">${r.p?money(r.p):'tack room'}</td></tr>`}).join('')}</table></div>
     ${miss.length?`<p class="note" style="margin-top:8px">Can’t fill ${miss.length} slot${miss.length===1?'':'s'} (not in stock or not enough money): ${[...new Set(miss.map(r=>SLOTN[r.sl]))].join(', ')}.</p>`:''}
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="buygearok">Buy all for ${money(tot)}</button><button class="btn" data-a="close">Cancel</button></div>`;
+  }else if(m.type==='changelog'){title='What’s new in each build';body=changelogBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="${m.back?'clback':'close'}">${m.back?'Back':'Close'}</button></div>`;
   }else if(m.type==='autoall'){const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const ran=m.rows.filter(r=>r.ev!=null),sk=m.rows.filter(r=>r.ev==null);
     const tot=ran.reduce((a,r)=>a+(r.prize||0)-(r.cut||0),0),wins=ran.filter(r=>r.place===1).length;title='Auto compete results';
     body=`<p><b>${ran.length}</b> horse${ran.length===1?'':'s'} competed · <b>${wins}</b> win${wins===1?'':'s'} · <b class="mono">${money(tot)}</b> in prizes.</p>
@@ -3915,6 +3986,8 @@ const ACT={
   treat:d=>{const h=H(d.id);if(h)treat(h,d.t)},
   open:d=>{UI.modal={type:'horse',id:+d.id,mode:d.m||null};tutMark('papers')},
   close:()=>{UI.modal=null},
+  changelog:()=>{UI.modal={type:'changelog',back:UI.modal&&UI.modal.type!=='changelog'?UI.modal:null}},
+  clback:()=>{UI.modal=(UI.modal&&UI.modal.back)||null},
   foalrnd:()=>{const m=UI.modal;const f=m&&H((m.list[m.i]||{}).f);const el=document.getElementById('foalName');if(f&&el)el.value=foalNameIdea(f);return 'skip'},
   foalok:()=>{const m=UI.modal;if(!m||m.type!=='foal')return;const f=H((m.list[m.i]||{}).f);const el=document.getElementById('foalName');
     if(f){const v=((el&&el.value)||'').trim();if(v)f.name=v.slice(0,28);register(f);log('good','Welcome to the herd, '+f.name+'!');sfx('sparkle')}
