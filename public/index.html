@@ -1112,7 +1112,7 @@ let lastSaveOk=false,lastSaveAt=0,saveWarned=false;
 // (yours, for sale, boarding, past horses) plus all of their ancestors.
 function pruneRegistry(s){const reg=s&&s.registry;if(!reg)return 0;const keep=new Set(),stack=[];
   const add=h=>{if(h&&h.id!=null)stack.push(+h.id)};
-  (s.horses||[]).forEach(add);(s.market||[]).forEach(add);(s.studs||[]).forEach(add);(s.away||[]).forEach(a=>add(a&&a.h));(s.boardReq||[]).forEach(r=>add(r&&r.h));
+  (s.horses||[]).forEach(add);[...(s.horses||[]),...(s.away||[]).map(a=>a&&a.h)].forEach(h=>{if(h&&h.preg&&h.preg.sire&&h.preg.sire.id!=null)stack.push(+h.preg.sire.id)});(s.market||[]).forEach(add);(s.studs||[]).forEach(add);(s.away||[]).forEach(a=>add(a&&a.h));(s.boardReq||[]).forEach(r=>add(r&&r.h));
   (s.memorial||[]).forEach(m=>{if(m&&m.id!=null)stack.push(+m.id)});(s.offers||[]).forEach(o=>{if(o&&o.id!=null)stack.push(+o.id)});
   while(stack.length){const id=stack.pop();if(id==null||isNaN(id)||keep.has(id))continue;keep.add(id);const r=reg[id];if(r){if(r.sire!=null)stack.push(+r.sire);if(r.dam!=null)stack.push(+r.dam)}}
   const core=new Set([...(s.horses||[]),...(s.memorial||[])].map(h=>+h.id));
@@ -1331,7 +1331,9 @@ function inbreedInfo(s,m){const f=coiOf(s.id,m.id);const rel=relationName(s,m);
   const bad=f>=.0625,line=f>=.015&&!bad;
   return {f,rel,tier,bad,line,loss:bad?Math.round(f*40):0,fragile:bad?Math.min(.6,f*1.2):0,lifeYrs:bad?Math.round(f*12):0}}
 function coiLabel(f){return f>=.25?'Very high':f>=.125?'High':f>=.0625?'Moderate':f>=.015?'Low (line-bred)':'None'}
-function sireSnap(s){return {id:s.id,name:s.name,genes:s.genes,pot:s.pot,traits:s.traits,gen:s.gen,breed:s.breed||'grade',cross:!!s.cross,blood:{...bloodOf(s)}}}
+function sireSnap(s){const rec=(S.registry&&S.registry[s.id])?{...S.registry[s.id]}:{name:s.name,reg:s.reg,sex:'M',coat:coat(s.genes).full,breed:breedLabel(s),blood:{...bloodOf(s)},sire:s.sire,dam:s.dam,ap:Math.round(avg(s.pot))};
+  return {id:s.id,name:s.name,genes:s.genes,pot:s.pot,traits:s.traits,gen:s.gen,breed:s.breed||'grade',cross:!!s.cross,blood:{...bloodOf(s)},rec}}
+function ensureSireRec(sn){if(!sn||sn.id==null||S.registry[sn.id])return;S.registry[sn.id]=sn.rec?{...sn.rec}:{name:sn.name,reg:'—',sex:'M',coat:coat(sn.genes).full,breed:(BREEDS[sn.breed]||BREEDS.grade).n,blood:{...(sn.blood||{})},sire:null,dam:null,ap:Math.round(avg(sn.pot))}}
 function breedFoal(sire,dam){
   const h={id:S.nextId++,name:'',sex:R()<.5?'M':'F',born:S.day,genes:inheritGenes(sire.genes,dam.genes),pot:{},tr:{},traits:[],
     health:100,energy:100,happy:75,bond:30,wins:0,starts:0,earnings:0,sire:sire.id,dam:dam.id,gen:Math.max(sire.gen,dam.gen)+1,
@@ -2209,7 +2211,7 @@ function endDay(){
       const n=m.preg.twins?2:1;const ck=m.preg.checks||0;const hard=R()<.12*(specOf('vet')==='repro'?.6:1)*[1,.75,.5,.35][L('foaling')]*(ck>=2?.25:ck?.5:1)*(n>1?1.6:1);
       if(hard){m.health=clamp(m.health-25,0,100);m.happy=clamp(m.happy-8,0,100);ev.push(['bad',m.name+' had a hard birth and needs rest.'+(ck?'':' Prenatal vet checkups lower this risk.')])}
       else if(ck){m.health=clamp(m.health+10,0,100);ev.push(['good',m.name+'’s prenatal checkups paid off: an easy, healthy birth.'])}
-      for(let i=0;i<n;i++){const f=breedFoal(m.preg.sire,m);f.bond=clamp(f.bond+[0,10,15][L('foaling')]+(ck?5:0),0,100);f.ribbons=[];f.awardsSeen=[];f.acted=0;S.horses.push(f);S.stats.foals++;born.push({f:f.id,m:m.id,hard:hard,twins:n>1});if(f.shiny){log('good','✦ '+f.name+' was born SHINY! A very rare foal with higher potential in every stat.')}
+      ensureSireRec(m.preg.sire);for(let i=0;i<n;i++){const f=breedFoal(m.preg.sire,m);f.bond=clamp(f.bond+[0,10,15][L('foaling')]+(ck?5:0),0,100);f.ribbons=[];f.awardsSeen=[];f.acted=0;S.horses.push(f);S.stats.foals++;born.push({f:f.id,m:m.id,hard:hard,twins:n>1});if(f.shiny){log('good','✦ '+f.name+' was born SHINY! A very rare foal with higher potential in every stat.')}
         if(hard){f.health=60;if(R()<.25){for(const k in f.pot)f.pot[k]=Math.max(10,f.pot[k]-3);ev.push(['bad',f.name+' was born weak (−3 potential on every stat).'])}}else if(ck)f.happy=clamp(f.happy+10,0,100);
         const best=Math.max(...Object.values(f.pot));
         ev.push(['good',m.name+' had a '+(f.sex==='M'?'colt':'filly')+'! Meet '+f.name+' ('+coat(f.genes).full+', best potential '+best+(f.breakthrough.length?', with a breakthrough!':'')+').'])}
