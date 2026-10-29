@@ -105,7 +105,7 @@ main{padding-block:20px}
 .pskills{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px 18px}
 .loanrow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--line)}
 .chip.warn{border-color:#C98A1B;color:#9a6512}
-.chip.trainchip{border-color:var(--r-rare,#2f6fd6);color:var(--r-rare,#2f6fd6);font-weight:600}
+.tchipbtn{cursor:pointer;font:inherit;background:var(--card)}.tchipbtn:hover{filter:brightness(1.08);text-decoration:underline}.chip.trainchip.reserved{background:color-mix(in srgb,var(--r-rare,#2f6fd6) 14%,var(--card))}.chip.trainchip{border-color:var(--r-rare,#2f6fd6);color:var(--r-rare,#2f6fd6);font-weight:600}
 .pastbanner{padding:8px 12px;border-radius:8px;margin-bottom:12px;background:color-mix(in srgb,var(--brass,#9a6b1f) 14%,transparent);border-left:4px solid var(--brass,#9a6b1f)}.pastbanner.died{background:color-mix(in srgb,#6b6b6b 14%,transparent);border-left-color:#6b6b6b}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .specline{color:var(--ink)}.specline b{color:var(--brass,#9a6b1f)}
@@ -958,14 +958,18 @@ function trainerSession(h,p){const ks=trainerStats(h).slice(0,trainerCount(p.ski
   let hurt='';if(isAdult(h)&&R()<injuryRisk(h,.015)){injure(h);hurt=', got hurt'}
   return h.name+' ('+parts.join(', ')+hurt+')'}
 function trainerTonight(){const p=S.staff.trainer;const o={};if(!p||!S.autoTrain)return o;const pr={high:0,normal:1,low:2};let n=0;const cap=trainerCap(p.skill);
-  for(const h of S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>pr[tpri(a)]-pr[tpri(b)])){if(h.energy<25){o[h.id]='tired';continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){o[h.id]='dayoff';continue}o[h.id]=n<cap?'yes':'full';n++}return o}
-function trainerTag(h){const t=trainerTonight()[h.id];if(!t)return '';return t==='yes'?'<span class="chip trainchip" title="Left idle, so the trainer will work this horse when you press End Day">Trainer tonight</span>':t==='full'?'<span class="chip warn" title="The trainer has more idle horses than time. Raise this horse’s priority in its papers.">Trainer full</span>':t==='tired'?'<span class="chip" title="Under 25 energy, so the trainer will let this horse rest">Trainer: resting</span>':'<span class="chip" title="Worked 4+ days in a row, so the trainer will give a day off">Trainer: day off</span>'}
+  for(const h of S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>((b.tres?1:0)-(a.tres?1:0))||(pr[tpri(a)]-pr[tpri(b)]))){if(h.energy<25){o[h.id]='tired';continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){o[h.id]='dayoff';continue}o[h.id]=n<cap?'yes':'full';n++}return o}
+function trainerTag(h){const t=trainerTonight()[h.id];if(!t)return '';const B=(cls,title,txt)=>`<button class="chip ${cls} tchipbtn" data-a="treserve" data-id="${h.id}" title="${title}">${txt}</button>`;
+  if(h.tres&&S.staff.trainer)return B('trainchip reserved','Reserved for the trainer: kept out of events, pasture and jobs, and trained first tonight. Tap to free up.',t==='tired'?'📌 Reserved · resting':t==='dayoff'?'📌 Reserved · day off':'📌 Reserved for trainer');
+  if(t==='yes'||t==='full')return B(t==='yes'?'trainchip':'warn',(t==='yes'?'The trainer will work this horse tonight.':'The trainer has more idle horses than time.')+' Tap to reserve: trained first and kept out of events, pasture and jobs.',t==='yes'?'Trainer tonight':'Trainer full');
+  return t==='yes'?'<span class="chip trainchip" title="Left idle, so the trainer will work this horse when you press End Day">Trainer tonight</span>':t==='full'?'<span class="chip warn" title="The trainer has more idle horses than time. Raise this horse’s priority in its papers.">Trainer full</span>':t==='tired'?'<span class="chip" title="Under 25 energy, so the trainer will let this horse rest">Trainer: resting</span>':'<span class="chip" title="Worked 4+ days in a row, so the trainer will give a day off">Trainer: day off</span>'}
 function trainerPlan(h){const tp=h.tplan||{},sp=tp.stats||{},p=S.staff.trainer;
   const sel=(f,val,opts,lbl)=>`<select data-c="tplan" data-id="${h.id}" data-f="${f}" aria-label="${lbl}">${opts.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
   const plan=p&&trainerEligible(h)&&tpri(h)!=='off'?trainerStats(h).slice(0,p.skill>=4?3:2).map(k=>STATS.find(x=>x.k===k).n):null;
   const young=isYoung(h)?`<p class="note">${stage(h)==='Foal'&&age(h)<TRAIN_MIN_AGE?'Too young for the trainer. From 6 months old the trainer can work '+(h.sex==='M'?'him':'her')+' lightly.':'Young horses train at one third of an adult’s gains and use less energy.'} If nobody works ${h.sex==='M'?'him':'her'} during the day, ${h.sex==='M'?'he':'she'} goes out to pasture automatically.</p>`:'';
   return `<div class="subh">Trainer plan</div>${young}
   ${p?`<p class="note">${esc(p.name)} works up to ${trainerCap(p.skill)} idle horses each evening (High priority first), ${trainerCountText(p.skill)} stats per horse at ${Math.round(trainerFrac(p.skill)*100)}% of a full session each. An idle horse is one you didn’t use today: no training, trail ride, groundwork, lessons, cattle work, event or pasture turnout. ${h.trainerDay===S.day?'<b>Trained by the trainer last night.</b>':''}${S.autoTrain?'':' <b class="warn">Evening training is switched off on the Staff tab.</b>'}</p>`:'<p class="note">Hire a Trainer on the Staff tab and they’ll follow this plan whenever this horse is left idle. An idle horse is one you didn’t use today: no training, trail ride, groundwork, lessons, cattle work, event or pasture turnout.</p>'}
+  ${p?`<div class="actions" style="margin:4px 0 8px"><button class="btn small ${h.tres?'primary':''}" data-a="treserve" data-id="${h.id}">${h.tres?'📌 Reserved for the trainer (tap to free up)':'📌 Reserve for the trainer'}</button><span class="note">Reserved horses are trained first and kept out of events, pasture and jobs.</span></div>`:''}
   <div class="tplan"><label class="tpri">Horse priority ${sel('pri',tp.pri||'normal',[['high','High'],['normal','Normal'],['low','Low'],['off','Don’t train']],'Horse training priority')}</label>
   ${STATS.map(x=>`<label>${x.n} ${sel('s:'+x.k,sp[x.k]||'normal',[['high','First'],['normal','Normal'],['low','Last'],['skip','Skip']],x.n+' priority')}</label>`).join('')}</div>
   ${plan?`<p class="note" style="margin-top:6px">If ${esc(h.name)} is still idle at day’s end: ${plan.length?'<b>'+plan.join(', ')+'</b>':'nothing left to train'}${plan.length&&p.skill===3?' (maybe one more)':''}.</p>`:''}`;
@@ -1007,6 +1011,7 @@ const BUILD='69';
 const CHANGELOG=[
  {b:'69',d:'Oct 29, 2026',t:'Fresh horses, fences and faster shows',c:[
   'Click the build number to see what changed in every build (this list!).',
+  'Reserve a horse for the trainer: tap its “Trainer tonight” or “Trainer full” chip (or the button in its papers). Reserved horses are trained first and kept out of events, pasture and jobs.',
   'More character options: beanie, trucker cap, riding helmet and bandana hats; pigtails and mullet hair; mutton chops; hoodie and barn coat; a bandana neckerchief; sunglasses and earrings; new hat and shirt colors.',
   'Swipe left and right on a phone to move between tabs.',
   'Pop-up messages stay on screen longer, and you can tap one to close it.',
@@ -1708,7 +1713,8 @@ function train(h,k,quiet){
   if(isAdult(h)&&R()<injuryRisk(h,.02)){injure(h);msg+=' — but got hurt!'}
   if(!quiet)toast(msg);
 }
-function canTurnout(h){return !h.injury&&h.acted!==S.day}
+function canTurnout(h){return !h.injury&&h.acted!==S.day&&!(h.tres&&S.staff.trainer)}
+function trainerHeld(h){return !!(h&&h.tres&&S.staff.trainer)}
 const PASTURE_EVENTS=[
   {w:5,good:1,t:'made a new friend over the fence',fx:'happiness +8',f:h=>{h.happy=clamp(h.happy+8,0,100)}},
   {w:4,good:1,t:'found a patch of sweet clover',fx:'health +3, happiness +3',f:h=>{h.health=clamp(h.health+3,0,100);h.happy=clamp(h.happy+3,0,100)}},
@@ -1730,7 +1736,7 @@ function rest(h,quiet){if(!canTurnout(h))return false;tutMark('pasture');h.acted
   if(!quiet)toast(h.name+' spends the day grazing out in the pasture'+gain+'.'+(e?' '+e:''));else if(e)S._pastureMsgs=(S._pastureMsgs||[]).concat(e);
   return true}
 function doJob(h,id){
-  const j=JOBS.find(x=>x.id===id);if(!j)return;
+  const j=JOBS.find(x=>x.id===id);if(!j)return;if(trainerHeld(h))return toast(h.name+' is reserved for the trainer tonight. Tap the 📌 chip on the card to free them up.');
   if(id==='turnout')return rest(h);
   if(!canWork(h))return toast(h.name+' can’t do that today.');
   if(j.adult&&!isAdult(h))return toast('Only grown horses can do that.');
@@ -1884,9 +1890,9 @@ function odds(h,ev,t){const pl=[0,0,0];const N=500;
   for(let i=0;i<N;i++){const me=base*(.88+rr()*.24);let b=0;for(let j=0;j<7;j++)if(Math.max(5,t.base+gs()*t.spread)>me)b++;if(b<3)pl[b]++}const pz=prizesFor(ev,t);return{win:pl[0]/N,top3:(pl[0]+pl[1]+pl[2])/N,avg:Math.round((pl[0]*pz[0]+pl[1]*pz[1]+pl[2]*pz[2])/N)}}
 function ranchInvPanel(h,ok){const L0=(S.ranchInv||[]).filter(v=>v.until>=S.day);if(!L0.length)return '';const elig=S.horses.filter(canCompete);
   return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Ranch show invitations</div><p class="note">Other ranches invite you to their own shows. No entry fee. Pick a horse to send.</p>${L0.map(v=>{const ev=EVENTS[v.ei];const sel=UI['rinv'+v.id]||'';return `<div class="staff"><div class="grow"><b>${esc(v.who)} Ranch ${esc(ev.n)}</b><div class="note">Purse ${v.prize.map(p=>money(r10(p*(ev.purse||1)))).join(' / ')} · field strength about ${Math.round(v.base)} · good through day ${v.until}</div></div><select data-c="rinvsel" data-v="${v.id}" aria-label="Horse to send"><option value="">Pick a horse…</option>${elig.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${esc(x.name)} (${ev.n.split(' ')[0]} ${Math.round(baseScore(x,ev))})</option>`).join('')}</select><button class="btn small primary" data-a="rinvgo" data-v="${v.id}" ${sel?'':'disabled'}>Send</button></div>`}).join('')}</div>`}
-function canCompete(h){return h&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
+function canCompete(h){return h&&!trainerHeld(h)&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
 function compete(h,ei,ti){
-  const ev=EVENTS[ei],t=TIERS[ti];
+  const ev=EVENTS[ei],t=TIERS[ti];if(trainerHeld(h))return toast(h.name+' is reserved for the trainer. Tap the 📌 chip on the card to free them up.');
   if(!canCompete(h))return toast('That horse can’t compete today. They need '+compEnergy(h||{})+' energy and 50 health.');
   if(S.rep<t.req)return toast(t.n+' events need '+t.req+' reputation.');
   const rinv=t.ranch?(S.ranchInv||[]).find(v=>v.ei===ei&&v.until>=S.day):null;if(t.ranch){if(!rinv)return toast('That ranch show invitation has expired.');t.base=rinv.base;t.prize=rinv.prize}else if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
@@ -2258,7 +2264,7 @@ function whatsNewBody(){return `<p>Welcome back to ${esc(S.ranchName)}! A few bi
 function endDay(){
   const ev=[];
   if(S.staff.trainer&&S.autoTrain&&S.horses.length){const p=S.staff.trainer,cap=trainerCap(p.skill),pr={high:0,normal:1,low:2};
-    const cands=S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>pr[tpri(a)]-pr[tpri(b)]);const done=[];let tired=0,waiting=0;
+    const cands=S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>((b.tres?1:0)-(a.tres?1:0))||(pr[tpri(a)]-pr[tpri(b)]));const done=[];let tired=0,waiting=0;
     let gave=0;for(const h of cands){if(h.energy<25){h.trainerRest=S.day;tired++;continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){h.trainerRest=S.day;gave++;continue}if(done.length>=cap){waiting++;continue}done.push(trainerSession(h,p))}
     if(done.length)ev.push(['info',p.name+' (Trainer) worked '+done.length+' horse'+(done.length>1?'s':'')+' this evening: '+done.join('; ')+'.']);
     if(tired)ev.push(['info',p.name+' let '+tired+' tired horse'+(tired>1?'s':'')+' rest instead of training.']);
@@ -2825,7 +2831,7 @@ function renderCompete(){
   return `<div class="section-head"><h2>Show Grounds</h2><span class="sub">Each horse can enter one event per day. Entry fees are about 6–8% of the purse. Only Local Shows run every day. The rest follow the show calendar.</span></div>
   <div class="panel showcal"><div class="subh" style="margin-top:0">Show calendar · ${SEASONS[dateParts(S.day).sIdx]} day ${dateParts(S.day).sday}, year ${dateParts(S.day).year}</div><div class="calgrid">${TIERS.map((t,ti)=>t.invite?'':`<div class="calrow ${tierOpen(ti)?'open':''}"><b>${t.n}</b><span class="note">${t.when}</span><span class="${tierOpen(ti)?'good':'note'}">${tierOpen(ti)?'● Open now':openText(ti)}</span>${S.rep<t.req?`<span class="note">needs ${t.req} rep</span>`:''}</div>`).join('')}</div></div>
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
-   <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+status(x)[1]}</option>`).join('')}</select></div>
+   <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+(trainerHeld(x)?'reserved for trainer':status(x)[1])}</option>`).join('')}</select></div>
    <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 80% or better chance to win">⚡ Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">⚡ Auto compete all</button></div><span class="note" style="font-size:11.5px">Best open level with 80%+ win chance · skips horses that would sour</span></div>
    ${h?`<div class="note">${esc(h.name)}: Energy ${Math.round(h.energy)} · Happy ${Math.round(h.happy)} · Health ${Math.round(h.health)} · Record ${h.wins} wins / ${h.starts} starts${refuseChance(h)?` · <span class="bad">Sulking: ${Math.round(refuseChance(h)*100)}% chance to refuse</span>`:''}</div>`:'<div class="note">Odds appear once you pick a horse. Energy 40+ and health 50+ needed.</div>'}
   </div>
@@ -3987,6 +3993,7 @@ const ACT={
   endday:()=>{endDay();return 'skip'},
   groom:d=>{const h=H(d.id);if(h)groom(h)},
   groomall:()=>{let n=0,x=0;for(const h of S.horses){const e=staffGroomed(h);if(groom(h,true)){n++;if(e)x++}}toast(n?'You groomed '+n+' horse'+(n>1?'s':'')+(x?' ('+x+' already brushed by staff, so mostly extra bond)':'')+'.':'You’ve already groomed everyone today.')},
+  treserve:d=>{const h=H(d.id);if(!h)return;h.tres=h.tres?0:1;toast(h.tres?'📌 '+h.name+' is reserved for the trainer: trained first tonight and kept out of events, pasture and jobs.':h.name+' is no longer reserved for the trainer.')},
   restall:()=>{let n=0;S._pastureMsgs=[];for(const h of S.horses)if(rest(h,true))n++;const ms=S._pastureMsgs;delete S._pastureMsgs;toast(n?n+' horse'+(n>1?'s':'')+' turned out to pasture.'+(ms.length?' '+ms.join(' '):''):'No idle horses.')},
   train:d=>{const h=H(d.id);if(h)train(h,d.k)},
   rest:d=>{const h=H(d.id);if(h)rest(h)},
