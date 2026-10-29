@@ -1030,6 +1030,8 @@ const CHANGELOG=[
   'Market horses cost more than you can resell them for, so buying and flipping no longer makes free money.',
   'The government bailout forgives a quarter of your debt instead of half.',
   'Stud requests: each stallion rests 4 days between outside mares, and stud fees are lower.',
+  'Breeding Eye levels much faster: more XP for breeding, every foal born (extra for shiny or breakthrough foals), homebred horses growing up and winning, and every vet checkup.',
+  'Business levels much faster: XP for selling horses, stud fees, boarding pay and client pickups, sponsor payments and livestock income.',
   'Tested with a computer player over hundreds of simulated years.']},
  {b:'69',d:'Oct 29, 2026',t:'Fresh horses, fences and faster shows',c:[
   'Click the build number to see what changed in every build (this list!).',
@@ -1825,7 +1827,7 @@ function vet(h){
 }
 function autoVetCost(h){return Math.round(vetCost(h)*1.25)}
 function checkup(h){const lines=[];
-  h.vetSeason=seasonIdx();h.lastVet=S.day;h.vetKnown=1;h.vacc=seasonEnd();fertOf(h);
+  h.vetSeason=seasonIdx();h.lastVet=S.day;h.vetKnown=1;pxp('eye',1);h.vacc=seasonEnd();fertOf(h);
   h.health=clamp(h.health+15,0,100);h.happy=clamp(h.happy+3,0,100);lines.push('Health +15. Vaccinated: half the chance of getting sick until the season ends. Clean bill of health for 8 days.');
   if(h.brew){lines.push('Caught early: '+COND[h.brew.id].n.toLowerCase()+' was just starting. Treated on the spot, so it never took hold.');h.brew=null}
   if(R()<.25){const f=pick(['a small stone bruise','a tight back muscle','a loose shoe','a minor hoof crack','a sore tooth']);lines.push('Found and fixed '+f+' before it became a problem. Injury risk −15% for the rest of the season.');h.vetSound=seasonIdx()}
@@ -1850,7 +1852,7 @@ function hofReasons(r){const o=[];if(r.awards.includes('Hall of Fame'))o.push('H
   if(r.wins>=10)o.push(r.wins+' career wins');if(r.earnings>=50000)o.push(money(r.earnings)+' earned');if(r.foals>=6)o.push('Foundation '+(r.sex==='M'?'sire':'dam')+' ('+r.foals+' foals)');
   if(r.gen>0&&r.bestPot>=85)o.push('Exceptional bloodline (potential '+r.bestPot+')');return o}
 function sell(h,amt,why){if(!h.client){S.soldBack=S.soldBack||[];const c=JSON.parse(JSON.stringify(h));S.soldBack.unshift({h:c,price:Math.round(amt*1.15/10)*10,until:S.day+7});if(S.soldBack.length>10)S.soldBack.length=10}remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
-  S.money+=amt;pxp('biz',4);freeGear(h.id);S.studReq=S.studReq.filter(r=>r.id!==h.id);S.horses=S.horses.filter(x=>x.id!==h.id);S.offers=S.offers.filter(o=>o.id!==h.id);
+  S.money+=amt;pxp('biz',6);freeGear(h.id);S.studReq=S.studReq.filter(r=>r.id!==h.id);S.horses=S.horses.filter(x=>x.id!==h.id);S.offers=S.offers.filter(o=>o.id!==h.id);
   log('info','Sold '+h.name+' for '+money(amt)+(why?' ('+why+')':'')+'.');toast('Sold '+h.name+' for '+money(amt)+'.');
   if(UI.modal&&UI.modal.id===h.id)UI.modal=null;
 }
@@ -1931,7 +1933,7 @@ function compete(h,ei,ti){
   let prize=0,rep=0;
   if(place<=3&&h.client)h.client.places++;
   let cut=0;if(place<=3){prize=r10(prizesFor(ev,t)[place-1]*gradMult(h,ti));rep=(t.repCap&&S.rep>=t.repCap)?0:gainRep(t.rep[place-1]*pskM('show',.06));cut=h.client?Math.round(prize*CLIENT_CUT):0;S.money+=prize-cut;h.earnings+=prize;if(cut)h.client.paidOut=(h.client.paidOut||0)+cut}
-  if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.15)){S.starOffer=1}if(ti===7)unlock('invitational')}
+  if(place===1){h.wins++;S.stats.wins++;if(!h.client&&h.origin==='Bred on your ranch')pxp('eye',2);h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.15)){S.starOffer=1}if(ti===7)unlock('invitational')}
   else if(place>=7)h.happy=clamp(h.happy-4,0,100);
   if(place<=3&&gearSum(h,'rep'))rep+=gainRep(1);
   let awardMsg='';
@@ -1966,7 +1968,7 @@ function breed(){
   if(S.horses.length+pregnancies()>=S.stalls)return toast('No room for a foal. Build more stalls first.');
   if(S.money<sr.fee)return toast('Not enough money for the stud fee.');
   if(m.health<50)return toast(m.name+' needs at least 50 health to carry a foal.');
-  S.money-=sr.fee;m.acted=S.day;if(!sr.stud)s.acted=S.day;pxp('eye',4);
+  S.money-=sr.fee;m.acted=S.day;if(!sr.stud)s.acted=S.day;pxp('eye',8);
   const c=conception(m,s);
   if(R()<c){m.preg={due:S.day+GEST,sire:sireSnap(s),twins:has(m,'fertile')&&R()<.12};
     log('good',m.name+' is in foal to '+s.name+'. Due in '+GEST+' days.');toast('It took! '+m.name+' is in foal.')}
@@ -2028,12 +2030,12 @@ function clientExtras(h){const c=h.client;if(!c)return {sk:[],skB:0,pts:0,ptB:0}
   pts=Math.floor(pts);const ptB=Math.min(c.bonus||400,pts*Math.max(8,Math.round(c.pay*.25)));return {sk,skB,pts,ptB}}
 function clientLeaves(h,ev){const c=h.client;const met=c.goals.filter(g=>goalMet(g,h)).length,all=met===c.goals.length;
   let bonus=all?c.bonus:met?Math.round(c.bonus*met/c.goals.length*.75/10)*10:0,rp=all?1+c.goals.length:met?1:-2;const X=clientExtras(h);const extra=c.hurt?0:X.skB+X.ptB;bonus+=extra;
-  S.money+=bonus;if(rp>0)rp=gainRep(rp);else loseRep(-rp,c.owner+' was unhappy with how '+h.name+' was looked after.',ev);
+  S.money+=bonus;pxp('biz',all?6:3);if(rp>0)rp=gainRep(rp);else loseRep(-rp,c.owner+' was unhappy with how '+h.name+' was looked after.',ev);
   freeGear(h.id);S.offers=S.offers.filter(o=>o.id!==h.id);S.studReq=S.studReq.filter(o=>o.id!==h.id);S.horses=S.horses.filter(x=>x!==h);
   const msg=c.owner+' picked up '+h.name+'. Goals met: '+met+' of '+c.goals.length+'.'+(bonus?' Bonus paid: '+money(bonus)+'.':'')+(extra?' (Includes '+[X.skB?money(X.skB)+' for '+X.sk.length+' new skill'+(X.sk.length>1?'s':''):'',X.ptB?money(X.ptB)+' for '+X.pts+' extra stat point'+(X.pts>1?'s':''):''].filter(Boolean).join(' and ')+'.)':'')+(rp>0?' Reputation +'+rp+'.':'');
   ev.push([all?'good':met?'info':'warn',msg])}
 function clientNight(ev){let pay=0;for(const h of [...S.horses])if(h.client){if(h.injury)h.client.hurt=true;pay+=h.client.pay;if(S.day+1>=h.client.until)clientLeaves(h,ev)}
-  if(pay){S.money+=pay;ev.push(['good','Boarding clients paid '+money(pay)+' today.'])}
+  if(pay){S.money+=pay;pxp('biz',1);ev.push(['good','Boarding clients paid '+money(pay)+' today.'])}
   if(S.day+1>=(S.boardNext||0)){S.boardNext=S.day+1+4;refreshBoardReq();if(S.boardReq.length)ev.push(['info',S.boardReq.length+' owner'+(S.boardReq.length>1?'s want':' wants')+' to board a horse with you. See the Boarding tab.'])}}
 function renderBoarding(){
   const cands=S.horses.filter(canSendAway);const sel=cands.find(h=>h.id==UI.awayH)||cands[0];const days=+UI.awayD||8;
@@ -2305,7 +2307,7 @@ function endDay(){
   const fed=S.hay>=need;
   if(fed)S.hay=Math.round((S.hay-need)*10)/10;
   else{ev.push(['bad','Ran out of hay! The herd needed '+need+' bales and you had '+S.hay+'. Everyone went hungry.']);S.hay=0;loseRep(3,'Word got around that your horses went hungry.',ev)}
-  {const inc=fed?Math.round(stockIncome(dateParts(S.day).sIdx)*stockCareMult()*(1+stockHandBonus())*mgrOf().inc):0;if(fed&&stockIncome(dateParts(S.day).sIdx)&&stockCareMult()<1)ev.push(['warn',stockCareMult()?'Your livestock are neglected, so they earned less.':'Your livestock are badly neglected and earned nothing. Tend to them!']);if(inc){S.money+=inc;ev.push(['good','Your livestock brought in '+money(inc)+' today.'])}else if(!fed&&stockIncome(dateParts(S.day).sIdx))ev.push(['bad','Hungry livestock produced nothing today.'])}
+  {const inc=fed?Math.round(stockIncome(dateParts(S.day).sIdx)*stockCareMult()*(1+stockHandBonus())*mgrOf().inc):0;if(fed&&stockIncome(dateParts(S.day).sIdx)&&stockCareMult()<1)ev.push(['warn',stockCareMult()?'Your livestock are neglected, so they earned less.':'Your livestock are badly neglected and earned nothing. Tend to them!']);if(inc){S.money+=inc;pxp('biz',1);ev.push(['good','Your livestock brought in '+money(inc)+' today.'])}else if(!fed&&stockIncome(dateParts(S.day).sIdx))ev.push(['bad','Hungry livestock produced nothing today.'])}
   if(L('hayfield')>=3&&dateParts(S.day).sIdx<3){S.hay+=3;ev.push(['info','Your hay operation baled 3 bales overnight.'])}
   const crowded=S.horses.length>S.stalls;
   if(crowded)ev.push(['warn','The barn is overcrowded. Horses are unhappy.']);
@@ -2356,7 +2358,7 @@ function endDay(){
       const n=m.preg.twins?2:1;const ck=m.preg.checks||0;const hard=R()<.12*(specOf('vet')==='repro'?.6:1)*[1,.75,.5,.35][L('foaling')]*(ck>=2?.25:ck?.5:1)*(n>1?1.6:1);
       if(hard){m.health=clamp(m.health-25,0,100);m.happy=clamp(m.happy-8,0,100);ev.push(['bad',m.name+' had a hard birth and needs rest.'+(ck?'':' Prenatal vet checkups lower this risk.')])}
       else if(ck){m.health=clamp(m.health+10,0,100);ev.push(['good',m.name+'’s prenatal checkups paid off: an easy, healthy birth.'])}
-      ensureSireRec(m.preg.sire);for(let i=0;i<n;i++){const f=breedFoal(m.preg.sire,m);f.bond=clamp(f.bond+[0,10,15][L('foaling')]+(ck?5:0),0,100);f.ribbons=[];f.awardsSeen=[];f.acted=0;S.horses.push(f);S.stats.foals++;born.push({f:f.id,m:m.id,hard:hard,twins:n>1});if(f.shiny){log('good','✦ '+f.name+' was born SHINY! A very rare foal with higher potential in every stat.')}
+      ensureSireRec(m.preg.sire);for(let i=0;i<n;i++){const f=breedFoal(m.preg.sire,m);pxp('eye',f.shiny||f.breakthrough.length?14:8);f.bond=clamp(f.bond+[0,10,15][L('foaling')]+(ck?5:0),0,100);f.ribbons=[];f.awardsSeen=[];f.acted=0;S.horses.push(f);S.stats.foals++;born.push({f:f.id,m:m.id,hard:hard,twins:n>1});if(f.shiny){log('good','✦ '+f.name+' was born SHINY! A very rare foal with higher potential in every stat.')}
         if(hard){f.health=60;if(R()<.25){for(const k in f.pot)f.pot[k]=Math.max(10,f.pot[k]-3);ev.push(['bad',f.name+' was born weak (−3 potential on every stat).'])}}else if(ck)f.happy=clamp(f.happy+10,0,100);
         const best=Math.max(...Object.values(f.pot));
         ev.push(['good',m.name+' had a '+(f.sex==='M'?'colt':'filly')+'! Meet '+f.name+' ('+coat(f.genes).full+', best potential '+best+(f.breakthrough.length?', with a breakthrough!':'')+').'])}
@@ -2364,8 +2366,8 @@ function endDay(){
       m.preg=null;unlock('foal');
     }
   }
-  for(const h of S.horses){if(stage(h)==='Yearling'&&age(h)===YEARLING)ev.push(['info',h.name+' is a yearling now and can start light training.']);
-    if(age(h)===ADULT)ev.push(['info',h.name+' is grown up! Ready to compete and breed.'])}
+  for(const h of S.horses){const hb=!h.client&&h.origin==='Bred on your ranch';if(stage(h)==='Yearling'&&age(h)===YEARLING){ev.push(['info',h.name+' is a yearling now and can start light training.']);if(hb)pxp('eye',4)}
+    if(age(h)===ADULT){ev.push(['info',h.name+' is grown up! Ready to compete and breed.']);if(hb)pxp('eye',6)}}
   // random events
   const adults=S.horses.filter(h=>isAdult(h)&&!h.client);
   if(adults.length&&R()<.14){const h=pick(adults);if(!S.offers.some(o=>o.id===h.id)){const amt=Math.round(saleValue(h)*(1.15+R()*.4)*houseMult()/10)*10;S.offers.push({id:h.id,amt,exp:S.day+2,who:pick(FARMS)});ev.push(['info','A buyer from '+S.offers[S.offers.length-1].who+' offered '+money(amt)+' for '+h.name+'. See the Stable tab.'])}}
@@ -2374,7 +2376,7 @@ function endDay(){
   S.hayPrice=Math.max(3,Math.round(([7,6,8,11][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]));
   if(dp.sday===1)ev.push(['info',SEASONS[dp.sIdx]+' has arrived. Hay costs about '+money(S.hayPrice)+' a bale'+(dp.sIdx===3?' and horses eat more in the cold.':dp.sIdx===1?' and the pasture is lush, so horses eat less.':'.')]);
   if((S.day-1)%7===0){
-    if(S.sponsor){const sp=SPONSORS.find(x=>x.id===S.sponsor.id);if(sp){if((S.weekStarts||0)>=sp.starts){S.money+=sp.pay;ev.push(['good',sp.n+' paid your weekly sponsorship of '+money(sp.pay)+'.'])}else{S.sponsor.strikes=(S.sponsor.strikes||0)+1;ev.push(['warn',sp.n+' expected '+sp.starts+' event entr'+(sp.starts>1?'ies':'y')+' last week and got '+(S.weekStarts||0)+'. No payment. Strike '+S.sponsor.strikes+' of 2.'])}
+    if(S.sponsor){const sp=SPONSORS.find(x=>x.id===S.sponsor.id);if(sp){if((S.weekStarts||0)>=sp.starts){S.money+=sp.pay;pxp('biz',4);ev.push(['good',sp.n+' paid your weekly sponsorship of '+money(sp.pay)+'.'])}else{S.sponsor.strikes=(S.sponsor.strikes||0)+1;ev.push(['warn',sp.n+' expected '+sp.starts+' event entr'+(sp.starts>1?'ies':'y')+' last week and got '+(S.weekStarts||0)+'. No payment. Strike '+S.sponsor.strikes+' of 2.'])}
       S.sponsor.weeks--;if(S.sponsor.strikes>=2){S.sponsor=null;loseRep(3,sp.n+' dropped your sponsorship.',ev)}else if(S.sponsor.weeks<=0){S.sponsor=null;ev.push(['info',sp.n+'’s sponsorship has ended. A new offer may come.'])}}}
     if(!S.sponsor){const b=bestSponsor();if(b&&S.sponsorOffer!==b.id){S.sponsorOffer=b.id;ev.push(['good',b.n+' wants to sponsor your ranch for '+money(b.pay)+' a week. See the Office tab.'])}}
     S.weekStarts=0;
@@ -4059,7 +4061,7 @@ const ACT={
   sellextras:(d,b)=>{const L0=extrasList();if(!L0.length)return toast('No extra gear matches.');const tot=L0.reduce((a,x)=>a+Math.round(ITEMS[x.id].p*sellRate()),0);if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again: sell '+L0.length+' for '+money(tot);return 'skip'}
     const ids=new Set(L0.map(x=>x.uid));S.inv=S.inv.filter(x=>!ids.has(x.uid));S.money+=tot;log('info','Sold '+L0.length+' extra pieces of gear for '+money(tot)+'.');toast('Sold '+L0.length+' extra pieces of gear for '+money(tot)+'.')},
   studyes:d=>{const r=S.studReq.find(x=>x.id===+d.id);const h=H(d.id);if(!r||!h)return;if(!canWork(h)||h.energy<20)return toast(h.name+' can’t cover a mare today.');
-    h.acted=S.day;h.studLast=S.day;h.energy=clamp(h.energy-20,0,100);h.studCount=(h.studCount||0)+1;h.studBook=h.studBook||[];h.studBook.unshift({d:S.day,farm:r.who,mare:randName().split(' ')[0]+' '+pick(N2),due:S.day+11,st:'wait'});if(h.studBook.length>20)h.studBook.length=20;{const bonus=Math.round(r.fee*(mgrOf().inc-1));r.fee+=bonus}h.studEarned=(h.studEarned||0)+r.fee;h.earnings=(h.earnings||0)+r.fee;S.money+=r.fee;
+    h.acted=S.day;h.studLast=S.day;h.energy=clamp(h.energy-20,0,100);h.studCount=(h.studCount||0)+1;h.studBook=h.studBook||[];h.studBook.unshift({d:S.day,farm:r.who,mare:randName().split(' ')[0]+' '+pick(N2),due:S.day+11,st:'wait'});if(h.studBook.length>20)h.studBook.length=20;{const bonus=Math.round(r.fee*(mgrOf().inc-1));r.fee+=bonus}h.studEarned=(h.studEarned||0)+r.fee;h.earnings=(h.earnings||0)+r.fee;S.money+=r.fee;pxp('biz',4);
     let extra='';if(r.fee>=800){gainRep(1);extra=' Your ranch’s name spreads (+1 reputation).'}
     S.studReq=S.studReq.filter(x=>x!==r);unlock('studsvc');log('good',h.name+' covered a mare from '+r.who+' Ranch for '+money(r.fee)+'.'+extra);toast('Earned '+money(r.fee)+' in stud fees.'+extra)},
   studno:d=>{S.studReq=S.studReq.filter(x=>x.id!==+d.id);toast('Request declined.')},
