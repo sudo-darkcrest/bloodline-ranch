@@ -109,6 +109,7 @@ main{padding-block:20px}
 .pastbanner{padding:8px 12px;border-radius:8px;margin-bottom:12px;background:color-mix(in srgb,var(--brass,#9a6b1f) 14%,transparent);border-left:4px solid var(--brass,#9a6b1f)}.pastbanner.died{background:color-mix(in srgb,#6b6b6b 14%,transparent);border-left-color:#6b6b6b}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .specline{color:var(--ink)}.specline b{color:var(--brass,#9a6b1f)}
+.tackchk{display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:2px 0}.tackchk input{width:18px;height:18px;accent-color:var(--accent)}
 .ctrgrid,.clientgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.clientgrid{margin-top:12px}.ctr.r-high{border:1.5px solid var(--r-legendary)}.ctr.r-mid{border:1.5px solid var(--r-rare)}.awayrow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line,#ddd)}.awayrow:last-child{border-bottom:0}
 .inbox{border-left:4px solid var(--line,#ccc);padding:6px 10px;margin:8px 0;border-radius:6px;background:color-mix(in srgb,var(--card) 80%,transparent)}.inbox.bad,.inbox.warn,.inbox.good{color:var(--ink)}.inbox.bad{border-color:#B4412F}.inbox.warn{border-color:#C98A1B}.inbox.good{border-color:#3C7A3E}
 .bloodline{font-size:12px;margin:3px 0 2px;color:var(--ink)}.pedblood{opacity:.85}
@@ -636,7 +637,8 @@ function gearSum(h,k){return gearOf(h).reduce((a,i)=>a+(i.e[k]||0),0)}
 function gearEv(h,ev){return gearOf(h).reduce((a,i)=>a+((i.e.ev&&i.e.ev[ev])||0),0)}
 function gearInj(h){return gearOf(h).reduce((a,i)=>a*(i.e.inj||1),1)}
 function freeGear(id){for(const x of S.inv)if(x.on===id)x.on=null}
-function equip(uid,hid){const x=S.inv.find(y=>y.uid===+uid);const h=H(hid);if(!x||!h)return;const sl=ITEMS[x.id].s;for(const y of S.inv)if(y.on===h.id&&ITEMS[y.id].s===sl)y.on=null;x.on=h.id;toast(h.name+' is wearing the '+ITEMS[x.id].n+'.')}
+function useTack(h){return !!h&&(!h.client||!!h.client.tack)}
+function equip(uid,hid){const x=S.inv.find(y=>y.uid===+uid);const h=H(hid);if(!x||!h)return;if(!useTack(h))return toast(h.name+' uses the owner’s tack. Tick “Use my tack” in their papers first.');const sl=ITEMS[x.id].s;for(const y of S.inv)if(y.on===h.id&&ITEMS[y.id].s===sl)y.on=null;x.on=h.id;toast(h.name+' is wearing the '+ITEMS[x.id].n+'.')}
 /* ---------- auto gear ---------- */
 function bestEventOf(h){let bi=0,bv=-1;EVENTS.forEach((ev,i)=>{let v=0;for(const k in ev.w)v+=ev.w[k]*(h.tr[k]+h.pot[k])/2;if(v>bv){bv=v;bi=i}});return bi}
 function gearRole(h){if(h.retired)return 'retired';if(!isAdult(h))return 'young';return 'active'}
@@ -648,23 +650,23 @@ function itemScore(it,h){const e=it.e,role=gearRole(h),be=EVENTS[bestEventOf(h)]
   v+=(e.happy||0)*4*(has(h,'skittish')?1.4:1)+(e.energy||0)*1.5+(e.health||0)*2+(e.bond||0)*2.5+(e.rep||0)*4*compW;
   return v+RORDER.indexOf(it.r)*.01}
 function horsePrio(h){return (gearRole(h)==='active'?2:gearRole(h)==='young'?1.3:1)*(1+avg(h.pot)/100)}
-function autoEquip(onlyH){let n=0;const hs=(onlyH?[onlyH]:S.horses.filter(h=>!h.client)).sort((a,b)=>horsePrio(b)-horsePrio(a));
+function autoEquip(onlyH){let n=0;const hs=(onlyH?[onlyH].filter(useTack):S.horses.filter(useTack)).sort((a,b)=>horsePrio(b)-horsePrio(a));
   for(const h of hs)for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;
     const c=S.inv.filter(y=>y.on==null&&ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(c){c.on=h.id;n++}}
   return n}
 function gearReserve(){return Math.round((wages()+S.horses.length*(S.hayPrice||7))*5/10)*10}
-function planGearBuys(){const hs=S.horses.filter(h=>!h.client).sort((a,b)=>horsePrio(b)-horsePrio(a));const spare=S.inv.filter(y=>y.on==null).map(y=>({...y}));const shop=S.shop.map((id,i)=>({id,i,used:false}));let budget=S.money-gearReserve();const plan=[];
+function planGearBuys(){const hs=S.horses.filter(useTack).sort((a,b)=>horsePrio(b)-horsePrio(a));const spare=S.inv.filter(y=>y.on==null).map(y=>({...y}));const shop=S.shop.map((id,i)=>({id,i,used:false}));let budget=S.money-gearReserve();const plan=[];
   for(const h of hs)for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;
     const sp=spare.filter(y=>!y.taken&&ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(sp){sp.taken=1;plan.push({h:h.id,sl:sl.k,id:sp.id,uid:sp.uid,p:0});continue}
     const c=shop.filter(x=>!x.used&&ITEMS[x.id].s===sl.k&&ITEMS[x.id].p<=budget).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];
     if(c){if(ITEMS[c.id].r!=='common')c.used=true;budget-=ITEMS[c.id].p;plan.push({h:h.id,sl:sl.k,id:c.id,p:ITEMS[c.id].p})}else plan.push({h:h.id,sl:sl.k,none:1})}
   return plan}
-function optimizeGear(onlyH){let moved=0;const before={};for(const x of S.inv)before[x.uid]=x.on;
+function optimizeGear(onlyH){if(onlyH&&!useTack(onlyH))return 0;let moved=0;const before={};for(const x of S.inv)before[x.uid]=x.on;
   if(onlyH){for(const sl of SLOTS){const cur=S.inv.find(y=>y.on===onlyH.id&&ITEMS[y.id].s===sl.k);
       const pool=S.inv.filter(y=>ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],onlyH)-itemScore(ITEMS[a.id],onlyH));const best=pool[0];
       if(best&&best!==cur&&(!cur||itemScore(ITEMS[best.id],onlyH)>itemScore(ITEMS[cur.id],onlyH))){const prev=best.on;if(cur)cur.on=prev??null;best.on=onlyH.id}}}
   else{for(const sl of SLOTS){const items=S.inv.filter(y=>ITEMS[y.id].s===sl.k);if(!items.length)continue;for(const y of items)y.on=null;
-      const pairs=[];for(const h of S.horses.filter(h=>!h.client))for(const y of items)pairs.push([itemScore(ITEMS[y.id],h)*horsePrio(h),h,y]);pairs.sort((a,b)=>b[0]-a[0]);
+      const pairs=[];for(const h of S.horses.filter(useTack))for(const y of items)pairs.push([itemScore(ITEMS[y.id],h)*horsePrio(h),h,y]);pairs.sort((a,b)=>b[0]-a[0]);
       const usedH=new Set();for(const [sc,h,y] of pairs){if(y.on!=null||usedH.has(h.id)||sc<=0)continue;y.on=h.id;usedH.add(h.id)}}}
   for(const x of S.inv)if(before[x.uid]!==x.on)moved++;return moved}
 function itemEffects(it){const e=it.e,o=[];if(e.comp)o.push('+'+e.comp+'% at all events');if(e.ev)for(const k in e.ev)o.push('+'+e.ev[k]+'% '+EVENTS.find(x=>x.id===k).n);if(e.train)o.push('+'+e.train+'% training');if(e.inj)o.push('-'+Math.round((1-e.inj)*100)+'% injury risk');if(e.happy)o.push('+'+e.happy+' happiness a night');if(e.energy)o.push('+'+e.energy+' energy a night');if(e.health)o.push('+'+e.health+' health a night');if(e.bond)o.push('+'+e.bond+' bond a night');if(e.rep)o.push('+1 reputation on every podium');return o.join(' · ')}
@@ -678,7 +680,7 @@ function itemIcon(slot,r,sz=30){const c=`var(--r-${r})`,k='var(--ink)';const g={
   flair:`<path d="M16 3 L19 11 L28 11 L21 16 L24 25 L16 20 L8 25 L11 16 L4 11 L13 11 Z" fill="${c}"/>`}[slot]||'';
   return `<svg class="iicon" viewBox="0 0 32 32" width="${sz}" height="${sz}" aria-hidden="true"><rect x=".5" y=".5" width="31" height="31" rx="7" fill="var(--paper)" stroke="${c}" stroke-opacity=".5"/>${g}</svg>`}
 function itemRow(it,right){return `<div class="item-row r-${it.r}">${itemIcon(it.s,it.r)}<div class="grow"><div class="iname"><span class="rc-${it.r}">${it.n}</span> ${rbadge(it.r)} <span class="note" style="font-weight:500">${SLOTN[it.s]}</span></div><div class="note">${itemEffects(it)}</div></div>${right}</div>`}
-function gearSection(h){return `<div class="subh">Gear</div><div class="note" style="margin:-2px 0 6px">${gearRole(h)==='active'?'Best suited to '+EVENTS[bestEventOf(h)].n+'.':gearRole(h)==='young'?'Young horse: training gear helps most.':'Retired: comfort gear helps most.'}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"><button class="btn small" data-a="autogear1" data-id="${h.id}" ${S.inv.some(x=>x.on==null)?'':'disabled'}>Fill empty slots</button><button class="btn small" data-a="bestgear1" data-id="${h.id}" ${S.inv.length?'':'disabled'}>Best gear (take from others)</button></div><div>${SLOTS.map(sl=>{const x=S.inv.find(y=>y.on===h.id&&ITEMS[y.id].s===sl.k);const avail=S.inv.filter(y=>y.on==null&&ITEMS[y.id].s===sl.k);
+function gearSection(h){const tb=h.client?`<label class="tackchk"><input type="checkbox" data-c="clienttack" data-id="${h.id}" ${h.client.tack?'checked':''}> Use my tack on ${esc(h.name)}</label><div class="note" style="margin:2px 0 8px">${h.client.tack?'Your gear can be put on this horse, and the buttons below and in the Tack Shop include it. It all comes back to your tack room when the owner picks the horse up.':'Off: '+esc(h.name)+' uses the owner’s own tack. Tick the box to let it wear and be assigned your gear.'}</div>`:'';if(h.client&&!h.client.tack)return `<div class="subh">Gear</div>${tb}`;return `<div class="subh">Gear</div>${tb}<div class="note" style="margin:-2px 0 6px">${gearRole(h)==='active'?'Best suited to '+EVENTS[bestEventOf(h)].n+'.':gearRole(h)==='young'?'Young horse: training gear helps most.':'Retired: comfort gear helps most.'}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"><button class="btn small" data-a="autogear1" data-id="${h.id}" ${S.inv.some(x=>x.on==null)?'':'disabled'}>Fill empty slots</button><button class="btn small" data-a="bestgear1" data-id="${h.id}" ${S.inv.length?'':'disabled'}>Best gear (take from others)</button></div><div>${SLOTS.map(sl=>{const x=S.inv.find(y=>y.on===h.id&&ITEMS[y.id].s===sl.k);const avail=S.inv.filter(y=>y.on==null&&ITEMS[y.id].s===sl.k);
   return `<div class="gslot"><span class="gk">${sl.n}</span>${x?`<span class="gi"><b class="rc-${ITEMS[x.id].r}">${ITEMS[x.id].n}</b><span class="note">${itemEffects(ITEMS[x.id])}</span></span><button class="btn small" data-a="unequip" data-u="${x.uid}">Take off</button>`
    :avail.length?`<select data-c="equip" data-id="${h.id}" aria-label="Choose a ${sl.n}"><option value="">Empty · choose from your tack room…</option>${[...new Set(avail.map(y=>y.id))].map(id=>{const ys=avail.filter(y=>y.id===id);return `<option value="${ys[0].uid}">${ITEMS[id].n} (${RARITY[ITEMS[id].r].n})${ys.length>1?' ×'+ys.length:''}</option>`}).join('')}</select>`:'<span class="note">Empty · buy one at the Tack Shop</span>'}</div>`}).join('')}</div>`}
 
@@ -973,7 +975,7 @@ function trainerSession(h,p){const ks=trainerStats(h).slice(0,trainerCount(p.ski
 function trainerTonight(){const p=S.staff.trainer;const o={};if(!p||!S.autoTrain)return o;const pr={high:0,normal:1,low:2};let n=0;const cap=trainerCap(p.skill);
   for(const h of S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>((b.tres?1:0)-(a.tres?1:0))||(pr[tpri(a)]-pr[tpri(b)]))){if(h.energy<25){o[h.id]='tired';continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){o[h.id]='dayoff';continue}o[h.id]=n<cap?'yes':'full';n++}return o}
 function trainerTag(h){const t=trainerTonight()[h.id];if(!t)return '';const B=(cls,title,txt)=>`<button class="chip ${cls} tchipbtn" data-a="treserve" data-id="${h.id}" title="${title}">${txt}</button>`;
-  if(h.tres&&S.staff.trainer)return B('trainchip reserved','Reserved for the trainer: kept out of events, pasture and jobs, and trained first tonight. Tap to free up.',t==='tired'?'📌 Reserved · resting':t==='dayoff'?'📌 Reserved · day off':'📌 Reserved for trainer');
+  if(h.tres&&S.staff.trainer)return B('trainchip reserved','Reserved for the trainer: kept out of events, pasture and jobs, and trained first tonight. Tap to free up.',t==='tired'?'Reserved · resting':t==='dayoff'?'Reserved · day off':'Reserved for trainer');
   if(t==='yes'||t==='full')return B(t==='yes'?'trainchip':'warn',(t==='yes'?'The trainer will work this horse tonight.':'The trainer has more idle horses than time.')+' Tap to reserve: trained first and kept out of events, pasture and jobs.',t==='yes'?'Trainer tonight':'Trainer full');
   return t==='yes'?'<span class="chip trainchip" title="Left idle, so the trainer will work this horse when you press End Day">Trainer tonight</span>':t==='full'?'<span class="chip warn" title="The trainer has more idle horses than time. Raise this horse’s priority in its papers.">Trainer full</span>':t==='tired'?'<span class="chip" title="Under 25 energy, so the trainer will let this horse rest">Trainer: resting</span>':'<span class="chip" title="Worked 4+ days in a row, so the trainer will give a day off">Trainer: day off</span>'}
 function trainerPlan(h){const tp=h.tplan||{},sp=tp.stats||{},p=S.staff.trainer;
@@ -982,7 +984,7 @@ function trainerPlan(h){const tp=h.tplan||{},sp=tp.stats||{},p=S.staff.trainer;
   const young=isYoung(h)?`<p class="note">${stage(h)==='Foal'&&age(h)<TRAIN_MIN_AGE?'Too young for the trainer. From 6 months old the trainer can work '+(h.sex==='M'?'him':'her')+' lightly.':'Young horses train at one third of an adult’s gains and use less energy.'} If nobody works ${h.sex==='M'?'him':'her'} during the day, ${h.sex==='M'?'he':'she'} goes out to pasture automatically.</p>`:'';
   return `<div class="subh">Trainer plan</div>${young}
   ${p?`<p class="note">${esc(p.name)} works up to ${trainerCap(p.skill)} idle horses each evening (High priority first), ${trainerCountText(p.skill)} stats per horse at ${Math.round(trainerFrac(p.skill)*100)}% of a full session each. An idle horse is one you didn’t use today: no training, trail ride, groundwork, lessons, cattle work, event or pasture turnout. ${h.trainerDay===S.day?'<b>Trained by the trainer last night.</b>':''}${S.autoTrain?'':' <b class="warn">Evening training is switched off on the Staff tab.</b>'}</p>`:'<p class="note">Hire a Trainer on the Staff tab and they’ll follow this plan whenever this horse is left idle. An idle horse is one you didn’t use today: no training, trail ride, groundwork, lessons, cattle work, event or pasture turnout.</p>'}
-  ${p?`<div class="actions" style="margin:4px 0 8px"><button class="btn small ${h.tres?'primary':''}" data-a="treserve" data-id="${h.id}">${h.tres?'📌 Reserved for the trainer (tap to free up)':'📌 Reserve for the trainer'}</button><span class="note">Reserved horses are trained first and kept out of events, pasture and jobs.</span></div>`:''}
+  ${p?`<div class="actions" style="margin:4px 0 8px"><button class="btn small ${h.tres?'primary':''}" data-a="treserve" data-id="${h.id}">${h.tres?'Reserved for the trainer (tap to free up)':'Reserve for the trainer'}</button><span class="note">Reserved horses are trained first and kept out of events, pasture and jobs.</span></div>`:''}
   <div class="tplan"><label class="tpri">Horse priority ${sel('pri',tp.pri||'normal',[['high','High'],['normal','Normal'],['low','Low'],['off','Don’t train']],'Horse training priority')}</label>
   ${STATS.map(x=>`<label>${x.n} ${sel('s:'+x.k,sp[x.k]||'normal',[['high','First'],['normal','Normal'],['low','Last'],['skip','Skip']],x.n+' priority')}</label>`).join('')}</div>
   ${plan?`<p class="note" style="margin-top:6px">If ${esc(h.name)} is still idle at day’s end: ${plan.length?'<b>'+plan.join(', ')+'</b>':'nothing left to train'}${plan.length&&p.skill===3?' (maybe one more)':''}.</p>`:''}`;
@@ -1032,6 +1034,9 @@ const CHANGELOG=[
   'Stud requests: each stallion rests 4 days between outside mares, and stud fees are lower.',
   'Breeding Eye levels much faster: more XP for breeding, every foal born (extra for shiny or breakthrough foals), homebred horses growing up and winning, and every vet checkup.',
   'Business levels much faster: XP for selling horses, stud fees, boarding pay and client pickups, sponsor payments and livestock income.',
+  'Boarded horses get the Event button, and a “Use my tack” box in their papers so they can wear and be assigned your gear.',
+  'Sponsorship offers now show at the top of the Stable tab, next to buy and stud offers.',
+  'Cleaner buttons: removed the little icons from Report a Bug, trainer reserve, Auto compete and Event.',
   'Tested with a computer player over hundreds of simulated years.']},
  {b:'69',d:'Oct 29, 2026',t:'Fresh horses, fences and faster shows',c:[
   'Click the build number to see what changed in every build (this list!).',
@@ -1406,7 +1411,7 @@ function renderTitle(){const v=UI.tview||'main';const auto=hasAutosave();
      <button class="tbtn ${auto?'':'primary'}" data-a="tnew"><span class="tb1">New Game</span><span class="tb2">Make your rancher and start a new story</span></button>
      <button class="tbtn" data-a="tview" data-v="load"><span class="tb1">Load Game</span><span class="tb2">Save slots, save files and transfer codes</span></button>
      <button class="tbtn" data-a="tview" data-v="settings"><span class="tb1">Settings</span><span class="tb2">Look, event watching and saves</span></button>
-     <button class="tbtn" data-a="tview" data-v="bug"><span class="tb1">🐞 Report a Bug</span><span class="tb2">Something broken or odd? Tell the developer</span></button></div>`;
+     <button class="tbtn" data-a="tview" data-v="bug"><span class="tb1">Report a Bug</span><span class="tb2">Something broken or odd? Tell the developer</span></button></div>`;
   if(v==='bug')panel=bugPanel();
   if(v==='new')panel=`<div class="panel tpanel"><h2>Start a new game?</h2><p>Your current ranch, <b>${esc(auto?auto.ranchName:'')}</b>, is in the autosave. Starting over replaces it.</p><p class="note">Want to keep it? Save it to a slot first. You can load it again any time.</p>
      <div class="actions">${[1,2,3].map(n=>`<button class="btn small" data-a="tkeep" data-n="${n}">Keep it in slot ${n}${slotInfo(n)?' (replaces '+esc(slotInfo(n).name)+')':''}</button>`).join('')}</div>
@@ -1760,7 +1765,7 @@ function rest(h,quiet){if(!canTurnout(h))return false;tutMark('pasture');h.acted
   if(!quiet)toast(h.name+' spends the day grazing out in the pasture'+gain+'.'+(e?' '+e:''));else if(e)S._pastureMsgs=(S._pastureMsgs||[]).concat(e);
   return true}
 function doJob(h,id){
-  const j=JOBS.find(x=>x.id===id);if(!j)return;if(trainerHeld(h))return toast(h.name+' is reserved for the trainer tonight. Tap the 📌 chip on the card to free them up.');
+  const j=JOBS.find(x=>x.id===id);if(!j)return;if(trainerHeld(h))return toast(h.name+' is reserved for the trainer tonight. Tap the Reserved chip on the card to free them up.');
   if(id==='turnout')return rest(h);
   if(!canWork(h))return toast(h.name+' can’t do that today.');
   if(j.adult&&!isAdult(h))return toast('Only grown horses can do that.');
@@ -1916,7 +1921,7 @@ function ranchInvPanel(h,ok){const L0=(S.ranchInv||[]).filter(v=>v.until>=S.day)
   return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Ranch show invitations</div><p class="note">Other ranches invite you to their own shows. No entry fee. Pick a horse to send.</p>${L0.map(v=>{const ev=EVENTS[v.ei];const sel=UI['rinv'+v.id]||'';return `<div class="staff"><div class="grow"><b>${esc(v.who)} Ranch ${esc(ev.n)}</b><div class="note">Purse ${v.prize.map(p=>money(r10(p*(ev.purse||1)))).join(' / ')} · field strength about ${Math.round(v.base)} · good through day ${v.until}</div></div><select data-c="rinvsel" data-v="${v.id}" aria-label="Horse to send"><option value="">Pick a horse…</option>${elig.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${esc(x.name)} (${ev.n.split(' ')[0]} ${Math.round(baseScore(x,ev))})</option>`).join('')}</select><button class="btn small primary" data-a="rinvgo" data-v="${v.id}" ${sel?'':'disabled'}>Send</button></div>`}).join('')}</div>`}
 function canCompete(h){return h&&!trainerHeld(h)&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
 function compete(h,ei,ti){
-  const ev=EVENTS[ei],t=TIERS[ti];if(trainerHeld(h))return toast(h.name+' is reserved for the trainer. Tap the 📌 chip on the card to free them up.');
+  const ev=EVENTS[ei],t=TIERS[ti];if(trainerHeld(h))return toast(h.name+' is reserved for the trainer. Tap the Reserved chip on the card to free them up.');
   if(!canCompete(h))return toast('That horse can’t compete today. They need '+compEnergy(h||{})+' energy and 50 health.');
   if(S.rep<t.req)return toast(t.n+' events need '+t.req+' reputation.');
   const rinv=t.ranch?(S.ranchInv||[]).find(v=>v.ei===ei&&v.until>=S.day):null;if(t.ranch){if(!rinv)return toast('That ranch show invitation has expired.');t.base=rinv.base;t.prize=rinv.prize}else if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
@@ -2378,7 +2383,7 @@ function endDay(){
   if((S.day-1)%7===0){
     if(S.sponsor){const sp=SPONSORS.find(x=>x.id===S.sponsor.id);if(sp){if((S.weekStarts||0)>=sp.starts){S.money+=sp.pay;pxp('biz',4);ev.push(['good',sp.n+' paid your weekly sponsorship of '+money(sp.pay)+'.'])}else{S.sponsor.strikes=(S.sponsor.strikes||0)+1;ev.push(['warn',sp.n+' expected '+sp.starts+' event entr'+(sp.starts>1?'ies':'y')+' last week and got '+(S.weekStarts||0)+'. No payment. Strike '+S.sponsor.strikes+' of 2.'])}
       S.sponsor.weeks--;if(S.sponsor.strikes>=2){S.sponsor=null;loseRep(3,sp.n+' dropped your sponsorship.',ev)}else if(S.sponsor.weeks<=0){S.sponsor=null;ev.push(['info',sp.n+'’s sponsorship has ended. A new offer may come.'])}}}
-    if(!S.sponsor){const b=bestSponsor();if(b&&S.sponsorOffer!==b.id){S.sponsorOffer=b.id;ev.push(['good',b.n+' wants to sponsor your ranch for '+money(b.pay)+' a week. See the Office tab.'])}}
+    if(!S.sponsor){const b=bestSponsor();if(b&&S.sponsorOffer!==b.id){S.sponsorOffer=b.id;ev.push(['good',b.n+' wants to sponsor your ranch for '+money(b.pay)+' a week. See the top of the Stable tab.'])}}
     S.weekStarts=0;
     S.invites=[];if(S.rep>=100){const n=S.rep>=150?2:1;const pool=EVENTS.map((e,i)=>i).sort(()=>R()-.5);for(let i=0;i<n;i++)S.invites.push({ei:pool[i],until:S.day+3});ev.push(['good','You’ve been invited to '+S.invites.map(v=>'the '+EVENTS[v.ei].n+' Invitational').join(' and ')+'! See the Compete tab (good for 4 days).'])}
     refreshMarket();refreshShop();refreshApplicants();ev.push(['info','New job applicants are looking for ranch work. See the Staff tab.']);if(L('house')>=2){const hr=gainRep(L('house')-1);ev.push(['good','Word of your fine ranch house spread. Reputation +'+hr+'.'])}ev.push(['info','New horses, outside studs and fresh tack arrived in town.'])}
@@ -2682,7 +2687,7 @@ function horseCard(h,mode){
     const w=canWork(h)&&h.energy>=25;
     actions=groomBtn(h,true);
     if(canTurnout(h))actions+=`<button class="btn small" data-a="rest" data-id="${h.id}" title="Turn out to pasture">Pasture</button>`;
-    if(canCompete(h)&&!h.client)actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">🏆 Event</button>`;
+    if(canCompete(h))actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">Event</button>`;
     if(stage(h)!=='Foal'&&pregOk(h)){actions+=`<span class="lbl">Train</span>`+STATS.map(s=>`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'} title="Train ${s.n}">${s.s}</button>`).join('')}
     if(canWork(h))actions+=jobSelect(h);
   }
@@ -2738,7 +2743,8 @@ function renderStable(){
   const offers=S.offers.map(o=>{const h=H(o.id);return h?`<div class="offer"><div class="grow"><b>${esc(o.who)}</b> wants to buy <b>${esc(h.name)}</b> for <b class="mono">${money(o.amt)}</b> <span class="note">(worth about ${money(saleValue(h))}, offer ends day ${o.exp})</span></div><button class="btn primary small" data-a="accept" data-id="${h.id}">Accept</button><button class="btn small" data-a="decline" data-id="${h.id}">Decline</button></div>`:''}).join('');
   const studs=S.studReq.map(r=>{const h=H(r.id);if(!h)return '';const ok=canWork(h)&&h.energy>=20;
     return `<div class="offer"><div class="grow"><b>${esc(r.who)} Ranch</b> wants to breed their mare to <b>${esc(h.name)}</b> ${rbadge(rarityOf(h))} and will pay <b class="mono">${money(r.fee)}</b> <span class="note">(stud service, uses ${esc(h.name)}’s day and 20 energy, offer ends day ${r.exp})</span>${ok?'':'<div class="note bad">'+esc(h.name)+' can’t do it today. Accept tomorrow before the offer ends.</div>'}</div><button class="btn primary small" data-a="studyes" data-id="${h.id}" ${ok?'':'disabled'}>Accept</button><button class="btn small" data-a="studno" data-id="${h.id}">Decline</button></div>`}).join('');
-  return `<div class="hint"><div class="grow"><b>Next step:</b> ${hint()}</div></div>${studs}${offers}${yourDay()}
+  const spo=!S.sponsor&&S.sponsorOffer&&SPONSORS.find(x=>x.id===S.sponsorOffer);const spon=spo?`<div class="offer"><div class="grow"><b>${esc(spo.n)}</b> wants to sponsor your ranch for <b class="mono">${money(spo.pay)}</b> a week <span class="note">(4 weeks · enter at least ${spo.starts} event${spo.starts>1?'s':''} a week · two missed weeks and they drop you, −3 reputation)</span></div><button class="btn primary small" data-a="takesponsor">Accept</button><button class="btn small" data-a="nosponsor">Decline</button></div>`:'';
+  return `<div class="hint"><div class="grow"><b>Next step:</b> ${hint()}</div></div>${spon}${studs}${offers}${yourDay()}
   <div class="section-head"><h2>The Barn</h2><span class="sub">Tonight the herd eats ${herdHay()} bales${stockHay()?' (horses '+Math.round(horseHay()*10)/10+', livestock '+stockHay()+')':''}. Click any horse to see its papers.</span>
   <div class="right"><button class="btn" data-a="groomall" ${S.horses.every(h=>h.pgroomed===S.day)?'disabled':''} title="${grooms().length?esc(groomNames())+' brush horses each morning. Grooming them yourself adds extra bond.':'Groom every horse: happiness and bond up'}">${S.horses.every(h=>h.pgroomed===S.day)?'✓ All groomed':grooms().length?'Groom all yourself (+bond)':'Groom all'}</button><button class="btn" data-a="restall">Turn out the rest</button></div></div>
   ${grooms().length?`<div class="helpline ${groomCap()<S.horses.length?'warn':''}"><span>${groomCap()<S.horses.length?'!':'✓'}</span><span>${groomNote()}</span></div>`:''}
@@ -2856,7 +2862,7 @@ function renderCompete(){
   <div class="panel showcal"><div class="subh" style="margin-top:0">Show calendar · ${SEASONS[dateParts(S.day).sIdx]} day ${dateParts(S.day).sday}, year ${dateParts(S.day).year}</div><div class="calgrid">${TIERS.map((t,ti)=>t.invite?'':`<div class="calrow ${tierOpen(ti)?'open':''}"><b>${t.n}</b><span class="note">${t.when}</span><span class="${tierOpen(ti)?'good':'note'}">${tierOpen(ti)?'● Open now':openText(ti)}</span>${S.rep<t.req?`<span class="note">needs ${t.req} rep</span>`:''}</div>`).join('')}</div></div>
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+(trainerHeld(x)?'reserved for trainer':status(x)[1])}</option>`).join('')}</select></div>
-   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 80% or better chance to win">⚡ Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">⚡ Auto compete all</button></div><span class="note" style="font-size:11.5px">Best open level with 80%+ win chance · skips horses that would sour</span></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 80% or better chance to win">Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">Auto compete all</button></div><span class="note" style="font-size:11.5px">Best open level with 80%+ win chance · skips horses that would sour</span></div>
    ${h?`<div class="note">${esc(h.name)}: Energy ${Math.round(h.energy)} · Happy ${Math.round(h.happy)} · Health ${Math.round(h.health)} · Record ${h.wins} wins / ${h.starts} starts${refuseChance(h)?` · <span class="bad">Sulking: ${Math.round(refuseChance(h)*100)}% chance to refuse</span>`:''}</div>`:'<div class="note">Odds appear once you pick a horse. Energy 40+ and health 50+ needed.</div>'}
   </div>
   ${ranchInvPanel(h,ok)}
@@ -3228,7 +3234,7 @@ function renderTack(){
   // unworn, stacked by item id
   const groups={};for(const x of S.inv)if(x.on==null)(groups[x.id]=groups[x.id]||[]).push(x);
   const freeRow=id=>{const it=ITEMS[id],list=groups[id],x=list[0];
-    const sel=`<select data-c="equipto" data-u="${x.uid}" aria-label="Put ${esc(it.n)} on a horse"><option value="">Put on a horse…</option>${S.horses.map(h=>{const cur=gearOf(h).find(g=>g.s===it.s);return `<option value="${h.id}">${esc(h.name)}${cur?' (swap for '+esc(cur.n)+')':''}</option>`}).join('')}</select>`;
+    const sel=`<select data-c="equipto" data-u="${x.uid}" aria-label="Put ${esc(it.n)} on a horse"><option value="">Put on a horse…</option>${S.horses.filter(useTack).map(h=>{const cur=gearOf(h).find(g=>g.s===it.s);return `<option value="${h.id}">${esc(h.name)}${cur?' (swap for '+esc(cur.n)+')':''}</option>`}).join('')}</select>`;
     return itemRow(it,`${list.length>1?`<span class="stack">×${list.length}</span>`:''}${sel}<button class="btn small" data-a="sellitem" data-u="${x.uid}">Sell${list.length>1?' one':''} · ${money(it.p*sellRate())}</button>`)};
   const free=Object.keys(groups).sort((a,b)=>rk(b)-rk(a)||ITEMS[a].s.localeCompare(ITEMS[b].s)).map(freeRow).join('');
   // worn, grouped by horse
@@ -3252,7 +3258,7 @@ function renderTack(){
     <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn primary" data-a="crate" data-n="1" ${S.money<crateCost()?'disabled':''}>Open 1 · ${money(crateCost())}</button><button class="btn" data-a="crate" data-n="5" ${S.money<crateCost()*5?'disabled':''}>Open 5 · ${money(crateCost()*5)}</button><button class="btn" data-a="crate" data-n="10" ${S.money<crateCost()*10?'disabled':''}>Open 10 · ${money(crateCost()*10)}</button></div>
     <p class="note">Winning events can also earn gear. A National or Invitational win always does.</p></div>
    <div class="panel"><div class="subh" style="margin-top:0">Auto gear</div>
-    <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-a="autogear" ${S.inv.some(x=>x.on==null)&&S.horses.length?'':'disabled'}>Fill empty slots</button><button class="btn primary" data-a="bestgear" ${S.inv.length&&S.horses.length?'':'disabled'}>Best gear for everyone</button><button class="btn" data-a="buygear" ${S.horses.some(h=>!h.client)?'':'disabled'} title="Buys from the Tack Shop to fill every empty gear slot">🛒 Buy missing gear</button></div>
+    <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-a="autogear" ${S.inv.some(x=>x.on==null)&&S.horses.length?'':'disabled'}>Fill empty slots</button><button class="btn primary" data-a="bestgear" ${S.inv.length&&S.horses.length?'':'disabled'}>Best gear for everyone</button><button class="btn" data-a="buygear" ${S.horses.some(useTack)?'':'disabled'} title="Buys from the Tack Shop to fill every empty gear slot">🛒 Buy missing gear</button></div>
     <p class="note" style="margin-top:6px"><b>Fill empty slots</b> puts spare tack-room gear on horses with open slots. <b>Best gear for everyone</b> reshuffles all gear, worn or not, so each horse gets what suits it: event gear for its best event, training gear for horses still learning, comfort and safety gear for retired horses. Top competitors get first pick.</p></div>
    ${sellPanel}
    <div class="panel"><div class="subh" style="margin-top:0">In the tack room (${nFree})</div>${compact&&freeHtml?'<p class="note">Lots of gear, so it’s grouped by slot. Tap a slot to open it.</p>':''}${freeHtml||'<p class="note">Nothing unworn. Buy something or open a crate.</p>'}
@@ -3488,7 +3494,7 @@ function renderModal(){
     title=t.n+' '+ev.n;
     body=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+(m.cut?' ('+money(m.cut)+' goes to '+esc(m.owner)+', the owner’s '+Math.round(CLIENT_CUT*100)+'% share)':'')+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(['A Local Show ribbon','A County Fair ribbon','A State Championship rosette','A Regional rosette','A gold-rimmed National rosette','A teal-rimmed International rosette','A gold Olympic rosette','A purple-rimmed Invitational rosette','A Ranch Show rosette'][m.t]||'A ribbon')+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
     <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':''}"><td>${ord[i]}</td><td>${esc(f.name)}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
-    <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">⚡ Auto compete next horse</button>':''}</div>`;
+    <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">Auto compete next horse</button>':''}</div>`;
   }else if(m.type==='buygear'){const buy=m.plan.filter(r=>!r.none),miss=m.plan.filter(r=>r.none);const tot=buy.reduce((a,r)=>a+r.p,0);title='Buy missing gear';
     body=`<p>Fill <b>${buy.length}</b> empty slot${buy.length===1?'':'s'} for <b class="mono">${money(tot)}</b>${buy.some(r=>r.uid!=null)?' (some come free from your tack room)':''}. Each horse gets the best fit it can from the Tack Shop’s current stock. You have ${money(S.money)}, and ${money(gearReserve())} is kept back for about 5 days of hay and wages.</p>
     <div class="tablewrap"><table class="result"><tr><th>Horse</th><th>Slot</th><th>Item</th><th class="n">Cost</th></tr>${buy.map(r=>{const h=H(r.h),it=ITEMS[r.id];return `<tr><td>${esc(h?h.name:'?')}</td><td>${SLOTN[r.sl]}</td><td><b class="rc-${it.r}">${it.n}</b></td><td class="n">${r.p?money(r.p):'tack room'}</td></tr>`}).join('')}</table></div>
@@ -4017,7 +4023,7 @@ const ACT={
   endday:()=>{endDay();return 'skip'},
   groom:d=>{const h=H(d.id);if(h)groom(h)},
   groomall:()=>{let n=0,x=0;for(const h of S.horses){const e=staffGroomed(h);if(groom(h,true)){n++;if(e)x++}}toast(n?'You groomed '+n+' horse'+(n>1?'s':'')+(x?' ('+x+' already brushed by staff, so mostly extra bond)':'')+'.':'You’ve already groomed everyone today.')},
-  treserve:d=>{const h=H(d.id);if(!h)return;h.tres=h.tres?0:1;toast(h.tres?'📌 '+h.name+' is reserved for the trainer: trained first tonight and kept out of events, pasture and jobs.':h.name+' is no longer reserved for the trainer.')},
+  treserve:d=>{const h=H(d.id);if(!h)return;h.tres=h.tres?0:1;toast(h.tres?h.name+' is reserved for the trainer: trained first tonight and kept out of events, pasture and jobs.':h.name+' is no longer reserved for the trainer.')},
   restall:()=>{let n=0;S._pastureMsgs=[];for(const h of S.horses)if(rest(h,true))n++;const ms=S._pastureMsgs;delete S._pastureMsgs;toast(n?n+' horse'+(n>1?'s':'')+' turned out to pasture.'+(ms.length?' '+ms.join(' '):''):'No idle horses.')},
   train:d=>{const h=H(d.id);if(h)train(h,d.k)},
   rest:d=>{const h=H(d.id);if(h)rest(h)},
@@ -4216,6 +4222,7 @@ document.addEventListener('change',e=>{
   if(c==='pname'){UI.pdraft.name=e.target.value;return}
   if(c==='rnamec'){UI.pdraft.ranch=e.target.value;return}
   if(c==='rname'){UI.rname=e.target.value;return}
+  if(c==='clienttack'){const h=H(e.target.dataset.id);if(h&&h.client){h.client.tack=e.target.checked?1:0;if(!h.client.tack)freeGear(h.id);toast(h.client.tack?h.name+' can use your tack now.':h.name+' is back in the owner’s tack. Your gear went back to the tack room.')}save();render();return}
   if(c==='equip'){if(e.target.value)equip(e.target.value,e.target.dataset.id);save();render();return}
   if(c==='equipto'){if(e.target.value)equip(e.target.dataset.u,e.target.value);save();render();return}
   if(c==='loadfile'){const f=e.target.files&&e.target.files[0];if(!f)return;const rd=new FileReader();
