@@ -778,6 +778,12 @@ function compEnergy(h){return Math.max(15,(hasS(h,'easyloader')?24:40)-[0,8,15][
 function jobName(k){if(k.startsWith('train:'))return STATS.find(x=>x.k===k.slice(6)).n+' drills';if(k.startsWith('ev:'))return (EVENTS[+k.slice(3)]||{n:'Shows'}).n;return {lesson:'Riding lessons',trail:'Trail rides',ground:'Groundwork',ranchwork:'Ranch work'}[k]||k}
 function recentJobs(h,days=6){return (h.jobs||[]).filter(j=>j.d>S.day-days)}
 function jobCount(h,k){return recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)}
+const AUTO_WIN=.8;
+function autoPick(h){let best=null,top=null,sour=null;
+  EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti))return;if(ti>=T_NAT&&!vetClear(h))return;if(S.money<entryFee(t,ev))return;
+    const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
+    if(od.win>=AUTO_WIN){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-entryFee(t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
+  return {best,sour,top}}
 function sourRisk(h,ei){const o=[];if(!h)return o;const lazy=has(h,'lazy');
   if(!has(h,'workaholic')&&(h.streak||0)+1>=(lazy?3:5))o.push('This would be day '+((h.streak||0)+1)+' of work in a row. '+h.name+' would sour (−3 happiness).');
   if(!has(h,'workaholic')&&!has(h,'habit')&&!has(h,'showoff')){let n=jobCount(h,'ev:'+ei);if(has(h,'easilybored'))n*=2;const pen=boredPen(n);if(pen)o.push(h.name+' is getting sick of '+jobName('ev:'+ei).toLowerCase()+' (−'+pen+' happiness).')}
@@ -2665,7 +2671,7 @@ function renderCompete(){
   <div class="panel showcal"><div class="subh" style="margin-top:0">Show calendar · ${SEASONS[dateParts(S.day).sIdx]} day ${dateParts(S.day).sday}, year ${dateParts(S.day).year}</div><div class="calgrid">${TIERS.map((t,ti)=>t.invite?'':`<div class="calrow ${tierOpen(ti)?'open':''}"><b>${t.n}</b><span class="note">${t.when}</span><span class="${tierOpen(ti)?'good':'note'}">${tierOpen(ti)?'● Open now':openText(ti)}</span>${S.rep<t.req?`<span class="note">needs ${t.req} rep</span>`:''}</div>`).join('')}</div></div>
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+status(x)[1]}</option>`).join('')}</select></div>
-   <div style="display:flex;flex-direction:column;gap:4px"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 85% or better chance to win">⚡ Auto compete</button><span class="note" style="font-size:11.5px">Best open level with 85%+ win chance</span></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 80% or better chance to win">⚡ Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">⚡ Auto compete all</button></div><span class="note" style="font-size:11.5px">Best open level with 80%+ win chance · skips horses that would sour</span></div>
    ${h?`<div class="note">${esc(h.name)}: Energy ${Math.round(h.energy)} · Happy ${Math.round(h.happy)} · Health ${Math.round(h.health)} · Record ${h.wins} wins / ${h.starts} starts${refuseChance(h)?` · <span class="bad">Sulking: ${Math.round(refuseChance(h)*100)}% chance to refuse</span>`:''}</div>`:'<div class="note">Odds appear once you pick a horse. Energy 40+ and health 50+ needed.</div>'}
   </div>
   ${ranchInvPanel(h,ok)}
@@ -3276,7 +3282,7 @@ function renderModal(){
     title='This could sour '+(h?h.name:'this horse');
     body=`<p>Auto compete picked <b>${t.n} ${ev.n}</b> (${pct(m.win)} win chance), but every good option would hurt ${h?esc(h.name):'the horse'}’s mood:</p><ul class="report">${m.reasons.map(r=>`<li class="warn">${esc(r)}</li>`).join('')}</ul>
     <p class="note">A day off in the pasture fixes most of this. Sour horses are less happy, and unhappy horses can refuse in the ring.</p>
-    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sourok">Run the race anyway</button><button class="btn" data-a="close">Not today</button></div>`;
+    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sourok">Run the race anyway</button>${h&&canTurnout(h)?`<button class="btn" data-a="sourrest">Rest ${esc(h.name)} in the pasture</button>`:''}<button class="btn" data-a="close">Not today</button></div>`;
   }else if(m.type==='foal'){const b=m.list[m.i]||{};const f=H(b.f),mo=H(b.m);if(!f){UI.modal={type:'report',ev:m.ev,day:m.day};return render()}
     const sireN=(S.registry[f.sire]||{}).name||'an unknown sire',best=Math.max(...Object.values(f.pot)),kid=f.sex==='M'?'colt':'filly';
     title=(mo?mo.name+' had a '+kid+'!':'A '+kid+' was born!');
@@ -3297,7 +3303,13 @@ function renderModal(){
     title=t.n+' '+ev.n;
     body=`<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(['A Local Show ribbon','A County Fair ribbon','A State Championship rosette','A Regional rosette','A gold-rimmed National rosette','A teal-rimmed International rosette','A gold Olympic rosette','A purple-rimmed Invitational rosette','A Ranch Show rosette'][m.t]||'A ribbon')+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
     <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':''}"><td>${ord[i]}</td><td>${esc(f.name)}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
-    <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button></div>`;
+    <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">⚡ Auto compete next horse</button>':''}</div>`;
+  }else if(m.type==='autoall'){const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const ran=m.rows.filter(r=>r.ev!=null),sk=m.rows.filter(r=>r.ev==null);
+    const tot=ran.reduce((a,r)=>a+(r.prize||0),0),wins=ran.filter(r=>r.place===1).length;title='Auto compete results';
+    body=`<p><b>${ran.length}</b> horse${ran.length===1?'':'s'} competed · <b>${wins}</b> win${wins===1?'':'s'} · <b class="mono">${money(tot)}</b> in prizes.</p>
+    ${ran.length?`<div class="tablewrap"><table class="result"><tr><th>Horse</th><th>Event</th><th>Place</th><th class="n">Prize</th></tr>${ran.map(r=>{const h=H(r.id);return `<tr class="${r.place===1?'me':''}"><td>${esc(h?h.name:'?')}</td><td>${TIERS[r.t].n} ${EVENTS[r.ev].n}</td><td>${r.place<=3?ribbonSVG(r.place,r.t,16)+' ':''}${ord[r.place-1]}${r.hurt?' <span class="bad">· hurt</span>':''}</td><td class="n">${r.prize?money(r.prize):'—'}</td></tr>`}).join('')}</table></div>`:''}
+    ${sk.length?`<div class="subh">Skipped</div>${sk.map(r=>{const h=H(r.id);return `<div class="staff"><div class="grow"><b>${esc(h?h.name:'?')}</b><div class="note">${r.skip==='sour'?'Would sour: ':''}${esc(r.why)}</div></div>${r.rested?'<span class="note good">Resting</span>':h&&r.skip!=='refused'&&canTurnout(h)?`<button class="btn small" data-a="autorest" data-id="${h.id}">Rest in pasture</button>`:''}</div>`}).join('')}`:''}
+    <div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Done</button></div>`;
   }else if(m.type==='welcome'){
     title='Welcome to your ranch';
     body=`<p>${S.player?esc(S.player.name)+', you':'You'}’ve got ${S.horses.length} horse${S.horses.length===1?'':'s'}, ${S.hay} bales of hay and ${money(S.money)}${totalDebt()?`, plus ${money(totalDebt())} of debt (see the Bank tab)`:''}. Your goal is to breed a line of champions.</p>
@@ -3879,13 +3891,22 @@ const ACT={
     const c=h.client;S.money-=amt;pxp('biz',4);delete h.client;h.origin='Bought from '+c.owner;h.noOffer=0;S.offers=S.offers.filter(o=>o.id!==h.id);sfx('coin');
     log('good','You bought '+h.name+' from '+c.owner+' for '+money(amt)+'. '+h.name+' is yours now.');toast(c.owner+' said yes! '+h.name+' is yours for '+money(amt)+'.')},
   sourok:()=>{const m=UI.modal;if(!m||m.type!=='sourcomp')return;UI.modal=null;const h=H(UI.compHorse);toast('Auto compete: '+h.name+' → '+TIERS[m.ti].n+' '+EVENTS[m.ei].n+' ('+pct(m.win)+' win chance)');return compete(h,m.ei,m.ti)},
-  autocomp:()=>{const h=H(UI.compHorse);if(!canCompete(h))return toast('Pick a horse that can compete today first.');let best=null,top=null,sour=null;
-    EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti))return;if(ti>=T_NAT&&!vetClear(h))return;if(S.money<entryFee(t,ev))return;
-      const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
-      if(od.win>=.85){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-entryFee(t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
+  autocomp:()=>{const h=H(UI.compHorse);if(!canCompete(h))return toast('Pick a horse that can compete today first.');const {best,sour,top}=autoPick(h);
     if(!best&&sour){UI.modal={type:'sourcomp',ei:sour.ei,ti:sour.ti,win:sour.win,reasons:sour.sr};return}
-    if(!best)return toast(top?'No open event gives '+h.name+' an 85% chance to win. Best is '+TIERS[top.ti].n+' '+EVENTS[top.ei].n+' at '+pct(top.win)+'.':'No open events '+h.name+' can enter right now.');
+    if(!best)return toast(top?'No open event gives '+h.name+' an '+Math.round(AUTO_WIN*100)+'% chance to win. Best is '+TIERS[top.ti].n+' '+EVENTS[top.ei].n+' at '+pct(top.win)+'.':'No open events '+h.name+' can enter right now.');
     toast('Auto compete: '+h.name+' → '+TIERS[best.ti].n+' '+EVENTS[best.ei].n+' ('+pct(best.win)+' win chance)');return compete(h,best.ei,best.ti)},
+  autonext:()=>{const cur=UI.modal&&UI.modal.h;UI.modal=null;const nx=S.horses.filter(isAdult).find(x=>x.id!==cur&&canCompete(x));if(!nx)return toast('No other horses can compete today.');UI.compHorse=String(nx.id);UI.tab='compete';return ACT.autocomp()},
+  autoall:()=>{const list=S.horses.filter(x=>isAdult(x)&&canCompete(x));if(!list.length)return toast('No horses can compete today.');
+    const rows=[];const w0=PREF.watch,rs0=resultSound;PREF.watch=0;resultSound=()=>{};let won=0,cash=0;
+    try{for(const h of list){const {best,sour,top}=autoPick(h);
+      if(!best){rows.push({id:h.id,skip:sour?'sour':'none',why:sour?sour.sr[0]:top?'Best chance is '+pct(top.win)+' ('+TIERS[top.ti].n+' '+EVENTS[top.ei].n+').':'No open events right now.'});continue}
+      const m0=S.money;UI.modal=null;compete(h,best.ei,best.ti);const r=UI.modal&&UI.modal.type==='result'?UI.modal:null;
+      if(!r){rows.push({id:h.id,skip:'refused',why:h.name+' refused to load into the trailer.'});continue}
+      if(r.place===1)won++;cash+=r.prize||0;rows.push({id:h.id,ev:r.ev,t:r.t,place:r.place,prize:r.prize,rep:r.rep,hurt:r.hurt,win:best.win})}}
+    finally{PREF.watch=w0;resultSound=rs0}
+    UI.modal={type:'autoall',rows};if(won)sfx('cheer',won>2);if(cash)setTimeout(()=>sfx('coin'),600);save()},
+  autorest:d=>{const h=H(d.id);if(!h)return;if(rest(h)===false)return toast(h.name+' can’t go out to pasture right now.');const m=UI.modal;if(m&&m.rows){const r=m.rows.find(x=>x.id===h.id);if(r)r.rested=1}toast(h.name+' is resting in the pasture today.')},
+  sourrest:()=>{const h=H(UI.compHorse);UI.modal=null;if(!h)return;if(rest(h)===false)return toast(h.name+' can’t go out to pasture right now.');toast(h.name+' gets the day off in the pasture.')},
   job:d=>{const h=H(d.id);if(h)doJob(h,d.j)},
   chore:d=>doChore(d.k),
   hire:(d,b)=>{const x=STAFF.find(y=>y.id===d.s);if(!x)return;if(!roleOpen(x))return toast(x.lock+'.');const a=(S.applicants[x.id]||[])[+d.i];if(!a)return;
