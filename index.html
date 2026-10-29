@@ -200,7 +200,7 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .modal{background:var(--card);color:var(--ink);border-radius:14px;width:min(860px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative;overflow:hidden;overflow:clip}
 .modal .mhead{display:flex;gap:10px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
 .modal .mhead h2{font-family:var(--f-display);font-weight:400;font-size:22px;flex:1;min-width:0;overflow-wrap:anywhere}
-.modal .mbody{padding:16px 18px 20px}
+.modal .mbody{padding:16px 18px 20px}@keyframes swl{from{transform:translateX(40px);opacity:.4}to{transform:none;opacity:1}}@keyframes swr{from{transform:translateX(-40px);opacity:.4}to{transform:none;opacity:1}}.modal.swl{animation:swl .22s ease-out}.modal.swr{animation:swr .22s ease-out}
 .xbtn{border:0;background:none;font-size:22px;line-height:1;padding:4px 8px;color:var(--muted)}
 .papers{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:20px}
 @media (max-width:720px){.papers{grid-template-columns:1fr}}
@@ -685,7 +685,7 @@ const FAC=[
   {id:'pasture',g:'care',n:'Pastures',lv:[{n:'Scrub Lot',d:'Basic grazing.'},{n:'Fenced Paddocks',c:2000,d:'Pasture days +2 happiness and +1 health.'},{n:'Shaded Pastures',c:4500,d:'Pasture days +4 happiness, +2 health. Every horse +2 happiness nightly.'},{n:'Irrigated Meadows',c:9000,d:'Pasture days +6 happiness, +4 health. Every horse +3 happiness nightly. Good pasture events more likely.'}]},
   {id:'clinic',g:'care',n:'Vet Clinic',lv:[{n:'None',d:'The vet drives out from town.'},{n:'First-Aid Room',c:3000,d:'Vet visits 25% cheaper.'},{n:'Ranch Clinic',c:8000,d:'Vet care 50% cheaper. Injuries heal 25% faster. Unlocks clinic rest & monitoring. +1 health nightly. Illness half as likely.'},{n:'Equine Hospital',c:18000,d:'Vet care 70% cheaper. Injuries heal 50% faster. On-site surgery and stem-cell therapy at a much lower price. +2 health nightly. Illness rare.'}]},
   {id:'recovery',g:'care',n:'Recovery Barn',lv:[{n:'None',d:'Horses cool off on their own.'},{n:'Hot Walker',c:2200,d:'+10 energy overnight.'},{n:'Cold-Water Spa',c:6000,d:'+15 energy overnight. Unlocks spa therapy for leg, hoof and muscle injuries.'},{n:'Therapy Center',c:12000,d:'+20 energy overnight. Injury risk −10%.'}]},
-  {id:'foaling',g:'care',n:'Foaling Barn',lv:[{n:'None',d:'Mares foal in their stalls.'},{n:'Foaling Stalls',c:4000,d:'Conception +8%. Foals start with +10 bond.'},{n:'Breeding Center',c:10000,d:'Conception +15%. Foals +15 bond. Breakthrough chance 9% instead of 6%.'}]},
+  {id:'foaling',g:'care',n:'Foaling Barn',lv:[{n:'None',d:'Mares foal in their stalls.'},{n:'Foaling Stalls',c:4000,d:'Conception +8%. Foals start with +10 bond. Hard births 25% less likely.'},{n:'Breeding Center',c:10000,d:'Conception +15%. Foals +15 bond. Hard births 50% less likely. Breakthrough chance 9% instead of 6%.'}]},
   {id:'training',g:'train',n:'Training Area',lv:[{n:'Open Field',d:'Training in the dirt.'},{n:'Round Pen',c:1800,d:'Training +10%.'},{n:'Training Barn',c:5000,d:'Training +18%.'},{n:'Equine Gym',c:12000,d:'Training +28%. Water treadmill: +5 energy overnight.'}]},
   {id:'ring',g:'train',n:'Riding Ring',lv:[{n:'None',d:'Lessons in the yard.'},{n:'Lesson Ring',c:3000,d:'Riding lessons pay 50% more.'},{n:'Covered Arena',c:7000,d:'Lessons pay 80% more. +3% in Dressage. Training +5%.'},{n:'Show Arena',c:15000,d:'Lessons pay 120% more. +5% in Dressage. Training +5%. Unlocks “Host a horse show”.'}]},
   {id:'track',g:'train',n:'Race Track',lv:[{n:'None',d:'Sprints down the driveway.'},{n:'Dirt Track',c:4000,d:'Speed training +10%. +4% in races and barrels.'},{n:'Groomed Oval',c:9000,d:'Speed training +20%. +8% in races and barrels.'},{n:'Pro Track',c:18000,d:'Speed training +30%. +12% in races and barrels.'}]},
@@ -3895,6 +3895,11 @@ const ACT={
   wrap('crate',m0=>{if(S&&S.money!==m0)sfx('sparkle')});
   wrap('endday',(m0,f0,sh0)=>{sfx('morning');if(S&&S.stats&&S.stats.foals>f0)setTimeout(()=>sfx('whinny'),700);if(S&&S.horses.filter(h=>h.shiny).length>sh0)setTimeout(()=>sfx('sparkle'),1400)});
   ACT.mute=()=>{PREF.mute=!PREF.mute;savePref();toast(PREF.mute?'Sound off.':'Sound on.')};})();
+/* swipe left/right on a horse's papers (phones) to go to the next/previous horse */
+(()=>{let sx=0,sy=0,st=0,ok=false;const ov=document.getElementById('overlay');if(!ov)return;
+  ov.addEventListener('touchstart',e=>{const m=UI.modal;ok=!!(m&&m.type==='horse'&&e.touches.length===1&&!e.target.closest('input,select,textarea,.slider,[data-noswipe]'));if(!ok)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
+  ov.addEventListener('touchend',e=>{if(!ok)return;ok=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Date.now()-st>700||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.8)return;
+    const md=ov.querySelector('.modal');navHorse(dx<0?1:-1);render();const m2=ov.querySelector('.modal');if(m2){m2.classList.remove('swl','swr');void m2.offsetWidth;m2.classList.add(dx<0?'swl':'swr')}},{passive:true})})();
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');
   if(e.target.closest('select,input,textarea,label'))return;
