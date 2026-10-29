@@ -1152,10 +1152,32 @@ function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l]
 /* ---------- start screen ---------- */
 let TITLE_ANIM=null;
 function stopTitleAnim(){if(TITLE_ANIM){cancelAnimationFrame(TITLE_ANIM.raf);TITLE_ANIM=null}}
+function mtnRange(o){const r=srng(o.seed);
+  const mid=(a,b,depth,rough,out)=>{if(depth===0){out.push(b);return}const m=[(a[0]+b[0])/2+(r()-.5)*Math.abs(b[0]-a[0])*.15,(a[1]+b[1])/2+(r()-.45)*Math.abs(b[0]-a[0])*rough];mid(a,m,depth-1,rough*.92,out);mid(m,b,depth-1,rough*.92,out)};
+  const pts=[o.keys[0]];for(let i=1;i<o.keys.length;i++)mid(o.keys[i-1],o.keys[i],o.depth,o.rough,pts);
+  const P=p=>p[0].toFixed(1)+' '+p[1].toFixed(1),B=o.base+40;
+  const body='M'+P([pts[0][0],B])+' L'+pts.map(P).join(' L')+' L'+P([pts[pts.length-1][0],B])+'Z';
+  const yAt=x=>{for(let k=1;k<pts.length;k++)if(pts[k][0]>=x){const a=pts[k-1],b=pts[k],t=(x-a[0])/Math.max(.001,b[0]-a[0]);return a[1]+(b[1]-a[1])*t}return o.base};
+  let shade='',snow='',lines='';const K=o.keys;
+  for(let i=1;i<K.length-1;i++){const pk=K[i];if(!(pk[1]<K[i-1][1]&&pk[1]<K[i+1][1]))continue;
+    const dir=pk[0]<500?-1:1,vk=K[i+dir];const side=pts.filter(p=>dir<0?(p[0]<=pk[0]&&p[0]>=vk[0]):(p[0]>=pk[0]&&p[0]<=vk[0]));if(dir<0)side.reverse();
+    // spine: from the peak, wander down and outward toward the viewer, ending between peak and valley
+    const end=[pk[0]+(vk[0]-pk[0])*.42,B];const sp=[[pk[0],pk[1]]];const n=9;for(let k=1;k<=n;k++){const t=k/n;sp.push([pk[0]+(end[0]-pk[0])*Math.pow(t,1.4)+(r()-.5)*5,pk[1]+(end[1]-pk[1])*t+(r()-.5)*3])}
+    const vl=side[side.length-1],gul=[];{let gx=vl[0],gy=vl[1];const m=6;for(let k=1;k<=m;k++){gx+=(-dir*12/m)+(r()-.5)*4;gy+=(B-vl[1])/m;gul.push([gx,gy])}}shade+=`<path d="M${[...side,...gul,...sp.slice().reverse()].map(P).join(' L')}Z" fill="${o.shade}"/>`;
+    // secondary ridges on the lit side
+    const lit=-dir;for(let g=0;g<3;g++){const sx=pk[0]+lit*(12+g*16+r()*8),sy=yAt(sx);if(sy>o.base-6)continue;let d=`M${P([sx,sy])}`,x=sx,y=sy;for(let k=0;k<5;k++){x+=lit*(2+r()*4)+(r()-.5)*3;y+=(o.base-sy)/5;d+=` L${P([x,y])}`}d+=` L${P([x+dir*12,B])} L${P([sx+dir*3,sy+4])}Z`;shade+=`<path d="${d}" fill="${o.shade}" opacity=".45"/>`}
+    // snow that follows the ridge with ragged streaks
+    if(pk[1]<o.snowTop){const sp2=pts.filter(p=>Math.abs(p[0]-pk[0])<o.snowW&&p[1]<o.snowTop+6);if(sp2.length>1){
+      let lo=sp2.map((p,k)=>{const th=Math.max(1.5,(o.snowTop+6-p[1])*.7);const streak=r()<.22?r()*th*.8:0;return [p[0],p[1]+th*(.5+r()*.45)+streak]});lo=lo.map((p,k)=>[p[0],k&&k<lo.length-1&&r()<.6?(lo[k-1][1]+p[1]*2+lo[k+1][1])/4:p[1]]);
+      snow+=`<path d="M${[...sp2,...lo.slice().reverse()].map(P).join(' L')}Z" fill="${o.snow}"/>`;
+      const sh=sp2.filter(p=>dir<0?p[0]<=pk[0]:p[0]>=pk[0]);const shl=lo.filter(p=>dir<0?p[0]<=pk[0]:p[0]>=pk[0]);
+      if(sh.length>1)snow+=`<path d="M${[...sh,...shl.slice().reverse()].map(P).join(' L')}Z" fill="${o.snowSh}"/>`}}}
+  return `<clipPath id="${o.id}c"><path d="${body}"/></clipPath><path d="${body}" fill="${o.body}"/><g clip-path="url(#${o.id}c)">${shade}${snow}</g>`}
 function titleArt(){const rs=srng(7);const run=[['#7A3D1C','#1E1A18',0],['#D7AC57','#F2E6C3',1],['#211D1B','#141211',2],['#BEBEB8','#8C8C87',3]];
   const ridge=(y0,amp,step,seed,jag)=>{const r=srng(seed);let d=`M0 ${y0}`,pk=[];for(let x=0;x<=1000;x+=step){const h=y0-amp*(.35+.65*r());const mx=x+step/2;d+=` L${mx.toFixed(0)} ${h.toFixed(1)} L${(x+step).toFixed(0)} ${(y0-amp*.25*r()+jag*(r()-.5)).toFixed(1)}`;pk.push([mx,h])}return {d:d+' V300 H0Z',pk}};
-  const far=ridge(170,78,74,11,10),mid=ridge(182,44,52,23,8);
-  const snow=far.pk.filter(p=>p[1]<128).map(([x,y])=>`<path d="M${x} ${y.toFixed(1)} L${x-11} ${(y+13).toFixed(1)} L${x-5} ${(y+10).toFixed(1)} L${x-1} ${(y+15).toFixed(1)} L${x+4} ${(y+10).toFixed(1)} L${x+12} ${(y+14).toFixed(1)} Z" fill="#F4F1EC" opacity=".9"/>`).join('');
+  const MTN=mtnRange;
+  const back=MTN({seed:5,base:200,keys:[[-20,150],[60,118],[150,134],[240,100],[330,128],[420,112],[500,150],[580,116],[660,96],[760,126],[850,104],[940,122],[1030,140]],rough:.42,depth:6,body:'#ABA9C6',shade:'#9290B4',snow:'#EFEBF4',snowSh:'#CDC9DF',snowTop:122,snowW:46,id:'tmB'});
+  const front=MTN({seed:9,base:206,keys:[[-30,170],[40,128],[110,160],[190,108],[270,150],[340,132],[410,168],[470,176],[530,176],[600,160],[660,126],[730,156],[800,112],[880,148],[950,124],[1040,166]],rough:.46,depth:6,body:'#7F8B9E',shade:'#5E6880',snow:'#F7F4EF',snowSh:'#C2C6D6',snowTop:138,snowW:40,id:'tmF'});
   const pine=(x,y,h,c)=>`<path d="M${x} ${(y-h).toFixed(1)} L${(x-h*.32).toFixed(1)} ${y} L${(x+h*.32).toFixed(1)} ${y}Z" fill="${c}"/>`;
   const r2=srng(31);let pines='';for(let x=-6;x<1010;x+=7+r2()*8){const y=196-(Math.sin(x/90)*5)+r2()*3;pines+=pine(x,y,10+r2()*14,r2()<.5?'#3E5B3B':'#466645')}
   const r3=srng(43);let tufts='';for(let i=0;i<70;i++){const x=r3()*1000,y=268+r3()*30;if(x>400&&x<600&&y<290)continue;tufts+=`<path d="M${x.toFixed(0)} ${y.toFixed(0)} l-2 -6 M${x.toFixed(0)} ${y.toFixed(0)} l1 -7 M${x.toFixed(0)} ${y.toFixed(0)} l4 -5" stroke="${r3()<.5?'#6F8746':'#7F9852'}" stroke-width="1.3" stroke-linecap="round"/>`}
@@ -1163,7 +1185,7 @@ function titleArt(){const rs=srng(7);const run=[['#7A3D1C','#1E1A18',0],['#D7AC5
   return `<svg viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid slice" id="titleSvg" aria-hidden="true"><defs>
   <linearGradient id="tiSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5F93C8"/><stop offset=".5" stop-color="#E9C6A0"/><stop offset="1" stop-color="#F8E1B6"/></linearGradient>
   <radialGradient id="tiSun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFF6D8"/><stop offset=".35" stop-color="#FFE3A0" stop-opacity=".85"/><stop offset="1" stop-color="#FFD58A" stop-opacity="0"/></radialGradient>
-  <linearGradient id="tiFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8D93B4"/><stop offset="1" stop-color="#B9A9AE"/></linearGradient>
+  <linearGradient id="tiHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3D9B8" stop-opacity="0"/><stop offset="1" stop-color="#F3D9B8" stop-opacity=".55"/></linearGradient><linearGradient id="tiFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8D93B4"/><stop offset="1" stop-color="#B9A9AE"/></linearGradient>
   <linearGradient id="tiMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6D7F86"/><stop offset="1" stop-color="#8E9A86"/></linearGradient>
   <linearGradient id="tiField" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A6AE68"/><stop offset="1" stop-color="#7E9449"/></linearGradient>
   <linearGradient id="tiRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9BF8E"/><stop offset="1" stop-color="#C29B69"/></linearGradient>
@@ -1171,8 +1193,8 @@ function titleArt(){const rs=srng(7);const run=[['#7A3D1C','#1E1A18',0],['#D7AC5
   <linearGradient id="tiBeam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A643D"/><stop offset="1" stop-color="#4E331E"/></linearGradient></defs>
   <rect width="1000" height="300" fill="url(#tiSky)"/><circle cx="500" cy="168" r="150" fill="url(#tiSun)"/><circle cx="500" cy="166" r="30" fill="#FFF1C9"/>
   <g fill="#fff">${[[140,48,80,.55],[320,86,52,.4],[760,40,90,.55],[900,92,50,.4],[600,64,40,.3]].map(([x,y,w,o])=>`<g opacity="${o}"><ellipse cx="${x}" cy="${y}" rx="${w}" ry="9"/><ellipse cx="${x-w*.25}" cy="${y-6}" rx="${w*.45}" ry="10"/><ellipse cx="${x+w*.3}" cy="${y-8}" rx="${w*.38}" ry="11"/></g>`).join('')}</g>
-  <path d="${far.d}" fill="url(#tiFar)"/>${snow}
-  <path d="${mid.d}" fill="url(#tiMid)"/>
+  ${back}<rect y="150" width="1000" height="60" fill="url(#tiHaze)"/>
+  ${front}<rect y="168" width="1000" height="40" fill="url(#tiHaze)" opacity=".8"/>
   <path d="M0 196 C150 186 300 194 500 190 S 850 186 1000 192 V300 H0Z" fill="#8C9A62"/>${pines}
   <g transform="translate(838 196)"><path d="M-22 0 V-16 L-11 -26 L0 -16 V0Z" fill="#9E3B2E"/><path d="M-24 -15 L-11 -28 L2 -15" stroke="#5A2A20" stroke-width="2" fill="none"/><rect x="-14" y="-10" width="6" height="10" fill="#5A2A20"/><path d="M4 0 V-8 H18 V0Z" fill="#B9A57C"/></g>
   <g transform="translate(150 200)" stroke="#5B4A3A" stroke-width="1.3" fill="none"><path d="M-4 0 L0 -34 L4 0 M-3 -10 H3 M-2 -22 H2"/><g transform="translate(0 -35)"><path d="M0 0 L-9 -5 M0 0 L9 -5 M0 0 L-5 9 M0 0 L6 8 M0 0 L0 -10" stroke-width="1.6"/></g></g>
@@ -1190,9 +1212,9 @@ function titleArt(){const rs=srng(7);const run=[['#7A3D1C','#1E1A18',0],['#D7AC5
    <rect x="-244" y="58" width="488" height="26" rx="4" fill="url(#tiBeam)"/><path d="M-240 66 H236 M-236 74 H240" stroke="#3E2716" stroke-width=".8" opacity=".45"/>
    <path d="M-244 58 h12 v26 h-12z M232 58 h12 v26 h-12z" fill="#5E3E24"/><circle cx="-226" cy="71" r="2" fill="#2B1B10"/><circle cx="226" cy="71" r="2" fill="#2B1B10"/>
    <path d="M-120 84 L-122 96 M-118 84 L-120 96 M120 84 L122 96 M118 84 L120 96" stroke="#3A3A3A" stroke-width="1.2"/>
-   <rect x="-170" y="96" width="340" height="54" rx="5" fill="#EFE2C2" stroke="#5A3A22" stroke-width="4"/><rect x="-162" y="102" width="324" height="42" rx="3" fill="none" stroke="#A8382B" stroke-width="1.4"/>
-   <path d="M-166 140 C-80 146 80 136 166 142" stroke="#C9B48A" stroke-width="1" fill="none" opacity=".6"/>
-   <text y="132" font-size="30" text-anchor="middle" fill="#6B2E1E" font-family="Rye, Georgia, serif" letter-spacing="2">BLOODLINE RANCH</text>
+   <rect x="-182" y="94" width="364" height="58" rx="6" fill="#EFE2C2" stroke="#5A3A22" stroke-width="4"/><rect x="-173" y="101" width="346" height="44" rx="3" fill="none" stroke="#A8382B" stroke-width="1.4"/>
+   <path d="M-176 142 C-80 148 80 138 176 144" stroke="#C9B48A" stroke-width="1" fill="none" opacity=".6"/>
+   <text y="132" font-size="28" text-anchor="middle" fill="#6B2E1E" font-family="Rye, Georgia, serif" textLength="304" lengthAdjust="spacingAndGlyphs">BLOODLINE RANCH</text>
    <g transform="translate(0 40) rotate(180) scale(.9)"><path d="M0 -24 C-16 -24 -18 4 -10 16 L-4 16 C-10 4 -8 -16 0 -16 C8 -16 10 4 4 16 L10 16 C18 4 16 -24 0 -24Z" fill="#B9C1C4" stroke="#5E676A" stroke-width="1.4"/><circle cx="-12" cy="-4" r="1.4" fill="#4a4f52"/><circle cx="12" cy="-4" r="1.4" fill="#4a4f52"/><circle cx="-13" cy="6" r="1.4" fill="#4a4f52"/><circle cx="13" cy="6" r="1.4" fill="#4a4f52"/></g></g>
   </svg>`}
 function startTitleAnim(){stopTitleAnim();const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;const els=[0,1,2,3].map(i=>document.getElementById('tr'+i));if(els.some(e=>!e))return;
