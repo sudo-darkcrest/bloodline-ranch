@@ -419,7 +419,7 @@ const TRAITS={
   powerhouse:{n:'Powerhouse',d:'Trains Strength 40% faster.',good:1,w:5,val:250},
   nimble:{n:'Nimble',d:'Trains Agility 40% faster.',good:1,w:5,val:250},
   clever:{n:'Clever',d:'All training 20% faster.',good:1,w:4,val:350},
-  lazy:{n:'Lazy',d:'All training 25% slower.',good:0,w:4,val:-250},
+  lazy:{n:'Lazy',d:'All training 25% slower, and wears out sooner (sours below 45 energy).',good:0,w:4,val:-250},
   hotblood:{n:'Hot-Blooded',d:'+8% in races and barrels, but injures more easily.',good:1,w:4,val:150},
   calm:{n:'Calm',d:'+6% in dressage, half the injury risk at events.',good:1,w:4,val:200},
   skittish:{n:'Skittish',d:'-10% at every event and loses happiness twice as fast.',good:0,w:4,val:-250},
@@ -785,7 +785,7 @@ function autoPick(h){let best=null,top=null,sour=null;
     if(od.win>=AUTO_WIN){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-entryFee(t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
   return {best,sour,top}}
 function sourRisk(h,ei){const o=[];if(!h)return o;const lazy=has(h,'lazy');
-  if(!has(h,'workaholic')&&(h.streak||0)+1>=(lazy?3:5))o.push('This would be day '+((h.streak||0)+1)+' of work in a row. '+h.name+' would sour (−3 happiness).');
+  {const after=h.energy-compEnergy(h);if(!has(h,'workaholic')&&after<soreLine(h))o.push(h.name+' would finish on '+Math.max(0,Math.round(after))+' energy, worn out, and sour tonight (−3 happiness).')}
   if(!has(h,'workaholic')&&!has(h,'habit')&&!has(h,'showoff')){let n=jobCount(h,'ev:'+ei);if(has(h,'easilybored'))n*=2;const pen=boredPen(n);if(pen)o.push(h.name+' is getting sick of '+jobName('ev:'+ei).toLowerCase()+' (−'+pen+' happiness).')}
   if(!has(h,'showoff')&&recentJobs(h).filter(j=>j.k.startsWith('ev:')).length>=4)o.push(h.name+' is worn out from so many shows (−3 happiness).');
   return o}
@@ -806,11 +806,34 @@ function moodNotes(h){const o=[];const seen={};for(const j of recentJobs(h))seen
   if(has(h,'workaholic'))o.push(['good','Loves to work. Happiest with a job every day.']);
   else if(has(h,'habit'))o.push(['good','Creature of habit. Happiest doing the same job each day.']);
   else for(const [k,n] of Object.entries(seen)){const m=has(h,'easilybored')?n*2:n;if(k.startsWith('ev:')&&has(h,'showoff'))continue;if(m>=3)o.push(['bad','Sick of '+jobName(k).toLowerCase()+' ('+(Math.round(n*10)/10)+'× in 6 days). Try something different.']);else if(m>=2)o.push(['warn','Getting tired of '+jobName(k).toLowerCase()+'.'])}
-  const st=h.streak||0;if(!has(h,'workaholic')&&st>=(has(h,'lazy')?3:5))o.push(['bad','Worked '+st+' days in a row. Needs a day off.']);else if(!has(h,'workaholic')&&st>=(has(h,'lazy')?2:4))o.push(['warn','Worked '+st+' days in a row. A day off soon would help.']);
+  const en=h.energy;if(!has(h,'workaholic')&&en<soreLine(h))o.push(['bad','Worn out (energy '+Math.round(en)+'). More work today will sour them. A pasture day restores energy fast.']);else if(!has(h,'workaholic')&&en<soreLine(h)+20)o.push(['warn','Getting tired (energy '+Math.round(en)+'). A day off soon would help.']);
   if(has(h,'showoff')&&isAdult(h)){const ds=S.day-(h.lastComp||h.born);if(ds>6)o.push(['bad','Misses the show ring ('+ds+' days without an event).'])}
   if(!o.length)o.push(['good','Content. Mixing up jobs and giving days off keeps horses happy.']);return o}
-function moodChip(h){const st=h.streak||0;if(!has(h,'workaholic')&&st>=(has(h,'lazy')?3:5))return '<span class="chip bad" title="Worked too many days in a row">Needs a day off</span>';if(moodNotes(h).some(x=>x[0]==='bad'&&/Sick of|worn/.test(x[1])))return '<span class="chip bad" title="Doing the same job too often">Needs variety</span>';return ''}
+function moodChip(h){if(!has(h,'workaholic')&&h.energy<soreLine(h)&&!h.retired)return '<span class="chip bad" title="Low energy: more work will sour them">Needs a day off</span>';if(moodNotes(h).some(x=>x[0]==='bad'&&/Sick of|worn/.test(x[1])))return '<span class="chip bad" title="Doing the same job too often">Needs variety</span>';return ''}
 const COMFORT_CAP=6;
+// energy = how fresh the body is; happiness = how the horse feels
+function soreLine(h){return has(h,'lazy')?45:30}
+function freshMult(h){return .9+.15*Math.min(100,Math.max(0,h.energy))/100}
+function happyTrain(h){return h.happy>=80?1.08:h.happy>=50?1:.75+.25*h.happy/50}
+function happyComp(h){return h.happy>=80?1.04:h.happy>=40?1:.9+.1*h.happy/40}
+function happyNight(h,ctx){const o=[];const add=(v,t,tag)=>{if(v)o.push([v,t,tag])};const sIdx=ctx.sIdx;const endE=ctx.endE!=null?ctx.endE:h.energy;
+  const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;
+  add(-1,'Everyday wear');
+  if(!ctx.fed)add(-10,'No hay tonight');
+  if(h.groomed!==S.day)add(has(h,'skittish')?-4:-2,'Not groomed today');
+  if(has(h,'workaholic')){if(worked)add(1,'Loves a day of work');else if(!h.injury&&pregOk(h)&&stage(h)!=='Foal'&&!h.retired&&h.trainerRest!==S.day)add(-4,'Bored without work','bored')}
+  else if(worked&&endE<soreLine(h))add(-3,'Worked while worn out (energy '+Math.round(endE)+')','overworked');
+  if(has(h,'showoff')&&isAdult(h)&&!h.retired&&S.day-(h.lastComp||h.born)>6)add(-2,'Misses the show ring');
+  if(ctx.crowded)add(-5,'Barn is overcrowded');
+  if(h.acted!==S.day&&h.trainerRest!==S.day&&!h.injury&&h.health>=40&&!has(h,'homebody'))add(-3,'Cooped up all day','cooped');
+  if(stallOf(h)<25)add(-3,'Filthy stall');else if(stallOf(h)<50)add(-1,'Dirty stall');
+  if(h.retired&&h.retired.voluntary)add(1,'Enjoying retirement');
+  add(Math.min(COMFORT_CAP,(sIdx<2?1:0)+[0,0,2,3][L('pasture')]+[0,0,0,1,1,2][L('barn')]+(L('goats')>=2?1:0)+gearSum(h,'happy')),'Comfort: season, barn, pastures, gear');
+  if(h.happy>85)add(-Math.round((h.happy-85)*.2*10)/10,'Hard to stay this happy');
+  return o}
+function happyForecast(h){const o=happyNight(h,{sIdx:dateParts(S.day).sIdx,fed:S.hay>=1,crowded:S.horses.length>S.stalls});const d=o.reduce((a,x)=>a+x[0],0);return {d,o}}
+function fenceWear(){return (1.2+.12*S.horses.length+(dateParts(S.day).sIdx===3?1.2:0))*(S.staff.feed?.4:1)}
+function fenceSafe(){return S.fenceSafe!=null&&S.day<=S.fenceSafe}
 function bondMult(h){return .5+h.happy/100}
 function addBond(h,amt){h.bond=clamp(h.bond+amt*bondMult(h),0,100)}
 function refuseChance(h){return h.happy<20?.25+.55*(20-h.happy)/20:0}
@@ -928,7 +951,7 @@ function trainerSession(h,p){const ks=trainerStats(h).slice(0,trainerCount(p.ski
   let hurt='';if(isAdult(h)&&R()<injuryRisk(h,.015)){injure(h);hurt=', got hurt'}
   return h.name+' ('+parts.join(', ')+hurt+')'}
 function trainerTonight(){const p=S.staff.trainer;const o={};if(!p||!S.autoTrain)return o;const pr={high:0,normal:1,low:2};let n=0;const cap=trainerCap(p.skill);
-  for(const h of S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>pr[tpri(a)]-pr[tpri(b)])){if(h.energy<25){o[h.id]='tired';continue}if(p.skill>=3&&(h.streak||0)>=4&&!has(h,'workaholic')){o[h.id]='dayoff';continue}o[h.id]=n<cap?'yes':'full';n++}return o}
+  for(const h of S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>pr[tpri(a)]-pr[tpri(b)])){if(h.energy<25){o[h.id]='tired';continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){o[h.id]='dayoff';continue}o[h.id]=n<cap?'yes':'full';n++}return o}
 function trainerTag(h){const t=trainerTonight()[h.id];if(!t)return '';return t==='yes'?'<span class="chip trainchip" title="Left idle, so the trainer will work this horse when you press End Day">Trainer tonight</span>':t==='full'?'<span class="chip warn" title="The trainer has more idle horses than time. Raise this horse’s priority in its papers.">Trainer full</span>':t==='tired'?'<span class="chip" title="Under 25 energy, so the trainer will let this horse rest">Trainer: resting</span>':'<span class="chip" title="Worked 4+ days in a row, so the trainer will give a day off">Trainer: day off</span>'}
 function trainerPlan(h){const tp=h.tplan||{},sp=tp.stats||{},p=S.staff.trainer;
   const sel=(f,val,opts,lbl)=>`<select data-c="tplan" data-id="${h.id}" data-f="${f}" aria-label="${lbl}">${opts.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
@@ -958,7 +981,7 @@ const JOBS=[
 const CHORES=[
   {id:'cut',n:'Cut and bale hay',d:'Free hay. Spring through fall.'},
   {id:'town',n:'Odd jobs in town',d:'Earn $100–200 in cash.'},
-  {id:'fix',n:'Mend fences and stalls',d:'Every horse +5 happiness and health.'},
+  {id:'fix',n:'Mend fences',d:'Repair the fences (+45 condition). Fewer pasture injuries for 3 days, and every horse +4 happiness.'},
   {id:'openhouse',n:'Host an open house',d:'Reputation up if the herd is happy (70+).'},
   {id:'muck',n:'Muck out the stalls',d:'Clean stalls keep horses healthy and happy.'},
   {id:'tend',n:'Tend to livestock',d:'Feed, water and check on your stock animals.'},
@@ -1449,7 +1472,7 @@ function loseRep(n,why,ev){const b=S.rep;S.rep=Math.max(0,S.rep-n);if(S.rep<b){c
 const SPONSORS=[{id:'feedco',n:'Dry Creek Feed & Supply',req:40,pay:150,starts:1},{id:'tackco',n:'Silver Spur Tack Co.',req:80,pay:400,starts:2},{id:'brand',n:'Frontier Equine Nutrition',req:130,pay:1000,starts:3}];
 function bestSponsor(){return [...SPONSORS].reverse().find(x=>S.rep>=x.req)}
 function inviteFor(ei){return (S.invites||[]).find(v=>v.ei===ei&&v.until>=S.day)}
-function migrate(s){for(const h of (s.horses||[]))if(h&&h.client&&!h.client.startSk)h.client.startSk=[...(h.skills||[])];for(const h of [...(s.horses||[]),...(s.memorial||[]),...(s.memorial||[]).map(m=>m.full)])if(h&&h.name==='Guinivere')h.name='Guinevere';bankInit(s);if(!s.phase)s.phase='play';if(!s.player&&s.phase==='play'&&!s.tut)s.needChar=1;if(!s.tierV2){s.tierV2=1;const mp={0:1,1:3,2:4,3:7};const fix=h=>{if(h&&h.ribbons&&Array.isArray(h.ribbons))for(const r of h.ribbons)if(typeof r==='object'&&r.t!=null)r.t=mp[r.t]??r.t};
+function migrate(s){if(s&&s.fence==null)s.fence=85;for(const h of (s.horses||[]))if(h&&h.client&&!h.client.startSk)h.client.startSk=[...(h.skills||[])];for(const h of [...(s.horses||[]),...(s.memorial||[]),...(s.memorial||[]).map(m=>m.full)])if(h&&h.name==='Guinivere')h.name='Guinevere';bankInit(s);if(!s.phase)s.phase='play';if(!s.player&&s.phase==='play'&&!s.tut)s.needChar=1;if(!s.tierV2){s.tierV2=1;const mp={0:1,1:3,2:4,3:7};const fix=h=>{if(h&&h.ribbons&&Array.isArray(h.ribbons))for(const r of h.ribbons)if(typeof r==='object'&&r.t!=null)r.t=mp[r.t]??r.t};
   for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[]),...(s.away||[]).map(a=>a.h),...(s.memorial||[]).map(m=>m.full)])fix(h);for(const r of (s.boardReq||[]))fix(r.h)}if(s.lastRepGain==null)s.lastRepGain=s.day||1;if(s.rep>300)s.rep=300;if(!s.staffDepth1){s.staffDepth1=1;for(const x of STAFF){const p=s.staff&&s.staff[x.id];if(p&&typeof p==='object'){if(!p.spec&&SPECS[x.id])p.spec=pick(Object.keys(SPECS[x.id]));if(!p.bg){p.bg=pick(BACKGROUNDS);p.yrs=ri(2,5)+p.skill*3}}}if(s.applicants)for(const k in s.applicants)for(const a of s.applicants[k])if(!a.spec&&SPECS[k]){a.spec=pick(Object.keys(SPECS[k]));a.bg=pick(BACKGROUNDS);a.yrs=ri(2,5)+a.skill*3}}if(s.autoVet==null)s.autoVet=1;if(!s.away)s.away=[];if(!s.boardReq)s.boardReq=[];if(s.boardNext==null)s.boardNext=(s.day||1)+1;if(!s.coiFix&&s.registry){s.coiFix=1;const sv=S;S=s;try{for(const h of (s.horses||[]))if(h.coi==null&&h.sire!=null&&h.dam!=null)h.coi=Math.round(coiOf(h.sire,h.dam)*10000)/10000}catch(e){}S=sv}for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[])]){if(h&&!h.blood)h.blood={...bloodOf(h)}}for(const h of (s.horses||[])){const r=(s.registry||{})[h.id];if(r&&!r.blood)r.blood={...h.blood}}if(s.weekStarts==null)s.weekStarts=0;if(!s.invites)s.invites=[];if(!s.memorial)s.memorial=[];for(const h of (s.horses||[]))if(h.injury&&!h.inj)h.inj={id:'pulled',days:h.injury,total:h.injury,risk:0,retire:0,treated:[],since:s.day||1};if(!s.hayFix1){s.hayFix1=1;if((s.day||1)>1){s.hay=(s.hay||0)+150;(s.log=s.log||[]).unshift({d:s.day,k:'good',t:'Hay refund: a bug was emptying your hay loft every night. It is fixed, and 150 bales have been added back.'})}}{const old=s.staff||{};const ns={};for(const x of STAFF){const v=old[x.id];ns[x.id]=v&&typeof v==='object'?v:v?{name:pick(STAFF_FN)+' '+pick(STAFF_LN),skill:2,xp:0,happy:65,hired:s.day||1,trait:'Quiet'}:null}s.staff=ns}
   if(!s.applicants)refreshApplicants(s);if(s.applicants&&!s.applicants.groom2)s.applicants.groom2=[genPerson(s,'groom2'),genPerson(s,'groom2'),genPerson(s,'groom2')];if(s.stallClean!=null){for(const h of (s.horses||[]))if(h.stallClean==null)h.stallClean=s.stallClean;delete s.stallClean}if(s.stockCare==null)s.stockCare=100;if(!s.choresToday){s.choresToday=[];s.choreDay=0}
   if(!s.fac){s.fac={};const u=s.upgrades||{};if(u.roundpen)s.fac.training=1;if(u.hotwalker)s.fac.recovery=1;if(u.paddock)s.fac.pasture=2;if(u.meadow)s.fac.hayfield=1;if(u.arena)s.fac.ring=1;let b=0;for(let i=0;i<STALLS.length;i++)if(STALLS[i]<=(s.stalls||6))b=i;s.fac.barn=b}
@@ -1512,14 +1535,14 @@ function groomStatus(h){return h.pgroomed===S.day?'Groomed by you today':staffGr
 function smtTrain(h){return .85+(h.tr.smt||0)/200}
 function smtInj(h){return 1.2-(h.tr.smt||0)/200}
 function trainGain(h,k){
-  let g=(3+R()*2.5)*Math.pow(Math.max(0,1-h.tr[k]/h.pot[k]),.6)*smtTrain(h)*(.7+.3*h.happy/100);
+  let g=(3+R()*2.5)*Math.pow(Math.max(0,1-h.tr[k]/h.pot[k]),.6)*smtTrain(h)*happyTrain(h)*freshMult(h);
   if(TRAIN_BOOST[k]&&has(h,TRAIN_BOOST[k]))g*=1.4;
   if(has(h,'clever'))g*=1.2;if(has(h,'lazy'))g*=.75;if(has(h,'stubborn'))g*=.9;
   if(stage(h)==='Yearling')g*=.5;
   if(S.staff.trainer)g*=(1.08+.04*sk('trainer'))*(specOf('trainer')===k?1.15:1);g*=1+h.bond/400;if(hasS(h,'quickstudy'))g*=1.15;g*=1+gearSum(h,'train')/100;g*=[1,1.1,1.18,1.28][L('training')]*(L('ring')>=2?1.05:1);if(k==='spd')g*=1+[0,.1,.2,.3][L('track')];if(k==='sta')g*=1+[0,.08,.15][L('trails')];
   return g;
 }
-function injuryRisk(h,base){let r=base;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r}
+function injuryRisk(h,base){let r=base;if(fenceSafe())r*=.85;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r}
 const SEV=['minor','moderate','serious','severe'];
 const SEVN={minor:'Minor',moderate:'Moderate',serious:'Serious',severe:'Severe'};
 const COND={
@@ -1619,12 +1642,12 @@ const PASTURE_EVENTS=[
 ];
 function pastureEvent(h){
   if(R()>.15)return null;
-  const list=PASTURE_EVENTS.map(e=>({...e,w:e.w*(e.scrape?(has(h,'fragile')?2:has(h,'ironhooves')?.4:1):1)*(e.good&&L('pasture')>=3?1.5:1)}));
+  const list=PASTURE_EVENTS.map(e=>({...e,w:e.w*(e.scrape?(has(h,'fragile')?2:has(h,'ironhooves')?.4:1)*((S.fence??80)<50?2.5:fenceSafe()?.4:1):1)*(e.good&&L('pasture')>=3?1.5:1)}));
   let tot=list.reduce((a,e)=>a+e.w,0),x=R()*tot,ev=list[0];for(const e of list){x-=e.w;if(x<=0){ev=e;break}}
   ev.f(h);const msg=h.name+' '+ev.t+' ('+ev.fx+').';log(ev.good?'good':'warn','Pasture: '+msg);return msg;
 }
 function rest(h,quiet){if(!canTurnout(h))return false;tutMark('pasture');h.acted=S.day;h.rested=S.day;h.pastured=S.day;
-  const hp0=h.happy,he0=h.health;const pl=has(h,'pasturelover');h.happy=clamp(h.happy+(10+(pl?5:0)+[0,2,4,6][L('pasture')])*clamp(1.25-h.happy/100,.35,1),0,100);h.health=clamp(h.health+3+(pl?3:0)+[0,1,2,4][L('pasture')],0,100);
+  const hp0=h.happy,he0=h.health;const pl=has(h,'pasturelover');h.happy=clamp(h.happy+(10+(pl?5:0)+[0,2,4,6][L('pasture')]*((S.fence??80)<50?.5:1))*clamp(1.25-h.happy/100,.35,1),0,100);h.health=clamp(h.health+3+(pl?3:0)+[0,1,2,4][L('pasture')],0,100);
   const gp=[];if(h.happy-hp0>=.05)gp.push('happiness +'+(h.happy-hp0).toFixed(1));if(h.health-he0>=.05)gp.push('health +'+(h.health-he0).toFixed(1));const gain=gp.length?' ('+gp.join(', ')+')':' (already at full health and happiness)';const e=pastureEvent(h);
   if(!quiet)toast(h.name+' spends the day grazing out in the pasture'+gain+'.'+(e?' '+e:''));else if(e)S._pastureMsgs=(S._pastureMsgs||[]).concat(e);
   return true}
@@ -1656,7 +1679,7 @@ function doChore(id){
   const si=dateParts(S.day).sIdx;let msg='';
   if(id==='cut'){if(si===3)return toast('Nothing grows in winter.');const n=Math.round([ri(8,12),ri(10,15),ri(4,7)][si]*hayMult());S.hay=Math.round((S.hay+n)*10)/10;msg='You cut and baled '+n+' bales of hay.'}
   else if(id==='town'){const pay=ri(100,200);S.money+=pay;msg='You picked up odd jobs in town and earned '+money(pay)+'.'}
-  else if(id==='fix'){for(const h of S.horses){h.happy=clamp(h.happy+5,0,100);h.health=clamp(h.health+5,0,100)}msg='You mended fences and mucked out the stalls. The herd is more comfortable.'}
+  else if(id==='fix'){const f0=Math.round(S.fence??80);S.fence=Math.min(100,(S.fence??80)+45);S.fenceSafe=S.day+2;for(const h of S.horses){h.happy=clamp(h.happy+4,0,100)}msg='You walked the fence line and fixed every loose rail. Fences '+f0+'% → '+Math.round(S.fence)+'%. Fewer pasture injuries for 3 days.'}
   else if(id==='openhouse'){const n=S.horses.length,ah=n?S.horses.reduce((a,h)=>a+h.happy,0)/n:0;
     if(n&&ah>=70){const r=gainRep(ri(1,3)+L('house'));msg='Your open house was a hit. Reputation +'+r+'.';const ad=S.horses.filter(h=>isAdult(h)&&!h.client);if(ad.length&&R()<.5){const o=makeOffer(pick(ad),1.2+R()*.3);if(o)msg+=' A visitor made an offer on '+H(o.id).name+'.'}}
     else msg='Visitors came, but the horses looked glum. Get average happiness to 70 first.'}
@@ -1764,7 +1787,7 @@ function tierOpen(ti,day=S.day){const t=TIERS[ti];if(t.invite)return true;if(!t.
 function nextOpen(ti){for(let d=S.day;d<S.day+DPY*4+2;d++)if(tierOpen(ti,d))return d;return null}
 function openText(ti){if(tierOpen(ti))return 'Open now';const d=nextOpen(ti);if(d==null)return 'Not scheduled';const dp=dateParts(d);return 'Opens '+SEASONS[dp.sIdx]+' day '+dp.sday+(dp.year!==dateParts(S.day).year?', year '+dp.year:'')+' (in '+(d-S.day)+' day'+(d-S.day===1?'':'s')+')'}
 function compMult(h,ev){
-  let m=(.85+.15*h.happy/100)*(.8+.2*h.health/100)*(1+h.bond/600)*(specOf('farrier')==='sport'?1.02:1);
+  let m=happyComp(h)*freshMult(h)*(.8+.2*h.health/100)*(1+h.bond/600)*(specOf('farrier')==='sport'?1.02:1);
   if(has(h,'skittish')&&!hasS(h,'steadynerves'))m*=.9;
   if(hasS(h,'ringsavvy'))m*=1.05;if(hasS(h,'steadynerves')&&ev.id==='dress')m*=1.05;if(hasS(h,'startinggate')&&ev.id==='race')m*=1.08;if(hasS(h,'cattlesense')&&ev.id==='barrel')m*=1.1;
   if(has(h,'hotblood')&&(ev.id==='race'||ev.id==='barrel'))m*=1.08;
@@ -2148,7 +2171,7 @@ function endDay(){
   const ev=[];
   if(S.staff.trainer&&S.autoTrain&&S.horses.length){const p=S.staff.trainer,cap=trainerCap(p.skill),pr={high:0,normal:1,low:2};
     const cands=S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>pr[tpri(a)]-pr[tpri(b)]);const done=[];let tired=0,waiting=0;
-    let gave=0;for(const h of cands){if(h.energy<25){h.trainerRest=S.day;tired++;continue}if(p.skill>=3&&(h.streak||0)>=4&&!has(h,'workaholic')){h.trainerRest=S.day;gave++;continue}if(done.length>=cap){waiting++;continue}done.push(trainerSession(h,p))}
+    let gave=0;for(const h of cands){if(h.energy<25){h.trainerRest=S.day;tired++;continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){h.trainerRest=S.day;gave++;continue}if(done.length>=cap){waiting++;continue}done.push(trainerSession(h,p))}
     if(done.length)ev.push(['info',p.name+' (Trainer) worked '+done.length+' horse'+(done.length>1?'s':'')+' this evening: '+done.join('; ')+'.']);
     if(tired)ev.push(['info',p.name+' let '+tired+' tired horse'+(tired>1?'s':'')+' rest instead of training.']);
     if(gave)ev.push(['info',p.name+' gave '+gave+' hard-working horse'+(gave>1?'s':'')+' a day off so they don’t sour.']);
@@ -2174,20 +2197,13 @@ function endDay(){
   const gone=[],faded=[],cooped=[],bored=[],overworked=[];
   for(const h of S.horses){
     const rested=h.acted!==S.day||h.rested===S.day;
-    h.energy=clamp(h.energy+(30+(rested?15:0)+[0,10,15,20][L('recovery')]+(L('training')>=3?5:0))*(has(h,'quickrecovery')?1.5:1),0,100);
-    if(!fed){h.health-=10;h.happy-=10}else if(!h.injury)h.health=Math.min(100,h.health+3);
+    const endE=h.energy;h.energy=clamp(h.energy+(20+(rested?25:0)+[0,10,15,20][L('recovery')]+(L('training')>=3?5:0))*(has(h,'quickrecovery')?1.5:1),0,100);
+    if(!fed){h.health-=10}else if(!h.injury)h.health=Math.min(100,h.health+3);
     if(h.brew&&!h.inj&&S.day>=h.brew.at){const id=h.brew.id;h.brew=null;ev.push(['warn',afflict(h,id)+' A vet checkup could have caught it early.'])}else if(h.brew&&h.inj)h.brew=null;
-    if(h.groomed!==S.day)h.happy-=has(h,'skittish')?4:2;
-    h.happy-=2;if(h.happy>80)h.happy-=(h.happy-80)*.3;
-    {const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;h.streak=worked?(h.streak||0)+1:0;
-     if(has(h,'workaholic')){if(worked)h.happy+=1;else if(!h.injury&&pregOk(h)&&stage(h)!=='Foal'&&!h.retired&&h.trainerRest!==S.day){h.happy-=4;bored.push(h.name)}}
-     else if(h.streak>=(has(h,'lazy')?3:5)){h.happy-=3;overworked.push(h.name)}
-     if(has(h,'showoff')&&isAdult(h)&&!h.retired&&S.day-(h.lastComp||h.born)>6)h.happy-=2}
-    if(crowded)h.happy-=5;
-    if(h.acted!==S.day&&h.trainerRest!==S.day&&!h.injury&&h.health>=40&&!has(h,'homebody')){h.happy-=3;cooped.push(h.name)}
-    if(stallOf(h)<25){h.happy-=3;h.health-=2}else if(stallOf(h)<50)h.happy-=1;
-    if(h.retired&&h.retired.voluntary)h.happy+=1;
-    h.happy+=Math.min(COMFORT_CAP,(sIdx<2?1:0)+[0,0,2,3][L('pasture')]+[0,0,0,1,1,2][L('barn')]+(L('goats')>=2?1:0)+gearSum(h,'happy'));if(!h.injury)h.health+=[0,0,1,2][L('clinic')];h.energy=clamp(h.energy+gearSum(h,'energy'),0,100);addBond(h,gearSum(h,'bond'));if(fed&&!h.injury)h.health+=gearSum(h,'health');
+    {const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;h.streak=worked?(h.streak||0)+1:0}
+    for(const [v,t,tag] of happyNight(h,{sIdx,fed,crowded,endE})){h.happy+=v;if(tag==='bored')bored.push(h.name);if(tag==='overworked')overworked.push(h.name);if(tag==='cooped')cooped.push(h.name)}
+    if(stallOf(h)<25)h.health-=2;
+    if(!h.injury)h.health+=[0,0,1,2][L('clinic')];h.energy=clamp(h.energy+gearSum(h,'energy'),0,100);addBond(h,gearSum(h,'bond'));if(fed&&!h.injury)h.health+=gearSum(h,'health');
     if(hasS(h,'loyalheart'))h.happy=Math.max(h.happy,50);
     h.happy=clamp(h.happy,0,100);h.health=clamp(h.health,0,100);
     if(careAge(h)>=2&&!hasS(h,'loyalheart')&&h.bond>0){h.bond=clamp(h.bond-(has(h,'stubborn')?3:has(h,'gentle')?1:2),0,100);faded.push(h.name)}
@@ -2203,7 +2219,10 @@ function endDay(){
   for(const h of S.horses)h.stallClean=clamp(stallOf(h)-stallDirt(h),0,100);
   if(grooms().length&&S.horses.length){const r=muckStalls(muckCap());const left=dirtyStalls(60);if(left)ev.push(['info',groomNames()+' mucked out '+r.n+' stalls overnight but couldn’t get to everything. '+left+' still need work.'])}
   if(stockLevels()){S.stockCare=clamp(S.stockCare-(15+1.5*stockLevels())+(S.staff.stock?10+6*sk('stock'):0),0,100);if(S.stockCare<50)ev.push(['warn','Your livestock need tending ('+Math.round(S.stockCare)+'% cared for).'])}
-  if(overworked.length)ev.push(['warn',(overworked.length>2?overworked.length+' horses':overworked.join(' and '))+' worked too many days in a row and are getting sour (−3 happiness). Give them a day off in the pasture.']);
+  {S.fence=clamp((S.fence??80)-fenceWear(),0,100);const f=S.fence;
+   if(f<35&&S.horses.length&&R()<(35-f)/55){const hs=S.horses.filter(x=>!x.injury);if(hs.length){const x=pick(hs);x.health=clamp(x.health-8,0,100);x.happy=clamp(x.happy-5,0,100);x.energy=clamp(x.energy-15,0,100);ev.push(['bad',x.name+' got out through a broken fence overnight and was found down the road, scraped up and tired. Mend your fences!']);if(R()<.4)loseRep(1,'A neighbor complained about your loose horse.',ev)}}
+   else if(f<50)ev.push(['warn','Fences are getting worn ('+Math.round(f)+'%). Mend fences from Your Day before a horse gets out.'])}
+  if(overworked.length)ev.push(['warn',(overworked.length>2?overworked.length+' horses':overworked.join(' and '))+' worked while worn out and are getting sour (−3 happiness). A day off in the pasture restores energy fast.']);
   if(bored.length)ev.push(['warn',(bored.length>2?bored.length+' horses':bored.join(' and '))+' love to work and were sad to have the day off (−4 happiness).']);
   if(cooped.length)ev.push(['warn',(cooped.length>2?cooped.length+' horses':cooped.join(' and '))+' stood in the stall all day and got bored (−3 happiness). Turn idle horses out to pasture.']);
   if(faded.length)ev.push(['warn',(faded.length>2?faded.length+' horses':faded.join(' and '))+' went two days without grooming, a trail ride or groundwork and lost some bond.']);
@@ -2574,6 +2593,7 @@ function yourDay(){
   <div class="chores">${CHORES.map(c=>{const did=S.choresToday.includes(c.id);const dis=!left||did||(c.id==='cut'&&si===3)||(c.id==='scout'&&S.money<60)||(c.id==='show'&&L('ring')<3)||(c.id==='tend'&&!stockLevels())||(c.id==='staffwork'&&!STAFF.some(x=>S.staff[x.id]));
     let sub=c.d;if(c.id==='cut')sub=si===3?'Nothing grows in winter.':'About '+Math.round([10,12,5][si]*hayMult())+' free bales this '+SEASONS[si].toLowerCase()+'.';
     if(c.id==='muck'){sub=dirtyStalls(50)?'<span class="bad">'+dirtyStalls(50)+' dirty stall'+(dirtyStalls(50)>1?'s':'')+'. Those horses are suffering.</span>':'You clean the dirtiest stalls first. Enough work for about 5 filthy stalls, or many lightly dirty ones.';const n=stallNote();if(n)sub+=`<span class="staffnote ${n.ok?'':'warn'}">${n.ok?'✓ ':''}${n.t}</span>`}
+    if(c.id==='fix'){const f=Math.round(S.fence??80);sub=`<span class="${f<35?'bad':f<55?'warn':''}"><b>Fences ${f}%</b></span>${f<35?' · <span class="bad">horses may get out at night</span>':f<50?' · worn: pasture days help less':''}<br>`+c.d+(S.staff.feed?'<span class="staffnote ok">✓ Your Ranch Manager slows fence wear.</span>':'')}
     if(c.id==='tend')sub=!stockLevels()?'No livestock yet.':S.stockCare<50?'<span class="bad">Your animals need you. Income is down.</span>':c.d;if(c.id==='tend'){const n=stockNote();if(n)sub+=`<span class="staffnote ${n.ok?'':'warn'}">${n.ok?'✓ ':''}${n.t}</span>`}
     if(c.id==='staffwork'&&!STAFF.some(x=>S.staff[x.id]))sub='Hire some help first.';
     return `<button class="chore" data-a="chore" data-k="${c.id}" ${dis?'disabled':''}><span class="t">${did?'✓ ':''}${c.n}</span><span class="s">${sub}</span></button>`}).join('')}</div></div>`;
@@ -3084,7 +3104,7 @@ const HOWTO=`<ol>
   <li><b>Groom</b> every horse daily. It raises happiness (less when a horse is already very happy) and builds bond. Horses nobody grooms lose happiness overnight. A Stable Hand brushes horses each morning; the button then becomes <b>Groom +bond</b>, so you can still add your own bond.</li>
   <li><b>Train</b> one stat per horse per day. Stats rise toward each horse's potential (the pale part of the bar). Only breeding raises potential.</li>
   <li><b>Compete</b> at shows for prize money, reputation and ribbons. Each event weighs stats differently.</li>
-  <li><b>Keep work varied.</b> Horses get sick of doing the same job or the same event over and over, and sour if worked 5+ days in a row. Mix up training, trail rides and shows, and give days off in the pasture. Horses with <i>Loves to Work</i>, <i>Creature of Habit</i> or <i>Show-Off</i> are different.</li>
+  <li><b>Keep work varied.</b> Horses get sick of doing the same job or the same event over and over, and work drains energy faster than a night’s rest brings it back. A horse that keeps working below 30 energy sours. Fresh horses train and compete better, and happy horses (80+) get a bonus too. Fences wear down over time: mend them before a horse gets out. Mix up training, trail rides and shows, and give days off in the pasture. Horses with <i>Loves to Work</i>, <i>Creature of Habit</i> or <i>Show-Off</i> are different.</li>
   <li><b>Boarding</b> tab: send a horse to a training center (low, medium or elite) for fast training and a chance at new skills, or take in other owners’ horses for daily pay and a bonus if you meet their goals.</li>
   <li><b>Breed</b> your best mare to your best stallion. Foals inherit potential, natural skills and coat genes. Avoid breeding close family: inbred foals lose potential and can be born fragile. The breeding screen shows a family check.</li>
   <li>A <b>Trainer</b> (Staff tab) works your <b>idle</b> horses every evening when you press End Day. Idle means you didn’t use the horse that day: no training, riding, lessons, cattle work, events or pasture. Set each horse’s trainer priority and favorite stats in its papers. Cards show a <b>Trainer tonight</b> tag for horses the trainer will work.</li>
@@ -3205,7 +3225,7 @@ function papers(h,mode){
     ${h.preg?`<dt>In foal to</dt><dd>${esc(h.preg.sire.name)}, due day ${h.preg.due}<div class="note">${pregLight(h)?'Early pregnancy: she can still train and work for '+Math.max(1,Math.ceil(GEST/3-pregDay(h)))+' more day'+(Math.ceil(GEST/3-pregDay(h))>1?'s':'')+' (no competing).':'Too far along to train. She goes out to pasture each day until she foals.'}</div></dd>`:''}
     ${mode==='stud'?`<dt>Stud fee</dt><dd class="mono">${money(h.fee)}</dd>`:''}</dl>
     ${own?`<div class="vitals" style="margin-top:12px">${vit('Energy',h.energy,vitColor(h.energy))}${vit('Happy',h.happy,vitColor(h.happy))}${vit('Health',h.health,vitColor(h.health))}</div><div class="vitals" style="margin-top:8px">${vit('Bond',h.bond,'var(--brass)')}${vit('Stall',stallOf(h),vitColor(stallOf(h)))}</div>
-     <div class="moodbox"><div class="subh" style="margin:10px 0 4px">Mood &amp; workload</div>${moodNotes(h).map(([c,t])=>`<div class="note ${c}">• ${esc(t)}</div>`).join('')}${recentJobs(h).length?`<div class="note mono" style="margin-top:3px">Last 6 days: ${[...new Set(recentJobs(h).map(j=>j.k))].map(k=>jobName(k)+' ×'+Math.round(recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)*10)/10).join(' · ')}</div>`:''}</div>
+     <div class="moodbox"><div class="subh" style="margin:10px 0 4px">Mood &amp; workload</div>${!h.past&&S.horses.includes(h)?(()=>{const F=happyForecast(h);const d=Math.round(F.d*10)/10;return `<div class="note" style="margin-bottom:4px"><b>Tonight:</b> happiness <b class="${d>=0?'good':'bad'}">${d>=0?'+':''}${d}</b> <span class="note">(${F.o.filter(x=>x[0]).map(x=>esc(x[1])+' '+(x[0]>0?'+':'')+x[0]).join(' · ')})</span><br>${h.happy>=80?'<span class="good">Happy 80+: trains 8% faster and +4% at events.</span> ':h.happy<40?'<span class="bad">Unhappy: trains slower and scores lower at events.</span> ':''}Energy ${Math.round(h.energy)}: ${h.energy>=90?'fresh and at its best':h.energy<soreLine(h)?'<span class="bad">worn out</span>':'a little tired'}. Fresher horses train and compete better.</div>`})():''}${moodNotes(h).map(([c,t])=>`<div class="note ${c}">• ${esc(t)}</div>`).join('')}${recentJobs(h).length?`<div class="note mono" style="margin-top:3px">Last 6 days: ${[...new Set(recentJobs(h).map(j=>j.k))].map(k=>jobName(k)+' ×'+Math.round(recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)*10)/10).join(' · ')}</div>`:''}</div>
      <p class="note" style="margin-top:6px">Last cared for: ${careAge(h)===0?'today':careAge(h)===1?'yesterday':careAge(h)+' days ago'}. Bond grows at ${Math.round(bondMult(h)*100)}% speed at this happiness. Bond speeds training by ${Math.round(h.bond/4)}%${skillChance(h)?' and gives a '+(skillChance(h)*100).toFixed(1)+'% nightly chance to learn a skill':h.skills.length>=MAXSKILLS?'. Skills are full ('+MAXSKILLS+')':'. Reach 70 bond for a chance to learn skills'}.</p>`:''}
     <div class="pedwrap">
     <div class="subh">Pedigree</div>
