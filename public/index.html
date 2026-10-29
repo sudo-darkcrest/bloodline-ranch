@@ -2342,6 +2342,43 @@ function horseAnchors(h,foal,st){const bt={hot:0,draft:0,tall:0,small:0};for(con
   const L=1+bt.tall*.12-bt.small*.16+(foal?.36:st==='Yearling'?.16:0);const top=178,sh=(273-top)*(L-1);
   for(const k of Object.keys(A)){const y=A[k][1];A[k][1]=y>=273?y:y>top?top+(y-top)*L-sh:y-sh}
   return {A,bt,sh}}
+function headDetail(A,E,N,o){const P=A.poll,Br=A.brow,Fc=A.face,MF=A.mzF,MB=A.mzB,C=A.chin,JL=A.jawL,JB=A.jawB,T=A.throat;const f=v=>v.toFixed(1);
+  const hl=hexMix(o.body,'#ffffff',.42),sh=o.dark,mz=o.points||hexMix(o.body,'#1a120c',.38);
+  // cheek (jowl) centre: below and behind the eye, above the jaw corner
+  const cx=(JB[0]+JL[0])/2+3,cy=(E[1]+JL[1])/2+3;
+  let g=`<g>`;
+  // side-of-face shadow and the lit face plane (head turned a little toward us)
+  g+=`<path d="M${f(Br[0]+2)} ${f(Br[1]+4)} C${f(Fc[0]-2)} ${f(Fc[1]+2)} ${f(N[0]-8)} ${f(N[1]-10)} ${f(MF[0]-6)} ${f(MF[1]-6)}" stroke="${hl}" stroke-width="6" fill="none" opacity=".32" stroke-linecap="round" filter="url(#${o.id}b2)"/>`;
+  g+=`<path d="M${f(Br[0]-5)} ${f(Br[1]+12)} C${f(Fc[0]-10)} ${f(Fc[1]+8)} ${f(N[0]-16)} ${f(N[1]-6)} ${f(MF[0]-14)} ${f(MF[1]-2)}" stroke="${sh}" stroke-width="4" fill="none" opacity=".22" stroke-linecap="round" filter="url(#${o.id}b2)"/>`;
+  // big round cheek: lit top, shaded rim
+  g+=`<ellipse cx="${f(cx+2)}" cy="${f(cy-3)}" rx="10" ry="8" fill="${hl}" opacity=".3" filter="url(#${o.id}b2)"/>`;
+  {const r=Math.max(9,Math.min(13,(JL[1]-E[1])*.4)),jx=JB[0]+r*.6,jy=JL[1]-r*1.1;
+   g+=`<path d="M${f(jx+r*.15)} ${f(jy-r)} A${f(r)} ${f(r)} 0 0 0 ${f(jx+r*.75)} ${f(jy+r*.66)}" stroke="${sh}" stroke-width="2.6" fill="none" opacity=".32" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+   g+=`<circle cx="${f(jx+1)}" cy="${f(jy-2)}" r="${f(r*.62)}" fill="${hl}" opacity=".22" filter="url(#${o.id}b2)"/>`}
+  // facial crest: bony ridge from under the eye toward the nose
+  g+=`<path d="M${f(E[0]-1)} ${f(E[1]+9)} C${f(E[0]+5)} ${f(E[1]+12)} ${f(E[0]+9)} ${f(E[1]+16)} ${f(E[0]+12)} ${f(E[1]+21)}" stroke="${hl}" stroke-width="2.2" fill="none" opacity=".35" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+  g+=`<path d="M${f(E[0]-1)} ${f(E[1]+11.5)} C${f(E[0]+5)} ${f(E[1]+14.5)} ${f(E[0]+9)} ${f(E[1]+18.5)} ${f(E[0]+11.5)} ${f(E[1]+23)}" stroke="${sh}" stroke-width="1.6" fill="none" opacity=".25" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+  // brow bone over the eye and the hollow above it
+  g+=`<path d="M${f(E[0]-8)} ${f(E[1]-6)} C${f(E[0]-2)} ${f(E[1]-12)} ${f(E[0]+7)} ${f(E[1]-12)} ${f(E[0]+12)} ${f(E[1]-6)}" stroke="${hl}" stroke-width="2.6" fill="none" opacity=".45" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+  g+=`<ellipse cx="${f(E[0]-9)}" cy="${f(E[1]-12)}" rx="4.5" ry="3.2" fill="${sh}" opacity=".3" filter="url(#${o.id}b3)"/>`;
+  // veins (show more on hot-blooded horses)
+  const vo=(.12+.25*Math.min(1,o.hot)).toFixed(2);
+  g+=`<path d="M${f(E[0]+4)} ${f(E[1]+16)} C${f(E[0]+2)} ${f(E[1]+24)} ${f(E[0]+8)} ${f(E[1]+30)} ${f(E[0]+6)} ${f(E[1]+38)} M${f(E[0]-2)} ${f(E[1]+15)} C${f(E[0]-6)} ${f(E[1]+22)} ${f(E[0]-3)} ${f(E[1]+28)} ${f(E[0]-7)} ${f(E[1]+34)}" stroke="${hl}" stroke-width=".9" fill="none" opacity="${vo}"/>`;
+  // throatlatch crease and jaw underside shading
+  g+=`<path d="M${f(T[0]+1)} ${f(T[1]-6)} C${f(JB[0]-1)} ${f(JB[1]-4)} ${f(JB[0]-2)} ${f(JB[1]+4)} ${f(JB[0]+1)} ${f(JB[1]+8)}" stroke="${sh}" stroke-width="2.2" fill="none" opacity=".4" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+  g+=`<path d="M${f(JB[0]+3)} ${f(JB[1]+10)} C${f(JL[0]-6)} ${f(JL[1]+6)} ${f(JL[0]+6)} ${f(JL[1]+8)} ${f(C[0]-6)} ${f(C[1]-1)}" stroke="${sh}" stroke-width="4" fill="none" opacity=".3" stroke-linecap="round" filter="url(#${o.id}b2)"/>`;
+  // muzzle: darker soft nose, chin bump, lips, whiskers
+  g+=`<ellipse cx="${f((MF[0]+MB[0])/2-2)}" cy="${f((MF[1]+MB[1])/2-3)}" rx="11" ry="10" fill="${mz}" opacity="${o.fm==='blaze'?'.18':o.grey?'.55':'.42'}" filter="url(#${o.id}b2)"/>`;
+  g+=`<path d="M${f(MB[0]-10)} ${f(MB[1]-2)} C${f(MB[0]-12)} ${f(MB[1]+3)} ${f(C[0]+1)} ${f(C[1]+3)} ${f(C[0]-4)} ${f(C[1]-2)}" stroke="${sh}" stroke-width="1.3" fill="none" opacity=".45"/>`;
+  g+=`<path d="M${f(MB[0]-6)} ${f(MB[1]-1)} C${f(MB[0]-2)} ${f(MB[1]+1)} ${f(MB[0]+3)} ${f(MB[1])} ${f(MB[0]+5)} ${f(MB[1]-3)}" stroke="${hl}" stroke-width="1" fill="none" opacity=".35"/>`;
+  g+=[[-6,-6],[-3,-8],[-1,-4],[2,-6]].map(([dx,dy])=>`<circle cx="${f(MB[0]+dx)}" cy="${f(MB[1]+dy)}" r=".55" fill="#1a110b" opacity=".5"/>`).join('');
+  // nostril flare and the far nostril just showing on the front of the muzzle
+  g+=`<path d="M${f(N[0]-10)} ${f(N[1]-6)} C${f(N[0]-13)} ${f(N[1]-1)} ${f(N[0]-12)} ${f(N[1]+6)} ${f(N[0]-7)} ${f(N[1]+9)}" stroke="${sh}" stroke-width="2" fill="none" opacity=".3" stroke-linecap="round" filter="url(#${o.id}b3)"/>`;
+  g+=`<path d="M${f(N[0]-11)} ${f(N[1]-7)} C${f(N[0]-6)} ${f(N[1]-10)} ${f(N[0]-1)} ${f(N[1]-8)} ${f(N[0]+1)} ${f(N[1]-4)}" stroke="${hl}" stroke-width="1.6" fill="none" opacity=".4" stroke-linecap="round"/>`;
+  g+=`<path d="M${f(N[0]+2.2)} ${f(N[1]-2)} C${f(N[0]+3.4)} ${f(N[1]+1)} ${f(N[0]+3)} ${f(N[1]+4)} ${f(N[0]+1.6)} ${f(N[1]+6)}" stroke="#160d08" stroke-width="1.6" fill="none" opacity=".45" stroke-linecap="round"/>`;
+  // eye wrinkles and lashes
+  g+=`<path d="M${f(E[0]-7)} ${f(E[1]-8)} C${f(E[0]-2)} ${f(E[1]-11)} ${f(E[0]+4)} ${f(E[1]-11)} ${f(E[0]+8)} ${f(E[1]-8)}" stroke="${sh}" stroke-width=".8" fill="none" opacity=".45"/><path d="M${f(E[0]-4)} ${f(E[1]+6)} C${f(E[0])} ${f(E[1]+8)} ${f(E[0]+5)} ${f(E[1]+7)} ${f(E[0]+8)} ${f(E[1]+4)}" stroke="${sh}" stroke-width=".8" fill="none" opacity=".4"/>`;
+  return g+'</g>'}
 function horseSVG(h){
   const c=coat(h.genes);const p=c.grey?GREYPAL:PAL[c.base+c.cr];const WH='#F3EFE6';
   let body=p.b,mane=p.m,points=p.l||null;
@@ -2356,8 +2393,13 @@ function horseSVG(h){
   const mkk=lf('clyde')>=.5?{face:'blaze',socks:[1,1,1,1]}:wildFull?{face:'none',socks:[0,0,0,0]}:mk;
   const {A,bt,sh}=horseAnchors(h,foal,st);
   const dark=hexMix(body,'#000000',body==='#211D1B'?.3:.42),light=hexMix(body,'#ffffff',body==='#211D1B'||body==='#3C322B'?.18:.3);
-  const pts=HORDER.map(k=>A[k]);const fi=HORDER.indexOf('face');
-  if(bt.hot>.6)pts[fi]=[A.face[0]-1.5*bt.hot,A.face[1],0];if(bt.draft>.6)pts[fi]=[A.face[0]+3*bt.draft,A.face[1]-2,0];
+  const pts0=HORDER.map(k=>A[k]);const fi=HORDER.indexOf('face');
+  if(bt.hot>.6)pts0[fi]=[A.face[0]-1.5*bt.hot,A.face[1],0];if(bt.draft>.6)pts0[fi]=[A.face[0]+3*bt.draft,A.face[1]-2,0];
+  // extra head points so the outline has a round jowl, a curb groove, a chin, a lower lip and a little orbit bump
+  const hc=[(A.eye[0]+A.jawL[0])/2,(A.eye[1]+A.jawL[1])/2];
+  const bulge=(a,b,t,off)=>{const x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t;let nx=-(b[1]-a[1]),ny=b[0]-a[0];const L=Math.hypot(nx,ny)||1;nx/=L;ny/=L;if((x-hc[0])*nx+(y-hc[1])*ny<0){nx=-nx;ny=-ny}return [x+nx*off,y+ny*off,0]};
+  const jw=5-1.5*bt.hot+1.5*bt.draft;const XTRA={jawB:[[A.jawB,A.jawL,.5,jw]],chin:[[A.chin,A.mzB,.5,1.1]],mzF:[[A.mzF,A.nose,.5,1.6]],mzB:[[A.mzB,A.mzF,.5,1.4]],face:[[A.face,A.brow,.55,1.4]]};
+  const pts=[];HORDER.forEach((k,i)=>{let p=pts0[i];if(k==='jawB')p=[p[0]-1.5,p[1]+2.5,0];pts.push(p);for(const [a,b,t,o] of (XTRA[k]||[]))pts.push(bulge(a,b,t,o))});
   const O=crSpline(pts);
   const legPath=(w,dx)=>{const H=['gaskB','hock','canHB','fetHB','pasHB','hoofHB','hoofHF','pasHF','fetHF','canHF','hockF','gaskF'],F=['forB','kneeB','canFB','fetFB','pasFB','hoofFB','hoofFF','pasFF','fetFF','canFF','kneeF','forF'];
     const q=(w==='h'?H:F).map(k=>[A[k][0]+dx,A[k][1],A[k][2]]);const tp=w==='h'?[[A.gaskF[0]+dx+8,A.gaskF[1]-50],[A.gaskB[0]+dx+4,A.gaskB[1]-46]]:[[A.forF[0]+dx,A.forF[1]-50],[A.forB[0]+dx-4,A.forB[1]-52]];return crSpline([...q,...tp])};
@@ -2489,8 +2531,9 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
    <path d="M${A.canHF[0]-3} ${A.canHF[1]-8} L${A.fetHF[0]-3} ${A.fetHF[1]-6}" stroke="#fff" stroke-opacity=".14" stroke-width="2"/>
    <path d="M${A.canFF[0]-3} ${A.canFF[1]-8} L${A.fetFF[0]-3} ${A.fetFF[1]-6}" stroke="#fff" stroke-opacity=".14" stroke-width="2"/>
   </g>
+  ${headDetail(A,E,N,{body,dark,light,points,id,hot:bt.hot,grey:c.grey,fm:mkk.face})}
   ${face}
-  <path d="M${A.jawB[0]+2} ${A.jawB[1]-2} C${A.jawB[0]+4} ${A.jawB[1]+14} ${A.jawL[0]+2} ${A.jawL[1]+8} ${A.chin[0]-8} ${A.chin[1]-4}" stroke="#000" stroke-opacity=".2" stroke-width="1.6" fill="none"/>
+
   ${senior?`<ellipse cx="${A.mzB[0]-4}" cy="${A.mzB[1]-8}" rx="14" ry="11" fill="#E8E4DA" opacity=".45" filter="url(#${id}b2)"/><ellipse cx="${E[0]}" cy="${E[1]-2}" rx="10" ry="7" fill="#E8E4DA" opacity=".35" filter="url(#${id}b2)"/>`:''}
  </g>
  <g transform="rotate(28 ${E[0]} ${E[1]}) translate(${E[0]} ${E[1]}) scale(.8) translate(${-E[0]} ${-E[1]})">
@@ -3655,7 +3698,7 @@ const HF_COATS={bay:['#8A4520','#1C1714','#2A2220'],chestnut:['#A8582A','#8A3F1A
 function hFront(...a){return '<!--ns-->'+hFront_raw(...a)+'<!--/ns-->'}
 function hFront_raw(coat,o={}){const [c,m,mz]=Array.isArray(coat)?coat:(HF_COATS[coat]||HF_COATS.bay);const dk=hexMix(c,'#000000',.28),lt=hexMix(c,'#ffffff',.22),nk=hexMix(c,'#000000',.34);
   const face='M0 2 C8 2 16 5 19 12 C21 18 21 26 19.5 34 C17.5 42 13.5 50 12.5 60 C12 68 15 74 14.5 82 C14 90 8 94 0 94 C-8 94 -14 90 -14.5 82 C-15 74 -12 68 -12.5 60 C-13.5 50 -17.5 42 -19.5 34 C-21 26 -21 18 -19 12 C-16 5 -8 2 0 2Z';
-  const ear=s=>`<path d="M${s*7} 8 C${s*8} -4 ${s*12} -13 ${s*16} -19 C${s*19} -10 ${s*20} 0 ${s*17} 10Z" fill="${c}"/><path d="M${s*9.5} 6 C${s*10.5} -2 ${s*13} -9 ${s*15.5} -13 C${s*17} -6 ${s*17.5} 1 ${s*15.5} 7Z" fill="${dk}"/>`;
+  const ear=s=>`<path d="M${s*7} 8 C${s*8} -4 ${s*12} -13 ${s*16} -19 C${s*19} -10 ${s*20} 0 ${s*17} 10Z" fill="${c}"/><path d="M${s*9.5} 6 C${s*10.5} -2 ${s*13} -9 ${s*15.5} -13 C${s*17} -6 ${s*17.5} 1 ${s*15.5} 7Z" fill="${dk}"/><path d="M${s*11} 5 C${s*12} 0 ${s*13} -4 ${s*14.5} -8 M${s*13} 6 C${s*13.6} 1 ${s*14.6} -3 ${s*15.6} -6" stroke="${lt}" stroke-width=".7" fill="none" opacity=".55"/>`;
   const mk=o.mark||'none';const W='#F4F1EA';
   const marks=mk==='snip'?`<path d="M-3 74 C-4 80 -2 84 0 84 C2 84 4 80 3 74 C1 72 -1 72 -3 74Z" fill="${W}"/>`:mk==='blaze'?`<path d="M-5 12 C-7 30 -4 50 -5 66 C-7 78 -5 90 0 91 C5 90 7 78 5 66 C4 50 7 30 5 12 C2 9 -2 9 -5 12Z" fill="${W}"/>`:mk==='star'?`<path d="M0 16 L3 21 L0 27 L-3 21Z" fill="${W}"/>`:mk==='stripe'?`<path d="M-3 14 C-4 30 -2 50 -2.5 68 L2.5 68 C2 50 4 30 3 14Z" fill="${W}"/><path d="M-4 76 C-3 84 3 84 4 76Z" fill="${W}"/>`:'';
   const NB=o.nb||130;const neck=`<path d="M-17 26 C-24 56 -32 92 -42 ${NB} H42 C32 92 24 56 17 26Z" fill="${nk}"/><path d="M-14 50 C-6 58 6 58 14 50 L18 80 C8 84 -8 84 -18 80Z" fill="#000" opacity=".18"/>${o.mane===0?'':`<path d="M15 20 C19 50 23 92 27 ${NB} H33 C29 92 24 50 19 22Z" fill="${m}" opacity=".85"/>`}`;
@@ -3663,9 +3706,11 @@ function hFront_raw(coat,o={}){const [c,m,mz]=Array.isArray(coat)?coat:(HF_COATS
   const head=`${ear(-1)}${ear(1)}<path d="${face}" fill="${c}"/>
    <path d="M-19 12 C-22 22 -21 32 -18 40 C-15 34 -14 24 -15 14Z" fill="${dk}" opacity=".45"/><path d="M19 12 C22 22 21 32 18 40 C15 34 14 24 15 14Z" fill="${dk}" opacity=".45"/><path d="M-12.5 56 C-12 62 -13 68 -12.4 70 L-9 70 C-10 64 -10 60 -12.5 56Z M12.5 56 C12 62 13 68 12.4 70 L9 70 C10 64 10 60 12.5 56Z" fill="${dk}" opacity=".3"/>
    <path d="M-8 6 C-4 4 4 4 8 6 C7 24 6 44 0 52 C-6 44 -7 24 -8 6Z" fill="${lt}" opacity=".35"/>
+   ${[-1,1].map(s=>`<path d="M${s*15} 27 C${s*15.5} 34 ${s*14} 42 ${s*11.5} 50" stroke="${lt}" stroke-width="2.2" fill="none" opacity=".35" stroke-linecap="round"/><path d="M${s*16.5} 28 C${s*17} 35 ${s*15.5} 43 ${s*13} 51" stroke="${dk}" stroke-width="1.4" fill="none" opacity=".35" stroke-linecap="round"/><ellipse cx="${s*14}" cy="12" rx="4.5" ry="3" fill="${dk}" opacity=".3"/><path d="M${s*7} 52 C${s*6} 58 ${s*7.5} 63 ${s*6.5} 68" stroke="${lt}" stroke-width=".8" fill="none" opacity=".3"/>`).join('')}
+   <path d="M-1.8 21.5 q1.8 -2.2 3.4 -.2 q-.4 2.2 -2.6 1.6" stroke="${dk}" stroke-width=".6" fill="none" opacity=".3"/>
    ${marks}
    <path d="M-12.4 70 C-14 76 -15 80 -14.5 84 C-14 90 -8 94 0 94 C8 94 14 90 14.5 84 C15 80 14 76 12.4 70 C8 73 -8 73 -12.4 70Z" fill="${mz}" opacity="${mk==='blaze'?.45:.6}"/>
-   <path d="M-12.5 78 C-14 82 -12.5 87 -9 87.5 C-8 85 -9.5 82 -7 79 C-8.5 77 -11 77 -12.5 78Z M12.5 78 C14 82 12.5 87 9 87.5 C8 85 9.5 82 7 79 C8.5 77 11 77 12.5 78Z" fill="#141010" opacity=".85"/><path d="M-5 91.5 Q0 93 5 91.5" stroke="#141010" stroke-width="1" fill="none" opacity=".5"/>
+   <path d="M-12.5 78 C-14 82 -12.5 87 -9 87.5 C-8 85 -9.5 82 -7 79 C-8.5 77 -11 77 -12.5 78Z M12.5 78 C14 82 12.5 87 9 87.5 C8 85 9.5 82 7 79 C8.5 77 11 77 12.5 78Z" fill="#141010" opacity=".85"/><path d="M-5 91.5 Q0 93 5 91.5" stroke="#141010" stroke-width="1" fill="none" opacity=".5"/>${[-1,1].map(s=>`<path d="M${s*13.6} 76 C${s*15.4} 80 ${s*14.4} 86 ${s*10.4} 88.5" stroke="${lt}" stroke-width="1" fill="none" opacity=".45"/><path d="M${s*6.8} 77.5 C${s*5.6} 80 ${s*6.2} 83 ${s*7.6} 85" stroke="${lt}" stroke-width=".8" fill="none" opacity=".35"/>${[[4,86],[6,88.5],[9,87],[3,89.5]].map(([x,y])=>`<circle cx="${s*x}" cy="${y}" r=".45" fill="#141010" opacity=".5"/>`).join('')}`).join('')}<path d="M-6 94 Q0 97.5 6 94" stroke="${dk}" stroke-width="1.2" fill="none" opacity=".4"/>
    ${[-1,1].map(s=>`<path d="M${s*15.5} 22 C${s*17.5} 18.5 ${s*21} 18 ${s*22.5} 21.5 C${s*22} 25.5 ${s*18.5} 26.5 ${s*16} 24.5Z" fill="#120E0C"/><circle cx="${s*19.6}" cy="21.2" r=".9" fill="#fff" opacity=".8"/><path d="M${s*14.5} 18 C${s*17.5} 15 ${s*21.5} 15.5 ${s*23} 19.5" stroke="${dk}" stroke-width="1.3" fill="none"/>`).join('')}
    <path d="M-9 4 C-6 -2 -1 -4 2 -3 C6 -2 9 2 9 6 C6 12 3 16 -1 17 C-3 13 -6 9 -9 4Z" fill="${m}"/><path d="M-3 0 C-2 6 -1 11 -1 15 M2 -1 C3 5 2 10 1 14" stroke="${hexMix(m,'#000000',.3)}" stroke-width=".8" fill="none"/>
    ${halter}`;
