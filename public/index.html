@@ -1075,6 +1075,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Friendlier horse eyes: a warm brown iris with a soft horizontal pupil, a gentle sky reflection and a sparkle, eyelashes, a moist lower lid and a calmer, rounder shape (no more harsh black slit). Starfall Horses have deep blue eyes.',
   'New horse heads: the neck now slopes forward to a proper throat, the head is a little smaller and sits further out in front of the chest, and it has a round cheek (jowl) where it meets the neck. The head outline has twice as many points, giving a real forehead, nose, nostril, upper and lower lip, mouth corner, chin and jaw line. Ears, eyes, nostrils and markings were resized to match.',
   'Starfall Horses: your first Olympic win (or a lucky International win) unlocks them and brings one to the next market. After that, every weekly market has a small 4% chance of a drifter bringing another one. More big wins don’t add extra Starfalls.',
   'Event results now show the full money split: purse, the owner’s 40% share for boarded horses, your part of the entry fee, and what you net. Auto compete totals are after fees.',
@@ -2660,7 +2661,7 @@ function horseSVG(h){
   if(curlyS>=.25)patches+=`<path d="${O}" fill="url(#${id}cu)" opacity="${Math.min(1,curlyS*1.3).toFixed(2)}"/>`;
   const fm=mkk.face==='none'&&c.tob?'star':mkk.face;
   const face=fm==='star'?`<path d="${blob(A.eye[0]+7,A.eye[1]-6,4,3.4,rnd,6)}" fill="${WH}"/>`:fm==='blaze'?`<path d="M${A.brow[0]+2} ${A.brow[1]+6} C${A.face[0]-4} ${A.face[1]} ${A.nose[0]-10} ${A.nose[1]-8} ${A.mzF[0]-4} ${A.mzF[1]+2} C${A.mzF[0]+2} ${A.mzF[1]} ${A.nose[0]+2} ${A.nose[1]} ${A.face[0]+4} ${A.face[1]} C${A.brow[0]+12} ${A.brow[1]} ${A.brow[0]+8} ${A.brow[1]} ${A.brow[0]+2} ${A.brow[1]+6}Z" fill="${WH}"/>`:fm==='snip'?`<path d="${A.hf?(q=>blob(q[0],q[1],3.6,4.6,rnd,6))(A.hf.L(1.01,-.03)):blob(A.mzF[0]-5,A.mzF[1]-4,4,5,rnd,6)}" fill="${WH}"/>`:'';
-  const E=A.eye,N=A.hf?A.hf.L(.955,.005):A.nose,senior=st==='Senior';
+  const E=A.eye,N=A.hf?A.hf.L(.955,.005):A.nose,senior=st==='Senior';const eyeC=starS>=.5?['#1d2a44','#33507a','#6a8fbf']:['#2a170d','#4f2d17','#8a5a30'];
   // gear
   const sad=gs('saddle'),bla=gs('blanket'),bri=gs('bridle'),boo=gs('boots');
   const sx0=A.back[0]-34,sx1=A.withers[0]-8,sy=A.back[1];
@@ -2677,7 +2678,8 @@ function horseSVG(h){
 <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".25" stop-color="#fff" stop-opacity=".05"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
 ${points?`<linearGradient id="${id}pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${points}" stop-opacity="0"/><stop offset=".22" stop-color="${points}" stop-opacity=".85"/><stop offset=".32" stop-color="${points}"/></linearGradient>`:''}
 <linearGradient id="${id}hs" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
-<radialGradient id="${id}e" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#5a3a26"/><stop offset=".55" stop-color="#1d120c"/><stop offset="1" stop-color="#080505"/></radialGradient>
+<radialGradient id="${id}e" cx=".52" cy=".5" r=".6"><stop offset="0" stop-color="${eyeC[0]}"/><stop offset=".62" stop-color="${eyeC[1]}"/><stop offset=".86" stop-color="${eyeC[2]}"/><stop offset="1" stop-color="#1c0f08"/></radialGradient>
+<filter id="${id}b4" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".6"/></filter>
 <radialGradient id="${id}dp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#F4F4F0" stop-opacity=".8"/><stop offset=".6" stop-color="#E8E8E2" stop-opacity=".4"/><stop offset="1" stop-color="#E8E8E2" stop-opacity="0"/></radialGradient>
 <pattern id="${id}cu" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M1.5 6.5 a3 3 0 1 1 6 0" stroke="#000" stroke-opacity=".2" fill="none" stroke-width="1.2"/><path d="M6 1.5 a2.2 2.2 0 1 1 4 1" stroke="#fff" stroke-opacity=".15" fill="none" stroke-width="1"/></pattern>
 </defs>
@@ -2735,13 +2737,20 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
 
   ${senior?`<ellipse cx="${A.mzB[0]-4}" cy="${A.mzB[1]-8}" rx="14" ry="11" fill="#E8E4DA" opacity=".45" filter="url(#${id}b2)"/><ellipse cx="${E[0]}" cy="${E[1]-2}" rx="10" ry="7" fill="#E8E4DA" opacity=".35" filter="url(#${id}b2)"/>`:''}
  </g>
- <g transform="rotate(28 ${E[0]} ${E[1]}) translate(${E[0]} ${E[1]}) scale(${A.hf?.72:.8}) translate(${-E[0]} ${-E[1]})">
-  <ellipse cx="${E[0]}" cy="${E[1]+1}" rx="9.5" ry="6.5" fill="#000" opacity=".22" filter="url(#${id}b2)"/>
-  <path d="M${E[0]-7} ${E[1]} C${E[0]-3} ${E[1]-5.5} ${E[0]+4} ${E[1]-5.5} ${E[0]+7.5} ${E[1]} C${E[0]+4} ${E[1]+4.5} ${E[0]-3} ${E[1]+4.5} ${E[0]-7} ${E[1]}Z" fill="url(#${id}e)"/>
-  <ellipse cx="${E[0]+2}" cy="${E[1]-1.8}" rx="2" ry="1.3" fill="#fff" opacity=".85"/><circle cx="${E[0]-2.5}" cy="${E[1]+1.5}" r=".8" fill="#fff" opacity=".4"/>
-  <path d="M${E[0]-8} ${E[1]-.5} C${E[0]-4} ${E[1]-7} ${E[0]+4} ${E[1]-7.5} ${E[0]+9} ${E[1]-.5}" stroke="#120b07" stroke-width="1.6" fill="none"/>
-  <path d="M${E[0]-9} ${E[1]-4} C${E[0]-3} ${E[1]-11} ${E[0]+5} ${E[1]-11} ${E[0]+11} ${E[1]-4}" stroke="#000" stroke-opacity=".22" stroke-width="1.3" fill="none"/>
- </g>
+ ${(()=>{const X=(x,y)=>`${(E[0]+x).toFixed(2)} ${(E[1]+y).toFixed(2)}`;const lash=[[-5.4,-4.2],[-3.6,-5.6],[-1.5,-6.3],[.8,-6.5],[3,-6]].map(([x,y],i)=>`<path d="M${X(x,y)} q${(-1.3+i*.1).toFixed(2)} -.5 ${(-2.1+i*.15).toFixed(2)} -1.2" stroke="#140c07" stroke-width=".5" fill="none" stroke-linecap="round" opacity=".6"/>`).join('');
+  return `<g transform="rotate(14 ${E[0]} ${E[1]}) translate(${E[0]} ${E[1]}) scale(${A.hf?.74:.8}) translate(${-E[0]} ${-E[1]})">
+  <ellipse cx="${E[0]}" cy="${E[1]+.6}" rx="10.5" ry="7.8" fill="#000" opacity=".2" filter="url(#${id}b2)"/>
+  <path d="M${X(-7,-.3)} C${X(-4.2,-6.4)} ${X(3.8,-6.6)} ${X(7.2,1.1)} C${X(4,4.8)} ${X(-3.6,4.6)} ${X(-7,-.3)}Z" fill="url(#${id}e)"/>
+  <ellipse cx="${E[0]+.7}" cy="${E[1]+.5}" rx="3.7" ry="1.9" fill="#0b0604" opacity=".8" filter="url(#${id}b4)"/>
+  <ellipse cx="${E[0]-1.4}" cy="${E[1]-2.5}" rx="3.9" ry="1.7" fill="#fff" opacity=".42" transform="rotate(-10 ${E[0]-1.4} ${E[1]-2.5})" filter="url(#${id}b4)"/>
+  <circle cx="${E[0]+2.7}" cy="${E[1]-2.3}" r="1.05" fill="#fff" opacity=".95"/><circle cx="${E[0]-3.4}" cy="${E[1]+1.6}" r=".45" fill="#fff" opacity=".45"/>
+  <path d="M${X(-3.2,3.1)} C${X(-1,4)} ${X(2,4.1)} ${X(4,3.2)}" stroke="${eyeC[2]}" stroke-width=".9" fill="none" opacity=".45" stroke-linecap="round"/>
+  <ellipse cx="${E[0]+6.3}" cy="${E[1]+1.2}" rx=".9" ry=".65" fill="#B5847A" opacity=".75"/>
+  <path d="M${X(-7.2,-.2)} C${X(-4.3,-6.7)} ${X(3.9,-6.9)} ${X(7.3,1)}" stroke="#160e09" stroke-width="1.25" fill="none" stroke-linecap="round"/>
+  <path d="M${X(-5.6,2)} C${X(-2.2,5.1)} ${X(3.4,5.2)} ${X(6.6,2.3)}" stroke="#fff" stroke-opacity=".18" stroke-width=".6" fill="none" stroke-linecap="round"/>
+  <path d="M${X(-6.6,-3.6)} C${X(-3,-9)} ${X(4.2,-9.2)} ${X(7.6,-2.4)}" stroke="#000" stroke-opacity=".22" stroke-width=".9" fill="none" stroke-linecap="round"/>
+  ${lash}
+ </g>`})()}
  <ellipse cx="${N[0]-4}" cy="${N[1]+1}" rx="5" ry="6" fill="#000" opacity=".14" filter="url(#${id}b2)"/>
  <path d="M${N[0]-2} ${N[1]-4.5} C${N[0]-6.5} ${N[1]-4} ${N[0]-8} ${N[1]+1} ${N[0]-5.5} ${N[1]+4.5} C${N[0]-4} ${N[1]+2} ${N[0]-3.5} ${N[1]-1} ${N[0]-2} ${N[1]-4.5}Z" fill="#160d08" opacity=".7"/>
  <path d="M${N[0]-1.5} ${N[1]-5} C${N[0]-7.5} ${N[1]-5} ${N[0]-9.5} ${N[1]+1} ${N[0]-6.5} ${N[1]+6}" stroke="#fff" stroke-opacity=".18" stroke-width="1.1" fill="none"/>
