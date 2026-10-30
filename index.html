@@ -842,7 +842,7 @@ function rivalPanel(){const r=ensureRival();const tot=r.w+r.l;const lead=r.w>r.l
   return `<div class="panel rivalpanel"><div class="grow"><div class="subh" style="margin-top:0">Your rival</div><b>${esc(r.owner)}</b> of <b>${esc(r.farm)} Ranch</b><div class="note">Shows up at about a quarter of Local and County events, and more often at bigger shows. Only your own horses count toward the record, not boarded horses. Their horses: ${r.horses.map(esc).join(', ')}.</div></div>
    <div class="rivalrec"><span class="rw">${r.w}</span><span class="rd">–</span><span class="rl">${r.l}</span><span class="note">${tot?lead:'Not met yet'}</span></div>${r.last.length?`<div class="note rivallast">Last ${r.last.length}: ${r.last.map(x=>`<span class="${x?'good':'bad'}">${x?'W':'L'}</span>`).join(' ')}</div>`:''}</div>`}
 /* ---------- balance (Build 70) ---------- */
-const BAL={rivalLo:.76,rivalSpan:.24,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={rivalLo:.78,rivalSpan:.24,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
 function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
@@ -1076,7 +1076,7 @@ const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
   'Event results now show the full money split: purse, the owner’s 40% share for boarded horses, your part of the entry fee, and what you net. Auto compete totals are after fees.',
-  'The rival ranch is a bit weaker and shows up a little less often.',
+  'The rival ranch shows up a little less often, and their horses are a touch weaker (about 90% of your horse’s strength).',
   'Property tax lowered by a quarter (3.75% of building value above $25,000 per season).',
   'Training a horse yourself gives 15% bigger gains.',
   'Trophy Room on the Hall of Fame tab: a shelf of championship trophies (National and up), a wall of your ranch’s best ribbons, and an all-time count by level. It includes horses that have passed or been sold.',
