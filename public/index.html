@@ -842,7 +842,7 @@ function rivalPanel(){const r=ensureRival();const tot=r.w+r.l;const lead=r.w>r.l
   return `<div class="panel rivalpanel"><div class="grow"><div class="subh" style="margin-top:0">Your rival</div><b>${esc(r.owner)}</b> of <b>${esc(r.farm)} Ranch</b><div class="note">Shows up at about a quarter of Local and County events, and more often at bigger shows. Only your own horses count toward the record, not boarded horses. Their horses: ${r.horses.map(esc).join(', ')}.</div></div>
    <div class="rivalrec"><span class="rw">${r.w}</span><span class="rd">–</span><span class="rl">${r.l}</span><span class="note">${tot?lead:'Not met yet'}</span></div>${r.last.length?`<div class="note rivallast">Last ${r.last.length}: ${r.last.map(x=>`<span class="${x?'good':'bad'}">${x?'W':'L'}</span>`).join(' ')}</div>`:''}</div>`}
 /* ---------- balance (Build 70) ---------- */
-const BAL={rivalLo:.78,rivalSpan:.24,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={starWeekly:.04,rivalLo:.78,rivalSpan:.24,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
 function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
@@ -1075,6 +1075,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Starfall Horses: your first Olympic win (or a lucky International win) unlocks them and brings one to the next market. After that, every weekly market has a small 4% chance of a drifter bringing another one. More big wins don’t add extra Starfalls.',
   'Event results now show the full money split: purse, the owner’s 40% share for boarded horses, your part of the entry fee, and what you net. Auto compete totals are after fees.',
   'The rival ranch shows up a little less often, and their horses are a touch weaker (about 90% of your horse’s strength).',
   'Property tax lowered by a quarter (3.75% of building value above $25,000 per season).',
@@ -1616,7 +1617,8 @@ function refreshMarket(){
   for(let i=0;i<2;i++)S.market.push(genHorse({ageDays:ri(YEARLING,ADULT-2),potMid:ri(44,60)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({ageDays:ADULT+DPY*ri(9,13),potMid:ri(40,58)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({potMid:ri(60,68)+lift,nTraits:2,origin:pick(FARMS)+' Ranch'}));
-  if(S.starOffer){S.starOffer=0;const sh=genHorse({breed:'starfall',potMid:ri(58,66)+lift,nTraits:2,origin:'A drifter from the high country'});S.market.push(sh);log('good','Word of your champions spread. A drifter has brought a Starfall Horse to the market!')}
+  if(!S.starUnlocked&&(S.starOffer||(S.ach&&S.ach.olympic)||S.horses.some(h=>starBlood(h)>=.5)))S.starUnlocked=1;
+  const firstStar=!!S.starOffer;if(firstStar||(S.starUnlocked&&R()<BAL.starWeekly)){S.starOffer=0;const sh=genHorse({breed:'starfall',potMid:ri(58,66)+lift,nTraits:2,origin:'A drifter from the high country'});S.market.push(sh);log('good',firstStar?'Word of your champions spread. A drifter has brought a Starfall Horse to the market!':'A drifter from the high country is back with another Starfall Horse. Check the market!')}
   S.market.forEach(enrichSale);
   S.market.forEach(h=>h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup/10)*10);
   S.studs=[];
@@ -1999,7 +2001,7 @@ function compete(h,ei,ti){
   let prize=0,rep=0;
   if(place<=3&&h.client)h.client.places++;
   let cut=0;if(place<=3){prize=r10(prizesFor(ev,t)[place-1]*gradMult(h,ti));rep=(t.repCap&&S.rep>=t.repCap)?0:gainRep(t.rep[place-1]*pskM('show',.06));cut=h.client?Math.round(prize*CLIENT_CUT):0;S.money+=prize-cut;h.earnings+=prize;if(cut)h.client.paidOut=(h.client.paidOut||0)+cut}
-  if(place===1){h.wins++;S.stats.wins++;if(!h.client&&h.origin==='Bred on your ranch')pxp('eye',2);h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if(ti===6||(ti===5&&R()<.15)){S.starOffer=1}if(ti===7)unlock('invitational')}
+  if(place===1){h.wins++;S.stats.wins++;if(!h.client&&h.origin==='Bred on your ranch')pxp('eye',2);h.happy=clamp(h.happy+6,0,100);unlock('firstwin');if(ti===2)unlock('state');if(ti===3)unlock('regional');if(ti===4)unlock('national');if(ti===5)unlock('international');if(ti===6)unlock('olympic');if((ti===6||(ti===5&&R()<.15))&&!S.starUnlocked){S.starUnlocked=1;S.starOffer=1;log('good','✦ Word of your champion is spreading through the high country. Watch the market next week…')}if(ti===7)unlock('invitational')}
   else if(place>=7)h.happy=clamp(h.happy-4,0,100);
   if(place<=3&&gearSum(h,'rep'))rep+=gainRep(1);
   let awardMsg='';
