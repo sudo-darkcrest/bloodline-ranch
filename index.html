@@ -835,13 +835,13 @@ const RIVAL_HORSES=['Dusty Star','Black Jack','Sundance Kid','Cimarron','Rio Bra
 function ensureRival(){if(S.rival)return S.rival;const used=new Set([S.ranchName]);const farm=pick(FARMS.filter(f=>!used.has(f)));const hs=[...RIVAL_HORSES].sort(()=>R()-.5).slice(0,4);
   S.rival={farm,owner:pick(STAFF_FN)+' '+pick(STAFF_LN),horses:hs,w:0,l:0,met:0,last:[]};return S.rival}
 function rivalScore(myBase,npcScore,rnd){return Math.max(npcScore,myBase*(BAL.rivalLo+rnd()*BAL.rivalSpan))}
-function rivalChance(ti){return ti>=T_NAT?.6:ti>=2?.45:.3}
+function rivalChance(ti){return ti>=T_NAT?.5:ti>=2?.35:.25}
 function rivalLine(won){const r=S.rival;return pick(won?[r.owner+' tipped their hat. “Next time.”',r.owner+' is already muttering about a rematch.','The crowd loved watching '+r.farm+' come up short.']:[r.owner+' grinned at you from the rail.',r.owner+' won’t let you hear the end of this.','Score one for '+r.farm+' Ranch.'])}
 function rivalPanel(){const r=ensureRival();const tot=r.w+r.l;const lead=r.w>r.l?'You lead':r.w<r.l?'They lead':'All square';
-  return `<div class="panel rivalpanel"><div class="grow"><div class="subh" style="margin-top:0">Your rival</div><b>${esc(r.owner)}</b> of <b>${esc(r.farm)} Ranch</b><div class="note">Shows up at about a third of Local and County events, and more often at bigger shows. Only your own horses count toward the record, not boarded horses. Their horses: ${r.horses.map(esc).join(', ')}.</div></div>
+  return `<div class="panel rivalpanel"><div class="grow"><div class="subh" style="margin-top:0">Your rival</div><b>${esc(r.owner)}</b> of <b>${esc(r.farm)} Ranch</b><div class="note">Shows up at about a quarter of Local and County events, and more often at bigger shows. Only your own horses count toward the record, not boarded horses. Their horses: ${r.horses.map(esc).join(', ')}.</div></div>
    <div class="rivalrec"><span class="rw">${r.w}</span><span class="rd">–</span><span class="rl">${r.l}</span><span class="note">${tot?lead:'Not met yet'}</span></div>${r.last.length?`<div class="note rivallast">Last ${r.last.length}: ${r.last.map(x=>`<span class="${x?'good':'bad'}">${x?'W':'L'}</span>`).join(' ')}</div>`:''}</div>`}
 /* ---------- balance (Build 70) ---------- */
-const BAL={rivalLo:.82,rivalSpan:.24,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.05,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={rivalLo:.76,rivalSpan:.24,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.5,clientPer:3,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
 function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
@@ -1074,12 +1074,15 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'The rival ranch is a bit weaker and shows up a little less often.',
+  'Property tax lowered by a quarter (3.75% of building value above $25,000 per season).',
+  'Training a horse yourself gives 15% bigger gains.',
   'Trophy Room on the Hall of Fame tab: a shelf of championship trophies (National and up), a wall of your ranch’s best ribbons, and an all-time count by level. It includes horses that have passed or been sold.',
   'Life story in every horse’s papers: when it was born, came to the ranch, its first ribbon and first win, big championship wins, awards, skills learned, foals and retirement.',
   'A rival ranch: one named rancher keeps showing up at your events. Their horses are marked in the results, and the Compete tab keeps your win–loss record against them. Boarded client horses don’t count toward the record.']},
  {b:'70',d:'Oct 29, 2026',t:'Balance pass: a real late game',c:[
   'Show class limits: after a horse wins 30 Local Shows, 20 County Fairs or 16 State Championships, it has graduated from that level. It can still enter, but its prize money there is halved. The event buttons warn you when a horse is close.',
-  'Property tax: once your buildings are worth more than $25,000, you pay 5% of the value above that each season. It shows on the Facilities tab.',
+  'Property tax: once your buildings are worth more than $25,000, you pay 3.75% of the value above that each season. It shows on the Facilities tab.',
   'Boarding pays less, you can board 1 client horse for every 3 stalls, and owners now keep 40% of their horse’s prize money.',
   'Bigger shows cost more to enter, and National-level purses and up are smaller.',
   'Market horses cost more than you can resell them for, so buying and flipping no longer makes free money.',
@@ -1790,7 +1793,7 @@ function train(h,k,quiet){
   if(R()<refuseChance(h))return quiet?undefined:sulk(h,'train');
   const st=STATS.find(s=>s.k===k);
   if(h.tr[k]>=h.pot[k])return toast(h.name+' has maxed '+st.n+'. Breeding is the only way higher.');
-  const g=Math.max(.2,trainGain(h,k)*pskM('horse',.06));h.tr[k]=Math.min(h.pot[k],Math.round((h.tr[k]+g)*10)/10);pxp('horse',2);tutMark('train');
+  const g=Math.max(.2,trainGain(h,k)*pskM('horse',.06)*BAL.userTrain);h.tr[k]=Math.min(h.pot[k],Math.round((h.tr[k]+g)*10)/10);pxp('horse',2);tutMark('train');
   h.energy=clamp(h.energy-25,0,100);if(!has(h,'workaholic'))h.happy=clamp(h.happy-1,0,100);h.acted=S.day;
   let msg=h.name+' trained '+st.n+': +'+g.toFixed(1)+workDone(h,'train:'+k);
   if(isAdult(h)&&R()<injuryRisk(h,.02)){injure(h);msg+=' — but got hurt!'}
