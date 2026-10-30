@@ -1075,6 +1075,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Starting a new ranch from the Office no longer warns that everything is erased (that wasn’t true). It now explains that only the autosave is replaced, and lets you keep your current ranch in a save slot or download a save file first.',
   'Fixed: a horse reserved for the trainer stayed stuck in its stall (and lost happiness) once it couldn’t be trained, such as a mare late in her pregnancy or an injured horse. A reservation now only holds a horse back when the trainer can actually work it, so “Turn out the rest” and the evening turnout include it again.',
   'Friendlier horse eyes: a warm brown iris with a soft horizontal pupil, a gentle sky reflection and a sparkle, eyelashes, a moist lower lid and a calmer, rounder shape (no more harsh black slit). Starfall Horses have deep blue eyes.',
   'New horse heads: the neck now slopes forward to a proper throat, the head is a little smaller and sits further out in front of the chest, and it has a round cheek (jowl) where it meets the neck. The head outline has twice as many points, giving a real forehead, nose, nostril, upper and lower lip, mouth corner, chin and jaw line. Ears, eyes, nostrils and markings were resized to match.',
@@ -3420,7 +3421,7 @@ function renderOffice(){
   <div class="section-head" style="margin-top:22px"><h2>Settings</h2></div>
   <div class="cols"><div class="panel"><div class="subh" style="margin-top:0">Ranch name</div>
     <div class="actions"><input type="text" id="ranchInput" value="${esc(S.ranchName)}" maxlength="32" aria-label="Ranch name"><button class="btn" data-a="renameRanch">Save name</button></div>
-    <div class="subh">Start over</div><button class="btn danger" data-a="newgame">Start a new ranch</button> <span class="note">Your game saves automatically after every action.</span></div>
+    <div class="subh">Start over</div><button class="btn" data-a="newgame">Start a new ranch…</button> <span class="note">You’ll get a chance to keep this ranch in a save slot first. Your game saves automatically after every action.</span></div>
    <div class="panel"><details class="howto"><summary>How to play</summary>${HOWTO}</details></div></div>`;
 }
 
@@ -3625,7 +3626,11 @@ function renderModal(){
   }else if(m.type==='whatsnew'){title='New in Bloodline Ranch';body=whatsNewBody();
   }else if(m.type==='confirmNew'){
     title='Start a new ranch?';
-    body=`<p>This erases your current ranch, horses and progress. It can't be undone.</p><div class="actions"><button class="btn armed" data-a="newgameyes">Yes, start over</button><button class="btn" data-a="close">Keep my ranch</button></div>`;
+    const kept=m.kept;body=`<p>Starting a new ranch replaces your <b>autosave</b> with the new game. <b>${esc(S.ranchName)}</b> isn’t lost if you keep a copy first:</p>
+    <ul class="note"><li><b>Save slots</b> aren’t touched. Put this ranch in one below and load it any time from the title screen.</li><li>A <b>downloaded save file</b> can be loaded on any device.</li></ul>
+    <div class="actions">${[1,2,3].map(n=>`<button class="btn small ${kept===n?'primary':''}" data-a="keepslot" data-n="${n}">${kept===n?'✓ Kept in slot '+n:'Keep it in slot '+n+(slotInfo(n)?' (replaces '+esc(slotInfo(n).name)+', day '+slotInfo(n).day+')':' (empty)')}</button>`).join('')}<button class="btn small" data-a="download">Download a save file</button></div>
+    ${kept?`<p class="note good" style="margin-top:8px">${esc(S.ranchName)} is safe in slot ${kept}.</p>`:`<p class="note" style="margin-top:8px">If you don’t keep a copy, this ranch can’t be loaded again.</p>`}
+    <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="newgameyes">Start a new ranch</button><button class="btn" data-a="close">Keep playing this ranch</button></div>`;
   }
   ov.innerHTML=`${nav?nav.side:''}<div class="modal" role="dialog" aria-modal="true" aria-label="${title}"><div class="mhead">${nav?nav.head:''}<h2>${title}</h2>${nav?nav.pos:''}${m.lock?'':'<button class="xbtn" data-a="close" aria-label="Close">×</button>'}</div><div class="mbody">${body}</div></div>`;
   ov.hidden=false;
@@ -4268,6 +4273,7 @@ const ACT={
   wskip:()=>{skipWatch();return 'skip'},
   wspeed:(d,b)=>{if(WATCH){WATCH.speed=WATCH.speed>=4?1:WATCH.speed*2;PREF.speed=WATCH.speed;savePref();hoovesRate(WATCH.speed);b.textContent='Speed: '+WATCH.speed+'×'}return 'skip'},
   newgame:()=>{UI.modal={type:'confirmNew'}},
+  keepslot:d=>{save();try{const t=localStorage.getItem(KEY);localStorage.setItem(slotKey(+d.n),t);UI.modal={type:'confirmNew',kept:+d.n};toast(S.ranchName+' is kept in slot '+d.n+'.')}catch(e){toast('Couldn’t save to that slot. Try downloading a save file instead.')}},
   newgameyes:()=>{startNewLife()},
 };
 (function(){const money=['buy','sell','buyitem','hay','hire','accept','sellitem','studyes','loanpay','borrow','acceptclient','takesponsor'],build=['upgrade','stalls','facup'],groomy=['groom','groomall'];
