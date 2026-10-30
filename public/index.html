@@ -1075,6 +1075,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Fixed: a horse reserved for the trainer stayed stuck in its stall (and lost happiness) once it couldn’t be trained, such as a mare late in her pregnancy or an injured horse. A reservation now only holds a horse back when the trainer can actually work it, so “Turn out the rest” and the evening turnout include it again.',
   'Friendlier horse eyes: a warm brown iris with a soft horizontal pupil, a gentle sky reflection and a sparkle, eyelashes, a moist lower lid and a calmer, rounder shape (no more harsh black slit). Starfall Horses have deep blue eyes.',
   'New horse heads: the neck now slopes forward to a proper throat, the head is a little smaller and sits further out in front of the chest, and it has a round cheek (jowl) where it meets the neck. The head outline has twice as many points, giving a real forehead, nose, nostril, upper and lower lip, mouth corner, chin and jaw line. Ears, eyes, nostrils and markings were resized to match.',
   'Starfall Horses: your first Olympic win (or a lucky International win) unlocks them and brings one to the next market. After that, every weekly market has a small 4% chance of a drifter bringing another one. More big wins don’t add extra Starfalls.',
@@ -1805,8 +1806,8 @@ function train(h,k,quiet){
   if(isAdult(h)&&R()<injuryRisk(h,.02)){injure(h);msg+=' — but got hurt!'}
   if(!quiet)toast(msg);
 }
-function canTurnout(h){return !h.injury&&h.acted!==S.day&&!(h.tres&&S.staff.trainer)}
-function trainerHeld(h){return !!(h&&h.tres&&S.staff.trainer)}
+function canTurnout(h){return !h.injury&&h.acted!==S.day&&!trainerHeld(h)}
+function trainerHeld(h){return !!(h&&h.tres&&S.staff.trainer&&!h.injury&&pregOk(h)&&!h.retired&&(stage(h)!=='Foal'||age(h)>=TRAIN_MIN_AGE))}
 const PASTURE_EVENTS=[
   {w:5,good:1,t:'made a new friend over the fence',fx:'happiness +8',f:h=>{h.happy=clamp(h.happy+8,0,100)}},
   {w:4,good:1,t:'found a patch of sweet clover',fx:'health +3, happiness +3',f:h=>{h.health=clamp(h.health+3,0,100);h.happy=clamp(h.happy+3,0,100)}},
