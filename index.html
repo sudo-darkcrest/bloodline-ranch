@@ -1076,6 +1076,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Fixed: the chicken and goat pens on the ranch map now change with the seasons like the other pens (greener in spring, golden in fall, snow-covered in winter).',
   'Redrawn horses: the body outline has many more points, so the back, croup, hamstring, belly, chest and legs curve the way real horses do, and the joints (knees, hocks, fetlocks) line up properly. New soft muscle shading shows the shoulder, forearm, neck, barrel, hip and gaskin, with a light rim along the topline.',
   'Turn your horse around: the horse papers now have Side, Front and Back buttons on the picture. The front and back views show the same coat, markings, spots, socks, mane, tail and feathers as the side view.',
   'The stable banner heads use the new front-view face (with the friendlier eyes), and two horses in the Market paddock now face you or walk away.',
@@ -3267,12 +3268,12 @@ function ranchMap(){
     const PENS={chickens:[24,204,76,128,'Chickens'],goats:[108,204,88,128,'Goats'],sheep:[204,204,96,128,'Sheep'],cattle:[452,66,100,174,'Cattle']};
     for(const id of ids){const n=lv(id);const [x,y,w,h,nm]=PENS[id];const r=srng(70+ids.indexOf(id)*13);o='';
       if(!n){o=lot(x,y,w,h)}
-      else if(id==='chickens'){o+=ground(x,y,w,h,'#C9BE8E')+`<ellipse cx="${x+w*.6}" cy="${y+h*.65}" rx="${w*.38}" ry="${h*.25}" fill="${C.dirt}" opacity=".8" filter="url(#mSoft)"/>`;
+      else if(id==='chickens'){o+=ground(x,y,w,h,'#C2C48E')+`<ellipse cx="${x+w*.6}" cy="${y+h*.65}" rx="${w*.38}" ry="${h*.25}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.55:.8}" filter="url(#mSoft)"/>`;
         o+=shadow(x+22,y+38,20,5)+`<rect x="${x+6}" y="${y+16}" width="30" height="22" fill="#B8432F"/><rect x="${x+6}" y="${y+16}" width="30" height="22" fill="none" stroke="#7E2A1E" stroke-width=".8"/>${roofTri(x+6,y+17,30,12,'#EDE6D6')}<rect x="${x+12}" y="${y+24}" width="7" height="14" fill="#5A2A1E"/><rect x="${x+24}" y="${y+22}" width="8" height="6" fill="#F4E7B8" stroke="#7E2A1E" stroke-width=".6"/><path d="M${x+19} ${y+38} L${x+30} ${y+48}" stroke="#9C7550" stroke-width="3"/><path d="M${x+20} ${y+40} l2 -1 M${x+23} ${y+43} l2 -1 M${x+26} ${y+46} l2 -1" stroke="#6B4A30" stroke-width=".7"/>`;
         o+=`<rect x="${x+42}" y="${y+12}" width="${w-48}" height="${h-20}" fill="none" stroke="#B9B6AA" stroke-width=".8" stroke-dasharray="1.6 1.6"/><rect x="${x+w-18}" y="${y+h-26}" width="9" height="11" rx="1" fill="#9AA3A6"/><ellipse cx="${x+w-13.5}" cy="${y+h-15}" rx="6" ry="1.6" fill="#7D868A"/>`;
         for(let i=0;i<3+n*3;i++)o+=A(x+10+r()*(w-22),y+52+r()*(h-60),1.5,hen(0,0,['#F7F3E8','#B9733A','#F7F3E8','#3A2F28','#C98A4A'][i%5]));
         if(n>=3)o+=shadow(x+w-22,y+40,10,3)+`<rect x="${x+w-32}" y="${y+26}" width="20" height="14" fill="#C9A06B"/>${roofTri(x+w-32,y+27,20,8,'#8E3A2C')}`}
-      else if(id==='goats'){o+=ground(x,y,w,h,'#B6B07E')+`<ellipse cx="${x+w/2}" cy="${y+h*.62}" rx="${w*.4}" ry="${h*.28}" fill="${C.dirt}" opacity=".75" filter="url(#mSoft)"/>`;
+      else if(id==='goats'){o+=ground(x,y,w,h,'#B3B67E')+`<ellipse cx="${x+w/2}" cy="${y+h*.62}" rx="${w*.4}" ry="${h*.28}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.5:.75}" filter="url(#mSoft)"/>`;
         o+=shadow(x+24,y+36,22,5)+`<path d="M${x+6} ${y+36} V${y+18} L${x+44} ${y+12} V${y+36}Z" fill="#8A6542"/><path d="M${x+3} ${y+19} L${x+47} ${y+11}" stroke="#5E6B74" stroke-width="3.4"/><rect x="${x+10}" y="${y+22}" width="30" height="14" fill="#3E2C1E"/><path d="M${x+14} ${y+36} V${y+22} M${x+20} ${y+36} V${y+22} M${x+26} ${y+36} V${y+22} M${x+32} ${y+36} V${y+22}" stroke="#5A4030" stroke-width=".6" opacity=".6"/>`;
         const sx=x+w-24,sy=y+h-34;o+=shadow(sx,sy+14,14,4)+`<ellipse cx="${sx}" cy="${sy+12}" rx="13" ry="4" fill="#7A5434"/><rect x="${sx-13}" y="${sy}" width="26" height="12" fill="#8E6640"/><ellipse cx="${sx}" cy="${sy}" rx="13" ry="4" fill="#B08654"/><ellipse cx="${sx}" cy="${sy}" rx="4" ry="1.4" fill="#6B4A30"/>${A(sx,sy-.5,1.6,goat(0,0,'#EDE6D6',1))}`;
         o+=`<path d="M${x+12} ${y+h-12} q6 -10 14 -2 q5 -8 11 0 q4 4 0 8 h-24 q-4 -2 -1 -6Z" fill="#9A958A"/><path d="M${x+18} ${y+h-16} q4 -4 8 0" stroke="#C9C4B8" stroke-width="1" fill="none"/>${A(x+26,y+h-17,1.5,goat(0,0,'#5A4636',0))}`;
