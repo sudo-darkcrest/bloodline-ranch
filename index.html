@@ -1076,6 +1076,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Fixed: in the front view, the back legs now join the body (they used to float under the belly on some horses).',
   'Fixed: the chicken and goat pens on the ranch map now change with the seasons like the other pens (greener in spring, golden in fall, snow-covered in winter).',
   'Redrawn horses: the body outline has many more points, so the back, croup, hamstring, belly, chest and legs curve the way real horses do, and the joints (knees, hocks, fetlocks) line up properly. New soft muscle shading shows the shoulder, forearm, neck, barrel, hip and gaskin, with a light rim along the topline.',
   'Turn your horse around: the horse papers now have Side, Front and Back buttons on the picture. The front and back views show the same coat, markings, spots, socks, mane, tail and feathers as the side view.',
@@ -2635,7 +2636,7 @@ function viewSVG(inner,L,tx=120,G=262,nb=0){return `<svg viewBox="0 -4 240 272" 
 function horseFrontSVG(h){const L=horseLook(h);const id='hf'+(++svgN);L.id=id;const rnd=srng(h.id*11+7);const {body,mane,points,WH,bt,foal}=L;const dr=Math.min(1,bt.draft),hot=Math.min(1,bt.hot);
   const X=120,G=262,Wd=(1+.22*dr-.1*hot)*(foal?.82:1),lift=foal?16:L.st==='Yearling'?7:0,lw=(1+.25*dr-.08*hot)*(foal?.85:1);const Y=y=>y-lift;
   const f=v=>v.toFixed(1),dk=L.dark,lt=L.light,far=hexMix(body,'#000000',.45);
-  const legTop=Y(140),hindTop=Y(178);const xs=s=>X+s*16*Wd,xh=s=>X+s*12.5*Wd;
+  const legTop=Y(140),hindTop=Y(170);const xs=s=>X+s*16*Wd,xh=s=>X+s*12.5*Wd;
   const fl=[-1,1].map(s=>legPath(xs(s),s,legTop,G,lw)),hl=[-1,1].map(s=>legPath(xh(s),s,hindTop,G-6,lw*.9,{hind:1}));
   const chest=`M${X-26*Wd} ${Y(96)} C${X-33*Wd} ${Y(100)} ${X-37*Wd} ${Y(110)} ${X-37*Wd} ${Y(122)} C${X-37*Wd} ${Y(134)} ${X-34*Wd} ${Y(144)} ${xs(-1)-9*lw} ${Y(150)} L${xs(-1)+7*lw} ${Y(156)} C${X-10} ${Y(160)} ${X-5} ${Y(166)} ${X} ${Y(166)} C${X+5} ${Y(166)} ${X+10} ${Y(160)} ${xs(1)-7*lw} ${Y(156)} L${xs(1)+9*lw} ${Y(150)} C${X+34*Wd} ${Y(144)} ${X+37*Wd} ${Y(134)} ${X+37*Wd} ${Y(122)} C${X+37*Wd} ${Y(110)} ${X+33*Wd} ${Y(100)} ${X+26*Wd} ${Y(96)}Z`;
   const neck=`M${X-27*Wd} ${Y(102)} C${X-25*Wd} ${Y(86)} ${X-21} ${Y(72)} ${X-17} ${Y(58)} L${X+17} ${Y(58)} C${X+21} ${Y(72)} ${X+25*Wd} ${Y(86)} ${X+27*Wd} ${Y(102)}Z`;
@@ -2645,6 +2646,8 @@ function horseFrontSVG(h){const L=horseLook(h);const id='hf'+(++svgN);L.id=id;co
   let o=`<defs>${viewDefs(id,L)}${fl.map((p,i)=>`<clipPath id="${id}l${i}"><path d="${p}"/></clipPath>`).join('')}${hl.map((p,i)=>`<clipPath id="${id}h${i}"><path d="${p}"/></clipPath>`).join('')}<clipPath id="${id}c"><path d="${chest}"/><path d="${neck}"/>${fl.map(p=>`<path d="${p}"/>`).join('')}</clipPath></defs>`;
   // hind legs far behind, then the barrel
   o+=hl.map((p,i)=>{const s=i?1:-1;const sy=hsockY(s);return `<path d="${p}" fill="${far}"/>${points?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${hindTop+(G-6-hindTop)*.45}" width="240" height="120" fill="url(#${id}pg)"/></g>`:''}${sy!=null?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${sy}" width="240" height="60" fill="#d9d3c6"/></g>`:''}<path d="${p}" fill="#000" opacity=".18"/>${hoofSVG(xh(s),G-6,12*lw,'#211a15')}${featherFB(xh(s),G-6,12*lw,hexMix(L.fCol,'#000000',.2),L)}`}).join('');
+  // stifles: the top of each hind leg tucks up into the belly so the legs join the body
+  o+=[-1,1].map(s=>`<ellipse cx="${f(xh(s)+s*2*Wd)}" cy="${f(Y(174))}" rx="${f(12*Wd)}" ry="13" fill="${far}"/><ellipse cx="${f(xh(s)+s*2*Wd)}" cy="${f(Y(174))}" rx="${f(12*Wd)}" ry="13" fill="#000" opacity=".12"/>`).join('');
   o+=barrel;
   // neck, chest and front legs
   o+=`<path d="${neck}" fill="${body}"/><path d="${chest}" fill="${body}"/>${fl.map(p=>`<path d="${p}" fill="${body}"/>`).join('')}<g clip-path="url(#${id}c)">`;
