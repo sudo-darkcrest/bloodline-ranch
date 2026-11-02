@@ -138,6 +138,7 @@ main{padding-block:20px}
 @media (prefers-reduced-motion:reduce){.wstage .wclouds,.wstage .wbirds{animation:none}}
 @keyframes bnCloud{0%{transform:translateX(0)}100%{transform:translateX(50px)}}@keyframes bnBird{0%{transform:translate(0,0)}100%{transform:translate(160px,-6px)}}.tabban .bnclouds{animation:bnCloud 45s linear infinite alternate}.tabban .bnbirds{animation:bnBird 30s ease-in-out infinite alternate}@media (prefers-reduced-motion:reduce){.tabban .bnclouds,.tabban .bnbirds{animation:none}}
 .guide .clog ul{list-style:disc;line-height:1.45}.guide .clog ul li{margin:0 0 2px}.guidepanel{text-align:left}
+.papersbottom{margin-top:14px;display:grid;gap:4px}.papersbottom .pedwrap{max-width:640px}.vetbox{margin-top:6px}
 .festart{margin:-16px -18px 0;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:1000/80}.festart svg{width:100%;height:100%;display:block}
 .rivalpanel{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}.rivalhead{display:flex;gap:12px;align-items:center;flex:1;min-width:260px}.rivalhead>.grow{min-width:0;flex:1 1 200px}.rivalface{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:var(--pasture)}.rivalface svg{width:64px;height:64px;display:block}.rivalbarn{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.rivalhorse{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px}.rivalrec{display:flex;align-items:baseline;gap:4px;flex-direction:row;flex-wrap:wrap;justify-content:center;min-width:90px}.rivalrec .rw,.rivalrec .rl{font-family:var(--f-display,serif);font-size:30px;font-weight:700}.rivalrec .rw{color:var(--good,#2e7d32)}.rivalrec .rl{color:var(--bad,#b3261e)}.rivalrec .note{flex-basis:100%;text-align:center}.rivallast{flex-basis:100%}.rivalchip{background:#7A1E1E;color:#fff;border-color:#7A1E1E;font-size:10px;padding:1px 6px}tr.rivalrow td{background:color-mix(in srgb,#B03A2E 10%,transparent)}
 .note.brk{font-size:11.5px;line-height:1.35}.note.brk span{display:block;white-space:nowrap}
@@ -1245,6 +1246,8 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Horse papers reordered: Vet care now sits right under the stats (with its own checkup button), and the pedigree and life story have moved to the bottom.',
+  'Fixed: the truck and trailer on the ranch map no longer sit on top of the road fence.',
   'Training centers hold your horse: if your barn is full on the day a horse is due home, the center keeps it instead of overcrowding you. The first night costs the normal daily rate and each night after costs 35% more, until you free a stall. You get a warning the day before, “Bring home” is blocked while the barn is full, and if you can’t pay the fee they send the horse home anyway.',
   'Sending your own horses away is much stronger. Dusty Creek ($90/day): three stats a day at 80% strength. Silver Spur ($280/day): four stats at 105%, more skills, and the horse comes home vet-checked. Royal Oak Elite ($950/day): all five stats at 145%, a 20% daily chance of a new skill, a 10% daily chance to raise a stat’s potential by 1, no bond loss, and a vet check on the way home.',
   'A full Game Guide: on the title screen between Load Game and Settings, and on the Office tab. Thirteen sections cover daily care, stats and traits, training, breeding and genetics, the show calendar and the Olympics, festivals, trouble, the rival, money, facilities, staff, tack, saving and tips.',
@@ -3505,7 +3508,7 @@ function ranchMap(){
   g+=[[342,546,92,13],[503,540,40,9],[638,540,40,9],[786,540,44,9],[1098,540,50,10],[132,546,46,9]].map(([x,y,rx,ry])=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${C.dirt}" opacity=".7" filter="url(#mSoft)"/>`).join('');
   g+=[...Array(48)].map((_,i)=>`<circle cx="${50+i*24+(i%3)*5}" cy="${552+(i%4)*2.5}" r=".9" fill="${C.dirtD}" opacity=".7"/>`).join('');
   // gravel pull-off for the truck and trailer, beside the front lane near the gate
-  g+=`<rect x="190" y="562" width="178" height="32" rx="6" fill="${C.dirtD}" opacity=".5"/><rect x="192" y="563" width="174" height="30" rx="5" fill="url(#mGravel)"/>`+[...Array(4)].map((_,i)=>`<path d="M${210+i*44} 567 v-3" stroke="#C9C2B0" stroke-width="1.2"/>`).join('');
+  g+=`<rect x="190" y="556" width="178" height="27" rx="6" fill="${C.dirtD}" opacity=".5"/><rect x="192" y="557" width="174" height="25" rx="5" fill="url(#mGravel)"/>`+[...Array(4)].map((_,i)=>`<path d="M${210+i*44} 561 v-3" stroke="#C9C2B0" stroke-width="1.2"/>`).join('');
   // road, gate, mailbox
   g+=`<rect x="0" y="596" width="1200" height="30" fill="${C.road}"/><path d="M0 611 H1200" stroke="#E9DFA8" stroke-width="2" stroke-dasharray="16 12"/><path d="M0 597 H1200 M0 625 H1200" stroke="#7B6F5E" stroke-width="1.2"/><text x="1190" y="636" text-anchor="end" font-size="10" fill="#5E5547" font-family="ui-monospace,monospace" letter-spacing="1">COUNTY RD 9</text>`;
   g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><rect x="112" y="552" width="40" height="11" rx="2" fill="${C.wood}"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${C.white}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
@@ -3680,7 +3683,7 @@ function ranchMap(){
        <path d="M${tx+TL-16} ${B-42} V${B-10} M${tx+TL-2} ${B-42} V${B-10}" stroke="#8A949C" stroke-width="1"/><rect x="${tx+TL-1}" y="${B-14}" width="4" height="3" fill="#C0392B"/>
        <path d="M${tx+TL*.5-24} ${B-8} q12 -10 24 0 M${tx+TL*.5+4} ${B-8} q12 -10 24 0" fill="#9AA4AD"/>${wheel(tx+TL*.5-12,5.6)}${wheel(tx+TL*.5+16,5.6)}
        <path d="M${tx+TL-30} ${B-36} q6 -6 12 0" stroke="#7A3D1C" stroke-width="3" fill="none" stroke-linecap="round"/></g>`}
-    o=`<g transform="translate(${200-56*.62} ${589-346*.62}) scale(.62)">${o}</g>`;g+=hot('trailer',o);label(408,579,'Trailer',n>0,n,mx('trailer'))}
+    o=`<g transform="translate(${200-56*.62} ${577-346*.62}) scale(.62)">${o}</g>`;g+=hot('trailer',o);label(408,566,'Trailer',n>0,n,mx('trailer'))}
   return `<svg viewBox="0 0 1200 640" role="img" aria-label="Illustrated map of your ranch. Click a spot to jump to its card.">${g}${labels}</svg>`;
 }
 function renderFacilities(){
@@ -3961,22 +3964,18 @@ function papers(h,mode){
     ${own?`<div class="vitals" style="margin-top:12px">${vit('Energy',h.energy,vitColor(h.energy))}${vit('Happy',h.happy,vitColor(h.happy))}${vit('Health',h.health,vitColor(h.health))}</div><div class="vitals" style="margin-top:8px">${vit('Bond',h.bond,'var(--brass)')}${vit('Stall',stallOf(h),vitColor(stallOf(h)))}</div>
      <div class="moodbox"><div class="subh" style="margin:10px 0 4px">Mood &amp; workload</div>${!h.past&&S.horses.includes(h)?(()=>{const F=happyForecast(h);const d=Math.round(F.d*10)/10;return `<div class="note" style="margin-bottom:4px"><b>Tonight:</b> happiness <b class="${d>=0?'good':'bad'}">${d>=0?'+':''}${d}</b> <span class="note">(${F.o.filter(x=>x[0]).map(x=>esc(x[1])+' '+(x[0]>0?'+':'')+x[0]).join(' · ')})</span><br>${h.happy>=80?'<span class="good">Happy 80+: trains 8% faster and +4% at events.</span> ':h.happy<40?'<span class="bad">Unhappy: trains slower and scores lower at events.</span> ':''}Energy ${Math.round(h.energy)}: ${h.energy>=90?'fresh and at its best':h.energy<soreLine(h)?'<span class="bad">worn out</span>':'a little tired'}. Fresher horses train and compete better.</div>`})():''}${moodNotes(h).map(([c,t])=>`<div class="note ${c}">• ${esc(t)}</div>`).join('')}${recentJobs(h).length?`<div class="note mono" style="margin-top:3px">Last 6 days: ${[...new Set(recentJobs(h).map(j=>j.k))].map(k=>jobName(k)+' ×'+Math.round(recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)*10)/10).join(' · ')}</div>`:''}</div>
      <p class="note" style="margin-top:6px">Last cared for: ${careAge(h)===0?'today':careAge(h)===1?'yesterday':careAge(h)+' days ago'}. Bond grows at ${Math.round(bondMult(h)*100)}% speed at this happiness. Bond speeds training by ${Math.round(h.bond/4)}%${skillChance(h)?' and gives a '+(skillChance(h)*100).toFixed(1)+'% nightly chance to learn a skill':h.skills.length>=MAXSKILLS?'. Skills are full ('+MAXSKILLS+')':'. Reach 70 bond for a chance to learn skills'}.</p>`:''}
-    <div class="pedwrap">
-    <div class="subh">Pedigree</div>
-    <div class="pedigree">${pedCell(h.sire,'m')}${pedCell(h.dam,'f')}
-     ${pedCell(sireR?sireR.sire:null,'m')}${pedCell(damR?damR.sire:null,'m')}
-     ${pedCell(sireR?sireR.dam:null,'f')}${pedCell(damR?damR.dam:null,'f')}</div>
-    <p class="note" style="margin-top:4px">Top row: sire and dam. Below: grandsires and granddams.</p>
-    </div>
    </div>
    <div style="min-width:0">
     ${own&&h.inj?injuryPanel(h):''}
     <div class="subh" style="margin-top:0">Stats <span style="text-transform:none;letter-spacing:0;font-weight:500">(trained / potential)</span></div>${statRows}${h.client?`<div class="clientgoals"><div class="subh" style="margin-top:0">${esc(h.client.owner)} wants · ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'} left</div>${h.client.goals.map(g=>`<div class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} <span class="mono">(${goalProg(g,h)})</span></div>`).join('')}${(()=>{const X=clientExtras(h);return `<div class="note" style="margin-top:4px">Extra pay so far: ${X.sk.length?`<b>${money(X.skB)}</b> for ${X.sk.length} new skill${X.sk.length>1?'s':''}, `:''}<b>${money(X.ptB)}</b> for ${X.pts} stat point${X.pts===1?'':'s'} beyond what was asked. New skills pay a big bonus. The owner takes ${Math.round(CLIENT_CUT*100)}% of any prize money ${esc(h.name)} wins and pays half of each entry fee.</div>`})()}${h.client.goals.some(g=>g.t==='stat')?'<div class="note" style="margin-top:4px">The gold line on a stat bar marks where the owner wants it.</div>':''}</div>`:''}
     <p class="note smtnote">Smarts ${h.tr.smt.toFixed(1)}: learns <b class="${smtTrain(h)>=1?'good':'bad'}">${smtTrain(h)>=1?'+':'−'}${Math.abs(Math.round((smtTrain(h)-1)*100))}%</b> ${smtTrain(h)>=1?'faster':'slower'} · injury risk <b class="${smtInj(h)<=1?'good':'bad'}">${smtInj(h)<=1?'−':'+'}${Math.abs(Math.round((smtInj(h)-1)*100))}%</b>. Smart horses learn quicker and keep themselves out of trouble.</p>
+    ${own?`<div class="vetbox">     <div class="subh">Vet care</div><div class="actions" style="margin:0 0 6px">${h.inj?'':vetDoneSeason(h)?`<button class="btn small" disabled>Checked this season</button>`:`<button class="btn small" data-a="vet" data-id="${h.id}">${h.preg?'Prenatal checkup':'Vet checkup'} · ${money(vetCost(h))}</button>`}</div>${h.vetReport?`<div class="note"><b>Last checkup, day ${h.vetReport.day}:</b><br>${h.vetReport.lines.map(esc).join('<br>')}</div>`:''}
+     <div class="note" style="margin:4px 0">${vetClear(h)?'<span class="good">Clean bill of health</span> (good for National and Invitational events and full sale price) until day '+(h.lastVet+8)+'.':'No recent checkup. National and Invitational events need one from the last 8 days.'}${vaccinated(h)?' · <span class="good">Vaccinated</span> until day '+h.vacc+'.':''} One checkup per season${vetDoneSeason(h)?' (done)':''}.</div>
+     ${vetInfoPanel(h)}
+</div>`:''}
     <div class="subh">Natural skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(born with, passed to foals)</span></div>${h.traits.length?`<div class="traitlist">${h.traits.map(t=>`<div><b class="${TRAITS[t].rare?'warn':TRAITS[t].good?'good':'bad'}">${TRAITS[t].n}</b>${TRAITS[t].d}</div>`).join('')}</div>`:'<p class="note">No natural skills.</p>'}
     <div class="subh">Learned skills <span style="text-transform:none;letter-spacing:0;font-weight:500">(earned through bond, ${(h.skills||[]).length}/${MAXSKILLS}, not inherited)</span></div>${(h.skills||[]).length?`<div class="traitlist">${h.skills.map(k=>`<div><b style="color:var(--accent)">${SKILLS[k].n}</b>${SKILLS[k].d}</div>`).join('')}</div>`:'<p class="note">None yet. Horses with 70+ bond can pick up a skill overnight.</p>'}
     ${ribbonSection(h)}
-    ${storySection(h)}
     ${mode==='market'?`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="buy" data-i="${S.market.indexOf(h)}">Buy for ${money(h.price)}</button><button class="btn" data-a="offer" data-k="market" data-i="${S.market.indexOf(h)}">Make an offer</button></div>`:''}
    </div></div>
    ${own?`<div class="papers2">
@@ -3985,12 +3984,9 @@ function papers(h,mode){
     <div class="pcol"><div class="subh">Care</div><div class="note" style="margin:-2px 0 6px">${groomStatus(h)}.</div><div class="actions">
      ${groomBtn(h,false)}
      <button class="btn" data-a="rest" data-id="${h.id}" ${canTurnout(h)?'':'disabled'}>Turn out to pasture</button>
-     ${h.client?'':`<button class="btn" data-a="fav" data-id="${h.id}">${h.fav?'★ Favorite':'☆ Mark favorite'}</button>`}${h.inj?'':vetDoneSeason(h)?`<button class="btn" disabled>Checked this season</button>`:`<button class="btn" data-a="vet" data-id="${h.id}">${h.preg?'Prenatal checkup':'Vet checkup'} · ${money(vetCost(h))}</button>`}
+     ${h.client?'':`<button class="btn" data-a="fav" data-id="${h.id}">${h.fav?'★ Favorite':'☆ Mark favorite'}</button>`}
      ${h.sex==='F'&&isAdult(h)&&!h.preg?`<button class="btn" data-a="gobreed" data-id="${h.id}">Breed her</button>`:''}
      ${canCompete(h)?`<button class="btn" data-a="gocomp" data-id="${h.id}">Enter an event</button>`:''}</div>
-     <div class="subh">Vet</div>${h.vetReport?`<div class="note"><b>Last checkup, day ${h.vetReport.day}:</b><br>${h.vetReport.lines.map(esc).join('<br>')}</div>`:''}
-     <div class="note" style="margin:4px 0">${vetClear(h)?'<span class="good">Clean bill of health</span> (good for National and Invitational events and full sale price) until day '+(h.lastVet+8)+'.':'No recent checkup. National and Invitational events need one from the last 8 days.'}${vaccinated(h)?' · <span class="good">Vaccinated</span> until day '+h.vacc+'.':''} One checkup per season${vetDoneSeason(h)?' (done)':''}.</div>
-     ${vetInfoPanel(h)}
      ${stage(h)!=='Foal'&&pregOk(h)?`<div class="subh">Other ways to spend the day</div><div class="traitlist">${JOBS.filter(j=>j.id!=='turnout'&&(!j.adult||isAdult(h))).map(j=>`<div style="display:flex;gap:10px;align-items:center"><button class="btn small" data-a="job" data-id="${h.id}" data-j="${j.id}" ${canWork(h)&&h.energy>=j.e?'':'disabled'}>${j.n}</button><span class="note">${j.d}${j.e?' Uses '+j.e+' energy.':''}</span></div>`).join('')}</div>`:''}
     </div>
      ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}. Goals are listed under the stats.</div></div>`:''}
@@ -4000,6 +3996,16 @@ function papers(h,mode){
 </div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
 </div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Stops competing for good (you can change your mind later). Still breeds, teaches lessons and works the ranch, gets +10 happiness now and +1 every night.</span>`}</div>`:''}
 </div><div>${h.client?'':`<div class="subh">Sell</div><div class="actions">${sellBtn}</div>`}</div></div></div>`:''}
+   <div class="papersbottom">
+    <div class="pedwrap">
+    <div class="subh">Pedigree</div>
+    <div class="pedigree">${pedCell(h.sire,'m')}${pedCell(h.dam,'f')}
+     ${pedCell(sireR?sireR.sire:null,'m')}${pedCell(damR?damR.sire:null,'m')}
+     ${pedCell(sireR?sireR.dam:null,'f')}${pedCell(damR?damR.dam:null,'f')}</div>
+    <p class="note" style="margin-top:4px">Top row: sire and dam. Below: grandsires and granddams.</p>
+    </div>
+    ${storySection(h)}
+   </div>
 `;
 }
 
