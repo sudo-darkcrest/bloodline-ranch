@@ -23,6 +23,10 @@
   --brass:#D6AC56; --pasture:#1E2920; --pasture2:#263428; --ground:rgba(0,0,0,.35);
   --good:#6CC488; --warn:#E3B05A; --bad:#EF7E69; --track:#252E27; --potential:#34425C;
   --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark}}
+:root{--ranch-soft:var(--ranch-soft-l,#F6EBC4)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ranch-soft:var(--ranch-soft-d,#3A3420)}}
+:root[data-theme="dark"]{--ranch-soft:var(--ranch-soft-d,#3A3420)}
+:root[data-theme="light"]{--ranch-soft:var(--ranch-soft-l,#F6EBC4)}
 :root[data-theme="dark"]{
   --paper:#111612; --card:#19201B; --ink:#E4E9DE; --muted:#95A296; --line:#2C362E;
   --accent:#88A5E6; --accent-ink:#0E1420; --accent-soft:#232E44;
@@ -1294,6 +1298,7 @@ const BUILD='73';
 const CHANGELOG=[
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
   'The two little flags on either side of your ranch name (top left) are in your ranch color. Click either one to change it.',
+  'Fixed: in dark mode your highlighted row in results tables and on the live leaderboard used a pale tint that made the light text hard to read. It now uses a dark tint of your ranch color.',
   'Ranch brand: pick a second color and a ranch symbol (20 symbols plus your ranch’s initial). Click either box beside your ranch name: the left box shows your symbol on your main color, the right box on your second color. Your riders now wear a second-color sash and cap, and your symbol shows on the ranch-map gate flags, truck and trailer, the Office banner, your trailer at the rodeo and reining arenas and the winner’s board.',
   'Longer, fuller tails on every event horse (they hang to the hocks at the trot and stream out behind at the gallop), a detailed driving gig (12-spoke wheels, mudguard, leaf spring, lamp, padded seat and a knee rug for the driver), new gooseneck horse trailers with barred windows, tack-room door, tandem wheels, lights and horses looking out, pickup trucks, and a proper tractor at the draft pull.',
   'Other riders at live events now wear 24 different colors, each rider a different one, so a field looks varied (none of them close to your ranch color).',
@@ -2874,7 +2879,7 @@ function colLum(c){const [r,g,b]=colRGB(c);return (r*.299+g*.587+b*.114)/255}
 function inkOn(c){return colLum(c)>.6?'#1d1b1a':'#ffffff'}
 function ranchDark(){const c=ranchCol();return colLum(c)<.18?hexMix(c,'#ffffff',.12):hexMix(c,'#000000',.22)}
 function setRanchCol(c){if(!/^#[0-9a-f]{6}$/i.test(c||''))return;c=c.toLowerCase();if(S){if(S.phase!=='tutorial'||S.ranchName)S.ranchColor=c;if(S.player)S.player.ranchColor=c}UI.rcolor=c;applyRanchCol();EAC_CLEAR()}
-function applyRanchCol(){try{const c=ranchCol(),r=document.documentElement.style;r.setProperty('--ranch',c);r.setProperty('--ranch-soft',hexMix(c,'#ffffff',.78));r.setProperty('--ranch-ink',inkOn(c))}catch(e){}}
+function applyRanchCol(){try{const c=ranchCol(),r=document.documentElement.style;r.setProperty('--ranch',c);r.setProperty('--ranch-soft-l',hexMix(c,'#ffffff',.78));r.setProperty('--ranch-soft-d',hexMix(c,'#19201b',.72));r.removeProperty('--ranch-soft');r.setProperty('--ranch-ink',inkOn(c))}catch(e){}}
 /* ---------- ranch brand: second colour + symbol ---------- */
 const RANCH_COLORS2=[...RANCH_COLORS,['#F4F1EA','White'],['#9AA5B1','Silver']];
 function ranchCol2(){const c=(S&&S.ranchColor2)||(S&&S.player&&S.player.ranchColor2)||(typeof UI!=='undefined'&&UI.rcolor2)||'#1f3a68';return /^#[0-9a-f]{6}$/i.test(c)?c:'#1f3a68'}
