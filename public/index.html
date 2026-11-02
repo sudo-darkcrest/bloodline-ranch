@@ -761,7 +761,9 @@ function stockHay(){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+f.hay[L(
 function stockIncome(sIdx){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+((f.seasonal&&sIdx>1)?0:f.inc[L(f.id)]*(specOf('stock')===f.id?1.25:1)),0)}
 function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85}
 function houseMult(){return [1,1.05,1.1,1.2][L('house')]}
-function vetCost(h){return Math.round(80*(1-(psk('care')-1)*.04)*(S.staff.vet?1-(.3+.05*sk('vet')):1)*[1,.75,.5,.3][L('clinic')])}
+const OWNER_VET=.7;function vetShare(h,c){return h&&h.client?Math.round(c*(1-OWNER_VET)):c}
+function vetCost(h){return vetShare(h,vetFull(h))}
+function vetFull(h){return Math.round(80*(1-(psk('care')-1)*.04)*(S.staff.vet?1-(.3+.05*sk('vet')):1)*[1,.75,.5,.3][L('clinic')])}
 const FEE_RATE=[.06,.08,.10,.12,.15,.18,.2,.18,0,.19];
 const r10=x=>Math.max(10,Math.round(x/10)*10);
 function prizesFor(ev,t){const k=TIERS.indexOf(t)>=T_NAT&&!t.ranch?BAL.topPrize:1;return t.prize.map(p=>r10(p*k*(ev?ev.purse||1:1)))}
@@ -922,7 +924,7 @@ const GUIDE=[
   'One named rancher with four real horses competes against you, mostly at State level and above. Beating them pays a bonus and reputation; losing costs nothing but pride. Streaks earn achievements.',
   'See their barn on the Compete tab. Their horses train, age, retire and get replaced; retired or cash-sale horses show up at the sale barn with a “From your rival” tag. Each season they throw down a one-on-one <b>challenge</b> with a side bet.']],
  ['Money, boarding and the bank',[
-  '<b>Boarding:</b> owners ask you to keep a horse for a set number of days at a daily rate, with goals (care, raise a stat, place at an event, build bond). Meet the goals for a bonus and reputation. You can board one client horse for every two stalls.',
+  '<b>Boarding:</b> owners ask you to keep a horse for a set number of days at a daily rate, with goals (care, raise a stat, place at an event, build bond). Meet the goals for a bonus and reputation. The owner pays 70% of every vet bill for their horse and you pay 30%. You can board one client horse for every two stalls.',
   '<b>Stud fees:</b> other ranches ask to breed to your stallions. <b>Livestock</b> (chickens, goats, sheep, cattle, bees) earn money every night but eat hay and need tending.',
   '<b>Sponsors</b> pay weekly once your reputation is high enough, as long as you keep showing. <b>Odd jobs</b> on the Office tab earn a little cash each day.',
   'The <b>Bank</b> lends against your credit; missed payments hurt and a foreclosure costs you buildings. <b>Property tax</b> is charged each season once your buildings are worth more than $25,000, and every building has daily upkeep.',
@@ -932,7 +934,7 @@ const GUIDE=[
   '<b>Prestige buildings</b> are the late-game money sinks: the Covered Arena (State shows all year), Breeding Lab (better foals), Guest Lodge (tourist income from your champions) and Ranch Museum (income from your career wins, better sale prices and the Legendary Ranch title).',
   '<b>Staff:</b> a Stable Hand grooms every horse each morning and mucks out, a Trainer works idle horses every evening, a Ranch Vet heals injuries faster and cuts vet bills, a Ranch Manager buys hay cheaper and restocks it and boosts income, a Farrier keeps hooves shod so horses get hurt less, and a Livestock Hand tends your stock animals. Staff housing lowers wages and attracts better applicants.']],
  ['Tack and gear',[
-  'Gear comes in Common, Rare, Epic and Legendary. Saddles, bridles, boots and blankets go on a horse; bedding and toys improve the stall; flair is for the show ring. Buy from the Tack Shop, win it as prizes, or open crates. Boarded horses can use your tack if you tick the box in their papers.']],
+  'Gear comes in Common, Uncommon, Rare, Epic and Legendary. Saddles, bridles, boots and blankets go on a horse; bedding and toys improve the stall; flair is for the show ring. Buy from the Tack Shop, win it as prizes, or open crates. Boarded horses can use your tack if you tick the box in their papers.']],
  ['Saving and devices',[
   'The game autosaves every day in this browser. Use the save slots and <b>Download a save file</b> on the Office tab for backups, and <b>Load Game</b> on the title screen to load a file or a transfer code on another device.',
   'Starting a new ranch replaces only the autosave; keep your current ranch in a slot or a file first.']],
@@ -1286,6 +1288,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Boarded horses: the owner now pays 70% of every vet bill (checkups, seasonal auto checkups and injury treatments). You pay 30%. Prices on a boarded horse’s papers show your share.',
   'Tack Shop: a new Uncommon tier between Common and Rare. Seven new Uncommon pieces (Pelleted Bedding, Fleece Stable Sheet, Peppermint Lick, Lightweight Youth Saddle, Padded Training Halter, Open-Front Jump Boots, Braided Tail Bag), and the stronger common pieces (Trail Saddle, Snaffle Bridle, Bell Boots, Fly Sheet, Sawdust Bedding, Jolly Ball, Ear Bonnet) moved up to Uncommon with slightly better effects. The shop stocks four Uncommon pieces each week, and crate odds are now 46% Common, 26% Uncommon, 20% Rare, 6.5% Epic, 1.5% Legendary.',
   'After opening several crates, the results window has Open 5 more and Open 10 more buttons (and a single crate offers Open 5).',
   'The life story button on horse cards is now just “Story”.',
@@ -2021,7 +2024,7 @@ function recover(h,ev){const c=COND[h.inj.id];let msg=h.name+' has recovered fro
   if(h.inj.retire&&R()<h.inj.retire){h.retired={day:S.day,why:c.n};msg+=' Sadly, the vet says '+(h.sex==='M'?'he':'she')+' can never compete again. '+h.name+' is retired from events but can still breed, teach lessons and enjoy life on the ranch.'}
   h.inj=null;h.injury=0;ev.push([h.retired&&h.retired.day===S.day?'bad':'good',msg])}
 function treatments(h){if(!h.inj)return [];const c=COND[h.inj.id],si=SEV.indexOf(c.sev),vm=vetMult(),v=S.staff.vet,out=[];
-  const add=(id,n,cost,d,ok=true,why='')=>out.push({id,n,cost:Math.round(cost),d,ok,why,used:h.inj.treated.includes(id)});
+  const add=(id,n,cost,d,ok=true,why='')=>out.push({id,n,cost:vetShare(h,Math.round(cost)),full:Math.round(cost),d,ok,why,used:h.inj.treated.includes(id)});
   if(c.emergency)add('emergency','Emergency vet call',400*vm,'Required today or '+h.name+' takes a big health hit tonight. Speeds recovery 30%.');
   add('vet',v?'Treatment by '+v.name+' (Ranch Vet)':'Vet exam & treatment',[90,220,450,800][si]*vm,c.sev==='minor'?'Heals a minor problem right away.':'Speeds recovery '+[0,45,25,15][si]+'%'+(v?' (+10% with your own vet)':'')+(si>=2?' and lowers the risk of lasting damage.':'.'));
   if(['hoof','leg','tendon','muscle','bone'].includes(c.kind))add('meds','Anti-inflammatories & wraps',[30,60,90,140][si],'Takes '+[1,1,1,2][si]+' day'+(si===3?'s':'')+' off recovery and eases pain (+5 happiness).');
@@ -2035,7 +2038,7 @@ function treatments(h){if(!h.inj)return [];const c=COND[h.inj.id],si=SEV.indexOf
   if(si>=2&&c.kind==='tendon')add('regen','Stem-cell therapy',L('clinic')>=3?1500:2800,'Halves the risk of lasting damage and of retirement.');
   return out}
 function treat(h,tid){const t=treatments(h).find(x=>x.id===tid);if(!t)return;if(t.used)return toast('Already done.');if(!t.ok)return toast(t.why+'.');if(S.money<t.cost)return toast('Not enough money ('+money(t.cost)+').');
-  S.money-=t.cost;const i=h.inj,c=COND[i.id],si=SEV.indexOf(c.sev);i.treated.push(tid);const mul=f=>{i.days=Math.max(.5,i.days*f)};let healed=false;
+  S.money-=t.cost;if(h.client&&t.full)log('info',h.client.owner+' paid '+money(t.full-t.cost)+' (70%) of '+h.name+'’s '+t.n.toLowerCase()+'. Your share: '+money(t.cost)+'.');const i=h.inj,c=COND[i.id],si=SEV.indexOf(c.sev);i.treated.push(tid);const mul=f=>{i.days=Math.max(.5,i.days*f)};let healed=false;
   if(tid==='vet'){if(c.emergency)i.handled=true;if(c.sev==='minor')healed=true;else{mul(1-[0,.45,.25,.15][si]-(S.staff.vet?.1:0));i.risk*=.75;i.retire*=.8}}
   if(tid==='emergency'){i.handled=true;mul(.7)}
   if(tid==='meds'){i.days=Math.max(.5,i.days-[1,1,1,2][si]);h.happy=clamp(h.happy+5,0,100);if(c.sev==='minor'&&i.days<=.5)healed=true}
@@ -2058,7 +2061,7 @@ function injuryPanel(h){const i=h.inj,c=COND[i.id];const pct=Math.round((1-i.day
    <div class="note">About <b>${Math.ceil(i.days)} day${Math.ceil(i.days)>1?'s':''}</b> left (recovers ${(()=>{const r=+healRate().toFixed(2);return r===1?'1 day':r+' days'})()} per night with your current staff and clinic). ${prog.length?'Outlook: '+prog.join(', ')+'.':'No lasting effects expected.'}</div>
    <div class="xpbar" style="max-width:none;margin:6px 0 8px"><i style="width:${pct}%;background:var(--good)"></i></div>
    <div class="treatlist">${treatments(h).map(t=>`<div class="treat ${t.used?'used':''}"><div class="grow"><b>${t.used?'✓ ':''}${esc(t.n)}</b><div class="note">${t.ok?t.d:t.why+'.'}</div></div><button class="btn small ${t.used||!t.ok?'':'primary'}" data-a="treat" data-id="${h.id}" data-t="${t.id}" ${t.used||!t.ok||S.money<t.cost?'disabled':''}>${t.used?'Done':t.cost?money(t.cost):'Free'}</button></div>`).join('')}</div>
-   <p class="note" style="margin-top:6px">Rest alone works too, just slower. Each treatment can be used once.</p></div>`}
+   <p class="note" style="margin-top:6px">Rest alone works too, just slower. Each treatment can be used once.${h.client?` <b>${esc(h.client.owner)} pays 70% of every vet bill</b>, so the prices shown are your 30% share.`:''}</p></div>`}
 function train(h,k,quiet){
   if(!canWork(h))return toast(h.name+' can’t train right now.');
   if(h.energy<25)return toast(h.name+' is too tired. Let them rest.');
@@ -2156,7 +2159,7 @@ function vet(h){
   if(h.inj){UI.modal={type:'horse',id:h.id};return toast('Pick a treatment for '+h.name+'’s '+COND[h.inj.id].n.toLowerCase()+'.')}
   if(vetDoneSeason(h))return toast(h.name+' already had a checkup this season.');
   if(S.money<cost)return toast('Not enough money for the vet ('+money(cost)+').');
-  S.money-=cost;const lines=checkup(h);pxp('care',2);tutMark('vet');log('info','Vet checkup for '+h.name+': '+lines.join(' '));
+  S.money-=cost;const lines=checkup(h);pxp('care',2);tutMark('vet');log('info','Vet checkup for '+h.name+(h.client?' ('+h.client.owner+' paid 70%, your share '+money(cost)+')':'')+': '+lines.join(' '));
   UI.modal={type:'horse',id:h.id};toast('Checkup done. See the vet report on '+h.name+'’s papers.')
 }
 function autoVetCost(h){return Math.round(vetCost(h)*1.25)}
@@ -2443,7 +2446,7 @@ function renderBoarding(){
   const req=(S.boardReq||[]).map((r,i)=>{const h=r.h;return `<div class="panel clientreq"><div style="display:flex;gap:10px;align-items:center"><div class="portrait${h.shiny?' shiny':''}" style="width:120px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><b>${esc(h.name)}</b> <span class="note">${sexLabel(h)} · ${ageLabel(h)}</span><div>${rbadge(rarityOf(h))} ${breedLabel(h)}</div><div class="note">Owner: ${esc(r.owner)}, ${esc(r.farm)}</div>${r.fromRival?'<div class="note good">Left your rival’s barn to board with you after seeing your record. Pays 25% more.</div>':''}</div></div>
      <p style="margin:8px 0 4px"><b>${r.days} days</b> at <b>${money(r.pay)}/day</b> (${money(r.pay*r.days)}) · bonus <b>${money(r.bonus)}</b> if every goal is met</p>
      <div class="subh" style="margin:4px 0">What the owner expects</div><ul class="note" style="margin:0 0 8px;padding-left:18px">${r.goals.map(g=>`<li>${goalText(g,h)}</li>`).join('')}</ul>
-     <div class="note" style="margin-top:4px">Extra pay at pickup: a big bonus for every new skill learned, and a little for each stat point beyond what they asked for. The owner keeps ${Math.round(CLIENT_CUT*100)}% of any prize money and pays half of every entry fee.</div><div class="actions"><button class="btn primary" data-a="acceptclient" data-i="${i}" ${S.horses.length>=S.stalls?'disabled':''}>Take them in</button><button class="btn" data-a="declineclient" data-i="${i}">Turn down</button><span class="note">Offer ends in ${r.exp-S.day} day${r.exp-S.day===1?'':'s'}</span></div></div>`}).join('');
+     <div class="note" style="margin-top:4px">Extra pay at pickup: a big bonus for every new skill learned, and a little for each stat point beyond what they asked for. The owner keeps ${Math.round(CLIENT_CUT*100)}% of any prize money and pays half of every entry fee and 70% of every vet bill.</div><div class="actions"><button class="btn primary" data-a="acceptclient" data-i="${i}" ${S.horses.length>=S.stalls?'disabled':''}>Take them in</button><button class="btn" data-a="declineclient" data-i="${i}">Turn down</button><span class="note">Offer ends in ${r.exp-S.day} day${r.exp-S.day===1?'':'s'}</span></div></div>`}).join('');
   const act=S.horses.filter(h=>h.client).map(h=>{const c=h.client;return `<div class="awayrow"><div><b>${esc(h.name)}</b> <span class="note">${esc(c.owner)} · ${money(c.pay)}/day · leaves in ${c.until-S.day} day${c.until-S.day===1?'':'s'}</span>
      <div class="note">${c.goals.map(g=>`<span class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} (${goalProg(g,h)})</span>`).join('<br>')}</div></div><div style="display:flex;flex-direction:column;gap:4px"><button class="btn small" data-a="open" data-id="${h.id}">Papers</button><button class="btn small" data-a="offer" data-k="client" data-id="${h.id}">Offer to buy</button></div></div>`}).join('');
   return `<div class="section-head"><h2>Boarding</h2><span class="sub">Send your horses away for professional training, or take in other owners’ horses for pay.</span></div>
@@ -4015,9 +4018,9 @@ function papers(h,mode){
    </div>
    <div style="min-width:0">
     ${own&&h.inj?injuryPanel(h):''}
-    <div class="subh" style="margin-top:0">Stats <span style="text-transform:none;letter-spacing:0;font-weight:500">(trained / potential)</span></div>${statRows}${h.client?`<div class="clientgoals"><div class="subh" style="margin-top:0">${esc(h.client.owner)} wants · ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'} left</div>${h.client.goals.map(g=>`<div class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} <span class="mono">(${goalProg(g,h)})</span></div>`).join('')}${(()=>{const X=clientExtras(h);return `<div class="note" style="margin-top:4px">Extra pay so far: ${X.sk.length?`<b>${money(X.skB)}</b> for ${X.sk.length} new skill${X.sk.length>1?'s':''}, `:''}<b>${money(X.ptB)}</b> for ${X.pts} stat point${X.pts===1?'':'s'} beyond what was asked. New skills pay a big bonus. The owner takes ${Math.round(CLIENT_CUT*100)}% of any prize money ${esc(h.name)} wins and pays half of each entry fee.</div>`})()}${h.client.goals.some(g=>g.t==='stat')?'<div class="note" style="margin-top:4px">The gold line on a stat bar marks where the owner wants it.</div>':''}</div>`:''}
+    <div class="subh" style="margin-top:0">Stats <span style="text-transform:none;letter-spacing:0;font-weight:500">(trained / potential)</span></div>${statRows}${h.client?`<div class="clientgoals"><div class="subh" style="margin-top:0">${esc(h.client.owner)} wants · ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'} left</div>${h.client.goals.map(g=>`<div class="${goalMet(g,h)?'good':'bad'}">${goalMet(g,h)?'✓':'○'} ${goalText(g,h)} <span class="mono">(${goalProg(g,h)})</span></div>`).join('')}${(()=>{const X=clientExtras(h);return `<div class="note" style="margin-top:4px">Extra pay so far: ${X.sk.length?`<b>${money(X.skB)}</b> for ${X.sk.length} new skill${X.sk.length>1?'s':''}, `:''}<b>${money(X.ptB)}</b> for ${X.pts} stat point${X.pts===1?'':'s'} beyond what was asked. New skills pay a big bonus. The owner takes ${Math.round(CLIENT_CUT*100)}% of any prize money ${esc(h.name)} wins and pays half of each entry fee and 70% of every vet bill.</div>`})()}${h.client.goals.some(g=>g.t==='stat')?'<div class="note" style="margin-top:4px">The gold line on a stat bar marks where the owner wants it.</div>':''}</div>`:''}
     <p class="note smtnote">Smarts ${h.tr.smt.toFixed(1)}: learns <b class="${smtTrain(h)>=1?'good':'bad'}">${smtTrain(h)>=1?'+':'−'}${Math.abs(Math.round((smtTrain(h)-1)*100))}%</b> ${smtTrain(h)>=1?'faster':'slower'} · injury risk <b class="${smtInj(h)<=1?'good':'bad'}">${smtInj(h)<=1?'−':'+'}${Math.abs(Math.round((smtInj(h)-1)*100))}%</b>. Smart horses learn quicker and keep themselves out of trouble.</p>
-    ${own?`<div class="vetbox">     <div class="subh">Vet care</div><div class="actions" style="margin:0 0 6px">${h.inj?'':vetDoneSeason(h)?`<button class="btn small" disabled>Checked this season</button>`:`<button class="btn small" data-a="vet" data-id="${h.id}">${h.preg?'Prenatal checkup':'Vet checkup'} · ${money(vetCost(h))}</button>`}</div>${h.vetReport?`<div class="note"><b>Last checkup, day ${h.vetReport.day}:</b><br>${h.vetReport.lines.map(esc).join('<br>')}</div>`:''}
+    ${own?`<div class="vetbox">     <div class="subh">Vet care</div><div class="actions" style="margin:0 0 6px">${h.inj?'':vetDoneSeason(h)?`<button class="btn small" disabled>Checked this season</button>`:`<button class="btn small" data-a="vet" data-id="${h.id}">${h.preg?'Prenatal checkup':'Vet checkup'} · ${money(vetCost(h))}</button>`}${h.client?`<span class="note">${esc(h.client.owner)} pays 70% of vet bills. You pay 30%.</span>`:''}</div>${h.vetReport?`<div class="note"><b>Last checkup, day ${h.vetReport.day}:</b><br>${h.vetReport.lines.map(esc).join('<br>')}</div>`:''}
      <div class="note" style="margin:4px 0">${vetClear(h)?'<span class="good">Clean bill of health</span> (good for National and Invitational events and full sale price) until day '+(h.lastVet+8)+'.':'No recent checkup. National and Invitational events need one from the last 8 days.'}${vaccinated(h)?' · <span class="good">Vaccinated</span> until day '+h.vacc+'.':''} One checkup per season${vetDoneSeason(h)?' (done)':''}.</div>
      ${vetInfoPanel(h)}
 </div>`:''}
