@@ -903,7 +903,7 @@ function festPanel(where){const k=festKey();const F=k?festState():null;const dp=
     return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Festivals</div><div class="calgrid">${rows}</div></div>`}
   const f=FESTS[k];if(where==='market'&&k!=='wintersale')return '';
   let body='';
-  if(k==='wintersale'){body=`<p class="note">Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price.</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/<button class="btn small" data-a="open"[^>]*>View papers<\/button>/,'')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
+  if(k==='wintersale'){body=`<p class="note">Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price.</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="-?\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/data-m="market"/g,'data-m="fest"')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
   else{const young=k==='foalshow';const cands=S.horses.filter(h=>!h.client&&!h.injury&&(young?isYoung(h):isAdult(h)));const m=festMult();
     if(F.done){const r=F.res;const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];body=`<p><b>${esc((H(r.h)||{}).name||'Your horse')}</b> placed <b>${ord[r.place-1]}</b>${r.prize?' and won <b>'+money(r.prize)+'</b>':''}.</p>`+(k==='harvest'?(F.booth?`<p class="note">Your booth earned ${money(F.booth)}.</p>`:`<button class="btn small" data-a="festbooth">Run the ranch booth</button>`):'')}
     else body=`<p class="note">Prizes this year: <b>${f.prize.map(v=>money(r10(v*m))).join(' / ')}</b> for 1st / 2nd / 3rd, plus reputation${k==='harvest'?' and a piece of prize tack for the winner':''}. Entry ${money(f.fee)}. One entry per year.</p>
@@ -1188,6 +1188,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Fixed: the Buy button on Winter Horse Sale lots did nothing. Buying works now, and View papers opens the lot’s papers.',
   'Live events look better: every horse casts a ground shadow, galloping horses kick up dust, clouds drift and birds cross open-sky scenes, and the dressage, reining and trail horses are drawn larger. A top-3 finish ends with confetti and a WINNER / 2ND / 3RD banner.',
   'The three specialty events have their own live scenes and cards: the Driving Class is driven in the arena with a cart and a driver, the Pony Cup is a gymkhana with striped poles and bunting, and the Desert Ride crosses dunes under a hot sun with a vet tent.',
   'World Cup: a new show level every winter, one step below the Olympics (purses up to $22,000, needs 140 reputation). A top-3 finish at a World Cup event qualifies that horse for the Olympics; without it, no Olympic entry.',
@@ -3954,7 +3955,7 @@ function papers(h,mode){
 `;
 }
 
-function navList(mode){return mode==='market'?S.market:mode==='stud'?S.studs:mode==='rival'?ensureRival().horses:mode==='past'?(S.memorial||[]):S.horses}
+function navList(mode){return mode==='market'?S.market:mode==='stud'?S.studs:mode==='rival'?ensureRival().horses:mode==='fest'?((S.fest&&S.fest.lots)||[]):mode==='past'?(S.memorial||[]):S.horses}
 function pastHorse(r){if(!r||!r.full)return null;const h=JSON.parse(JSON.stringify(r.full));h.born=S.day-(r.full.ageDays||0);h.past=r;return h}
 function pastBanner(r){return `<div class="pastbanner ${r.kind==='died'?'died':'sold'}"><b>${r.kind==='died'?'In memory':'Former horse'}</b> · ${esc(r.reason)} · left on day ${r.day}. These papers show ${r.sex==='M'?'him':'her'} as ${r.sex==='M'?'he':'she'} was then.</div>`}
 function pastSummary(r){const reg=S.registry[r.id]||{};
@@ -3974,7 +3975,7 @@ function renderModal(){
   let title='',body='',nav='';
   if(m.type==='horse'){
     const pr=m.mode==='past'?(S.memorial||[]).find(x=>x.id===m.id):null;
-    const h=m.mode==='market'?S.market.find(x=>x.id===m.id):m.mode==='stud'?S.studs.find(x=>x.id===m.id):m.mode==='rival'?ensureRival().horses.find(x=>x.id===m.id):m.mode==='past'?pastHorse(pr):H(m.id);
+    const h=m.mode==='market'?S.market.find(x=>x.id===m.id):m.mode==='stud'?S.studs.find(x=>x.id===m.id):m.mode==='rival'?ensureRival().horses.find(x=>x.id===m.id):m.mode==='fest'?((S.fest&&S.fest.lots)||[]).find(x=>x.id===m.id):m.mode==='past'?pastHorse(pr):H(m.id);
     if(!h&&!pr){UI.modal=null;ov.hidden=true;return}
     title=esc((h||pr).name);body=h?(pr?pastBanner(pr):'')+papers(h,m.mode):pastSummary(pr);
     const list=navList(m.mode),i=list.findIndex(x=>x.id===(h||pr).id);
