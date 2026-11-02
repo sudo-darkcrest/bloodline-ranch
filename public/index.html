@@ -1298,6 +1298,7 @@ const BUILD='73';
 const CHANGELOG=[
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
   'The two little flags on either side of your ranch name (top left) are in your ranch color. Click either one to change it.',
+  'Fixed wording in the morning report: one horse now “loves to work and was sad to have the day off” and “is getting sour” (several horses still “love” and “are”).',
   'Fixed: in dark mode your highlighted row in results tables and on the live leaderboard used a pale tint that made the light text hard to read. It now uses a dark tint of your ranch color.',
   'Ranch brand: pick a second color and a ranch symbol (20 symbols plus your ranch’s initial). Click either box beside your ranch name: the left box shows your symbol on your main color, the right box on your second color. Your riders now wear a second-color sash and cap, and your symbol shows on the ranch-map gate flags, truck and trailer, the Office banner, your trailer at the rodeo and reining arenas and the winner’s board.',
   'Longer, fuller tails on every event horse (they hang to the hocks at the trot and stream out behind at the gallop), a detailed driving gig (12-spoke wheels, mudguard, leaf spring, lamp, padded seat and a knee rug for the driver), new gooseneck horse trailers with barred windows, tack-room door, tandem wheels, lights and horses looking out, pickup trucks, and a proper tractor at the draft pull.',
@@ -2761,8 +2762,8 @@ function endDay(){
   {S.fence=clamp((S.fence??80)-fenceWear(),0,100);const f=S.fence;
    if(f<35&&S.horses.length&&R()<(35-f)/55){const hs=S.horses.filter(x=>!x.injury);if(hs.length){const x=pick(hs);x.health=clamp(x.health-8,0,100);x.happy=clamp(x.happy-5,0,100);x.energy=clamp(x.energy-15,0,100);ev.push(['bad',x.name+' got out through a broken fence overnight and was found down the road, scraped up and tired. Mend your fences!']);if(R()<.4)loseRep(1,'A neighbor complained about your loose horse.',ev)}}
    else if(f<50)ev.push(['warn','Fences are getting worn ('+Math.round(f)+'%). Mend fences from Your Day before a horse gets out.'])}
-  if(overworked.length)ev.push(['warn',(overworked.length>2?overworked.length+' horses':overworked.join(' and '))+' worked while worn out and are getting sour (−3 happiness). A day off in the pasture restores energy fast.']);
-  if(bored.length)ev.push(['warn',(bored.length>2?bored.length+' horses':bored.join(' and '))+' love to work and were sad to have the day off (−4 happiness).']);
+  if(overworked.length)ev.push(['warn',(overworked.length>2?overworked.length+' horses':overworked.join(' and '))+(overworked.length===1?' worked while worn out and is getting sour (−3 happiness).':' worked while worn out and are getting sour (−3 happiness).')+' A day off in the pasture restores energy fast.']);
+  if(bored.length)ev.push(['warn',(bored.length>2?bored.length+' horses':bored.join(' and '))+(bored.length===1?' loves to work and was sad to have the day off (−4 happiness).':' love to work and were sad to have the day off (−4 happiness).')]);
   if(cooped.length)ev.push(['warn',(cooped.length>2?cooped.length+' horses':cooped.join(' and '))+' stood in the stall all day and got bored (−3 happiness). Turn idle horses out to pasture.']);
   if(faded.length)ev.push(['warn',(faded.length>2?faded.length+' horses':faded.join(' and '))+' went two days without grooming, a trail ride or groundwork and lost some bond.']);
   for(const g of gone)freeGear(g.id);
