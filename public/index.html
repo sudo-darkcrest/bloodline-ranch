@@ -230,7 +230,7 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .wcomm{margin:10px 0;padding:10px 14px;border-radius:10px;background:var(--paper);font-weight:600;font-size:16px;min-height:22px}
 .wbottom{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}.wctl{display:flex;flex-direction:column;gap:8px;min-width:190px}
 .wboard{list-style:none;margin:0;padding:0;flex:1;min-width:240px;display:flex;flex-direction:column;gap:3px}
-.wboard li{display:flex;gap:8px;align-items:center;padding:4px 8px;border-radius:6px;font-size:14px;transition:background .3s}.wboard li.me{background:rgba(226,176,7,.18);font-weight:700}
+.wboard li{display:flex;gap:8px;align-items:center;padding:4px 8px;border-radius:6px;font-size:14px;transition:background .3s}.wboard li.me{background:var(--ranch-soft,rgba(226,176,7,.18));box-shadow:inset 3px 0 0 var(--ranch,#E2B007);font-weight:700}
 .wboard .silk{width:10px;height:10px;border-radius:50%;background:var(--silk);flex:none}.wboard .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wboard .val{font-family:ui-monospace,monospace}
 .modal{background:var(--card);color:var(--ink);border-radius:14px;width:min(860px,100%);box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative;overflow:hidden;overflow:clip}
 .modal .mhead{display:flex;gap:10px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
@@ -258,7 +258,9 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .ped .nm{font-weight:700;overflow-wrap:anywhere} .ped .rg{font-family:var(--f-mono);color:var(--muted);font-size:11px}
 .subh{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
 .report li{margin:6px 0} .report{padding-left:18px;margin:0}
-.result tr.me td{background:var(--accent-soft);font-weight:700}
+.result tr.me td{background:var(--ranch-soft,var(--accent-soft));font-weight:700}tr.me td:first-child{box-shadow:inset 4px 0 0 var(--ranch,#E2B007)}
+#ranchName::before{content:'';display:inline-block;width:.5em;height:.72em;margin-right:.38em;vertical-align:-.04em;border-radius:2px 2px 2px 0;background:var(--ranch,#E2B007);box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
+.rcolpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rcsw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:var(--c);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}.rcsw.on{box-shadow:0 0 0 3px var(--ink,#222)}.rcsw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.rccustom{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-left:4px}.rccustom input{width:34px;height:30px;border:1px solid var(--line);border-radius:8px;padding:2px;background:none;cursor:pointer}
 .bigplace{font-family:var(--f-display);font-size:42px;line-height:1;color:var(--brass)}
 
 .toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;z-index:60;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .25s}
@@ -1289,6 +1291,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='73';
 const CHANGELOG=[
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
+  'Ranch colors: pick your ranch color (12 colors or any custom color) when you name your ranch, or any time under Office → Settings. Your riders wear it at every live event (silks, helmet, shirt and saddle cloth; the teamster in the Draft Pull too), the other riders never wear a color close to yours, the arrow over your horse, the leaderboard highlight, the confetti and the finish banner all use it, and it shows on the results tables, the flag next to your ranch name, your pickup truck, the trailer stripe, the gate sign and flags on the ranch map, and the Office banner.',
   'Horse papers are tidier: the long life story moved behind a Read life story button (it opens the same window as the Story button on the card), and several long notes were shortened.',
   'Boarded horses: the owner now pays 70% of every vet bill (checkups, seasonal auto checkups and injury treatments). You pay 30%. Prices on a boarded horse’s papers show your share.',
   'Tack Shop: a new Uncommon tier between Common and Rare. Seven new Uncommon pieces (Pelleted Bedding, Fleece Stable Sheet, Peppermint Lick, Lightweight Youth Saddle, Padded Training Halter, Open-Front Jump Boots, Braided Tail Bag), and the stronger common pieces (Trail Saddle, Snaffle Bridle, Bell Boots, Fly Sheet, Sawdust Bedding, Jolly Ball, Ear Bonnet) moved up to Uncommon with slightly better effects. The shop stocks four Uncommon pieces each week, and crate odds are now 46% Common, 26% Uncommon, 20% Rare, 6.5% Epic, 1.5% Legendary.',
@@ -2607,13 +2610,14 @@ const PATHS={
 };
 function pathBody(){return `<p>Spring is over and it’s time to start your own place. How did you come to own your ranch?</p>
   <div class="field" style="max-width:360px"><label for="rName">Ranch name</label><input id="rName" data-c="rname" type="text" maxlength="28" value="${esc(UI.rname||(S.player&&S.player.ranchWant)||((S.player?S.player.name.split(' ').pop():'Rivers')+' Ranch'))}"></div>
+  <div class="field"><label>Ranch color</label>${colPicker()}</div>
   <div class="pathgrid">${Object.entries(PATHS).map(([k,p])=>{const pay=p.loan?loanPayment(p.loan.amt,p.loan.rate,p.loan.n):0;return `<div class="pathcard p-${k}"><div class="subh" style="margin:0">${p.diff}</div><h3 style="margin:2px 0 6px">${p.n}</h3><p class="note">${p.story}</p>
    <ul class="note"><li>${p.horses?p.horses+' horses':'No horses'} + Hank’s gift</li><li>${money(p.money)} cash, ${p.hay} bales of hay</li><li>Reputation ${p.rep}</li><li>${Object.entries(p.fac).map(([f,l])=>FACI[f].lv[l].n).join(', ')}</li>
    <li>${p.loan?`<b>Debt ${money(p.loan.amt)}</b> at ${(p.loan.rate*100).toFixed(1)}%: ${money(pay)} every season (4 days) for ${p.loan.n/4} years. First payment after 2 seasons.`:'<b>No debt</b>'}</li></ul>
    <button class="btn ${k==='inherit'?'primary':''}" data-a="pathpick" data-p="${k}">Choose ${p.n}</button></div>`}).join('')}</div>`}
 function buildRanch(pk,gift){const P=PATHS[pk];const keep={player:S.player,registry:S.registry,nextId:S.nextId,ach:S.ach};const name=(UI.rname||'').trim()||(S.player.ranchWant||'').trim()||(S.player.name.split(' ').pop()+' Ranch');
   S={ver:1,day:1,money:P.money,hay:P.hay,hayPrice:8,stalls:6,stallLevel:0,rep:P.rep,nextId:keep.nextId,horses:[],registry:keep.registry,market:[],studs:[],offers:[],log:[],ach:keep.ach,
-     stats:{wins:0,foals:0},ranchName:name,welcomed:true,phase:'play',player:keep.player,path:pk};
+     stats:{wins:0,foals:0},ranchName:name,welcomed:true,phase:'play',player:keep.player,path:pk,ranchColor:(keep.player&&keep.player.ranchColor)||UI.rcolor||'#E2B007'};
   migrate(S);S.fac={...S.fac,...P.fac};S.stalls=Math.max(S.stalls,STALLS[L('barn')]);
   if(pk==='inherit'){S.horses.push(genHorse({sex:'F',ageDays:ADULT+DPY*ri(11,14),potMid:52,trFrac:[.8,.92],nTraits:2,rarity:'common',origin:'Aunt Mae’s ranch'}));
     S.horses.push(genHorse({sex:'M',potMid:47,trFrac:[.45,.6],nTraits:1,rarity:'common',origin:'Aunt Mae’s ranch'}));S.horses.push(genHorse({sex:'F',potMid:45,trFrac:[.45,.6],nTraits:1,rarity:'common',origin:'Aunt Mae’s ranch'}));
@@ -2850,6 +2854,18 @@ const HD=(()=>{const z=()=>Object.fromEntries(Object.keys(HB).map(k=>[k,[0,0]]))
 const BODYTYPE={grade:{},shetland:{small:1,draft:.55},foxtrotter:{tall:.15},connemara:{small:.45},icelandic:{small:.6,draft:.2},fjord:{small:.4,draft:.45},quarter:{},paint:{},appaloosa:{hot:.1},mustang:{hot:.1,small:.2},morgan:{draft:.15,small:.15},thoroughbred:{hot:.55,tall:.6},percheron:{draft:.9,tall:.2},arabian:{hot:1,small:.15},akhalteke:{hot:.8,tall:.7},
   friesian:{draft:.45,tall:.35},lipizzaner:{draft:.3,small:.1},marwari:{hot:.6,tall:.3},walker:{hot:.25,tall:.3},standardbred:{hot:.3,tall:.2},haflinger:{draft:.45,small:.45},welsh:{draft:.25,small:.55},saddlebred:{hot:.5,tall:.5},
   andalusian:{draft:.25},clydesdale:{draft:1,tall:.3},hanoverian:{draft:.25,tall:.6},pasofino:{hot:.4,small:.5},knabstrupper:{draft:.1},vanner:{draft:.7,small:.25},lusitano:{draft:.25},przewalski:{draft:.4,small:.4},curly:{draft:.25,small:.2}};
+const RANCH_COLORS=[['#C0392B','Red'],['#7B2335','Maroon'],['#E67E22','Orange'],['#E2B007','Gold'],['#2D8A4E','Green'],['#16A085','Teal'],['#5DADE2','Sky Blue'],['#2E6FD8','Royal Blue'],['#1F3A68','Navy'],['#8E44AD','Purple'],['#D35480','Pink'],['#26262B','Black']];
+function ranchCol(){const c=(S&&S.ranchColor)||(S&&S.player&&S.player.ranchColor)||(typeof UI!=='undefined'&&UI.rcolor)||'#E2B007';return /^#[0-9a-f]{6}$/i.test(c)?c:'#E2B007'}
+function ranchColName(c){c=c||ranchCol();const f=RANCH_COLORS.find(x=>x[0].toLowerCase()===c.toLowerCase());return f?f[1]:'Custom'}
+function colRGB(c){return [1,3,5].map(i=>parseInt(c.slice(i,i+2),16))}
+function colDist(a,b){const A=colRGB(a),B=colRGB(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
+function colLum(c){const [r,g,b]=colRGB(c);return (r*.299+g*.587+b*.114)/255}
+function inkOn(c){return colLum(c)>.6?'#1d1b1a':'#ffffff'}
+function ranchDark(){const c=ranchCol();return colLum(c)<.18?hexMix(c,'#ffffff',.12):hexMix(c,'#000000',.22)}
+function setRanchCol(c){if(!/^#[0-9a-f]{6}$/i.test(c||''))return;c=c.toLowerCase();if(S){if(S.phase!=='tutorial'||S.ranchName)S.ranchColor=c;if(S.player)S.player.ranchColor=c}UI.rcolor=c;applyRanchCol()}
+function applyRanchCol(){try{const c=ranchCol(),r=document.documentElement.style;r.setProperty('--ranch',c);r.setProperty('--ranch-soft',hexMix(c,'#ffffff',.78));r.setProperty('--ranch-ink',inkOn(c))}catch(e){}}
+function colPicker(){const cur=ranchCol();return `<div class="rcolpick">${RANCH_COLORS.map(([c,n])=>`<button type="button" class="rcsw${c.toLowerCase()===cur.toLowerCase()?' on':''}" style="--c:${c}" data-a="rcolor" data-col="${c}" title="${n}" aria-label="${n}"></button>`).join('')}<label class="rccustom" title="Pick any color you like"><input type="color" data-c="rcolor" value="${cur}"><span>Custom</span></label></div><div class="note" style="margin-top:4px">Your ranch color: <b>${ranchColName(cur)}</b>. Your riders wear it at every event, and it shows on your truck, trailer, gate sign and results.</div>`}
+function oppSilks(){const me=ranchCol();const pool=SILKS.filter(c=>colDist(c,me)>150);return pool.length>=4?pool:SILKS}
 function hexMix(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
 function horseAnchors(h,foal,st){const bt={hot:0,draft:0,tall:0,small:0};for(const [k,f] of Object.entries(bloodOf(h))){const b=BODYTYPE[k]||{};for(const x in bt)bt[x]+=(b[x]||0)*f}
   const A={};for(const k of Object.keys(HB))A[k]=[HB[k][0]+HD.hot[k][0]*bt.hot+HD.draft[k][0]*bt.draft,HB[k][1]+HD.hot[k][1]*bt.hot+HD.draft[k][1]*bt.draft,HB[k][2]];
@@ -3565,7 +3581,7 @@ function ranchMap(){
   g+=`<rect x="190" y="556" width="178" height="27" rx="6" fill="${C.dirtD}" opacity=".5"/><rect x="192" y="557" width="174" height="25" rx="5" fill="url(#mGravel)"/>`+[...Array(4)].map((_,i)=>`<path d="M${210+i*44} 561 v-3" stroke="#C9C2B0" stroke-width="1.2"/>`).join('');
   // road, gate, mailbox
   g+=`<rect x="0" y="596" width="1200" height="30" fill="${C.road}"/><path d="M0 611 H1200" stroke="#E9DFA8" stroke-width="2" stroke-dasharray="16 12"/><path d="M0 597 H1200 M0 625 H1200" stroke="#7B6F5E" stroke-width="1.2"/><text x="1190" y="636" text-anchor="end" font-size="10" fill="#5E5547" font-family="ui-monospace,monospace" letter-spacing="1">COUNTY RD 9</text>`;
-  g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><rect x="112" y="552" width="40" height="11" rx="2" fill="${C.wood}"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${C.white}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
+  g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><path d="M110.5 544 V530 M154.5 544 V530" stroke="#6b6b66" stroke-width="1"/><path d="M110.5 530 l9 2.6 l-9 2.6z M154.5 530 l9 2.6 l-9 2.6z" fill="${ranchCol()}"/><rect x="111" y="551" width="42" height="13" rx="2" fill="${ranchDark()}" stroke="${C.wood}" stroke-width="1.2"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${inkOn(ranchDark())}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
   {let f='';const FY=591;for(let x=0;x<=1200;x+=14){if(x>96&&x<170)continue;f+=`<rect x="${x-1.2}" y="${FY-10}" width="2.4" height="11" fill="${C.wood}"/>`}g+=f+`<path d="M0 ${FY-3} H96 M170 ${FY-3} H1200 M0 ${FY-7.5} H96 M170 ${FY-7.5} H1200" stroke="${C.white}" stroke-width="1.5"/><path d="M0 ${FY-1} H96 M170 ${FY-1} H1200" stroke="#000" stroke-opacity=".18"/>`}
   g+=`<rect x="172" y="580" width="2.4" height="15" fill="${C.wood}"/><rect x="166" y="573" width="14" height="8" rx="2.5" fill="#5B6E7E"/><rect x="178" y="572" width="1.4" height="5" fill="#C0392B"/>`;
 
@@ -3725,12 +3741,12 @@ function ranchMap(){
     else{const wheel=(x,r=6.4)=>`<circle cx="${x}" cy="${B-r+1}" r="${r}" fill="#222"/><circle cx="${x}" cy="${B-r+1}" r="${r*.55}" fill="#B9C1C7"/><circle cx="${x}" cy="${B-r+1}" r="${r*.2}" fill="#555"/>`;
       const TL=n>=2?150:110,tx=128;
       o=`<ellipse cx="${tx+TL/2-20}" cy="${B+1}" rx="${TL/2+76}" ry="4" fill="rgba(25,35,15,.3)" filter="url(#mSh)"/>
-      <g><path d="M58 ${B-6} V${B-20} Q58 ${B-24} 62 ${B-24} H74 L84 ${B-38} H104 Q108 ${B-38} 108 ${B-34} V${B-24} H122 V${B-6}Z" fill="#7A1F1F"/>
-       <path d="M86 ${B-35} H103 V${B-25} H79Z" fill="#9FC3DA"/><path d="M95 ${B-35} V${B-25}" stroke="#7A1F1F" stroke-width="1.6"/><path d="M58 ${B-17} H122" stroke="#5E1515" stroke-width="1"/>
-       <rect x="56" y="${B-12}" width="6" height="5" rx="1" fill="#C9CED2"/><rect x="56.5" y="${B-21}" width="3" height="4" fill="#FFF3C4"/><path d="M110 ${B-24} V${B-12}" stroke="#5E1515" stroke-width=".8"/><rect x="88" y="${B-22}" width="5" height="1.4" fill="#C9CED2"/>
+      <g><path d="M58 ${B-6} V${B-20} Q58 ${B-24} 62 ${B-24} H74 L84 ${B-38} H104 Q108 ${B-38} 108 ${B-34} V${B-24} H122 V${B-6}Z" fill="${ranchCol()}"/>
+       <path d="M86 ${B-35} H103 V${B-25} H79Z" fill="#9FC3DA"/><path d="M95 ${B-35} V${B-25}" stroke="${ranchDark()}" stroke-width="1.6"/><path d="M58 ${B-17} H122" stroke="${ranchDark()}" stroke-width="1"/>
+       <rect x="56" y="${B-12}" width="6" height="5" rx="1" fill="#C9CED2"/><rect x="56.5" y="${B-21}" width="3" height="4" fill="#FFF3C4"/><path d="M110 ${B-24} V${B-12}" stroke="${ranchDark()}" stroke-width=".8"/><rect x="88" y="${B-22}" width="5" height="1.4" fill="#C9CED2"/>
        ${wheel(70)}${wheel(112)}<path d="M122 ${B-10} H${tx+2}" stroke="#444" stroke-width="2"/></g>
       <g><path d="M${tx} ${B-8} V${B-40} Q${tx} ${B-46} ${tx+6} ${B-46} H${tx+TL} Q${tx+TL+4} ${B-46} ${tx+TL+4} ${B-42} V${B-8}Z" fill="#E4E8EC" stroke="#8A949C" stroke-width="1"/>
-       <path d="M${tx+2} ${B-30} H${tx+TL+2}" stroke="#9AA4AD" stroke-width="2"/><path d="M${tx+2} ${B-14} H${tx+TL+2}" stroke="#B9C1C7" stroke-width="1"/>
+       <path d="M${tx+2} ${B-30} H${tx+TL+2}" stroke="${ranchCol()}" stroke-width="3.4"/><path d="M${tx+2} ${B-14} H${tx+TL+2}" stroke="#B9C1C7" stroke-width="1"/>
        ${[...Array(Math.floor(TL/22))].map((_,i)=>`<rect x="${tx+10+i*22}" y="${B-42}" width="14" height="8" rx="2" fill="#5C6B78"/><path d="M${tx+11+i*22} ${B-41} l6 6" stroke="#fff" stroke-opacity=".3" stroke-width="1.4"/>`).join('')}
        ${[...Array(Math.floor(TL/12))].map((_,i)=>`<rect x="${tx+8+i*12}" y="${B-27}" width="7" height="1.6" rx=".8" fill="#8A949C"/>`).join('')}
        ${n>=2?`<rect x="${tx+12}" y="${B-36}" width="14" height="27" rx="1.5" fill="#D4DADF" stroke="#8A949C" stroke-width=".8"/><circle cx="${tx+23}" cy="${B-22}" r=".9" fill="#555"/><rect x="${tx+TL/2-14}" y="${B-52}" width="22" height="6" rx="2" fill="#C9CED2" stroke="#8A949C" stroke-width=".6"/><path d="M${tx+30} ${B-20} h18" stroke="#3D5A80" stroke-width="2"/>`:''}
@@ -3949,6 +3965,7 @@ function renderOffice(){
   <div class="section-head" style="margin-top:22px"><h2>Settings</h2></div>
   <div class="cols"><div class="panel"><div class="subh" style="margin-top:0">Ranch name</div>
     <div class="actions"><input type="text" id="ranchInput" value="${esc(S.ranchName)}" maxlength="32" aria-label="Ranch name"><button class="btn" data-a="renameRanch">Save name</button></div>
+    <div class="subh">Ranch color</div>${colPicker()}
     <div class="subh">Start over</div><button class="btn" data-a="newgame">Start a new ranch…</button> <span class="note">You’ll get a chance to keep this ranch in a save slot first. Your game saves automatically after every action.</span></div>
    <div class="panel"><details class="howto"><summary>How to play</summary>${HOWTO}</details></div></div>`;
 }
@@ -4179,7 +4196,7 @@ function renderModal(){
 /* ---------- watching events ---------- */
 let WATCH=null,watchN=0;
 const RUNNER_COLS=[['#7A3D1C','#1E1A18'],['#9A4822','#B8672E'],['#211D1B','#141211'],['#BEBEB8','#8C8C87'],['#C89955','#231D19'],['#D7AC57','#F2E6C3'],['#3C322B','#201B18'],['#E3D4B3','#C6B18B'],['#6E3418','#18120E']];
-const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480'];
+const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480','#F1C40F','#1F3A68','#7B2335','#5DADE2','#F4F1EA','#26262B'];
 function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='race')return {v:24.5-s*.08,f:v=>v.toFixed(2)+'s',low:1};
   if(evid==='jump')return {v:84-s*.36,f:v=>v.toFixed(2)+'s',low:1};
@@ -4252,9 +4269,9 @@ function rSprite_raw(col,mane,silk,o={}){const trot=o.gait==='trot';const gait=t
    ${maneSvg}`;
   return `<g class="rs">${dust}<ellipse cx="2" cy="0.6" rx="21" ry="2.6" fill="rgba(0,0,0,.2)"/>${grp((L,k)=>tail(k))}${farLegs}
   ${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${bodySvg}</g></g>`).join('')}
-  ${nearLegs}${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${harness}${rider}${o.me?`<path d="M-1 -${o.rider?56:50} l3 4.6 l3 -4.6z" fill="#E2B007" stroke="#7a5a00" stroke-width=".6"/>`:''}</g></g>`).join('')}</g>`}
+  ${nearLegs}${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${harness}${rider}${o.me?`<path d="M-1 -${o.rider?56:50} l3 4.6 l3 -4.6z" fill="${ranchCol()}" stroke="#ffffff" stroke-width=".9"/>`:''}</g></g>`).join('')}</g>`}
 function watchSetup(m){const ev0=EVENTS[m.res.ev],ev=ev0.only?{...ev0,id:{drive:'dress',pony:'barrel',desert:'endur'}[ev0.id]}:ev0,T=TIERS[m.res.t];const myH=H(m.res.h)||{};const c=myH.genes?coat(myH.genes):null;const myP=c?(c.grey?GREYPAL:PAL[c.base+c.cr]):{b:'#7A3D1C',m:'#1E1A18'};
-  const rs=srng(m.wid*31+7);const field=m.res.field.map((f,i)=>{const met=evMetric(ev.id,f.score);const col=f.me?[myP.b,myP.m]:RUNNER_COLS[Math.floor(rs()*RUNNER_COLS.length)];return {...f,rank:i,met,col,silk:f.me?'#E2B007':SILKS[(i*3+1)%SILKS.length],ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
+  const rs=srng(m.wid*31+7);const OPP=oppSilks();const field=m.res.field.map((f,i)=>{const met=evMetric(ev.id,f.score);const col=f.me?[myP.b,myP.m]:RUNNER_COLS[Math.floor(rs()*RUNNER_COLS.length)];return {...f,rank:i,met,col,silk:f.me?ranchCol():OPP[(i*3+1)%OPP.length],ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
   const lanes=field.map((f,i)=>i);for(let i=lanes.length-1;i>0;i--){const j=Math.floor(rs()*(i+1));[lanes[i],lanes[j]]=[lanes[j],lanes[i]]}field.forEach((f,i)=>f.lane=lanes[i]);
   return {ev,T,field,me:field.find(f=>f.me),rs}}
 const CROWD_SHIRTS=['#F2F0EA','#E8E4DA','#3F5F8F','#5B7DB1','#8FA9CC','#B03A2E','#D2694F','#2F3E52','#6E8B5A','#C9A15A','#7A4E8A','#DCC9A6','#2B2B2B','#A0A7AD','#E0B84C','#4E8C8A'];
@@ -4364,7 +4381,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     <rect y="276" width="800" height="24" fill="#8DB46A"/>
     <g id="wr0"><g id="wDust" opacity="0"><ellipse cx="-98" cy="8" rx="10" ry="4" fill="#E2C899"/><ellipse cx="-110" cy="3" rx="6" ry="3" fill="#E2C899"/></g>
      <g transform="translate(-88 0)"><path d="M-4 10 L44 10 C50 10 52 6 50 2 L-4 2Z" fill="#7A5434"/><path d="M-4 10 L50 10" stroke="#4E331F" stroke-width="2"/>${[[2,-12],[18,-12],[34,-12],[10,-24],[26,-24]].map(([x,y])=>`<rect x="${x}" y="${y+2}" width="14" height="12" fill="#9C9890" stroke="#7a766e" stroke-width=".8"/>`).join('')}</g>
-     <g transform="translate(-130 8)"><path d="M0 0 L4 -14 L8 0 M4 -14 V-26" stroke="#3A4A6A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M4 -24 L12 -20 L34 -14" stroke="#7a5a3a" stroke-width="2.4" fill="none"/><circle cx="4" cy="-30" r="3.6" fill="#E2B48C"/><path d="M-1 -32 C1 -31 7 -31 9 -32 M1 -32 C1 -37 7 -37 7 -32" stroke="#6B4423" stroke-width="2" fill="#7A4E2A"/></g>
+     <g transform="translate(-130 8)"><path d="M0 0 L4 -14 L8 0" stroke="#3A4A6A" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M4 -14 V-26" stroke="${ranchCol()}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M4 -24 L12 -20 L34 -14" stroke="#7a5a3a" stroke-width="2.4" fill="none"/><circle cx="4" cy="-30" r="3.6" fill="#E2B48C"/><path d="M-1 -32 C1 -31 7 -31 9 -32 M1 -32 C1 -37 7 -37 7 -32" stroke="#6B4423" stroke-width="2" fill="#7A4E2A"/></g>
      <g transform="scale(1.75)">${rSprite(W.me.col[0],W.me.col[1],W.me.silk,{harness:1,gait:'trot',me:1})}</g></g>
     <g transform="translate(676 18)"><rect width="114" height="40" rx="5" fill="#1a1a1a"/><text x="57" y="13" font-size="8" text-anchor="middle" fill="#bbb" font-family="system-ui" letter-spacing="1">DISTANCE</text><text id="wClock" x="57" y="33" font-size="17" font-weight="700" fill="#FFC23C" text-anchor="middle" font-family="ui-monospace,monospace">0.0 ft</text></g>`}
   const board=`<ol class="wboard" id="wBoard">${W.field.map((f,i)=>`<li id="wb${i}" class="${f.me?'me':''}" style="--silk:${f.silk};order:${f.me?200:100+Math.floor(W.rs()*50)}"><span class="silk"></span><span class="nm">${esc(f.name)}</span><span class="val" id="wv${i}">–</span></li>`).join('')}</ol>`;
@@ -4435,8 +4452,8 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
 function ord(n){return n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th')}
 function finishWatch(m,W){if(!WATCH||WATCH.done)return;WATCH.done=true;hoovesStop();resultSound(m.res);W.field.forEach((f,i)=>{const v=document.getElementById('wv'+i);if(v)v.textContent=f.met.f(f.met.v);const li=document.getElementById('wb'+i);if(li)li.style.order=f.rank});
   const p=m.res.place;const c=document.getElementById('wComm');if(c)c.textContent=p===1?'🏆 '+W.me.name+' WINS!':W.me.name+' finishes '+ord(p)+'.';
-  {const cf=document.getElementById('wConf');if(cf&&p<=3){const cols=['#C0392B','#F2C14E','#2E6FD8','#2D8A4E','#E67E22','#8E44AD','#fff'];let o='';const n=p===1?70:30;for(let i=0;i<n;i++){const x=80+Math.random()*640,d=(Math.random()*1.2).toFixed(2),r=Math.floor(Math.random()*360),sz=4+Math.random()*5;o+=`<rect class="wcf" x="${x.toFixed(0)}" y="-12" width="${sz.toFixed(1)}" height="${(sz*.6).toFixed(1)}" fill="${cols[i%cols.length]}" style="animation-delay:${d}s;animation-duration:${(2.2+Math.random()*1.4).toFixed(2)}s;transform-origin:${x.toFixed(0)}px 0px;--r:${r}deg"/>`}
-    o+=`<g class="wban"><rect x="250" y="112" width="300" height="56" rx="10" fill="rgba(20,20,20,.72)"/><text x="400" y="148" text-anchor="middle" font-size="26" font-weight="800" fill="${p===1?'#F2C14E':'#fff'}" font-family="Figtree,system-ui,sans-serif" letter-spacing=".06em">${p===1?'WINNER!':p===2?'2ND PLACE':'3RD PLACE'}</text></g>`;cf.innerHTML=o}}const s=document.getElementById('wStatus');if(s)s.textContent='Final';
+  {const cf=document.getElementById('wConf');if(cf&&p<=3){const rc=ranchCol();const cols=[rc,'#F2C14E',rc,'#fff',rc,hexMix(rc,'#ffffff',.45),'#F2C14E'];let o='';const n=p===1?70:30;for(let i=0;i<n;i++){const x=80+Math.random()*640,d=(Math.random()*1.2).toFixed(2),r=Math.floor(Math.random()*360),sz=4+Math.random()*5;o+=`<rect class="wcf" x="${x.toFixed(0)}" y="-12" width="${sz.toFixed(1)}" height="${(sz*.6).toFixed(1)}" fill="${cols[i%cols.length]}" style="animation-delay:${d}s;animation-duration:${(2.2+Math.random()*1.4).toFixed(2)}s;transform-origin:${x.toFixed(0)}px 0px;--r:${r}deg"/>`}
+    o+=`<g class="wban"><rect x="250" y="112" width="300" height="56" rx="10" fill="rgba(20,20,20,.74)" stroke="${rc}" stroke-width="4"/><rect x="262" y="160" width="276" height="3" rx="1.5" fill="${rc}"/><text x="400" y="148" text-anchor="middle" font-size="26" font-weight="800" fill="${p===1?'#F2C14E':'#fff'}" font-family="Figtree,system-ui,sans-serif" letter-spacing=".06em">${p===1?'WINNER!':p===2?'2ND PLACE':'3RD PLACE'}</text></g>`;cf.innerHTML=o}}const s=document.getElementById('wStatus');if(s)s.textContent='Final';
   setTimeout(()=>{if(UI.modal&&UI.modal.type==='watch'&&UI.modal.wid===m.wid){UI.modal=m.res;WATCH=null;render()}},1800/Math.max(1,WATCH.speed))}
 function skipWatch(){const m=UI.modal;if(!m||m.type!=='watch')return;if(WATCH&&!WATCH.done)resultSound(m.res);hoovesStop();if(WATCH)WATCH.done=true;WATCH=null;UI.modal=m.res;render()}
 /* small event illustrations for the Show Grounds cards */
@@ -4642,7 +4659,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
      <g transform="translate(124 10) rotate(-2)"><rect width="40" height="30" fill="#fff"/><rect x="3" y="3" width="34" height="22" fill="#BFD6E2"/><path d="M3 18 Q20 13 37 17 V25 H3Z" fill="#9FC07C"/>${bh[3]?bHorse({...bh[3],noBg:1,showGear:[]},8,4,24):bHorse(BH(905,BG.bay,'morgan',60),8,4,24)}<circle cx="20" cy="2" r="2.4" fill="#2D8A4E"/></g>
      ${rib.map((r,k)=>`<g transform="translate(${172+k*0} ${8+k*0})">${''}</g>`).join('')}
      ${[0,1,2].map(k=>{const r=rib[k];return r?`<g transform="translate(${176+k*14} ${12+k*2}) scale(.9)">${ribbonSVG(r.p,r.t,22).replace('<svg ','<svg x="0" y="0" ')}</g>`:`<g transform="translate(${176+k*14} ${12+k*2})"><circle cx="10" cy="10" r="2" fill="#B9A27A"/></g>`}).join('')}
-     <g transform="translate(14 48)"><rect width="200" height="12" fill="#F7F0DC"/><text x="100" y="9" text-anchor="middle" font-size="7.5" font-weight="700" fill="#4A2F1C" font-family="Figtree,system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,22))} · YEAR ${dp.year} · ${SEASONS[dp.sIdx].toUpperCase()}</text></g></g>
+     <g transform="translate(14 48)"><rect width="200" height="12" fill="${ranchCol()}"/><text x="100" y="9" text-anchor="middle" font-size="7.5" font-weight="700" fill="${inkOn(ranchCol())}" font-family="Figtree,system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,22))} · YEAR ${dp.year} · ${SEASONS[dp.sIdx].toUpperCase()}</text></g></g>
     <!-- calendar, clock, mounted horseshoe -->
     <g transform="translate(680 12)"><rect x="-2" y="-2" width="74" height="64" fill="#8a7a62"/><rect width="70" height="60" fill="#F7F0DC"/><rect width="70" height="12" fill="#C0392B"/><text x="35" y="9" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="system-ui">${SEASONS[dp.sIdx].toUpperCase()}</text>${[...Array(12)].map((_,i)=>`<rect x="${6+(i%4)*15}" y="${18+Math.floor(i/4)*13}" width="11" height="9" fill="${i===(dp.sday-1)+4?'#F2C14E':'#E9E1CF'}"/>`).join('')}</g>
     <g transform="translate(800 36)"><circle r="20" fill="#F7F0DC" stroke="#3E2716" stroke-width="4"/><path d="M0 0 L0 -12 M0 0 L8 4" stroke="#2B2A26" stroke-width="2" stroke-linecap="round"/><circle r="1.6" fill="#2B2A26"/></g>
@@ -4689,6 +4706,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
 
 
 function render(){
+  applyRanchCol();
   document.body.classList.toggle('titlemode',UI.screen==='title'||!S);
   if(UI.screen==='title'||!S){if(!S)UI.screen='title';renderTitle();renderModal();return}
   stopTitleAnim();
@@ -4739,6 +4757,7 @@ const ACT={
   tocreator:()=>{UI.pdraft=defaultDraft();UI.modal={type:'creator',lock:1,mode:'existing'}},
   tutskip:()=>{UI.modal={type:'gift',lock:1}},
   giftpick:d=>{const h=H(d.id);if(!h)return;freeGear(h.id);const g=JSON.parse(JSON.stringify(h));g.ageDays=age(h);UI.gift=g;UI.modal={type:'path',lock:1}},
+  rcolor:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol(d.col)},
   pathpick:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;buildRanch(d.p,UI.gift);UI.gift=null;UI.tab='stable';UI.modal={type:'welcome'}},
   loanpay:d=>{const l=S.bank.loans.find(x=>x.id==d.id);if(!l)return;const amt=d.v==='due'?l.due:d.v==='all'?Math.ceil(l.bal):+d.v;const paid=payLoan(l,amt,d.v==='all'?'Paid off: '+l.name:d.v==='due'?'Payment: '+l.name:'Extra payment: '+l.name);toast(paid?'Paid '+money(paid)+'.':'Not enough money.')},
   autopay:()=>{S.bank.autopay=S.bank.autopay?0:1},
@@ -4919,6 +4938,7 @@ document.addEventListener('change',e=>{
   if(c==='pname'){UI.pdraft.name=e.target.value;return}
   if(c==='rnamec'){UI.pdraft.ranch=e.target.value;return}
   if(c==='rname'){UI.rname=e.target.value;return}
+  if(c==='rcolor'){setRanchCol(e.target.value);save();render();return}
   if(c==='clienttack'){const h=H(e.target.dataset.id);if(h&&h.client){h.client.tack=e.target.checked?1:0;if(!h.client.tack)freeGear(h.id);toast(h.client.tack?h.name+' can use your tack now.':h.name+' is back in the owner’s tack. Your gear went back to the tack room.')}save();render();return}
   if(c==='equip'){if(e.target.value)equip(e.target.value,e.target.dataset.id);save();render();return}
   if(c==='equipto'){if(e.target.value)equip(e.target.dataset.u,e.target.value);save();render();return}
