@@ -139,6 +139,7 @@ main{padding-block:20px}
 @keyframes bnCloud{0%{transform:translateX(0)}100%{transform:translateX(50px)}}@keyframes bnBird{0%{transform:translate(0,0)}100%{transform:translate(160px,-6px)}}.tabban .bnclouds{animation:bnCloud 45s linear infinite alternate}.tabban .bnbirds{animation:bnBird 30s ease-in-out infinite alternate}@media (prefers-reduced-motion:reduce){.tabban .bnclouds,.tabban .bnbirds{animation:none}}
 .guide .clog ul{list-style:disc;line-height:1.45}.guide .clog ul li{margin:0 0 2px}.guidepanel{text-align:left}
 .papersbottom{margin-top:14px;display:grid;gap:4px}.papersbottom .pedwrap{max-width:640px}.vetbox{margin-top:6px}
+.autorule select{font:inherit;font-size:11.5px;padding:1px 4px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .festart{margin:-16px -18px 0;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:1000/80}.festart svg{width:100%;height:100%;display:block}
 .rivalpanel{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}.rivalhead{display:flex;gap:12px;align-items:center;flex:1;min-width:260px}.rivalhead>.grow{min-width:0;flex:1 1 200px}.rivalface{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:var(--pasture)}.rivalface svg{width:64px;height:64px;display:block}.rivalbarn{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.rivalhorse{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px}.rivalrec{display:flex;align-items:baseline;gap:4px;flex-direction:row;flex-wrap:wrap;justify-content:center;min-width:90px}.rivalrec .rw,.rivalrec .rl{font-family:var(--f-display,serif);font-size:30px;font-weight:700}.rivalrec .rw{color:var(--good,#2e7d32)}.rivalrec .rl{color:var(--bad,#b3261e)}.rivalrec .note{flex-basis:100%;text-align:center}.rivallast{flex-basis:100%}.rivalchip{background:#7A1E1E;color:#fff;border-color:#7A1E1E;font-size:10px;padding:1px 6px}tr.rivalrow td{background:color-mix(in srgb,#B03A2E 10%,transparent)}
 .note.brk{font-size:11.5px;line-height:1.35}.note.brk span{display:block;white-space:nowrap}
@@ -831,6 +832,8 @@ function jobName(k){if(k.startsWith('train:'))return STATS.find(x=>x.k===k.slice
 function recentJobs(h,days=6){return (h.jobs||[]).filter(j=>j.d>S.day-days)}
 function jobCount(h,k){return recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)}
 const AUTO_WIN=.8;
+function autoWin(){return S&&S.autoWin!=null?S.autoWin:AUTO_WIN}function autoTop3(){return S&&S.autoTop3!=null?S.autoTop3:0}
+function autoRuleText(){const w=Math.round(autoWin()*100),t=Math.round(autoTop3()*100);return (w?w+'%+ win':'')+(w&&t?' and ':'')+(t?t+'%+ top 3':'')||'any odds'}
 
 /* ---------- life story, trophy room, rival (Build 71) ---------- */
 function story(h,t,d){if(!h)return;h.story=h.story||[];h.story.push({d:d??S.day,t});if(h.story.length>40)h.story.splice(0,h.story.length-40)}
@@ -900,7 +903,7 @@ const GUIDE=[
  ['Shows and the calendar',[
   'Each horse can enter one event a day. Entry fees are 6–8% of the purse. Show levels: Local (daily), County Fair (last two days of every season), State (spring and fall), Regional (summer and winter), National (fall), International (late summer), World Cup (winter) and the Olympics (every 4th summer). Higher levels need more reputation.',
   'Eight standard events test different stats: Quarter-Mile Race, Barrel Racing, Endurance Ride, Dressage, Draft Pull, Show Jumping, Cross-Country and Reining. Three <b>specialty events</b> need the right type of horse: the Driving Class (drafts), the Pony Cup (ponies) and the Desert Ride (hot bloods).',
-  '<b>Auto compete</b> enters the highest open level where the horse has an 80% or better chance to win, and skips horses that would finish sour. The odds shown are real: they come from simulating the field.',
+  '<b>Auto compete</b> enters the highest open level that meets your auto rule (set it under the Auto compete buttons: a minimum chance to win and a minimum chance to place top 3; the default is 80% to win), and skips horses that would finish sour. The odds shown are real: they come from simulating the field.',
   'After 30 Local wins, 20 County wins or 16 State wins a horse <b>graduates</b> that level: it can still enter but prizes are halved. Move up.',
   'The <b>season circuit</b> gives points for every placing (more at higher levels). The top horse when a season ends is Season Champion: cash, +5 reputation and a title.',
   '<b>Olympics:</b> two events each day of summer in Olympic years. A horse qualifies with a top-3 finish at any World Cup event. Olympic gold is the top of the game.',
@@ -1033,7 +1036,7 @@ function maxClients(){return Math.floor(S.stalls/BAL.clientPer)}
 function autoPick(h){let best=null,top=null,sour=null;
   EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti)||!evEligible(ev,h)||!eventOpen(ti,ei)||(ti===6&&!h.wcQual))return;if((ti>=T_NAT||troubleActive('disease'))&&!vetClear(h))return;if(S.money<myFee(h,t,ev))return;
     const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
-    if(od.win>=AUTO_WIN){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-myFee(h,t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
+    if(od.win>=autoWin()&&od.top3>=autoTop3()){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-myFee(h,t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(better(c,sour))sour=c}}));
   return {best,sour,top}}
 function sourRisk(h,ei){const o=[];if(!h)return o;const lazy=has(h,'lazy');
   {const after=h.energy-compEnergy(h);if(!has(h,'workaholic')&&after<soreLine(h))o.push(h.name+' would finish on '+Math.max(0,Math.round(after))+' energy, worn out, and sour tonight (−3 happiness).')}
@@ -1246,6 +1249,8 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Auto compete rule: under the Auto compete buttons, pick the minimum chance to win and the minimum chance to place top 3. Auto compete (and Auto compete all) enter the highest level that meets both. Saved with your ranch.',
+  'Every horse card has a 📖 Story button that opens the horse’s life story in its own window.',
   'The pictures at the top of each tab now scale to fit the screen, like the Tack Shop’s, so you see the whole scene on a phone held upright instead of a cropped middle.',
   'Horse papers reordered: Vet care now sits right under the stats (with its own checkup button), and the pedigree and life story have moved to the bottom.',
   'Fixed: the truck and trailer on the ranch map no longer sit on top of the road fence.',
@@ -3229,6 +3234,7 @@ function horseCard(h,mode){
     if(canCompete(h))actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">Event</button>`;
     if(stage(h)!=='Foal'&&pregOk(h)){actions+=`<span class="lbl">Train</span>`+STATS.map(s=>`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'} title="Train ${s.n}">${s.s}</button>`).join('')}
     if(canWork(h))actions+=jobSelect(h);
+    if(lifeStory(h).length)actions+=`<button class="btn small storybtn" data-a="storyopen" data-id="${h.id}" title="Read ${esc(h.name)}’s life story">📖 Story</button>`;
   }
   return `<article class="horse r-${rarityOf(h)}" data-a="open" data-id="${h.id}" ${mode==='market'?'data-m="market"':''} tabindex="0" aria-label="${esc(h.name)}">
   <div class="portrait${h.shiny?' shiny':''}">${horseSVG(h)}${shinyFx(h)}<span class="pill ${sc}">${sl}</span>${mode!=='market'&&!h.client?`<button class="favbtn${h.fav?' on':''}" data-a="fav" data-id="${h.id}" aria-pressed="${h.fav?'true':'false'}" title="${h.fav?'Remove from favorites':'Mark as a favorite'}">${h.fav?'★':'☆'}</button>`:''}${h.gen?`<span class="tag-gen">GEN ${h.gen}</span>`:''}</div>
@@ -3408,7 +3414,7 @@ function renderCompete(){
   ${rivalPanel()}
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+(trainerHeld(x)?'reserved for trainer':status(x)[1])}</option>`).join('')}</select></div>
-   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open event level where this horse has an 80% or better chance to win">Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">Auto compete all</button></div><span class="note" style="font-size:11.5px">Best open level with 80%+ win chance · skips horses that would sour</span></div>
+   <div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn primary" data-a="autocomp" ${ok?'':'disabled'} title="Enters the highest open level that meets your auto rule (${autoRuleText()})">Auto compete</button><button class="btn" data-a="autoall" ${S.horses.some(x=>isAdult(x)&&canCompete(x))?'':'disabled'} title="Auto compete every horse that can compete today, without watching">Auto compete all</button></div><span class="autorule note" style="font-size:11.5px">Auto rule: at least <select data-c="autowin" aria-label="Minimum win chance">${[0,10,20,30,40,50,60,70,75,80,85,90,95].map(v=>`<option value="${v}" ${Math.round(autoWin()*100)===v?'selected':''}>${v}%</option>`).join('')}</select> to win and <select data-c="autotop3" aria-label="Minimum top 3 chance">${[0,25,50,60,70,75,80,85,90,95,99].map(v=>`<option value="${v}" ${Math.round(autoTop3()*100)===v?'selected':''}>${v}%</option>`).join('')}</select> to place top 3 · picks the highest level that qualifies · skips horses that would sour</span></div>
    ${h?`<div class="note">${esc(h.name)}: Energy ${Math.round(h.energy)} · Happy ${Math.round(h.happy)} · Health ${Math.round(h.health)} · Record ${h.wins} wins / ${h.starts} starts${refuseChance(h)?` · <span class="bad">Sulking: ${Math.round(refuseChance(h)*100)}% chance to refuse</span>`:''}</div>`:'<div class="note">Odds appear once you pick a horse. Energy 40+ and health 50+ needed.</div>'}
   </div>
   ${ranchInvPanel(h,ok)}
@@ -4075,6 +4081,8 @@ function renderModal(){
     <div class="tablewrap"><table class="result"><tr><th>Horse</th><th>Slot</th><th>Item</th><th class="n">Cost</th></tr>${buy.map(r=>{const h=H(r.h),it=ITEMS[r.id];return `<tr><td>${esc(h?h.name:'?')}</td><td>${SLOTN[r.sl]}</td><td><b class="rc-${it.r}">${it.n}</b></td><td class="n">${r.p?money(r.p):'tack room'}</td></tr>`}).join('')}</table></div>
     ${miss.length?`<p class="note" style="margin-top:8px">Can’t fill ${miss.length} slot${miss.length===1?'':'s'} (not in stock or not enough money): ${[...new Set(miss.map(r=>SLOTN[r.sl]))].join(', ')}.</p>`:''}
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="buygearok">Buy all for ${money(tot)}</button><button class="btn" data-a="close">Cancel</button></div>`;
+  }else if(m.type==='story'){const h=H(m.id);if(!h){UI.modal=null;ov.hidden=true;return}title=esc(h.name)+'’s life story';
+    body=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><div class="portrait${h.shiny?' shiny':''}" style="width:200px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><b>${esc(h.name)}</b><div class="note">${sexLabel(h)} · ${ageLabel(h)} · ${breedLabel(h)}</div><div class="note">${h.wins} win${h.wins===1?'':'s'} in ${h.starts} start${h.starts===1?'':'s'} · ${money(h.earnings||0)} won</div></div></div>${storySection(h).replace('<div class="subh">Life story</div>','')}<div class="actions" style="margin-top:14px"><button class="btn" data-a="open" data-id="${h.id}">Open papers</button><button class="btn primary" data-a="close">Close</button></div>`;
   }else if(m.type==='guide'){title='Game Guide';body=guideBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Close</button></div>`;
   }else if(m.type==='changelog'){title='What’s new in each build';body=changelogBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="${m.back?'clback':'close'}">${m.back?'Back':'Close'}</button></div>`;
   }else if(m.type==='autoall'){const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const ran=m.rows.filter(r=>r.ev!=null),sk=m.rows.filter(r=>r.ev==null);
@@ -4666,6 +4674,7 @@ const ACT={
   open:d=>{UI.modal={type:'horse',id:+d.id,mode:d.m||null};tutMark('papers')},
   close:()=>{UI.modal=null},
   guide:()=>{UI.modal={type:'guide'}},
+  storyopen:d=>{UI.modal={type:'story',id:+d.id}},
   changelog:()=>{UI.modal={type:'changelog',back:UI.modal&&UI.modal.type!=='changelog'?UI.modal:null}},
   clback:()=>{UI.modal=(UI.modal&&UI.modal.back)||null},
   foalrnd:()=>{const m=UI.modal;const f=m&&H((m.list[m.i]||{}).f);const el=document.getElementById('foalName');if(f&&el)el.value=foalNameIdea(f);return 'skip'},
@@ -4734,7 +4743,7 @@ const ACT={
   sourok:()=>{const m=UI.modal;if(!m||m.type!=='sourcomp')return;UI.modal=null;const h=H(UI.compHorse);toast('Auto compete: '+h.name+' → '+TIERS[m.ti].n+' '+EVENTS[m.ei].n+' ('+pct(m.win)+' win chance)');return compete(h,m.ei,m.ti)},
   autocomp:()=>{const h=H(UI.compHorse);if(!canCompete(h))return toast('Pick a horse that can compete today first.');const {best,sour,top}=autoPick(h);
     if(!best&&sour){UI.modal={type:'sourcomp',ei:sour.ei,ti:sour.ti,win:sour.win,reasons:sour.sr};return}
-    if(!best)return toast(top?'No open event gives '+h.name+' an '+Math.round(AUTO_WIN*100)+'% chance to win. Best is '+TIERS[top.ti].n+' '+EVENTS[top.ei].n+' at '+pct(top.win)+'.':'No open events '+h.name+' can enter right now.');
+    if(!best)return toast(top?'No open event meets your auto rule ('+autoRuleText()+') for '+h.name+'. Best win chance is '+TIERS[top.ti].n+' '+EVENTS[top.ei].n+' at '+pct(top.win)+'.':'No open events '+h.name+' can enter right now.');
     toast('Auto compete: '+h.name+' → '+TIERS[best.ti].n+' '+EVENTS[best.ei].n+' ('+pct(best.win)+' win chance)');return compete(h,best.ei,best.ti)},
   autonext:()=>{const cur=UI.modal&&UI.modal.h;UI.modal=null;const nx=S.horses.filter(isAdult).find(x=>x.id!==cur&&canCompete(x));if(!nx)return toast('No other horses can compete today.');UI.compHorse=String(nx.id);UI.tab='compete';return ACT.autocomp()},
   autoall:()=>{const list=S.horses.filter(x=>isAdult(x)&&canCompete(x));if(!list.length)return toast('No horses can compete today.');
@@ -4857,6 +4866,8 @@ document.addEventListener('change',e=>{
   if(c==='feeddays'){S.feedDays=+e.target.value;save();render();return}
   if(c==='tplan'){const h=H(e.target.dataset.id);if(h){h.tplan=h.tplan||{pri:'normal',stats:{}};h.tplan.stats=h.tplan.stats||{};const f=e.target.dataset.f;if(f==='pri')h.tplan.pri=e.target.value;else h.tplan.stats[f.slice(2)]=e.target.value}save();render();return}
   if(c==='awayh'){UI.awayH=e.target.value;render();return}
+  if(c==='autowin'){S.autoWin=+e.target.value/100;save();render();return}
+  if(c==='autotop3'){S.autoTop3=+e.target.value/100;save();render();return}
   if(c==='festhorse'){UI.festHorse=e.target.value;render();return}
   if(c==='awayd'){UI.awayD=e.target.value;render();return}
   if(c==='pname'){UI.pdraft.name=e.target.value;return}
