@@ -3341,7 +3341,7 @@ function ranchMap(){
    g+=`<rect x="0" y="48" width="400" height="190" fill="url(#mMow)" opacity=".6"/><rect x="640" y="262" width="560" height="100" fill="url(#mMow)" opacity=".5"/>`;}
   {let f='';for(let x=8;x<1200;x+=22)f+=`<rect x="${x}" y="${38+Math.sin(x/70)*1.5}" width="2" height="6" fill="#6B4A30"/>`;g+=f+`<path d="M0 40 C300 38 600 41 1200 39" stroke="#7a6a58" stroke-width=".7" fill="none"/><path d="M0 43 C300 41 600 44 1200 42" stroke="#7a6a58" stroke-width=".7" fill="none"/>`;
    const r=srng(91);for(let x=40;x<1200;x+=46+r()*40){if(x>540&&x<880)continue;g+=tree(x,22+r()*6,14+r()*6,'#557F42')}}
-  for(const [x,y,r] of [[22,74,20],[18,424,20],[1184,300,20],[1182,470,18],[590,250,16],[622,386,15],[470,380,16],[870,392,16]])g+=tree(x,y,r,'#5A8746');
+  for(const [x,y,r] of [[22,74,20],[18,424,20],[1150,368,17],[1182,470,18],[590,250,16],[622,386,15],[470,380,16],[870,392,16]])g+=tree(x,y,r,'#5A8746');
   // farm pond with cattails, and a windmill pumping into a stock tank
   g+=`<ellipse cx="436" cy="334" rx="58" ry="22" fill="${C.waterD}"/><ellipse cx="436" cy="332" rx="54" ry="19" fill="${C.water}"/><path d="M402 328 q14 -5 28 0 M446 338 q12 -4 24 0" stroke="#fff" stroke-width="1.2" fill="none" opacity=".6"/>`+
    [[384,330],[390,342],[488,336],[482,324]].map(([x,y])=>`<path d="M${x} ${y} v-12 M${x+3} ${y} v-9 M${x-3} ${y} v-8" stroke="#4F7A3C" stroke-width="1.3"/><rect x="${x-.8}" y="${y-16}" width="2" height="5" rx="1" fill="#6B4A2E"/>`).join('')+
