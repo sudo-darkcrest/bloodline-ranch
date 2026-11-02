@@ -136,6 +136,8 @@ main{padding-block:20px}
 .wstage .wclouds{animation:wCloud 38s linear infinite alternate}.wstage .wclouds.slow{animation:wCloudB 50s linear infinite alternate}.wstage .wbirds{animation:wBird 26s ease-in-out infinite alternate}
 .wstage .wcf{animation:wConf 2.6s cubic-bezier(.3,.6,.6,1) forwards}.wstage .wban{transform-box:fill-box;transform-origin:center;animation:wBan .6s ease-out forwards}
 @media (prefers-reduced-motion:reduce){.wstage .wclouds,.wstage .wbirds{animation:none}}
+@keyframes bnCloud{0%{transform:translateX(0)}100%{transform:translateX(50px)}}@keyframes bnBird{0%{transform:translate(0,0)}100%{transform:translate(160px,-6px)}}.tabban .bnclouds{animation:bnCloud 45s linear infinite alternate}.tabban .bnbirds{animation:bnBird 30s ease-in-out infinite alternate}@media (prefers-reduced-motion:reduce){.tabban .bnclouds,.tabban .bnbirds{animation:none}}
+.guide .clog ul{list-style:disc;line-height:1.45}.guide .clog ul li{margin:0 0 2px}.guidepanel{text-align:left}
 .festart{margin:-16px -18px 0;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:1000/80}.festart svg{width:100%;height:100%;display:block}
 .rivalpanel{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}.rivalhead{display:flex;gap:12px;align-items:center;flex:1;min-width:260px}.rivalhead>.grow{min-width:0;flex:1 1 200px}.rivalface{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:var(--pasture)}.rivalface svg{width:64px;height:64px;display:block}.rivalbarn{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.rivalhorse{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px}.rivalrec{display:flex;align-items:baseline;gap:4px;flex-direction:row;flex-wrap:wrap;justify-content:center;min-width:90px}.rivalrec .rw,.rivalrec .rl{font-family:var(--f-display,serif);font-size:30px;font-weight:700}.rivalrec .rw{color:var(--good,#2e7d32)}.rivalrec .rl{color:var(--bad,#b3261e)}.rivalrec .note{flex-basis:100%;text-align:center}.rivallast{flex-basis:100%}.rivalchip{background:#7A1E1E;color:#fff;border-color:#7A1E1E;font-size:10px;padding:1px 6px}tr.rivalrow td{background:color-mix(in srgb,#B03A2E 10%,transparent)}
 .note.brk{font-size:11.5px;line-height:1.35}.note.brk span{display:block;white-space:nowrap}
@@ -514,7 +516,7 @@ const randPerson=()=>pick(PFIRST)+' '+pick(PLAST);
 const randRanch=()=>{const a=pick(RFIRST);let b=pick(RSECOND);if(a===b)b='Creek';return a+' '+b+' '+pick(RLAST)};
 
 /* ---------- rarity, breeds, items ---------- */
-const RARITY={common:{n:'Common',m:1},uncommon:{n:'Uncommon',m:1.15},rare:{n:'Rare',m:1.35},epic:{n:'Epic',m:1.8},legendary:{n:'Legendary',m:2.6},mythical:{n:'Mythical',m:4.2}};
+const RARITY={common:{n:'Common',m:1.1},uncommon:{n:'Uncommon',m:1.3},rare:{n:'Rare',m:1.7},epic:{n:'Epic',m:2.5},legendary:{n:'Legendary',m:4},mythical:{n:'Mythical',m:6.5}};
 const RORDER=['common','rare','epic','legendary'];
 const HRORDER=['common','uncommon','rare','epic','legendary','mythical'];
 const BREEDS={
@@ -670,6 +672,7 @@ function freeGear(id){for(const x of S.inv)if(x.on===id)x.on=null}
 function useTack(h){return !!h&&(!h.client||!!h.client.tack)}
 function equip(uid,hid){const x=S.inv.find(y=>y.uid===+uid);const h=H(hid);if(!x||!h)return;if(!useTack(h))return toast(h.name+' uses the owner’s tack. Tick “Use my tack” in their papers first.');const sl=ITEMS[x.id].s;for(const y of S.inv)if(y.on===h.id&&ITEMS[y.id].s===sl)y.on=null;x.on=h.id;toast(h.name+' is wearing the '+ITEMS[x.id].n+'.')}
 /* ---------- auto gear ---------- */
+function gapStat(h){let best=null,g=.5;for(const x of STATS){const d=h.pot[x.k]-h.tr[x.k];if(d>g){g=d;best=x.k}}return best}
 function bestEventOf(h){let bi=0,bv=-1;EVENTS.forEach((ev,i)=>{let v=0;for(const k in ev.w)v+=ev.w[k]*(h.tr[k]+h.pot[k])/2;if(v>bv){bv=v;bi=i}});return bi}
 function gearRole(h){if(h.retired)return 'retired';if(!isAdult(h))return 'young';return 'active'}
 function itemScore(it,h){const e=it.e,role=gearRole(h),be=EVENTS[bestEventOf(h)].id;let v=0;
@@ -747,7 +750,7 @@ const FACI=Object.fromEntries(FAC.map(f=>[f.id,f]));
 function L(id){return (S&&S.fac&&S.fac[id])||0}
 function stockHay(){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+f.hay[L(f.id)],0)}
 function stockIncome(sIdx){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+((f.seasonal&&sIdx>1)?0:f.inc[L(f.id)]*(specOf('stock')===f.id?1.25:1)),0)}
-function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)}
+function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85}
 function houseMult(){return [1,1.05,1.1,1.2][L('house')]}
 function vetCost(h){return Math.round(80*(1-(psk('care')-1)*.04)*(S.staff.vet?1-(.3+.05*sk('vet')):1)*[1,.75,.5,.3][L('clinic')])}
 const FEE_RATE=[.06,.08,.10,.12,.15,.18,.2,.18,0,.19];
@@ -863,8 +866,71 @@ function trophyRoom(){const all=ranchRibbons();if(!all.length)return `<div class
    <div class="subh">All-time ribbons by level</div><div class="tablewrap"><table><tr><th>Level</th><th class="n">1st</th><th class="n">2nd</th><th class="n">3rd</th></tr>${tally.map(x=>`<tr><td>${x.t.n}</td><td class="n">${x.c[0]}</td><td class="n">${x.c[1]}</td><td class="n">${x.c[2]}</td></tr>`).join('')}</table></div>
   </div>`}
 /* rival ranch */
-const RIVAL_HORSES=['Dusty Star','Black Jack','Sundance Kid','Cimarron','Rio Bravo','Prairie Fire','Smoke Signal','Desert Rose','Thunder Road','Midnight Rider','Copper Penny','Wild Card'];
 
+
+/* ---------- the game guide (title screen and Office) ---------- */
+const GUIDE=[
+ ['Getting started',[
+  'You run a horse ranch. Every <b>day</b> you can groom, train, show or rest each horse, then press <b>End Day</b>. A year is 16 days: four seasons of four days each.',
+  'Start with the horses you’re given. Groom them (bond), turn them out to pasture (happiness and health), train them toward their potential, and enter Local Shows for small prizes and reputation.',
+  'Money comes from show prizes, selling horses, boarding client horses, stud fees and livestock. Money goes to hay, wages, upkeep, entry fees and buildings. Keep a hay reserve: a herd that goes hungry loses reputation.',
+  'The tabs along the top are the places on your ranch: Stable, Breeding, Compete, Market, Tack, Boarding, Facilities, Bank, Staff, Office, Hall of Fame and Journal. The morning report after each End Day tells you what happened overnight.']],
+ ['Horses: stats, potential and traits',[
+  'Every horse has five stats: <b>Speed, Stamina, Strength, Agility and Smarts</b>. Each stat has a trained value (what the horse can do today) and a <b>potential</b> (its ceiling). Training raises the trained value toward the ceiling; only breeding raises the ceiling.',
+  '<b>Natural skills</b> (traits) are inborn and pass down through breeding: good ones like Powerhouse or Calm, bad ones like Lazy or Skittish, and rare ones like Champion Bloodline. <b>Learned skills</b> are picked up slowly through bond and work.',
+  '<b>Happiness</b> affects everything: unhappy horses train worse, compete worse and may refuse to load into the trailer. <b>Energy</b> is spent by training and showing and restored by rest. <b>Health</b> drops with injuries and neglect. <b>Bond</b> grows with grooming and care and speeds up training.',
+  'Horses are foals until 1 year, yearlings until 2, adults from 2, and seniors from 18. They live about 24 to 30 years. Mares can breed from 2; a pregnancy takes 11 days.',
+  'Breeds carry a rarity (Common to Mythical) that sets their price and gives bonus potential in certain stats. Purebreds get +2 on their breed’s bonus stats; a cross between two breeds counts as one rarity lower.']],
+ ['Daily care',[
+  '<b>Groom</b> once a day for bond and a little happiness. A Stable Hand grooms for you, but your own grooming still adds bond.',
+  '<b>Turn out to pasture</b> is a free day that restores happiness and health and halves hay use. Horses stuck in a stall all day get bored and lose happiness, so turn out everyone who isn’t working.',
+  '<b>Vet checkups</b> once a season keep health up and are required for National-level shows and above (and for every show during a disease scare). Injuries need treatment from the papers.',
+  '<b>Hay</b> is eaten every night. Buy it on the Office tab, cut it yourself from the Hay Fields, or let a Ranch Manager reorder it. It’s cheapest in summer and dearest in winter, when horses eat 30% more.']],
+ ['Training',[
+  'Train one stat per day yourself (costs energy; the gain shrinks as the horse nears its ceiling). A <b>Trainer</b> on staff works several idle horses every evening; mark a horse <b>Reserved</b> to put it first in line and keep it out of shows.',
+  'Young horses can be trained lightly from six months (the trainer takes it easy on them). Training plans in the papers tell the trainer which stats to focus on and how hard to push.',
+  'Energy matters: a horse below its soreness line finishes the day sour. Tack (saddle, bridle, boots, blanket) adds small bonuses to training, shows and comfort.']],
+ ['Breeding',[
+  'Pick a mare and a stallion in the Breeding Shed. The foal’s potential is the parents’ average plus luck, with bonuses for Champion Bloodline, a first cross between purebreds (hybrid vigor), the Breeding Lab, and a 6% chance per stat of a breakthrough worth +6 to +12.',
+  'Coat color follows real genetics (Extension, Agouti, Cream, Grey and Tobiano), so two bays can throw a chestnut and a cream gene can make a palomino or buckskin.',
+  '<b>Inbreeding</b> hurts: close relatives lose potential on every stat, may be born Fragile and live shorter lives. Mild line-breeding is safe and helps natural skills pass down. The family check in the shed warns you before you breed.',
+  'Outside studs change every week and charge a fee; your own stallions are free. Your rival’s stallion stands for double. The <b>Breeding planner</b> lists the three best matches for any mare.',
+  'The <b>Breeding Registry</b> on the Breeding tab sets twelve long-term goals, from a first foal to a fifth-generation homebred and a 100-potential horse, each paying cash and reputation.']],
+ ['Shows and the calendar',[
+  'Each horse can enter one event a day. Entry fees are 6–8% of the purse. Show levels: Local (daily), County Fair (last two days of every season), State (spring and fall), Regional (summer and winter), National (fall), International (late summer), World Cup (winter) and the Olympics (every 4th summer). Higher levels need more reputation.',
+  'Eight standard events test different stats: Quarter-Mile Race, Barrel Racing, Endurance Ride, Dressage, Draft Pull, Show Jumping, Cross-Country and Reining. Three <b>specialty events</b> need the right type of horse: the Driving Class (drafts), the Pony Cup (ponies) and the Desert Ride (hot bloods).',
+  '<b>Auto compete</b> enters the highest open level where the horse has an 80% or better chance to win, and skips horses that would finish sour. The odds shown are real: they come from simulating the field.',
+  'After 30 Local wins, 20 County wins or 16 State wins a horse <b>graduates</b> that level: it can still enter but prizes are halved. Move up.',
+  'The <b>season circuit</b> gives points for every placing (more at higher levels). The top horse when a season ends is Season Champion: cash, +5 reputation and a title.',
+  '<b>Olympics:</b> two events each day of summer in Olympic years. A horse qualifies with a top-3 finish at any World Cup event. Olympic gold is the top of the game.',
+  'Boarded client horses can compete too. The owner pays half the entry fee and takes 40% of the prize.']],
+ ['Festivals and trouble',[
+  'Three festivals a year: the <b>Spring Foal Show</b> (spring day 2, enter a foal or yearling), the <b>Harvest Fair</b> (fall day 2, Best in Show for grown horses plus a booth that sells your livestock goods) and the <b>Winter Horse Sale</b> (winter day 3, three horses about 30% off and 20% more for anything you sell).',
+  'Most springs the almanac warns of one problem coming later in the year: a <b>drought</b> (hay costs double that season), a <b>disease scare</b> (every show needs a recent vet check) or <b>storms</b> (a fence washout). You get a season to prepare.']],
+ ['Your rival',[
+  'One named rancher with four real horses competes against you, mostly at State level and above. Beating them pays a bonus and reputation; losing costs nothing but pride. Streaks earn achievements.',
+  'See their barn on the Compete tab. Their horses train, age, retire and get replaced; retired or cash-sale horses show up at the sale barn with a “From your rival” tag. Each season they throw down a one-on-one <b>challenge</b> with a side bet.']],
+ ['Money, boarding and the bank',[
+  '<b>Boarding:</b> owners ask you to keep a horse for a set number of days at a daily rate, with goals (care, raise a stat, place at an event, build bond). Meet the goals for a bonus and reputation. You can board one client horse for every two stalls.',
+  '<b>Stud fees:</b> other ranches ask to breed to your stallions. <b>Livestock</b> (chickens, goats, sheep, cattle, bees) earn money every night but eat hay and need tending.',
+  '<b>Sponsors</b> pay weekly once your reputation is high enough, as long as you keep showing. <b>Odd jobs</b> on the Office tab earn a little cash each day.',
+  'The <b>Bank</b> lends against your credit; missed payments hurt and a foreclosure costs you buildings. <b>Property tax</b> is charged each season once your buildings are worth more than $25,000, and every building has daily upkeep.',
+  'Selling a horse: buyers offer around its value; your reputation, a recent vet check, a ranch house and the Museum all raise what they pay. You can buy back a sold horse for a week.']],
+ ['Facilities and staff',[
+  'Facilities on the ranch map do what their cards say: the barn adds stalls, pasture and clinic levels improve daily care, the ring and track improve training, the feed barn cuts hay cost and waste, the tack room improves gear resale, and livestock buildings add income.',
+  '<b>Prestige buildings</b> are the late-game money sinks: the Covered Arena (State shows all year), Breeding Lab (better foals), Guest Lodge (tourist income from your champions) and Ranch Museum (income from your career wins, better sale prices and the Legendary Ranch title).',
+  '<b>Staff:</b> a Stable Hand grooms every horse each morning and mucks out, a Trainer works idle horses every evening, a Ranch Vet heals injuries faster and cuts vet bills, a Ranch Manager buys hay cheaper and restocks it and boosts income, a Farrier keeps hooves shod so horses get hurt less, and a Livestock Hand tends your stock animals. Staff housing lowers wages and attracts better applicants.']],
+ ['Tack and gear',[
+  'Gear comes in Common, Rare, Epic and Legendary. Saddles, bridles, boots and blankets go on a horse; bedding and toys improve the stall; flair is for the show ring. Buy from the Tack Shop, win it as prizes, or open crates. Boarded horses can use your tack if you tick the box in their papers.']],
+ ['Saving and devices',[
+  'The game autosaves every day in this browser. Use the save slots and <b>Download a save file</b> on the Office tab for backups, and <b>Load Game</b> on the title screen to load a file or a transfer code on another device.',
+  'Starting a new ranch replaces only the autosave; keep your current ranch in a slot or a file first.']],
+ ['Tips',[
+  'Keep horses happy before anything else: a happy horse trains faster, competes better and never refuses the trailer.',
+  'Breed for potential, buy for training. A cheap colt with 85 potential is worth more to you than a trained 60.',
+  'Match the show to the horse: check the odds, and use specialty events and the season circuit to get more out of a varied barn.',
+  'Spend early money on the barn and pasture, mid money on the trainer and breeding, and late money on prestige buildings.']]];
+function guideBody(){return `<div class="guide">${GUIDE.map(([h,ps],i)=>`<details class="clog" ${i===0?'open':''}><summary><b>${esc(h)}</b></summary><ul>${ps.map(t=>`<li>${t}</li>`).join('')}</ul></details>`).join('')}</div>`}
 /* ---------- seasonal festivals (Build 72) ---------- */
 const FESTS={foalshow:{n:'Spring Foal Show',s:0,d:2,fee:50,prize:[600,300,150],rep:[4,2,1],blurb:'The county judges pick the best young horse of the year. Enter one of your foals or yearlings; it’s judged on breeding, condition, happiness and how well it trusts you.'},
   harvest:{n:'Harvest Fair',s:2,d:2,fee:100,prize:[1500,700,300],rep:[6,3,1],blurb:'Pies, pumpkins and the Best in Show halter class. Enter one grown horse to be judged on training, condition, coat and show record. Your ranch booth sells eggs, cheese, wool and honey.'},
@@ -955,7 +1021,7 @@ function rivalPanel(){const r=ensureRival();const tot=r.w+r.l;const lead=r.w>r.l
    <div style="width:100%"><button class="btn small" data-a="rivaltoggle">${open?'Hide their horses':'See their horses ('+r.horses.length+')'}</button></div>
    ${open?`<div class="rivalbarn">${r.horses.map(rivalHorseRow).join('')}</div><p class="note">Their horses train every week, grow old and get replaced, so what you’re racing against changes over the years. When one retires or ${esc(r.owner.split(' ')[0])} needs cash, it shows up at the sale barn. Their stallion stands at stud for double the usual fee.</p>`:''}</div>`}
 /* ---------- balance (Build 70) ---------- */
-const BAL={starWeekly:.04,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.625,clientPer:2,clientCut:.4,marketMarkup:1.3,bailKeep:.75,studCool:4,studFee:[.08,.06]};
+const BAL={starWeekly:.04,userTrain:1.15,gradPay:.5,topPrize:0.6,classMax:{0:30,1:20,2:16},taxRate:.0375,taxFree:25000,boardMult:.625,clientPer:2,clientCut:.4,marketMarkup:1.45,bailKeep:.75,studCool:4,studFee:[.08,.06]};
 function tierWins(h,ti){return ((h&&h.ribbons)||[]).filter(r=>r.p===1&&r.t===ti).length}
 function classOk(h,ti){const m=BAL.classMax[ti];return m==null||!h||tierWins(h,ti)<m}
 function gradMult(h,ti){return classOk(h,ti)?1:BAL.gradPay}
@@ -1153,13 +1219,6 @@ function trainerPlan(h){const tp=h.tplan||{},sp=tp.stats||{},p=S.staff.trainer;
   ${plan?`<p class="note" style="margin-top:6px">If ${esc(h.name)} is still idle at day’s end: ${plan.length?'<b>'+plan.join(', ')+'</b>':'nothing left to train'}${plan.length&&p.skill===3?' (maybe one more)':''}.</p>`:''}`;
 }
 function choresLeft(){return 2-(S.choreDay===S.day?S.choresToday.length:0)}
-const UPGRADES=[
-  {id:'roundpen',n:'Round Pen',cost:1800,d:'Training gains +10%.'},
-  {id:'hotwalker',n:'Hot Walker',cost:2200,d:'Horses recover 10 extra energy overnight.'},
-  {id:'paddock',n:'Shaded Paddock',cost:2000,d:'Horses gain +2 happiness every night.'},
-  {id:'meadow',n:'Hay Meadow',cost:2500,d:'Doubles the hay you cut yourself.'},
-  {id:'arena',n:'Lesson Arena',cost:3000,d:'Riding lessons pay 50% more.'},
-];
 const JOBS=[
   {id:'turnout',n:'Turn out to pasture',e:0,d:'A day grazing outside. Happiness +10, health +3, extra rest tonight, and half the hay in spring and summer.'},
   {id:'trail',n:'Trail ride',e:15,d:'Happiness +8, bond +4 and a little Stamina.'},
@@ -1180,14 +1239,16 @@ const CHORES=[
   {id:'scout',n:'Scout other ranches',d:'$60. Fresh horses and studs at the sale barn now.'},
 ];
 function wages(){return STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S.staff[x.id],x.id):0),0)}
-function gapStat(h){let best=null,g=.5;for(const x of STATS){const d=h.pot[x.k]-h.tr[x.k];if(d>g){g=d;best=x.k}}return best}
-
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'A full Game Guide: on the title screen between Load Game and Settings, and on the Office tab. Thirteen sections cover daily care, stats and traits, training, breeding and genetics, the show calendar and the Olympics, festivals, trouble, the rival, money, facilities, staff, tack, saving and tips.',
+  'New top-of-tab art for the Office (a window onto your own horses, a bulletin board with your best ribbons, calendar, clock, safe and desk) and the Journal (an open journal with the date, polaroids of your horses, pen, glasses, candle and coffee). Every open-sky banner now has drifting clouds and birds.',
+  'Economy: hay costs about a dollar more a bale and the hay fields yield 15% less, so a Feed Barn and a Ranch Manager matter more. Horses cost more across the board, and the rare ones are properly expensive: rarity now multiplies value by 1.3× (Uncommon), 1.7× (Rare), 2.5× (Epic), 4× (Legendary) and 6.5× (Mythical). Sale-barn markup is a little higher too.',
+  'Housekeeping: removed old unused code (an early upgrade system, a leftover head drawing, dead banner helpers) and ran a lint pass over the whole game.',
   'Fixed: the Buy button on Winter Horse Sale lots did nothing. Buying works now, and View papers opens the lot’s papers.',
   'Live events look better: every horse casts a ground shadow, galloping horses kick up dust, clouds drift and birds cross open-sky scenes, and the dressage, reining and trail horses are drawn larger. A top-3 finish ends with confetti and a WINNER / 2ND / 3RD banner.',
   'The three specialty events have their own live scenes and cards: the Driving Class is driven in the arena with a cart and a driver, the Pony Cup is a gymkhana with striped poles and bunting, and the Desert Ride crosses dunes under a hot sun with a vet tent.',
@@ -1488,8 +1549,6 @@ async function readCode(code){code=String(code).replace(/\s+/g,'');let x;
   if(code.startsWith('BR2.')){if(typeof DecompressionStream==='undefined')throw new Error('old browser');x=JSON.parse(await unzipBytes(B64U.dec(code.slice(4))))}
   else if(code.startsWith('{'))x=JSON.parse(code);else x=JSON.parse(decodeURIComponent(escape(atob(code))));
   if(!validSave(x))throw new Error('bad');return x}
-function encodeSave(){return btoa(unescape(encodeURIComponent(JSON.stringify(S))))}
-function decodeSave(code){const x=JSON.parse(decodeURIComponent(escape(atob(code.replace(/\s+/g,'')))));if(!validSave(x))throw new Error('bad');return migrate(x)}
 function enterGame(){UI.screen='game';stopTitleAnim();if(!UI.pdraft)UI.pdraft=defaultDraft();if(S.phase==='gameover')UI.modal={type:'gameover',lock:1};else if(S.needChar&&!(UI.modal&&UI.modal.lock))UI.modal={type:'whatsnew',lock:1}}
 function loadState(x,msg){S=migrate(x);if(!S.market||!S.market.length||!S.studs)refreshMarket();if(!S.shop)refreshShop(S);UI={tab:'stable',modal:null,breedMare:'',breedSire:'',compHorse:''};enterGame();save();toast(msg)}
 function load(){try{const t=localStorage.getItem(KEY);if(t){const s=JSON.parse(t);if(validSave(s))return migrate(s)}}catch(e){}return null}
@@ -1520,6 +1579,7 @@ function savePanel(){
 function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button class="btn small ${PREF[k]===v?'primary':''}" data-a="pref" data-k="${k}" data-v="${v}">${l}</button>`).join('')}</div>`;
   return `<div class="setrow"><div><b>Look</b><div class="note">Auto follows your device.</div></div>${seg('theme',[['auto','Auto'],['light','Light'],['dark','Dark']])}</div>
   <div class="setrow"><div><b>Sound effects</b><div class="note">Hoofbeats, crowds, coins and horse sounds.</div></div>${seg('sfx',[[0,'Off'],[.35,'Low'],[.7,'Medium'],[1,'High']])}</div>
+  <div class="setrow"><div><b>Game Guide</b><div class="note">How everything works, from daily care to the Olympics</div></div><button class="btn small" data-a="guide">Open the guide</button></div>
   <div class="setrow"><div><b>Version</b><div class="note">Build ${BUILD}</div></div><button class="btn small" data-a="changelog">What’s new</button></div>
   <div class="setrow"><div><b>Music</b><div class="note">Six tunes take turns: Easy Country Guitar, Prairie Waltz, Campfire Shuffle, Sunset Ballad, Cattle Drive and Lonesome Trail.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
   <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz'],[2,'Campfire Shuffle'],[3,'Sunset Ballad (new)'],[4,'Cattle Drive (new)'],[5,'Lonesome Trail (new)']])}</div>
@@ -1620,7 +1680,8 @@ function renderTitle(){const v=UI.tview||'main';const auto=hasAutosave();
      ${auto?`<button class="tbtn primary" data-a="tcontinue"><span class="tb1">Continue</span><span class="tb2">${esc(auto.ranchName)} · Year ${dateParts(auto.day).year}, day ${auto.day} · ${money(auto.money)} · ${auto.horses.length} horse${auto.horses.length===1?'':'s'}</span></button>`:''}
      <button class="tbtn ${auto?'':'primary'}" data-a="tnew"><span class="tb1">New Game</span><span class="tb2">Make your rancher and start a new story</span></button>
      <button class="tbtn" data-a="tview" data-v="load"><span class="tb1">Load Game</span><span class="tb2">Save slots, save files and transfer codes</span></button>
-     <button class="tbtn" data-a="tview" data-v="settings"><span class="tb1">Settings</span><span class="tb2">Look, event watching and saves</span></button>
+     <button class="tbtn" data-a="tview" data-v="guide"><span class="tb1">Game Guide</span><span class="tb2">How everything works, from daily care to the Olympics</span></button>
+    <button class="tbtn" data-a="tview" data-v="settings"><span class="tb1">Settings</span><span class="tb2">Look, event watching and saves</span></button>
      <button class="tbtn" data-a="tview" data-v="bug"><span class="tb1">Report a Bug</span><span class="tb2">Something broken or odd? Tell the developer</span></button></div>`;
   if(v==='bug')panel=bugPanel();
   if(v==='new')panel=`<div class="panel tpanel"><h2>Start a new game?</h2><p>Your current ranch, <b>${esc(auto?auto.ranchName:'')}</b>, is in the autosave. Starting over replaces it.</p><p class="note">Want to keep it? Save it to a slot first. You can load it again any time.</p>
@@ -1631,6 +1692,7 @@ function renderTitle(){const v=UI.tview||'main';const auto=hasAutosave();
      ${slotRows(false)}${loadPanel('t')}
      <p class="note" style="margin-top:12px">Saves from older builds load fine. New features get added to your ranch when it loads.</p>
      <div class="actions"><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
+  if(v==='guide')panel=`<div class="panel tpanel guidepanel"><h2>Game Guide</h2><p class="note" style="margin-top:0">Open any section. The same guide is on the Office tab while you play.</p>${guideBody()}<div class="actions" style="margin-top:12px"><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
   if(v==='settings')panel=`<div class="panel tpanel"><h2>Settings</h2>${settingsPanel()}<div class="actions" style="margin-top:12px"><button class="btn" data-a="tview" data-v="main">Back</button></div></div>`;
   $('#main').innerHTML=`<div class="title"><div class="titleart">${titleArt()}</div><p class="tsub">Breed, train and show horses. Build a legacy.</p>${panel}<p class="note tbuild"><button class="linkbtn" data-a="changelog" title="See what changed in each build">Build ${BUILD} · What’s new</button></p></div>`;
   startTitleAnim()}
@@ -1706,7 +1768,7 @@ function breedFoal(sire,dam){
 }
 
 function value(h){
-  let v=150+Math.pow(avg(h.pot),1.9)*.6+avg(h.tr)*12+h.wins*150;
+  let v=200+Math.pow(avg(h.pot),1.9)*.7+avg(h.tr)*14+h.wins*150;
   for(const t of h.traits)v+=TRAITS[t].val;v+=(h.skills||[]).length*200;v+=(h.ribbons||[]).filter(r=>r.p>1).length*40+awardsOf(h).length*100;
   const c=coat(h.genes);v+=c.cr===2?900:c.cr===1?250:0;if(c.tob)v+=300;if(c.grey)v+=150;
   v*=RARITY[rarityOf(h)].m;if(h.shiny)v*=1.6;
@@ -1779,15 +1841,6 @@ function refreshMarket(){
 }
 
 /* ---------- new game / save ---------- */
-function newGame(){
-  S={ver:1,day:1,money:2500,hay:60,hayPrice:7,stalls:6,stallLevel:0,rep:0,nextId:1,horses:[],registry:{},market:[],studs:[],offers:[],log:[],ach:{},
-     stats:{wins:0,foals:0},ranchName:'Bloodline Ranch',welcomed:false};
-  S.horses.push(genHorse({sex:'M',potMid:48,trFrac:[.45,.65],nTraits:1,rarity:'common',origin:'Founding stock'}));
-  S.horses.push(genHorse({sex:'F',potMid:46,trFrac:[.45,.65],nTraits:1,rarity:'common',origin:'Founding stock'}));
-  S.horses.push(genHorse({sex:'F',potMid:44,trFrac:[.45,.65],nTraits:2,rarity:'common',origin:'Founding stock'}));
-  migrate(S);refreshMarket();
-  log('info','You bought the old homestead and three horses. Welcome to '+S.ranchName+'.');
-}
 const REP_MAX=300;
 function repGainMult(){return Math.max(.3,160/(160+S.rep))}
 function gainRep(n){if(!(n>0))return 0;const g=Math.max(1,Math.round(n*repGainMult()));S.rep=Math.min(REP_MAX,S.rep+g);S.lastRepGain=S.day;return g}
@@ -2472,7 +2525,7 @@ function tutBanner(){if(!S||S.phase!=='tutorial'||!S.tut)return '';const st=TUT[
    <button class="btn small" data-a="tutskip">Skip the tutorial</button></div>`}
 function hankSVG(sz){return portraitSVG({skin:1,hair:0,hairC:4,hat:0,hatC:0,shirt:1,beard:3,old:1},sz)}
 function tutNewGame(){
-  S={ver:1,day:1,money:3000,hay:20,hayPrice:7,stalls:8,stallLevel:0,rep:0,nextId:1,horses:[],registry:{},market:[],studs:[],offers:[],log:[],ach:{},
+  S={ver:1,day:1,money:3000,hay:20,hayPrice:8,stalls:8,stallLevel:0,rep:0,nextId:1,horses:[],registry:{},market:[],studs:[],offers:[],log:[],ach:{},
      stats:{wins:0,foals:0},ranchName:'Hank’s Place',welcomed:true,phase:'tutorial',tut:{day:1,done:{}}};
   S.horses.push(genHorse({sex:'M',potMid:52,trFrac:[.5,.65],nTraits:1,rarity:'common',origin:'Hank’s ranch'}));
   S.horses.push(genHorse({sex:'F',potMid:50,trFrac:[.5,.65],nTraits:1,rarity:'common',origin:'Hank’s ranch'}));
@@ -2497,7 +2550,7 @@ function pathBody(){return `<p>Spring is over and it’s time to start your own 
    <li>${p.loan?`<b>Debt ${money(p.loan.amt)}</b> at ${(p.loan.rate*100).toFixed(1)}%: ${money(pay)} every season (4 days) for ${p.loan.n/4} years. First payment after 2 seasons.`:'<b>No debt</b>'}</li></ul>
    <button class="btn ${k==='inherit'?'primary':''}" data-a="pathpick" data-p="${k}">Choose ${p.n}</button></div>`}).join('')}</div>`}
 function buildRanch(pk,gift){const P=PATHS[pk];const keep={player:S.player,registry:S.registry,nextId:S.nextId,ach:S.ach};const name=(UI.rname||'').trim()||(S.player.ranchWant||'').trim()||(S.player.name.split(' ').pop()+' Ranch');
-  S={ver:1,day:1,money:P.money,hay:P.hay,hayPrice:7,stalls:6,stallLevel:0,rep:P.rep,nextId:keep.nextId,horses:[],registry:keep.registry,market:[],studs:[],offers:[],log:[],ach:keep.ach,
+  S={ver:1,day:1,money:P.money,hay:P.hay,hayPrice:8,stalls:6,stallLevel:0,rep:P.rep,nextId:keep.nextId,horses:[],registry:keep.registry,market:[],studs:[],offers:[],log:[],ach:keep.ach,
      stats:{wins:0,foals:0},ranchName:name,welcomed:true,phase:'play',player:keep.player,path:pk};
   migrate(S);S.fac={...S.fac,...P.fac};S.stalls=Math.max(S.stalls,STALLS[L('barn')]);
   if(pk==='inherit'){S.horses.push(genHorse({sex:'F',ageDays:ADULT+DPY*ri(11,14),potMid:52,trFrac:[.8,.92],nTraits:2,rarity:'common',origin:'Aunt Mae’s ranch'}));
@@ -2659,7 +2712,7 @@ function endDay(){
   if(adults.length&&R()<.14){const h=pick(adults);if(!S.offers.some(o=>o.id===h.id)){const amt=Math.round(saleValue(h)*(1.15+R()*.4)*houseMult()/10)*10;S.offers.push({id:h.id,amt,exp:S.day+2,who:pick(FARMS)});ev.push(['info','A buyer from '+S.offers[S.offers.length-1].who+' offered '+money(amt)+' for '+h.name+'. See the Stable tab.'])}}
   if(S.horses.length&&R()<.04*(specOf('vet')==='med'?.7:1)*[1,1,.5,.25][L('clinic')]*(dirtyStalls(25)?2:1)){const dh=S.horses.filter(x=>stallOf(x)<25&&!x.inj);const ok=S.horses.filter(x=>!x.inj);if(ok.length){const h=dh.length&&R()<.7?pick(dh):pick(ok);if(vaccinated(h)&&R()<.5)ev.push(['good',h.name+' fought off a bug going around. The vaccine from the last checkup helped.']);else if(!h.brew&&R()<.6)h.brew={id:illPick(),at:S.day+ri(1,3)};else ev.push(['warn',sicken(h)])}}
   if(R()<.03){S.hay+=10;ev.push(['good','A neighbor dropped off 10 spare bales of hay.'])}
-  S.hayPrice=Math.max(3,Math.round(([7,6,8,11][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]));
+  S.hayPrice=Math.max(3,Math.round(([8,7,9,12][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]));
   if(dp.sday===1&&S.day>1){scFinish(ev);scState();rivalChallenge(ev)}
   troubleTick(ev);
   {const fk=festKey();if(fk)ev.push(['good','🎪 Today is the '+FESTS[fk].n+'! '+(fk==='wintersale'?'See the Market or Compete tab.':'Enter a horse on the Compete tab.')]);const fn=festKey(S.day+1);if(fn)ev.push(['info','Tomorrow is the '+FESTS[fn].n+'. Get a horse ready.'])}
@@ -3276,10 +3329,6 @@ function renderStaff(){
     return `<div class="panel"><div class="rolehead"><b>${x.n}</b>${cur?`<span class="note">· filled by ${esc(cur.name)}</span>`:'<span class="note good">· open</span>'}</div><div class="note">${x.d}</div>
     ${apps.length?apps.map((a,i)=>`<div class="applicant"><span><b>${esc(a.name)}</b> <span class="stars" aria-label="Skill ${a.skill} of 5">${stars(a.skill)}</span><br><span class="note">${a.bg?esc(a.bg)+' · '+a.yrs+' yrs':''}</span><br><span class="note">${a.trait}: ${STAFF_TRAITS[a.trait]}</span>${a.spec?`<br><span class="note specline">Specialty · ${specText(a,x.id)}</span>`:''}<br><span class="note" style="color:var(--ink)">${staffEffect(x.id,a.skill,a)}</span></span><span class="mono">${money(wageOf(a,x.id))}/day${signFee(a,x.id)?`<br><span class="note">+ ${money(signFee(a,x.id))} to sign</span>`:''}</span><button class="btn small ${cur?'':'primary'}" data-a="hire" data-s="${x.id}" data-i="${i}">${cur?'Replace '+esc(cur.name.split(' ')[0]):'Hire'}</button></div>`).join(''):'<div class="note">No applicants right now. More come next week.</div>'}</div>`}).join('')}</div>`;
 }
-function upgradesPanel(){
-  return `<div class="panel"><div class="subh" style="margin-top:0">Ranch improvements</div><p class="note">One-time purchases that help forever.</p>
-  ${UPGRADES.map(u=>{const own=S.upgrades[u.id];return `<div class="staff ${own?'on':''}"><div class="grow"><b>${u.n}${own?' · built':''}</b><div class="note">${u.d}</div></div>${own?'':`<button class="btn small" data-a="upgrade" data-u="${u.id}" ${S.money<u.cost?'disabled':''}>Build · ${money(u.cost)}</button>`}</div>`}).join('')}</div>`;
-}
 function planMatches(m){const cands=[...eligibleSires().map(h=>({h,v:'h:'+h.id,fee:0})),...S.studs.map(x=>({h:x,v:'s:'+x.id,fee:studPrice(x),stud:1}))];
   return cands.map(c=>{const s=c.h,ib=inbreedInfo(s,m);const bonus=(has(s,'bloodline')?4:0)+(has(m,'bloodline')?4:0)+(isFirstCross(s,m)?2:0)-ib.loss;
     const foal=STATS.reduce((a,st)=>a+(s.pot[st.k]+m.pot[st.k])/2+bonus,0)/STATS.length;const good=s.traits.filter(t=>TRAITS[t]&&(TRAITS[t].good||TRAITS[t].rare)).length,bad=s.traits.filter(t=>TRAITS[t]&&!TRAITS[t].good&&!TRAITS[t].rare).length;
@@ -3386,7 +3435,7 @@ function ranchMap(){
   const lv=L,C={grass:'#A9BE85',grassD:'#869F63',grass3:'#B7CA92',dirt:'#D1B486',dirtD:'#B9996A',road:'#8F8270',water:'#7DB2D2',waterD:'#5B92B6',wood:'#7A5638',woodL:'#9C7550',white:'#F7F3EA',ink:'#2B2A26',sand:'#E6D3A6',sh:'rgba(35,45,25,.28)',stone:'#A8A296'};
   let g='',labels='';
   // bigger 1200x640 layout: every facility keeps its drawing but is moved and enlarged around its label point
-  const LIVE=[420,214,1.25,42];const OFF={bunk:[110,152,1.08,30],clinic:[237,152,1.08,30],recovery:[327,152,1.08,30],pasture:[590,202,1.3,42],track:[855,202,1.15,42],trails:[855,230,1.2,70],
+  const OFF={bunk:[110,152,1.08,30],clinic:[237,152,1.08,30],recovery:[327,152,1.08,30],pasture:[590,202,1.3,42],track:[855,202,1.15,42],trails:[855,230,1.2,70],
     house:[110,322,1.2,200],barn:[285,322,1.2,200],foaling:[419,322,1.2,200],ring:[532,322,1.2,200],training:[655,322,1.2,200],hayfield:[797,329,1.2,200],feedbarn:[915,322,1.2,200],tackroom:[962,346,1.2,190]};
   let CO=null;const mp=(x,y)=>CO?[CO[0]*1.2+(x-CO[0])*CO[2],CO[1]+CO[3]+(y-CO[1])*CO[2]]:[x,y];
   const shadow=(cx,cy,rx,ry=5)=>`<ellipse cx="${cx}" cy="${cy-ry*.7}" rx="${rx}" ry="${ry*.75}" fill="rgba(25,35,15,.3)" filter="url(#mSh)"/>`;
@@ -3682,11 +3731,7 @@ function tackShopArt(){
   // hanging blade sign under the porch
   const blade=`<path d="M788 122 H846" stroke="#2B1B10" stroke-width="3"/><path d="M788 134 L812 122" stroke="#2B1B10" stroke-width="2"/><path d="M806 122 V128 M838 122 V128" stroke="#2B1B10" stroke-width="1.4"/><rect x="798" y="128" width="48" height="30" rx="3" fill="#EFE2C2" stroke="#5A3D26" stroke-width="2"/><path d="M822 134 C814 134 813 144 816 152 M822 134 C830 134 831 144 828 152" stroke="#7A4A26" stroke-width="3.4" fill="none" stroke-linecap="round"/><circle cx="816.6" cy="140" r=".9" fill="#EFE2C2"/><circle cx="827.4" cy="140" r=".9" fill="#EFE2C2"/>`;
   // right side props
-  const bale=(x,y,w)=>`<rect x="${x}" y="${y}" width="${w}" height="22" rx="3" fill="#D9B95E"/><rect x="${x}" y="${y}" width="${w}" height="6" rx="3" fill="#E9CE7A"/><path d="M${x+w*.3} ${y} V${y+22} M${x+w*.7} ${y} V${y+22}" stroke="#9E7E32" stroke-width="1.4"/>${Array.from({length:8},(_,i)=>`<path d="M${x+3+i*w/8} ${y+10+(i%3)*3} l4 ${i%2?-2:2}" stroke="#B39440" stroke-width=".8"/>`).join('')}`;
-  const rbale=(x,y,r0)=>`<ellipse cx="${x+4}" cy="${y+r0-1}" rx="${r0*1.2}" ry="3" fill="rgba(40,30,15,.25)"/><rect x="${x-r0*1.1}" y="${y-r0}" width="${r0*1.4}" height="${r0*2}" fill="#C9A23E"/><ellipse cx="${x+r0*.3}" cy="${y}" rx="${r0*.62}" ry="${r0}" fill="#DDBB57" stroke="#9C7A22" stroke-width=".8"/><path d="M${x+r0*.3} ${y} m-${r0*.35} 0 a${r0*.35} ${r0*.55} 0 1 1 ${r0*.35} ${r0*.55} a${r0*.22} ${r0*.36} 0 1 1 -${r0*.22} -${r0*.36}" stroke="#A8822E" stroke-width=".8" fill="none"/>${[-.8,-.4,0].map(k=>`<path d="M${x+r0*k} ${y-r0} v${r0*2}" stroke="#B48E30" stroke-width=".7"/>`).join('')}`;
-  const wheel=(x,y,r0)=>`<circle cx="${x}" cy="${y}" r="${r0}" fill="#1B1B1B"/><circle cx="${x}" cy="${y}" r="${r0*.62}" fill="#9AA3A9"/><circle cx="${x}" cy="${y}" r="${r0*.5}" fill="#C9D0D5"/>${[0,72,144,216,288].map(a=>`<path d="M${x} ${y} L${(x+Math.cos(a*Math.PI/180)*r0*.48).toFixed(1)} ${(y+Math.sin(a*Math.PI/180)*r0*.48).toFixed(1)}" stroke="#8A9399" stroke-width="1.6"/>`).join('')}<circle cx="${x}" cy="${y}" r="${r0*.16}" fill="#555"/>`;
   const pickup=`<g transform="translate(720 258)">${vPickupRear('#2E5D8C')}</g>`;
-  const sq=(x,y)=>`<rect x="${x}" y="${y}" width="22" height="11" rx="1.5" fill="#D9BE62" stroke="#9C7A22" stroke-width=".7"/><path d="M${x+7} ${y} v11 M${x+15} ${y} v11" stroke="#9C7A22" stroke-width=".6"/><path d="M${x+2} ${y+3} h18" stroke="#EAD48A" stroke-width=".8"/>`;
   const sqb=(x,y)=>`<rect x="${x}" y="${y}" width="50" height="19" rx="2" fill="#D9BE62" stroke="#9C7A22" stroke-width=".8"/><path d="M${x+16} ${y} v19 M${x+34} ${y} v19" stroke="#8A6A12" stroke-width="1.1"/><path d="M${x+3} ${y+5} h44 M${x+3} ${y+12} h44" stroke="#EAD48A" stroke-width=".9" opacity=".8"/>${[...Array(6)].map((_,i)=>`<path d="M${x+4+i*8} ${y+19} l1 2.4" stroke="#C9A23E" stroke-width=".8"/>`).join('')}`;
   const hay=`<ellipse cx="290" cy="213" rx="58" ry="3" fill="rgba(40,30,15,.25)"/>${sqb(238,193)}${sqb(290,193)}${sqb(264,174)}<rect x="258" y="160" width="62" height="12" rx="1.5" fill="#F4F0E6" stroke="#9C7A22" stroke-width=".6"/><text x="289" y="169" font-size="7.2" text-anchor="middle" fill="#6B4A30" font-weight="700" font-family="system-ui">HAY $9/BALE</text>`;
   const props='';
@@ -3694,8 +3739,6 @@ function tackShopArt(){
   const rail=`<rect x="150" y="196" width="7" height="58" fill="#5A3D26"/><rect x="214" y="196" width="7" height="58" fill="#5A3D26"/><rect x="144" y="194" width="84" height="7" rx="2" fill="#6E4C30"/><rect x="144" y="194" width="84" height="2" fill="#A17A52"/>
    <path d="M172 201 C170 214 178 220 176 230" stroke="#3A2214" stroke-width="1.6" fill="none"/>`;
   const trough=`<g transform="translate(0 -22) scale(1 .9)" opacity=".95"><ellipse cx="96" cy="256" rx="54" ry="5" fill="rgba(60,40,20,.2)"/><path d="M46 232 L52 254 H140 L146 232Z" fill="#7B532F"/><path d="M46 232 H146" stroke="#4A2F1C" stroke-width="3"/><path d="M50 235 H142" stroke="#7FB3C9" stroke-width="3" opacity=".9"/><path d="M52 254 V258 M140 254 V258" stroke="#4A2F1C" stroke-width="3"/></g>`;
-  const neighbor=(x,w,top,c,label)=>`<g opacity=".9"><path d="M${x} 214 V${top+16} H${x+8} V${top} H${x+w-8} V${top+16} H${x+w} V214Z" fill="${c}"/><path d="M${x} ${top+40} H${x+w}" stroke="${hexMix(c,'#000000',.2)}" stroke-width="10" opacity=".5"/>${label?`<text x="${x+w/2}" y="${top+12}" font-size="9" text-anchor="middle" fill="${hexMix(c,'#000000',.45)}" font-family="Rye,Georgia,serif" letter-spacing="1">${label}</text>`:''}
-   ${[0,1].map(k=>`<rect x="${x+14+k*(w-46)}" y="${top+60}" width="18" height="26" fill="${hexMix(c,'#3a2a1e',.5)}"/>`).join('')}</g>`;
   return `<svg viewBox="0 0 1000 262" role="img" aria-label="Tack and Saddlery, the gear shop in town, on a warm afternoon">
 <defs>
 <linearGradient id="tsSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FB8D6"/><stop offset=".55" stop-color="#D9DCCB"/><stop offset="1" stop-color="#F2D9A8"/></linearGradient>
@@ -3743,7 +3786,6 @@ ${[214,780].map(x=>`<rect x="${x}" y="112" width="8" height="102" fill="#6E4C30"
 <path d="M470 232 H530 L534 240 H466Z" fill="#8C6844"/><rect x="466" y="240" width="68" height="4" fill="#4E331F"/>
 ${hay}${rail}${trough}${horse}${pickup}${props}
 </svg>`}
-function horseSVGInner(){return `<path d="M54 58 C40 60 34 80 36 104 C37 114 33 122 30 126 C40 122 44 112 44 100 C45 84 48 72 56 64 Z" fill="#2A211C"/><path d="M66 80 L80 84 C78 96 76 104 76 112 L76 128 L70 128 L68 112 C64 104 62 92 66 80 Z M134 82 L146 82 C145 96 144 104 144 112 L144 128 L138 128 L136 112 C135 104 133 94 134 82 Z" fill="#6A3A1C"/><path d="M118 46 C104 50 86 52 72 49 C64 47 56 47 50 52 C44 57 42 66 45 74 C48 80 55 84 64 85 C78 87 98 88 116 86 C126 85 134 84 140 81 C147 78 151 71 150 64 C151 56 154 46 160 36 C166 38 168 46 174 50 C180 54 184 58 188 57 C192 56 193 51 190 48 C184 38 176 26 168 18 C165 14 161 13 158 15 C150 18 138 27 128 37 C124 41 121 44 118 46 Z" fill="#7A3D1C"/><path d="M160 13 C152 15 140 24 128 36 C124 40 120 44 116 47 C121 50 126 49 129 46 C132 43 136 42 139 41 C143 38 146 35 150 33 C153 29 156 26 159 24 C161 21 162 19 163 18 Z" fill="#1E1A18"/><path d="M160 17 L157 4 C160 6 163 10 165 14 Z" fill="#7A3D1C"/><path d="M168 29 C170 27 174 27 176 29.5 C174 31.5 170 31.5 168 29 Z" fill="#15110F"/>`}
 function extrasList(){const r=UI.sxR??0,k=UI.sxK??1,g={};for(const x of S.inv)if(x.on==null&&RORDER.indexOf(ITEMS[x.id].r)<=r)(g[x.id]=g[x.id]||[]).push(x);return Object.values(g).flatMap(l=>l.slice(k))}
 function renderTack(){
   const days=7-((S.day-1)%7);
@@ -4020,6 +4062,7 @@ function renderModal(){
     <div class="tablewrap"><table class="result"><tr><th>Horse</th><th>Slot</th><th>Item</th><th class="n">Cost</th></tr>${buy.map(r=>{const h=H(r.h),it=ITEMS[r.id];return `<tr><td>${esc(h?h.name:'?')}</td><td>${SLOTN[r.sl]}</td><td><b class="rc-${it.r}">${it.n}</b></td><td class="n">${r.p?money(r.p):'tack room'}</td></tr>`}).join('')}</table></div>
     ${miss.length?`<p class="note" style="margin-top:8px">Can’t fill ${miss.length} slot${miss.length===1?'':'s'} (not in stock or not enough money): ${[...new Set(miss.map(r=>SLOTN[r.sl]))].join(', ')}.</p>`:''}
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="buygearok">Buy all for ${money(tot)}</button><button class="btn" data-a="close">Cancel</button></div>`;
+  }else if(m.type==='guide'){title='Game Guide';body=guideBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Close</button></div>`;
   }else if(m.type==='changelog'){title='What’s new in each build';body=changelogBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="${m.back?'clback':'close'}">${m.back?'Back':'Close'}</button></div>`;
   }else if(m.type==='autoall'){const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const ran=m.rows.filter(r=>r.ev!=null),sk=m.rows.filter(r=>r.ev==null);
     const tot=ran.reduce((a,r)=>a+(r.prize||0)-(r.cut||0)-(r.fee||0),0),wins=ran.filter(r=>r.place===1).length;title='Auto compete results';
@@ -4376,17 +4419,6 @@ function hFront_raw(coat,o={}){const [c,m,mz]=Array.isArray(coat)?coat:(HF_COATS
   const marks=mk==='snip'?`<path d="M-3 74 C-4 80 -2 84 0 84 C2 84 4 80 3 74 C1 72 -1 72 -3 74Z" fill="${W}"/>`:mk==='blaze'?`<path d="M-5 12 C-7 30 -4 50 -5 66 C-7 78 -5 90 0 91 C5 90 7 78 5 66 C4 50 7 30 5 12 C2 9 -2 9 -5 12Z" fill="${W}"/>`:mk==='star'?`<path d="M0 16 L3 21 L0 27 L-3 21Z" fill="${W}"/>`:mk==='stripe'?`<path d="M-3 14 C-4 30 -2 50 -2.5 68 L2.5 68 C2 50 4 30 3 14Z" fill="${W}"/><path d="M-4 76 C-3 84 3 84 4 76Z" fill="${W}"/>`:'';
   const NB=o.nb||130;const neck=`<path d="M-17 26 C-24 56 -32 92 -42 ${NB} H42 C32 92 24 56 17 26Z" fill="${nk}"/><path d="M-14 50 C-6 58 6 58 14 50 L18 80 C8 84 -8 84 -18 80Z" fill="#000" opacity=".18"/>${o.mane===0?'':`<path d="M15 20 C19 50 23 92 27 ${NB} H33 C29 92 24 50 19 22Z" fill="${m}" opacity=".85"/>`}`;
   const halter=o.halter?`<path d="M-13 64 C-6 67 6 67 13 64" stroke="${o.halter}" stroke-width="3.4" fill="none"/><path d="M-19 24 C-16 40 -14 52 -13 64 M19 24 C16 40 14 52 13 64" stroke="${o.halter}" stroke-width="2.6" fill="none"/><path d="M-12 8 C-4 11 4 11 12 8" stroke="${o.halter}" stroke-width="2.4" fill="none"/><circle cx="0" cy="68.5" r="2.4" fill="none" stroke="#C9B26A" stroke-width="1.4"/>`:'';
-  const head=`${ear(-1)}${ear(1)}<path d="${face}" fill="${c}"/>
-   <path d="M-19 12 C-22 22 -21 32 -18 40 C-15 34 -14 24 -15 14Z" fill="${dk}" opacity=".45"/><path d="M19 12 C22 22 21 32 18 40 C15 34 14 24 15 14Z" fill="${dk}" opacity=".45"/><path d="M-12.5 56 C-12 62 -13 68 -12.4 70 L-9 70 C-10 64 -10 60 -12.5 56Z M12.5 56 C12 62 13 68 12.4 70 L9 70 C10 64 10 60 12.5 56Z" fill="${dk}" opacity=".3"/>
-   <path d="M-8 6 C-4 4 4 4 8 6 C7 24 6 44 0 52 C-6 44 -7 24 -8 6Z" fill="${lt}" opacity=".35"/>
-   ${[-1,1].map(s=>`<path d="M${s*15} 27 C${s*15.5} 34 ${s*14} 42 ${s*11.5} 50" stroke="${lt}" stroke-width="2.2" fill="none" opacity=".35" stroke-linecap="round"/><path d="M${s*16.5} 28 C${s*17} 35 ${s*15.5} 43 ${s*13} 51" stroke="${dk}" stroke-width="1.4" fill="none" opacity=".35" stroke-linecap="round"/><ellipse cx="${s*14}" cy="12" rx="4.5" ry="3" fill="${dk}" opacity=".3"/><path d="M${s*7} 52 C${s*6} 58 ${s*7.5} 63 ${s*6.5} 68" stroke="${lt}" stroke-width=".8" fill="none" opacity=".3"/>`).join('')}
-   <path d="M-1.8 21.5 q1.8 -2.2 3.4 -.2 q-.4 2.2 -2.6 1.6" stroke="${dk}" stroke-width=".6" fill="none" opacity=".3"/>
-   ${marks}
-   <path d="M-12.4 70 C-14 76 -15 80 -14.5 84 C-14 90 -8 94 0 94 C8 94 14 90 14.5 84 C15 80 14 76 12.4 70 C8 73 -8 73 -12.4 70Z" fill="${mz}" opacity="${mk==='blaze'?.45:.6}"/>
-   <path d="M-12.5 78 C-14 82 -12.5 87 -9 87.5 C-8 85 -9.5 82 -7 79 C-8.5 77 -11 77 -12.5 78Z M12.5 78 C14 82 12.5 87 9 87.5 C8 85 9.5 82 7 79 C8.5 77 11 77 12.5 78Z" fill="#141010" opacity=".85"/><path d="M-5 91.5 Q0 93 5 91.5" stroke="#141010" stroke-width="1" fill="none" opacity=".5"/>${[-1,1].map(s=>`<path d="M${s*13.6} 76 C${s*15.4} 80 ${s*14.4} 86 ${s*10.4} 88.5" stroke="${lt}" stroke-width="1" fill="none" opacity=".45"/><path d="M${s*6.8} 77.5 C${s*5.6} 80 ${s*6.2} 83 ${s*7.6} 85" stroke="${lt}" stroke-width=".8" fill="none" opacity=".35"/>${[[4,86],[6,88.5],[9,87],[3,89.5]].map(([x,y])=>`<circle cx="${s*x}" cy="${y}" r=".45" fill="#141010" opacity=".5"/>`).join('')}`).join('')}<path d="M-6 94 Q0 97.5 6 94" stroke="${dk}" stroke-width="1.2" fill="none" opacity=".4"/>
-   ${[-1,1].map(s=>`<path d="M${s*15.5} 22 C${s*17.5} 18.5 ${s*21} 18 ${s*22.5} 21.5 C${s*22} 25.5 ${s*18.5} 26.5 ${s*16} 24.5Z" fill="#120E0C"/><circle cx="${s*19.6}" cy="21.2" r=".9" fill="#fff" opacity=".8"/><path d="M${s*14.5} 18 C${s*17.5} 15 ${s*21.5} 15.5 ${s*23} 19.5" stroke="${dk}" stroke-width="1.3" fill="none"/>`).join('')}
-   <path d="M-9 4 C-6 -2 -1 -4 2 -3 C6 -2 9 2 9 6 C6 12 3 16 -1 17 C-3 13 -6 9 -9 4Z" fill="${m}"/><path d="M-3 0 C-2 6 -1 11 -1 15 M2 -1 C3 5 2 10 1 14" stroke="${hexMix(m,'#000000',.3)}" stroke-width=".8" fill="none"/>
-   ${halter}`;
   const head2=frontHead(c,{mane:m,mz,mark:mk,id:'hf'+(++svgN)})+halter;if(o.part==='neck')return neck;if(o.part==='head')return head2;return neck+head2}
 
 function faceSpec(r){try{const c=coat(r.genes);const p=c.grey?GREYPAL:PAL[c.base+c.cr]||PAL.bay0;const body=p.b,mane=p.m;const mz=c.grey?'#6E6C68':p.l||hexMix(body,'#1a1410',.45);return {coat:[body,mane,mz],mark:marks(r).face}}catch(e){return {coat:'bay',mark:'none'}}}
@@ -4442,7 +4474,7 @@ function mPerson_raw(x,y,shirt,o={}){const sk=o.skin||'#E2B48C',pn=o.pants||'#34
   <circle cx="0" cy="-31" r="3.8" fill="${sk}"/>${o.cap?`<path d="M-3.9 -32 C-4 -36.6 4 -36.6 3.9 -32Z" fill="${o.cap}"/><path d="M2.6 -32.6 L7 -32" stroke="${o.cap}" stroke-width="1.6" stroke-linecap="round"/>`:`<path d="M-3.9 -31.5 C-4 -36 4 -36 3.9 -31.5 C2 -33.6 -2 -33.6 -3.9 -31.5Z" fill="${hc}"/>`}</g>`}
 function bPerson(...a){return '<!--ns-->'+bPerson_raw(...a)+'<!--/ns-->'}
 function bPerson_raw(x,y,shirt,o={}){const sk=o.skin||'#E2B48C';return `<g transform="translate(${x} ${y}) scale(${o.s||1})"><ellipse cx="0" cy="0" rx="8" ry="2" fill="rgba(0,0,0,.18)"/><path d="M-3 0 L-2.4 -14 M3 0 L2.4 -14" stroke="${o.pants||'#3A4A6A'}" stroke-width="3.4" stroke-linecap="round"/><path d="M-4.6 -13 C-5 -20 -4 -26 0 -27 C4 -26 5 -20 4.6 -13Z" fill="${shirt}"/>${o.arm||`<path d="M-4.4 -24 L-6.4 -15 M4.4 -24 L6.4 -15" stroke="${shirt}" stroke-width="2.6" stroke-linecap="round"/>`}<circle cx="0" cy="-31" r="3.8" fill="${sk}"/>${o.hat===0?'':`<path d="M-6.4 -33.4 C-3 -32.4 3 -32.4 6.4 -33.4" stroke="${o.hatC||'#6B4423'}" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M-3.2 -33.2 C-3.4 -38 3.2 -38 3.2 -33.2Z" fill="${o.hatC||'#7A4E2A'}"/>`}</g>`}
-function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='hof'||t==='journal')?1:curSeason(),ck=t+'_'+si+(t==='stable'?'_'+bannerHorses().map(h=>h.id+(h.name)).join(','):t==='hof'?'_'+hofHorses().map(r=>r.id+r.name).join(','):'');if(BANNER_CACHE[ck])return BANNER_CACHE[ck];const sv0=SEAS;SEAS=si;
+function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='hof'||t==='journal')?1:curSeason(),ck=t+'_'+si+(t==='stable'||t==='journal'||t==='office'||t==='ranch'?'_'+bannerHorses().map(h=>h.id+(h.name)).join(',')+'_'+S.day:t==='hof'?'_'+hofHorses().map(r=>r.id+r.name).join(','):'');if(BANNER_CACHE[ck])return BANNER_CACHE[ck];const sv0=SEAS;SEAS=si;
   const keep=svgN;svgN=60000+Object.keys(BANNER_CACHE).length*500;const p='bn'+t+'_';let defs='',o='';const rs=srng(t.length*97+t.charCodeAt(0));
   if(t==='stable'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E4A2C"/><stop offset="1" stop-color="#8A6038"/></linearGradient><radialGradient id="${p}g"><stop offset="0" stop-color="#FFD77A" stop-opacity=".55"/><stop offset="1" stop-color="#FFD77A" stop-opacity="0"/></radialGradient>`;
     o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(50)].map((_,i)=>`<path d="M${i*20} 0 V104" stroke="#53361F" stroke-width="1" opacity=".5"/>`).join('')}<rect y="0" width="1000" height="10" fill="#4A3020"/>
@@ -4528,34 +4560,64 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
     ${mPerson(470,104,'#C0392B',{s:1.2,cap:'#2B2A26',arm:`<path d="M4.6 -24 L10 -20 M-4.6 -24 L-10 -20" stroke="#C0392B" stroke-width="2.6" stroke-linecap="round"/><rect x="-12" y="-24" width="24" height="10" rx="1.5" fill="#D9BE62" stroke="#9C7A22" stroke-width=".6"/>`})}
     ${mPerson(630,104,'#3E6F6A',{s:1.15,vest:'#E8C23A',cap:'#3D5A80',skin:'#9A6640'})}${mPerson(712,104,'#7A5A8C',{s:1.15,hair:'#5A3A22',flip:1,arm:`<path d="M4.6 -24 L8 -18" stroke="#7A5A8C" stroke-width="2.6" stroke-linecap="round"/><rect x="6" y="-20" width="4" height="5" fill="#F4F0E6"/>`})}
     ${mPerson(800,104,'#4E7A3A',{s:1.15,cap:'#C9B48A',skin:'#F2D3B8'})}${[...Array(6)].map((_,i)=>wTree(860+i*24,84-(i%2)*4,13+(i%2)*3,i*9+11)).join('')}`}
-  if(t==='office'||t==='ranch'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5E4130"/><stop offset=".5" stop-color="#6E4D38"/><stop offset="1" stop-color="#5A3E2E"/></linearGradient>`+bSky(p+'s','#A6CCE6','#E6EEDC');
-    o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(25)].map((_,i)=>`<path d="M${i*40} 0 V92" stroke="#4A3022" stroke-width="1.4" opacity=".6"/>`).join('')}
-    <g transform="translate(400 10)"><rect x="-6" y="-6" width="212" height="82" fill="#3E2716"/><rect width="200" height="70" fill="url(#${p}s)"/><path d="M0 34 Q50 26 100 31 T200 28 V70 H0Z" fill="#B3CD8E"/><path d="M0 44 Q60 38 120 42 T200 40 V70 H0Z" fill="#9FC07C"/>${wTree(176,30,7,9)}
-     <ellipse cx="62" cy="40.6" rx="9" ry="1.2" fill="#000" opacity=".18"/>${bHorse(BH(918,BG.chestnut,'thoroughbred',60),52,25.5,20)}<ellipse cx="42" cy="62" rx="18" ry="2" fill="#000" opacity=".2"/>${bHorse(BH(912,BG.bay,'quarter',60),20,28,44)}
-     <g transform="translate(140 32) scale(.27)">${hFront('grey',{part:'neck'})}</g>${bFence(52,'#F4F0E6',0,200,40)}<g transform="translate(140 32) scale(.27)">${hFront('grey',{part:'head',halter:'#2E5D8C'})}</g><path d="M100 0 V70 M0 20 H200" stroke="#3E2716" stroke-width="4"/></g>
-    <g transform="translate(120 14)"><rect width="150" height="66" fill="#E9DDBF" stroke="#3E2716" stroke-width="4"/><path d="M10 50 C30 30 50 44 70 24 S110 30 140 14" stroke="#C0392B" stroke-width="1.6" fill="none" stroke-dasharray="4 3"/><path d="M14 20 C40 18 50 40 80 44 S 120 52 140 46" stroke="#5A8CB8" stroke-width="2" fill="none"/>${[[30,38],[70,24],[120,40]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.4" fill="#2B2A26"/>`).join('')}<text x="75" y="62" font-size="7" text-anchor="middle" fill="#6B4A30" font-family="Rye,Georgia,serif">COUNTY MAP</text></g>
-    <g transform="translate(700 16)"><rect width="70" height="60" fill="#F7F0DC" stroke="#8a7a62"/><rect width="70" height="12" fill="#C0392B"/>${[...Array(12)].map((_,i)=>`<rect x="${6+(i%4)*15}" y="${18+Math.floor(i/4)*13}" width="11" height="9" fill="${i===5?'#F2C14E':'#E9E1CF'}"/>`).join('')}</g>
-    <g transform="translate(830 20)"><circle cx="0" cy="0" r="3" fill="#2B1B10"/><path d="M-22 18 C-20 6 20 6 22 18 C16 22 -16 22 -22 18Z" fill="#7A4E2A"/><path d="M-11 10 C-12 -4 12 -4 11 10Z" fill="#6B4423"/></g>
-    <rect y="92" width="1000" height="28" fill="#4A2F1C"/><rect y="90" width="1000" height="5" fill="#6E4527"/>
-    <g transform="translate(300 98)"><path d="M0 0 L60 -4 L120 0 L120 14 L60 10 L0 14Z" fill="#F7F0DC"/><path d="M60 -4 V10" stroke="#C9B994"/>${[...Array(4)].map((_,i)=>`<path d="M8 ${2+i*3} H52 M68 ${2+i*3} H112" stroke="#9a8f80" stroke-width=".6"/>`).join('')}</g>
-    <g transform="translate(560 96)"><ellipse cx="0" cy="-12" rx="10" ry="14" fill="#FFE29A" opacity=".5"/><path d="M-6 0 h12 l-2 -6 h-8z" fill="#8A6A2A"/><path d="M-5 -6 C-8 -14 -4 -22 0 -24 C4 -22 8 -14 5 -6Z" fill="#F4F0E6" opacity=".7"/></g>
-    <g transform="translate(650 98)"><path d="M0 0 h14 l-2 -14 h-10z" fill="#E9E1CF"/><path d="M13 -10 c5 0 5 6 0 6" stroke="#E9E1CF" stroke-width="1.6" fill="none"/><path d="M4 -18 c-2 -3 2 -5 0 -8 M9 -18 c-2 -3 2 -5 0 -8" stroke="#fff" stroke-width="1" fill="none" opacity=".6"/></g>`}
+  if(t==='office'||t==='ranch'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A5536"/><stop offset="1" stop-color="#5E4130"/></linearGradient><radialGradient id="${p}g"><stop offset="0" stop-color="#FFD98A" stop-opacity=".7"/><stop offset="1" stop-color="#FFD98A" stop-opacity="0"/></radialGradient>`+bSky(p+'s','#A6CCE6','#E6EEDC');
+    const bh=bannerHorses();const dp=dateParts(S.day);const rib=ranchRibbons().slice(0,3);
+    o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(25)].map((_,i)=>`<path d="M${i*40+20} 0 V78" stroke="#4A3022" stroke-width="1.2" opacity=".5"/>`).join('')}<rect y="78" width="1000" height="6" fill="#4A2F1C"/><rect y="84" width="1000" height="36" fill="#6B4A32"/>${[...Array(50)].map((_,i)=>`<path d="M${i*20} 84 V120" stroke="#5A3C27" stroke-width="1" opacity=".5"/>`).join('')}
+    <!-- big window onto the pasture, with your horses -->
+    <g transform="translate(380 6)"><rect x="-8" y="-6" width="256" height="84" rx="2" fill="#3E2716"/><rect width="240" height="72" fill="url(#${p}s)"/><path d="M0 34 Q60 26 120 31 T240 28 V72 H0Z" fill="#B3CD8E"/><path d="M0 46 Q70 40 140 44 T240 42 V72 H0Z" fill="#9FC07C"/>${wTree(214,30,8,9)}${wTree(24,34,6,13)}
+     ${bh[0]?bHorse({...bh[0],noBg:1,showGear:[]},28,22,54):bHorse(BH(912,BG.bay,'quarter',60),28,22,54)}${bh[1]?bHorse({...bh[1],noBg:1,showGear:[]},96,30,44,{view:'back'}):''}${bh[2]?bHorse({...bh[2],noBg:1,showGear:[]},160,26,48,{view:'front'}):bHorse(BH(918,BG.chestnut,'thoroughbred',60),150,28,44,{flip:1})}
+     ${bFence(58,'#F4F0E6',0,240,40)}<path d="M120 0 V72 M0 24 H240" stroke="#3E2716" stroke-width="4"/><rect width="240" height="72" fill="none" stroke="#3E2716" stroke-width="5"/>
+     <path d="M-10 -6 C-2 20 -2 50 -10 78 L-22 78 C-14 50 -14 20 -22 -6Z" fill="#8E3A2C"/><path d="M250 -6 C242 20 242 50 250 78 L262 78 C254 50 254 20 262 -6Z" fill="#8E3A2C"/><path d="M-22 -8 H262" stroke="#4A2F1C" stroke-width="5"/></g>
+    <!-- bulletin board with notes and your best ribbons -->
+    <g transform="translate(60 10)"><rect x="-6" y="-6" width="232" height="76" fill="#5A3A22"/><rect width="220" height="64" fill="#C9A36A"/><rect width="220" height="64" fill="url(#mBoards)" opacity=".4"/>
+     <g transform="translate(10 8) rotate(-3)"><rect width="46" height="34" fill="#FFF3B0"/><path d="M6 10 h30 M6 16 h26 M6 22 h32 M6 28 h18" stroke="#8a7a62" stroke-width="1"/><circle cx="23" cy="2" r="2.4" fill="#C0392B"/></g>
+     <g transform="translate(64 6) rotate(2)"><rect width="52" height="38" fill="#F7F0DC"/><path d="M6 8 h40 M6 14 h30 M6 20 h38 M6 26 h22 M6 32 h34" stroke="#9a8f80" stroke-width=".9"/><circle cx="26" cy="2" r="2.4" fill="#2E6FD8"/></g>
+     <g transform="translate(124 10) rotate(-2)"><rect width="40" height="30" fill="#fff"/><rect x="3" y="3" width="34" height="22" fill="#BFD6E2"/><path d="M3 18 Q20 13 37 17 V25 H3Z" fill="#9FC07C"/>${bh[3]?bHorse({...bh[3],noBg:1,showGear:[]},8,4,24):bHorse(BH(905,BG.bay,'morgan',60),8,4,24)}<circle cx="20" cy="2" r="2.4" fill="#2D8A4E"/></g>
+     ${rib.map((r,k)=>`<g transform="translate(${172+k*0} ${8+k*0})">${''}</g>`).join('')}
+     ${[0,1,2].map(k=>{const r=rib[k];return r?`<g transform="translate(${176+k*14} ${12+k*2}) scale(.9)">${ribbonSVG(r.p,r.t,22).replace('<svg ','<svg x="0" y="0" ')}</g>`:`<g transform="translate(${176+k*14} ${12+k*2})"><circle cx="10" cy="10" r="2" fill="#B9A27A"/></g>`}).join('')}
+     <g transform="translate(14 48)"><rect width="200" height="12" fill="#F7F0DC"/><text x="100" y="9" text-anchor="middle" font-size="7.5" font-weight="700" fill="#4A2F1C" font-family="Figtree,system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,22))} · YEAR ${dp.year} · ${SEASONS[dp.sIdx].toUpperCase()}</text></g></g>
+    <!-- calendar, clock, mounted horseshoe -->
+    <g transform="translate(680 12)"><rect x="-2" y="-2" width="74" height="64" fill="#8a7a62"/><rect width="70" height="60" fill="#F7F0DC"/><rect width="70" height="12" fill="#C0392B"/><text x="35" y="9" text-anchor="middle" font-size="7" font-weight="700" fill="#fff" font-family="system-ui">${SEASONS[dp.sIdx].toUpperCase()}</text>${[...Array(12)].map((_,i)=>`<rect x="${6+(i%4)*15}" y="${18+Math.floor(i/4)*13}" width="11" height="9" fill="${i===(dp.sday-1)+4?'#F2C14E':'#E9E1CF'}"/>`).join('')}</g>
+    <g transform="translate(800 36)"><circle r="20" fill="#F7F0DC" stroke="#3E2716" stroke-width="4"/><path d="M0 0 L0 -12 M0 0 L8 4" stroke="#2B2A26" stroke-width="2" stroke-linecap="round"/><circle r="1.6" fill="#2B2A26"/></g>
+    <g transform="translate(900 30)"><path d="M0 -14 C-16 -14 -18 10 -10 20 L-5 18 C-11 10 -9 -8 0 -8 C9 -8 11 10 5 18 L10 20 C18 10 16 -14 0 -14Z" fill="#9AA3A6" stroke="#6E777B"/>${[[-12,2],[12,2],[-10,12],[10,12]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.3" fill="#4a4f52"/>`).join('')}</g>
+    <g transform="translate(940 70)"><rect x="-22" y="-28" width="44" height="30" rx="2" fill="#3E4A52"/><rect x="-18" y="-24" width="36" height="22" fill="none" stroke="#9AA3A6" stroke-width="1.5"/><circle cx="0" cy="-13" r="5" fill="#9AA3A6"/><circle cx="0" cy="-13" r="2" fill="#3E4A52"/><text x="0" y="-27" font-size="4" text-anchor="middle" fill="#F7F0DC" font-family="system-ui">SAFE</text></g>
+    <!-- the desk -->
+    <rect x="120" y="86" width="760" height="8" rx="2" fill="#4A2F1C"/><rect x="128" y="94" width="744" height="26" fill="#5A3A22"/><path d="M132 100 H868" stroke="#6E4527" stroke-width="1"/>
+    <g transform="translate(300 88)"><path d="M0 0 L62 -5 L124 0 L124 16 L62 11 L0 16Z" fill="#F7F0DC"/><path d="M62 -5 V11" stroke="#C9B994"/>${[...Array(4)].map((_,i)=>`<path d="M8 ${2+i*3.2} H54 M70 ${2+i*3.2} H116" stroke="#9a8f80" stroke-width=".6"/>`).join('')}<path d="M10 4 q5 -2 9 0 t9 0 t12 -1 t10 1" stroke="#3B4A6A" stroke-width="1" fill="none"/><g transform="translate(96 -2) rotate(-30)"><rect width="34" height="3.2" rx="1.6" fill="#2B2A26"/><path d="M34 1.6 l5 0" stroke="#C9A227" stroke-width="2"/></g></g>
+    <g transform="translate(520 72)"><circle cx="0" cy="12" r="20" fill="url(#${p}g)"/><rect x="-5" y="4" width="10" height="16" fill="#8A6A2A"/><path d="M-14 4 h28 l-4 -12 h-20z" fill="#2F6B3E"/><path d="M-12 -8 h24" stroke="#C9A227" stroke-width="1.4"/></g>
+    <g transform="translate(600 90)"><path d="M0 0 h14 l-2 -14 h-10z" fill="#E9E1CF"/><path d="M13 -10 c5 0 5 6 0 6" stroke="#E9E1CF" stroke-width="1.6" fill="none"/><path d="M4 -18 c-2 -3 2 -5 0 -8 M9 -18 c-2 -3 2 -5 0 -8" stroke="#fff" stroke-width="1" fill="none" opacity=".6"/></g>
+    <g transform="translate(660 90)"><rect x="-16" y="-8" width="32" height="10" rx="3" fill="#2B2A26"/><path d="M-10 -8 C-10 -16 10 -16 10 -8" stroke="#2B2A26" stroke-width="4" fill="none"/><circle cx="0" cy="-3" r="5" fill="#3E4A52"/><circle cx="0" cy="-3" r="2" fill="#F7F0DC"/></g>
+    <g transform="translate(760 82)"><rect x="-26" y="-10" width="30" height="20" fill="#F4EBD5" stroke="#B9A27A"/><rect x="-22" y="-6" width="22" height="14" fill="#BFD6E2"/><path d="M-22 4 Q-10 0 0 3 V8 H-22Z" fill="#9FC07C"/>${bh[4]?bHorse({...bh[4],noBg:1,showGear:[]},-20,-6,18):''}<rect x="8" y="-6" width="22" height="14" fill="#E9DDBF"/><path d="M12 -2 h14 M12 2 h10 M12 6 h12" stroke="#9a8f80" stroke-width=".7"/></g>
+    <g transform="translate(200 88)"><path d="M-18 0 L-14 -10 H14 L18 0Z" fill="#8E3A2C"/><text x="0" y="-3" text-anchor="middle" font-size="5.5" font-weight="800" fill="#F4E7C4" font-family="system-ui" letter-spacing=".08em">RANCH OFFICE</text></g>`}
   if(t==='hof'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3E1F2A"/><stop offset="1" stop-color="#5A2D38"/></linearGradient><linearGradient id="${p}l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4D2" stop-opacity=".4"/><stop offset="1" stop-color="#FFF4D2" stop-opacity="0"/></linearGradient><linearGradient id="${p}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4D27A"/><stop offset=".5" stop-color="#C9962E"/><stop offset="1" stop-color="#F0C866"/></linearGradient>`;
     o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(20)].map((_,i)=>`<path d="M${i*50+25} 0 V100" stroke="#2E1620" stroke-width="2" opacity=".5"/>`).join('')}<rect y="100" width="1000" height="20" fill="#2A1A14"/><rect y="98" width="1000" height="4" fill="#C9962E"/>
     ${(()=>{const hh=hofHorses();return [110,270,730,890].map((x,k)=>{const r=[1,2,0,3].map(j=>hh[j])[k];return [x,r?[faceSpec(r).coat,faceSpec(r).mark]:null,r]})})().map(([x,h,r])=>`<path d="M${x-40} 0 L${x-60} 100 L${x+60} 100 L${x+40} 0Z" fill="url(#${p}l)"/><rect x="${x-44}" y="18" width="88" height="68" fill="url(#${p}g)"/><clipPath id="${p}c${x}"><rect x="${x-38}" y="24" width="76" height="56"/></clipPath><rect x="${x-38}" y="24" width="76" height="56" fill="#E8E0CC"/><rect x="${x-38}" y="24" width="76" height="56" fill="#C9B994" opacity=".35"/>${h?`<g clip-path="url(#${p}c${x})"><g transform="translate(${x} 32) scale(.52)">${hFront(h[0],{mark:h[1],halter:'#C9962E',mane:0})}</g></g>${rosette(x+26,68)}`:`<text x="${x}" y="50" font-size="8" text-anchor="middle" fill="#8A7A62" font-family="Figtree,system-ui,sans-serif" font-weight="700">Your next</text><text x="${x}" y="61" font-size="8" text-anchor="middle" fill="#8A7A62" font-family="Figtree,system-ui,sans-serif" font-weight="700">champion</text>`}<rect x="${x-40}" y="88" width="80" height="10" rx="1.5" fill="url(#${p}g)"/>${r?`<text x="${x}" y="95.6" font-size="7" text-anchor="middle" fill="#3E1F2A" font-family="Rye,Georgia,serif" ${r.name.length>14?'textLength="74" lengthAdjust="spacingAndGlyphs"':''}>${esc(r.name)}</text>`:''}`).join('')}
     <g transform="translate(500 0)"><path d="M-46 0 L-70 100 L70 100 L46 0Z" fill="url(#${p}l)"/><rect x="-26" y="78" width="52" height="22" fill="#E9E1CF"/><path d="M-14 46 C-16 58 -8 66 0 66 C8 66 16 58 14 46Z M-14 50 C-24 50 -24 60 -12 62 M14 50 C24 50 24 60 12 62" fill="url(#${p}g)" stroke="#9A7020" stroke-width="1"/><rect x="-4" y="66" width="8" height="6" fill="url(#${p}g)"/><rect x="-12" y="72" width="24" height="6" fill="url(#${p}g)"/>
      <rect x="-74" y="12" width="148" height="22" rx="3" fill="url(#${p}g)"/><text y="28" font-size="12" text-anchor="middle" fill="#3E1F2A" font-family="Rye,Georgia,serif" letter-spacing="2">HALL OF FAME</text>
      ${[-1,1].map(sd=>[...Array(7)].map((_,i)=>`<ellipse cx="${sd*(30+i*1.5)}" cy="${86-i*7}" rx="3" ry="6" fill="#7FA35A" transform="rotate(${sd*(30-i*8)} ${sd*(30+i*1.5)} ${86-i*7})"/>`).join('')).join('')}</g>`}
-  if(t==='journal'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A5232"/><stop offset="1" stop-color="#5E3E24"/></linearGradient>`;
-    o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(12)].map((_,i)=>`<path d="M0 ${i*11} C300 ${i*11+3} 700 ${i*11-3} 1000 ${i*11}" stroke="#4E331F" stroke-width="1" opacity=".5" fill="none"/>`).join('')}
-    <g transform="translate(120 10) rotate(-6)"><rect width="200" height="130" fill="#E9DDBF"/><path d="M10 20 C40 40 60 10 90 40 S150 60 190 30" stroke="#5A8CB8" stroke-width="3" fill="none"/><path d="M20 90 C60 70 120 110 180 80" stroke="#C0392B" stroke-dasharray="5 4" stroke-width="2" fill="none"/></g>
-    <g transform="translate(360 8)"><path d="M0 4 C60 -4 120 0 140 6 V112 C120 106 60 102 0 110Z" fill="#F7F0DC"/><path d="M280 4 C220 -4 160 0 140 6 V112 C160 106 220 102 280 110Z" fill="#FBF6E8"/><path d="M140 6 V112" stroke="#C9B994" stroke-width="2"/>
-     ${[...Array(8)].map((_,i)=>`<path d="M14 ${22+i*11} C50 ${20+i*11} 90 ${23+i*11} 126 ${21+i*11}" stroke="#9a8f80" stroke-width=".7" fill="none"/><path d="M${154} ${21+i*11} C190 ${23+i*11} 230 ${20+i*11} 266 ${22+i*11}" stroke="#9a8f80" stroke-width=".7" fill="none"/>`).join('')}
-     ${[...Array(6)].map((_,i)=>`<path d="M16 ${20+i*11} q6 -4 10 0 t10 0 t12 -1 t10 1 t14 0 ${i%2?'t10 -1 t12 1':''}" stroke="#3B4A6A" stroke-width="1.1" fill="none"/>`).join('')}
-     <g transform="translate(176 22) rotate(4)"><rect width="74" height="60" fill="#fff"/><rect x="5" y="5" width="64" height="44" fill="#BFD6E2"/><path d="M5 38 Q30 30 69 36 V49 H5Z" fill="#9FC07C"/>${bHorse(BH(918,BG.pal,'quarter',60),16,14,44)}</g></g>
-    <g transform="translate(700 70) rotate(-28)"><rect width="150" height="8" fill="#F2C14E"/><path d="M150 0 L166 4 L150 8Z" fill="#E9C9A0"/><path d="M160 2.6 L166 4 L160 5.4Z" fill="#333"/><rect x="-10" width="10" height="8" fill="#E25B7A"/><rect x="-2" width="4" height="8" fill="#B8B8B8"/></g>
-    <g transform="translate(900 62)"><ellipse cx="0" cy="0" rx="36" ry="36" fill="#E9E1CF"/><ellipse cx="0" cy="0" rx="28" ry="28" fill="#5A3A22"/><ellipse cx="-6" cy="-8" rx="10" ry="5" fill="#fff" opacity=".18"/></g>
-    <g transform="translate(60 80)"><path d="M0 -24 C-16 -24 -18 4 -10 16 L-4 16 C-10 4 -8 -16 0 -16 C8 -16 10 4 4 16 L10 16 C18 4 16 -24 0 -24Z" fill="#9AA3A6" stroke="#6E777B"/>${[[-12,-4],[12,-4],[-13,6],[13,6]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.4" fill="#4a4f52"/>`).join('')}</g>`}
+  if(t==='journal'){defs=`<linearGradient id="${p}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6E4A2E"/><stop offset="1" stop-color="#4E3320"/></linearGradient><radialGradient id="${p}g"><stop offset="0" stop-color="#FFD98A" stop-opacity=".55"/><stop offset="1" stop-color="#FFD98A" stop-opacity="0"/></radialGradient>`;
+    const bh=bannerHorses();const dp=dateParts(S.day);const line=(x,y,w,k)=>`<path d="M${x} ${y} ${[...Array(Math.floor(w/9))].map((_,i)=>`q4.5 ${(i+k)%2?-2.2:2.2} 9 0`).join(' ')}" stroke="#3B4A6A" stroke-width="1.05" fill="none" opacity=".85"/>`;
+    o=`<rect width="1000" height="120" fill="url(#${p}w)"/>${[...Array(12)].map((_,i)=>`<path d="M0 ${i*11} C300 ${i*11+3} 700 ${i*11-3} 1000 ${i*11}" stroke="#42291A" stroke-width="1" opacity=".5" fill="none"/>`).join('')}
+    <rect x="60" y="8" width="880" height="106" rx="6" fill="#3E2A1C" opacity=".55"/>
+    <!-- the journal: leather cover, cream pages, a ribbon bookmark -->
+    <g transform="translate(330 4)"><path d="M-6 2 C70 -8 130 -4 150 4 V116 C130 108 70 104 -6 114Z" fill="#5A3A22"/><path d="M306 2 C230 -8 170 -4 150 4 V116 C170 108 230 104 306 114Z" fill="#5A3A22"/>
+     <path d="M2 8 C70 0 125 2 146 10 V110 C125 104 70 102 2 110Z" fill="#F7F0DC"/><path d="M298 8 C230 0 175 2 154 10 V110 C175 104 230 102 298 110Z" fill="#FBF6E8"/><path d="M150 8 V110" stroke="#C9B994" stroke-width="2"/>
+     <text x="74" y="24" text-anchor="middle" font-size="8.5" font-style="italic" fill="#4A3A2A" font-family="Georgia,serif">Year ${dp.year} · ${SEASONS[dp.sIdx]}, day ${dp.sday}</text>
+     ${[...Array(7)].map((_,i)=>line(14,34+i*10.5,118,i)).join('')}
+     ${line(166,26,120,1)}${line(166,37,100,2)}
+     <g transform="translate(176 44) rotate(3)"><rect x="-3" y="-3" width="74" height="64" fill="#fff"/><rect width="68" height="48" fill="#BFD6E2"/><path d="M0 34 Q34 26 68 32 V48 H0Z" fill="#9FC07C"/>${bh[0]?bHorse({...bh[0],noBg:1,showGear:[]},12,6,46):bHorse(BH(918,BG.pal,'quarter',60),12,6,46)}<text x="34" y="58" text-anchor="middle" font-size="6" fill="#4A3A2A" font-family="Georgia,serif" font-style="italic">${esc(bh[0]?bh[0].name:'Our first horse')}</text></g>
+     ${line(166,106,118,3)}
+     <path d="M150 6 L150 118 L142 112 L158 118Z" fill="#C0392B" opacity=".9"/>
+     <!-- pressed flower -->
+     <g transform="translate(60 100)">${[0,72,144,216,288].map(a=>`<ellipse cx="${(6*Math.cos(a*Math.PI/180)).toFixed(1)}" cy="${(6*Math.sin(a*Math.PI/180)).toFixed(1)}" rx="4.5" ry="2.6" transform="rotate(${a} ${(6*Math.cos(a*Math.PI/180)).toFixed(1)} ${(6*Math.sin(a*Math.PI/180)).toFixed(1)})" fill="#E8A6B8" opacity=".85"/>`).join('')}<circle r="2.4" fill="#F2C14E"/><path d="M4 6 q6 10 12 14" stroke="#7E9852" stroke-width="1" fill="none"/></g></g>
+    <!-- polaroids of your horses -->
+    ${[[110,18,-7,1],[204,26,5,2],[850,22,6,3]].map(([x,y,r,k])=>`<g transform="translate(${x} ${y}) rotate(${r})"><rect x="-3" y="-3" width="86" height="80" fill="#FFFFFF"/><rect width="80" height="58" fill="#BFD6E2"/><path d="M0 40 Q40 32 80 38 V58 H0Z" fill="#9FC07C"/>${bh[k]?bHorse({...bh[k],noBg:1,showGear:[]},12,8,56,{view:k===2?'front':'side'}):bHorse(BH(905+k,[BG.bay,BG.chestnut,BG.grey,BG.buck][k],'morgan',60),12,8,56)}<text x="40" y="70" text-anchor="middle" font-size="7" fill="#4A3A2A" font-family="Georgia,serif" font-style="italic">${esc(bh[k]?bh[k].name:['Morning','Summer','Fall'][k-1]||'')}</text></g>`).join('')}
+    <!-- fountain pen, glasses, mug ring, candle -->
+    <g transform="translate(690 92) rotate(-22)"><rect width="120" height="8" rx="4" fill="#2B2A26"/><rect x="36" width="10" height="8" fill="#C9A227"/><path d="M120 1 L136 4 L120 7Z" fill="#C9A227"/><path d="M128 4 L136 4" stroke="#2B2A26" stroke-width="1"/></g>
+    <g transform="translate(760 40)"><circle cx="-16" cy="0" r="13" fill="none" stroke="#C9A227" stroke-width="2.2"/><circle cx="16" cy="0" r="13" fill="none" stroke="#C9A227" stroke-width="2.2"/><path d="M-3 0 H3 M-29 -2 L-44 -8 M29 -2 L44 -8" stroke="#C9A227" stroke-width="2"/><circle cx="-16" cy="0" r="11" fill="#BFD6E2" opacity=".25"/><circle cx="16" cy="0" r="11" fill="#BFD6E2" opacity=".25"/></g>
+    <g transform="translate(940 92)"><circle r="18" fill="none" stroke="#8A5A32" stroke-width="3" opacity=".55"/><g transform="translate(6 -4)"><ellipse cx="0" cy="8" rx="13" ry="4" fill="#3E2A1C"/><path d="M-12 -10 h24 v18 a12 4 0 0 1 -24 0z" fill="#E9E1CF"/><ellipse cx="0" cy="-10" rx="12" ry="4" fill="#F7F0DC"/><ellipse cx="0" cy="-10" rx="9" ry="2.8" fill="#5A3A22"/><path d="M12 -6 c7 0 7 10 0 10" stroke="#E9E1CF" stroke-width="2.2" fill="none"/><path d="M-4 -16 c-2 -3 2 -5 0 -8 M3 -16 c-2 -3 2 -5 0 -8" stroke="#fff" stroke-width="1" fill="none" opacity=".55"/></g></g>
+    <g transform="translate(40 60)"><circle cx="0" cy="-8" r="22" fill="url(#${p}g)"/><rect x="-7" y="0" width="14" height="30" rx="2" fill="#E9DDBF"/><path d="M-9 30 h18" stroke="#8A6A2A" stroke-width="3"/><path d="M0 -2 C-4 -8 -2 -14 0 -16 C2 -14 4 -8 0 -2Z" fill="#F2C14E"/><path d="M0 -4 C-2 -8 -1 -11 0 -12 C1 -11 2 -8 0 -4Z" fill="#fff" opacity=".8"/></g>`}
+  if(o&&o.includes(`fill="url(#${p}s)"`)&&!['office','ranch','stable','hof','journal'].includes(t)){const cl=(x,y,sc,op)=>`<g transform="translate(${x} ${y}) scale(${sc})" opacity="${op}"><ellipse cx="0" cy="0" rx="22" ry="7" fill="#fff"/><ellipse cx="-12" cy="2" rx="12" ry="6" fill="#fff"/><ellipse cx="13" cy="1" rx="13" ry="6.5" fill="#fff"/><ellipse cx="3" cy="-5" rx="11" ry="6" fill="#fff"/></g>`;const amb=`<!--ns--><g class="bnclouds">${cl(90+rs()*80,16+rs()*8,.9,.85)}${cl(400+rs()*100,10+rs()*8,.7,.7)}${cl(760+rs()*120,18+rs()*8,1.1,.8)}</g><g class="bnbirds">${[[300,30],[314,25],[326,32]].map(([x,y])=>`<path d="M${x} ${y} q3 -3 6 0 q3 -3 6 0" stroke="#3a3a3a" stroke-width="1" fill="none"/>`).join('')}</g><!--/ns-->`;const k2=o.indexOf(`fill="url(#${p}s)"/>`);if(k2>0)o=o.slice(0,k2+`fill="url(#${p}s)"/>`.length)+amb+o.slice(k2+`fill="url(#${p}s)"/>`.length)}
   svgN=keep;SEAS=sv0;if(si!==1){defs=seasonize(defs,si);o=seasonize(o,si);if(si===3&&!['stable','office','ranch','hof','journal'].includes(t))o+=snowFlakes(t.length*31)}const html=o?`<div class="tabban" aria-hidden="true"><svg viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid slice"><defs>${defs}</defs>${o}</svg></div>`:'';BANNER_CACHE[ck]=html;return html}
 
 
@@ -4590,6 +4652,7 @@ const ACT={
   treat:d=>{const h=H(d.id);if(h)treat(h,d.t)},
   open:d=>{UI.modal={type:'horse',id:+d.id,mode:d.m||null};tutMark('papers')},
   close:()=>{UI.modal=null},
+  guide:()=>{UI.modal={type:'guide'}},
   changelog:()=>{UI.modal={type:'changelog',back:UI.modal&&UI.modal.type!=='changelog'?UI.modal:null}},
   clback:()=>{UI.modal=(UI.modal&&UI.modal.back)||null},
   foalrnd:()=>{const m=UI.modal;const f=m&&H((m.list[m.i]||{}).f);const el=document.getElementById('foalName');if(f&&el)el.value=foalNameIdea(f);return 'skip'},
@@ -4641,7 +4704,6 @@ const ACT={
   rename:d=>{const h=H(d.id);if(h&&h.client){toast('You can’t rename a client’s horse.');return}const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
   renameRanch:()=>{const v=($('#ranchInput')||{}).value;if(v&&v.trim()){S.ranchName=v.trim().slice(0,32);toast('Ranch renamed.')}},
   hay:d=>{const n=+d.n;const cost=Math.round(S.hayPrice*n*(n>=150?[.9,.85,.8][L('feedbarn')]:n>=50?.95:1)*(1-(psk('biz')-1)*.03));pxp('biz',1);tutMark('hay');if(S.money<cost)return toast('Not enough money.');S.money-=cost;S.hay=Math.round((S.hay+n)*10)/10;toast('Bought '+n+' bales for '+money(cost)+'.')},
-  stalls:()=>{const c=1200+S.stallLevel*800;if(S.money<c)return;S.money-=c;S.stalls+=2;S.stallLevel++;log('info','Built 2 new stalls for '+money(c)+'.');toast('Two new stalls built.')},
   breed:()=>breed(),
   gobreed:d=>{UI.breedMare=String(d.id);UI.tab='breeding';UI.modal=null},
   gocomp:d=>{UI.compHorse=String(d.id);UI.tab='compete';UI.modal=null},
@@ -4681,7 +4743,6 @@ const ACT={
   fire:(d,b)=>{const x=STAFF.find(y=>y.id===d.s);const p=x&&S.staff[x.id];if(!p)return;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to let go';return 'skip'}S.staff[x.id]=null;log('info','Let '+p.name+' go from the '+x.n+' job.');toast(p.name+' packed up and left.')},
   autovet:()=>{S.autoVet=S.autoVet?0:1;toast('Seasonal vet checkups '+(S.autoVet?'on':'off')+'.')},
   autotrain:()=>{S.autoTrain=S.autoTrain?0:1;toast('Auto-training '+(S.autoTrain?'on':'off')+'.')},
-  upgrade:d=>{const u=UPGRADES.find(x=>x.id===d.u);if(!u||S.upgrades[u.id])return;if(S.money<u.cost)return toast('Not enough money.');S.money-=u.cost;S.upgrades[u.id]=S.day;log('info','Built a '+u.n+' for '+money(u.cost)+'.');toast(u.n+' built!')},
   savenow:()=>{save();toast(lastSaveOk?'Game saved. (It also saves by itself after every click.)':'This browser is blocking saves. Use Menu → Download save file.')},
   slotsave:d=>{S.savedAt=new Date().toLocaleString();try{localStorage.setItem(slotKey(d.n),JSON.stringify(S));toast('Saved to slot '+d.n+'.')}catch(e){toast('Storage is blocked here. Use a backup code instead.')}},
   slotload:(d,b)=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to load';return 'skip'}
@@ -4738,7 +4799,7 @@ const ACT={
   keepslot:d=>{save();try{const t=localStorage.getItem(KEY);localStorage.setItem(slotKey(+d.n),t);UI.modal={type:'confirmNew',kept:+d.n};toast(S.ranchName+' is kept in slot '+d.n+'.')}catch(e){toast('Couldn’t save to that slot. Try downloading a save file instead.')}},
   newgameyes:()=>{startNewLife()},
 };
-(function(){const money=['buy','sell','buyitem','hay','hire','accept','sellitem','studyes','loanpay','borrow','acceptclient','takesponsor'],build=['upgrade','stalls','facup'],groomy=['groom','groomall'];
+(function(){const money=['buy','sell','buyitem','hay','hire','accept','sellitem','studyes','loanpay','borrow','acceptclient','takesponsor'],build=['facup'],groomy=['groom','groomall'];
   const wrap=(k,fn)=>{const f=ACT[k];if(!f)return;ACT[k]=(d,b)=>{const m0=S&&S.money,f0=S&&S.stats&&S.stats.foals,sh0=S&&S.horses.filter(h=>h.shiny).length;const r=f(d,b);try{fn(m0,f0,sh0)}catch(e){}return r}};
   money.forEach(k=>wrap(k,m0=>{if(S&&S.money!==m0)sfx('coin')}));build.forEach(k=>wrap(k,m0=>{if(S&&S.money!==m0)sfx('build')}));groomy.forEach(k=>{const f=ACT[k];if(!f)return;const bs=()=>S?S.horses.reduce((a,h)=>a+(h.bond||0)+(h.happy||0),0):0;ACT[k]=(d,b)=>{const b0=bs();const r=f(d,b);try{if(bs()!==b0)sfx('groom')}catch(e){}return r}});
   wrap('crate',m0=>{if(S&&S.money!==m0)sfx('sparkle')});
