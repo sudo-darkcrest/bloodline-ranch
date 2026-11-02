@@ -1083,6 +1083,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'The front and back views now show the horse’s tack: saddle pad and saddle, blanket, bridle (with reins from the front) and boots, in the gear’s rarity color, just like the side view.',
   'Breeding planner: pick a mare in the Breeding Shed and it lists her three best matches (your stallions and outside studs), with the foal’s likely potential, the fee, conception odds and a family check. Tap Choose to fill in the stallion.',
   'The horse in the papers now comes alive a little: a tail swish, an ear flick and a blink now and then. (Turned off automatically if your device asks for reduced motion.)',
   'Two foals in the breeding pasture now face you or trot away, using the new front and back views.',
@@ -2601,7 +2602,8 @@ function horseLook(h){const c=coat(h.genes);const p=c.grey?GREYPAL:PAL[c.base+c.
   const mkk=lf('clyde')>=.5?{face:'blaze',socks:[1,1,1,1]}:wildFull?{face:'none',socks:[0,0,0,0]}:mk;const fm=mkk.face==='none'&&c.tob?'star':mkk.face;
   const {bt}=horseAnchors(h,foal,st);const sc=foal?.74:st==='Yearling'?.88:1-.14*bt.small;
   const fCol=lf('feather')>=lf('draft')+lf('clyde')?mane:WH;
-  return {c,body,mane,points,WH,mkk,fm,leo,leoFull,spotS,spotC,featherS,longMane,wildS,wildFull,starS,curlyS,arabT,fCol,st,foal,bt,sc,
+  const gear=h.showGear||(h.past?[]:gearOf(h)),gs=k=>gear.find(i=>i.s===k),sad=gs('saddle'),bla=gs('blanket'),bri=gs('bridle'),boo=gs('boots');const rc=x=>x?`var(--r-${x.r})`:null;
+  return {c,body,mane,points,WH,mkk,fm,leo,leoFull,spotS,spotC,featherS,longMane,wildS,wildFull,starS,curlyS,arabT,fCol,st,foal,bt,sc,sad,bla:bla&&!sad?bla:null,bri,boo,rc,
     dark:hexMix(body,'#000000',body==='#211D1B'?.3:.42),light:hexMix(body,'#ffffff',body==='#211D1B'||body==='#3C322B'?.18:.3),mz:points||hexMix(body,'#1a120c',.42)}}
 /* front-facing head in a local box: x = -23..23, y = 0 (poll) .. 97 (chin). Used by the full front view and the stable banners. */
 function frontHead(c,o={}){const dk=hexMix(c,'#000000',.3),lt=hexMix(c,'#ffffff',.24),m=o.mane||'#1C1714',mz=o.mz||hexMix(c,'#1a120c',.45),id=o.id||'fh',W='#F4F1EA',mk=o.mark||'none';const f=v=>v.toFixed(1);
@@ -2655,10 +2657,12 @@ function horseFrontSVG(h){const L=horseLook(h);const id='hf'+(++svgN);L.id=id;co
   const hsockY=s=>{const i=s<0?2:0;const on=L.c.tob?1:L.mkk.socks[i];if(!on)return null;return hindTop+(G-6-hindTop)*.76};
   let o=`<defs>${viewDefs(id,L)}${fl.map((p,i)=>`<clipPath id="${id}l${i}"><path d="${p}"/></clipPath>`).join('')}${hl.map((p,i)=>`<clipPath id="${id}h${i}"><path d="${p}"/></clipPath>`).join('')}<clipPath id="${id}c"><path d="${chest}"/><path d="${neck}"/>${fl.map(p=>`<path d="${p}"/>`).join('')}</clipPath></defs>`;
   // hind legs far behind, then the barrel
-  o+=hl.map((p,i)=>{const s=i?1:-1;const sy=hsockY(s);return `<path d="${p}" fill="${far}"/>${points?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${hindTop+(G-6-hindTop)*.45}" width="240" height="120" fill="url(#${id}pg)"/></g>`:''}${sy!=null?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${sy}" width="240" height="60" fill="#d9d3c6"/></g>`:''}<path d="${p}" fill="#000" opacity=".18"/>${hoofSVG(xh(s),G-6,12*lw,'#211a15')}${featherFB(xh(s),G-6,12*lw,hexMix(L.fCol,'#000000',.2),L)}`}).join('');
+  o+=hl.map((p,i)=>{const s=i?1:-1;const sy=hsockY(s);return `<path d="${p}" fill="${far}"/>${points?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${hindTop+(G-6-hindTop)*.45}" width="240" height="120" fill="url(#${id}pg)"/></g>`:''}${sy!=null?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${sy}" width="240" height="60" fill="#d9d3c6"/></g>`:''}${L.boo?`<g clip-path="url(#${id}h${i})"><rect x="0" y="${hindTop+(G-6-hindTop)*.56}" width="240" height="${(G-6-hindTop)*.22}" fill="${L.rc(L.boo)}"/></g>`:''}<path d="${p}" fill="#000" opacity=".18"/>${hoofSVG(xh(s),G-6,12*lw,'#211a15')}${featherFB(xh(s),G-6,12*lw,hexMix(L.fCol,'#000000',.2),L)}`}).join('');
   // stifles: the top of each hind leg tucks up into the belly so the legs join the body
   o+=[-1,1].map(s=>`<ellipse cx="${f(xh(s)+s*2*Wd)}" cy="${f(Y(174))}" rx="${f(12*Wd)}" ry="13" fill="${far}"/><ellipse cx="${f(xh(s)+s*2*Wd)}" cy="${f(Y(174))}" rx="${f(12*Wd)}" ry="13" fill="#000" opacity=".12"/>`).join('');
   o+=barrel;
+  if(L.sad)o+=`<ellipse cx="${X}" cy="${Y(97)}" rx="${f(35*Wd)}" ry="9" fill="${L.rc(L.sad)}"/><path d="M${f(X-22*Wd)} ${Y(96)} C${f(X-16)} ${Y(84)} ${f(X+16)} ${Y(84)} ${f(X+22*Wd)} ${Y(96)}Z" fill="#6B4528" stroke="#8A6040" stroke-width="1.2"/>`;
+  if(L.bla)o+=`<ellipse cx="${X}" cy="${Y(96)}" rx="${f(31*Wd)}" ry="7" fill="${L.rc(L.bla)}"/><path d="M${f(X-28*Wd)} ${Y(94)} C${f(X-10)} ${Y(90)} ${f(X+10)} ${Y(90)} ${f(X+28*Wd)} ${Y(94)}" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none"/>`;
   // neck, chest and front legs
   o+=`<path d="${neck}" fill="${body}"/><path d="${chest}" fill="${body}"/>${fl.map(p=>`<path d="${p}" fill="${body}"/>`).join('')}<g clip-path="url(#${id}c)">`;
   if(points)o+=`<rect x="0" y="${legTop+(G-legTop)*.3}" width="240" height="140" fill="url(#${id}pg)"/>`;
@@ -2666,6 +2670,8 @@ function horseFrontSVG(h){const L=horseLook(h);const id='hf'+(++svgN);L.id=id;co
   [-1,1].forEach((s,i)=>{const sy=sockY(s);if(sy!=null)o+=`<g clip-path="url(#${id}l${i})"><rect x="0" y="${sy}" width="240" height="80" fill="${WH}"/></g>`});
   o+=viewSpots(L,rnd,X-44*Wd,X+44*Wd,Y(60),Y(200),18);
   if(L.wildS>=.5)o+=[-1,1].map(s=>[0,1,2].map(j=>`<path d="M${f(xs(s)-6*lw)} ${f(legTop+16+j*7)} q${f(6*lw)} 2 ${f(12*lw)} 0" stroke="#2A2018" stroke-width="1.6" fill="none" opacity=".35"/>`).join('')).join('');
+  if(L.bla)o+=[-1,1].map(s=>`<path d="M${f(X+s*40*Wd)} ${Y(98)} L${f(X+s*26*Wd)} ${Y(102)} C${f(X+s*25*Wd)} ${Y(120)} ${f(X+s*27*Wd)} ${Y(136)} ${f(X+s*30*Wd)} ${Y(148)} L${f(X+s*44*Wd)} ${Y(144)}Z" fill="${L.rc(L.bla)}" opacity=".95"/><path d="M${f(X+s*28*Wd)} ${Y(104)} C${f(X+s*27*Wd)} ${Y(120)} ${f(X+s*29*Wd)} ${Y(134)} ${f(X+s*32*Wd)} ${Y(145)}" stroke="#fff" stroke-opacity=".5" stroke-width="1.8" fill="none"/>`).join('');
+  if(L.boo)o+=`<rect x="0" y="${legTop+(G-legTop)*.6}" width="240" height="${(G-legTop)*.2}" fill="${L.rc(L.boo)}"/>`;
   // shading: light from the upper left
   o+=`<rect x="0" y="0" width="240" height="300" fill="url(#${id}tb)"/><rect x="${X-50}" y="0" width="100" height="300" fill="url(#${id}lr)"/>
    ${[-1,1].map(s=>`<ellipse cx="${X+s*13*Wd}" cy="${Y(134)}" rx="${11*Wd}" ry="16" fill="${s<0?'#fff':lt}" opacity="${s<0?.18:.16}" filter="url(#${id}b)"/><ellipse cx="${X+s*30*Wd}" cy="${Y(110)}" rx="9" ry="12" fill="#fff" opacity="${s<0?.16:.07}" filter="url(#${id}b)"/>`).join('')}
@@ -2678,7 +2684,7 @@ function horseFrontSVG(h){const L=horseLook(h);const id='hf'+(++svgN);L.id=id;co
   {let mn='';for(let i=0;i<18;i++){const t=i/17,y=Y(50)+t*50,x=X-15-t*11*Wd;mn+=`<path d="M${f(x+4)} ${f(y)} C${f(x-1)} ${f(y+6)} ${f(x-5)} ${f(y+12)} ${f(x-6-(i%3))} ${f(y+18+(L.longMane?10:0))}" stroke="${i%5===0?hexMix(mane,'#ffffff',.3):i%3===0?hexMix(mane,'#000000',.3):mane}" stroke-width="${i%5===0?1:2.2}" stroke-linecap="round" fill="none"/>`}o+=`<g opacity=".95">${mn}</g>`}
   o+=[-1,1].map(s=>{const sy=sockY(s);return hoofSVG(xs(s),G,14*lw,sy!=null&&sy>legTop+(G-legTop)*.7?'#6b5a46':'#33291f')+featherFB(xs(s),G,14*lw,L.fCol,L)}).join('');
   // head on top, looking at us
-  const hs=(foal?.98:.88)*(1+.08*dr-.04*hot);o+=`<g transform="translate(${X} ${Y(foal?40:38)}) scale(${hs.toFixed(3)})">${frontHead(body,{mane,mz:L.mz,mark:L.fm,id:id+'h'})}</g>`;
+  const hs=(foal?.98:.88)*(1+.08*dr-.04*hot);o+=`<g transform="translate(${X} ${Y(foal?40:38)}) scale(${hs.toFixed(3)})">${frontHead(body,{mane,mz:L.mz,mark:L.fm,id:id+'h'})}${L.bri?`<g stroke="${L.rc(L.bri)}" stroke-width="2.6" fill="none" stroke-linecap="round"><path d="M-12 8 C-4 11 4 11 12 8"/><path d="M-19.5 24 C-16.5 40 -14.5 52 -13.5 64 M19.5 24 C16.5 40 14.5 52 13.5 64"/><path d="M-13.5 64 C-6 67.5 6 67.5 13.5 64"/><path d="M-13 80 C-17 100 -9 120 0 126 C9 120 17 100 13 80" stroke-width="2"/></g><circle cx="-13.5" cy="80" r="2.2" fill="#B8B8B2"/><circle cx="13.5" cy="80" r="2.2" fill="#B8B8B2"/>`:''}</g>`;
   return viewSVG(o,L,X,G,h.noBg)}
 function horseBackSVG(h){const L=horseLook(h);const id='hb'+(++svgN);L.id=id;const rnd=srng(h.id*13+3);const {body,mane,points,WH,bt,foal}=L;const dr=Math.min(1,bt.draft),hot=Math.min(1,bt.hot);
   const X=120,G=262,Wd=(1+.2*dr-.12*hot)*(foal?.8:1),lift=foal?16:L.st==='Yearling'?7:0,lw=(1+.25*dr-.08*hot)*(foal?.85:1);const Y=y=>y-lift;
@@ -2697,8 +2703,11 @@ function horseBackSVG(h){const L=horseLook(h);const id='hb'+(++svgN);L.id=id;con
    ${[...Array(8)].map((_,i)=>{const y=Y(54+i*6.4);return `<path d="M${X-1} ${f(y)} C${X-6} ${f(y+3)} ${X-9} ${f(y+6)} ${X-10-(i%3)} ${f(y+10)}" stroke="${i%3===0?hexMix(mane,'#000000',.3):mane}" stroke-width="1.8" stroke-linecap="round" fill="none"/>`}).join('')}
    <ellipse cx="${X}" cy="${Y(100)}" rx="16" ry="5" fill="#000" opacity=".25" filter="url(#${id}b2)"/>`;
   // front legs far behind, then the barrel
-  o+=fl.map((p,i)=>{const s=i?1:-1;const on=L.c.tob?1:L.mkk.socks[s<0?3:1];return `<path d="${p}" fill="${far}"/>${points?`<g clip-path="url(#${id}f${i})"><rect x="0" y="${frontTop+(G-6-frontTop)*.4}" width="240" height="120" fill="url(#${id}pg)"/></g>`:''}${on?`<g clip-path="url(#${id}f${i})"><rect x="0" y="${frontTop+(G-6-frontTop)*.78}" width="240" height="60" fill="#d9d3c6"/></g>`:''}<path d="${p}" fill="#000" opacity=".18"/>${hoofSVG(xf(s),G-6,12*lw,'#211a15')}${featherFB(xf(s),G-6,12*lw,hexMix(L.fCol,'#000000',.2),L)}`}).join('');
+  o+=fl.map((p,i)=>{const s=i?1:-1;const on=L.c.tob?1:L.mkk.socks[s<0?3:1];return `<path d="${p}" fill="${far}"/>${points?`<g clip-path="url(#${id}f${i})"><rect x="0" y="${frontTop+(G-6-frontTop)*.4}" width="240" height="120" fill="url(#${id}pg)"/></g>`:''}${on?`<g clip-path="url(#${id}f${i})"><rect x="0" y="${frontTop+(G-6-frontTop)*.78}" width="240" height="60" fill="#d9d3c6"/></g>`:''}${L.boo?`<g clip-path="url(#${id}f${i})"><rect x="0" y="${frontTop+(G-6-frontTop)*.56}" width="240" height="${(G-6-frontTop)*.22}" fill="${L.rc(L.boo)}"/></g>`:''}<path d="${p}" fill="#000" opacity=".18"/>${hoofSVG(xf(s),G-6,12*lw,'#211a15')}${featherFB(xf(s),G-6,12*lw,hexMix(L.fCol,'#000000',.2),L)}`}).join('');
   o+=`<ellipse cx="${X}" cy="${Y(158)}" rx="${34*Wd}" ry="20" fill="${hexMix(body,'#000000',.3)}"/><ellipse cx="${X}" cy="${Y(168)}" rx="${26*Wd}" ry="8" fill="#000" opacity=".22" filter="url(#${id}b)"/>`;
+  if(L.bri)o+=`<g stroke="${L.rc(L.bri)}" stroke-width="2.4" fill="none" stroke-linecap="round"><path d="M${X-13} ${Y(51)} C${X-6} ${Y(47)} ${X+6} ${Y(47)} ${X+13} ${Y(51)}"/><path d="M${X-14} ${Y(53)} C${X-16} ${Y(62)} ${X-16} ${Y(70)} ${X-15} ${Y(75)} M${X+14} ${Y(53)} C${X+16} ${Y(62)} ${X+16} ${Y(70)} ${X+15} ${Y(75)}"/><path d="M${X-15} ${Y(75)} C${X-8} ${Y(79)} ${X+8} ${Y(79)} ${X+15} ${Y(75)}"/></g>`;
+  if(L.sad)o+=`<ellipse cx="${X}" cy="${Y(98)}" rx="${f(34*Wd)}" ry="9" fill="${L.rc(L.sad)}"/><path d="M${f(X-20*Wd)} ${Y(97)} C${f(X-14)} ${Y(82)} ${f(X+14)} ${Y(82)} ${f(X+20*Wd)} ${Y(97)}Z" fill="#6B4528" stroke="#8A6040" stroke-width="1.2"/>`;
+  if(L.bla)o+=`<ellipse cx="${X}" cy="${Y(97)}" rx="${f(30*Wd)}" ry="7" fill="${L.rc(L.bla)}"/>`;
   // hindquarters and hind legs
   o+=`<path d="${quarters}" fill="${body}"/>${hl.map(p=>`<path d="${p}" fill="${body}"/>`).join('')}<g clip-path="url(#${id}c)">`;
   if(points)o+=`<rect x="0" y="${legTop+(G-legTop)*.35}" width="240" height="140" fill="url(#${id}pg)"/>`;
@@ -2707,6 +2716,8 @@ function horseBackSVG(h){const L=horseLook(h);const id='hb'+(++svgN);L.id=id;con
   [-1,1].forEach((s,i)=>{const sy=sockY(s);if(sy!=null)o+=`<g clip-path="url(#${id}l${i})"><rect x="0" y="${sy}" width="240" height="90" fill="${WH}"/></g>`});
   o+=viewSpots(L,rnd,X-48*Wd,X+48*Wd,Y(94),Y(200),20);
   if(L.wildS>=.25)o+=`<path d="M${X} ${Y(92)} L${X} ${Y(104)}" stroke="#2A2018" stroke-width="3" opacity=".6"/>`;
+  if(L.bla)o+=`<path d="M${f(X-50*Wd)} ${Y(90)} L${f(X+50*Wd)} ${Y(90)} L${f(X+46*Wd)} ${Y(138)} C${f(X+30*Wd)} ${Y(150)} ${f(X-30*Wd)} ${Y(150)} ${f(X-46*Wd)} ${Y(138)}Z" fill="${L.rc(L.bla)}" opacity=".95"/><path d="M${f(X-44*Wd)} ${Y(134)} C${f(X-28*Wd)} ${Y(145)} ${f(X+28*Wd)} ${Y(145)} ${f(X+44*Wd)} ${Y(134)}" stroke="#fff" stroke-opacity=".5" stroke-width="2.2" fill="none"/>`;
+  if(L.boo)o+=`<rect x="0" y="${legTop+(G-legTop)*.56}" width="240" height="${(G-legTop)*.22}" fill="${L.rc(L.boo)}"/>`;
   o+=`<rect x="0" y="0" width="240" height="300" fill="url(#${id}tb)"/><rect x="${X-54}" y="0" width="108" height="300" fill="url(#${id}lr)"/>
    ${[-1,1].map(s=>`<ellipse cx="${X+s*22*Wd}" cy="${Y(118)}" rx="${17*Wd}" ry="20" fill="#fff" opacity="${s<0?.22:.1}" filter="url(#${id}b)"/><path d="M${X+s*28*Wd} ${Y(118)} C${X+s*30*Wd} ${Y(136)} ${X+s*28*Wd} ${Y(152)} ${xh(s)+s*7*lw} ${Y(172)}" stroke="#000" stroke-width="3" fill="none" opacity=".26" filter="url(#${id}b2)"/><path d="M${X+s*10} ${Y(132)} C${X+s*11} ${Y(148)} ${X+s*12} ${Y(160)} ${xh(s)-s*6*lw} ${Y(174)}" stroke="#000" stroke-width="2.6" fill="none" opacity=".28" filter="url(#${id}b2)"/>`).join('')}
    <path d="M${X} ${Y(150)} C${X} ${Y(158)} ${X} ${Y(164)} ${X} ${Y(172)}" stroke="#000" stroke-width="4" fill="none" opacity=".5" filter="url(#${id}b2)"/>
