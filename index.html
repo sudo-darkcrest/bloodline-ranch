@@ -1167,6 +1167,7 @@ const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
   'Three yearly festivals, each with its own banner: the Spring Foal Show (spring day 2: enter a foal or yearling, judged on breeding, condition and trust), the Harvest Fair (fall day 2: a Best in Show class for grown horses with prize tack for the winner, plus a ranch booth that sells your livestock goods), and the Winter Horse Sale (winter day 3: three good horses at about 30% off, and anything you sell that day fetches 20% more). Prizes grow a little each year. A Festivals list under the show calendar shows when the next one is, and the morning report reminds you the day before.',
+  'Facilities map scale pass: everything is now sized against one ruler (a pickup truck is about 5.5 m, a horse 2.4 m). Trees are twice as big, chickens, goats and sheep are smaller, cattle a little bigger, the windmill and fence posts taller, the staff cabins are real cabins instead of sheds, and the feed barn, tack room and foaling barn grew to match the house and barn.',
   'Facilities map: the pens, pasture and ring are now drawn from the same high angle as the buildings, with short posts and a rail along the back and a taller two-rail fence along the front, so everything sits on one ground plane. Far-row buildings are a touch smaller and the near row a touch bigger for depth, and a light haze sits near the horizon.',
   'Your rival is now a real ranch. They have a face, a short bio and four actual horses (see them on the Compete tab, with papers). Their horses train every week, grow old, retire and get replaced, so their strength comes from their barn, not from copying your score. They bring a horse that suits the show, so a Local Show no longer draws their champion.',
   'Rival frequency: rare at Local Shows (1 in 10), sometimes at County, and usually at State level and above. Beating them pays a bonus (10% of the top prize) and +1 reputation; losing costs nothing. Winning streaks are tracked, with two new achievements: Rival Beaten and Nemesis (5 in a row).',
@@ -3308,9 +3309,9 @@ function ranchMap(){
     let o='';const post=(px,py,ht,wd=2.2)=>`<rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${wd}" height="${ht+1}" fill="${C.wood}"/><rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${(wd*.35).toFixed(1)}" height="${ht+1}" fill="#fff" opacity=".25"/>`;
     o+=`<linearGradient id="mPl${x}_${y}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#mPl${x}_${y})"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(30,40,20,.2)" stroke-width="1.2"/><ellipse cx="${x+w/2}" cy="${y+h+2}" rx="${w/2}" ry="3.5" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/>`;
     for(let i=x;i<=x+w;i+=12)o+=post(i,y,4,1.8);o+=`<path d="M${x} ${y-2.2} H${x+w}" stroke="${col}" stroke-width="1" opacity=".85"/>`;
-    for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4+3.5*t;o+=post(x,j,ht,1.8+.5*t)+post(x+w,j,ht,1.8+.5*t)}
+    for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4.5+5.5*t;o+=post(x,j,ht,1.8+.5*t)+post(x+w,j,ht,1.8+.5*t)}
     o+=`<path d="M${x} ${y-2.2} L${x} ${y+h-2.6} M${x} ${y+h-5.4} L${x} ${y+h*.5-3} M${x+w} ${y-2.2} L${x+w} ${y+h-2.6} M${x+w} ${y+h-5.4} L${x+w} ${y+h*.5-3}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
-    for(let i=x;i<=x+w;i+=12)o+=post(i,y+h,7.5,2.4);o+=`<path d="M${x} ${y+h-2.6} H${x+w} M${x} ${y+h-5.6} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
+    for(let i=x;i<=x+w;i+=12)o+=post(i,y+h,10,2.6);o+=`<path d="M${x} ${y+h-3} H${x+w} M${x} ${y+h-7.2} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
   const hot=(id,inner)=>{CO=OFF[id]||null;const tf=CO?`<g transform="translate(${(CO[0]*1.2-CO[0]*CO[2]).toFixed(1)} ${(CO[1]+CO[3]-CO[1]*CO[2]).toFixed(1)}) scale(${CO[2]})">${inner}</g>`:inner;return `<g class="hot" data-a="facjump" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}"><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${tf}</g>`};
   const mx=id=>FACI[id].lv.length-1;
 
@@ -3336,12 +3337,12 @@ function ranchMap(){
    for(const [x,y,w,h,c] of P){const j=()=>(r()-.5)*16;g+=`<path d="M${x+j()} ${y+j()} L${x+w+j()} ${y+j()} L${x+w+j()} ${y+h+j()} L${x+j()} ${y+h+j()}Z" fill="${c}" filter="url(#mSoft)"/>`}
    g+=`<rect x="0" y="48" width="400" height="190" fill="url(#mMow)" opacity=".6"/><rect x="640" y="262" width="560" height="100" fill="url(#mMow)" opacity=".5"/>`;}
   {let f='';for(let x=8;x<1200;x+=22)f+=`<rect x="${x}" y="${38+Math.sin(x/70)*1.5}" width="2" height="6" fill="#6B4A30"/>`;g+=f+`<path d="M0 40 C300 38 600 41 1200 39" stroke="#7a6a58" stroke-width=".7" fill="none"/><path d="M0 43 C300 41 600 44 1200 42" stroke="#7a6a58" stroke-width=".7" fill="none"/>`;
-   const r=srng(91);for(let x=40;x<1200;x+=26+r()*30){if(x>540&&x<880)continue;g+=tree(x,30+r()*6,7+r()*4,'#557F42')}}
-  for(const [x,y,r] of [[18,70,10],[14,420,10],[1188,300,10],[1186,470,9],[580,252,8],[620,388,7],[470,380,8],[870,392,8]])g+=tree(x,y,r,'#5A8746');
+   const r=srng(91);for(let x=40;x<1200;x+=46+r()*40){if(x>540&&x<880)continue;g+=tree(x,22+r()*6,14+r()*6,'#557F42')}}
+  for(const [x,y,r] of [[22,74,20],[18,424,20],[1184,300,20],[1182,470,18],[590,250,16],[622,386,15],[470,380,16],[870,392,16]])g+=tree(x,y,r,'#5A8746');
   // farm pond with cattails, and a windmill pumping into a stock tank
   g+=`<ellipse cx="436" cy="334" rx="58" ry="22" fill="${C.waterD}"/><ellipse cx="436" cy="332" rx="54" ry="19" fill="${C.water}"/><path d="M402 328 q14 -5 28 0 M446 338 q12 -4 24 0" stroke="#fff" stroke-width="1.2" fill="none" opacity=".6"/>`+
    [[384,330],[390,342],[488,336],[482,324]].map(([x,y])=>`<path d="M${x} ${y} v-12 M${x+3} ${y} v-9 M${x-3} ${y} v-8" stroke="#4F7A3C" stroke-width="1.3"/><rect x="${x-.8}" y="${y-16}" width="2" height="5" rx="1" fill="#6B4A2E"/>`).join('')+
-   `<g transform="translate(560 352)"><ellipse cx="0" cy="0" rx="16" ry="4" fill="rgba(25,35,15,.3)"/><path d="M-6 0 L-1.5 -54 M6 0 L1.5 -54 M-5 -12 H5 M-4 -26 H4 M-3 -40 H3 M-5 -12 L4 -26 M5 -12 L-4 -26" stroke="#7C7468" stroke-width="1.3"/>
+   `<g transform="translate(560 352) scale(1.35)"><ellipse cx="0" cy="0" rx="16" ry="4" fill="rgba(25,35,15,.3)"/><path d="M-6 0 L-1.5 -54 M6 0 L1.5 -54 M-5 -12 H5 M-4 -26 H4 M-3 -40 H3 M-5 -12 L4 -26 M5 -12 L-4 -26" stroke="#7C7468" stroke-width="1.3"/>
      <g transform="translate(0 -56)">${[0,30,60,90,120,150,180,210,240,270,300,330].map(a=>`<path d="M0 0 L${(12*Math.cos(a*Math.PI/180)).toFixed(1)} ${(12*Math.sin(a*Math.PI/180)*.9).toFixed(1)}" stroke="#A9A39A" stroke-width="2.2"/>`).join('')}<circle r="2.4" fill="#5B5550"/><path d="M2 0 L16 -2 L16 2Z" fill="#8E3A2C"/></g>
      <ellipse cx="22" cy="-3" rx="12" ry="4.2" fill="#7D8A92"/><ellipse cx="22" cy="-4.4" rx="10.5" ry="3.2" fill="${C.water}"/></g>`;
   // front lane, connectors to each building, worn yards
@@ -3358,7 +3359,7 @@ function ranchMap(){
 
   // ===== staff housing =====
   {const n=lv('bunk');let o;
-    if(!n)o=lot(42,74,136,64);else{o='';const cols=[['#C9B48E','#5B4636'],['#D9CBB0','#4E5D6A'],['#E3D7C2','#3F5040']][n-1];for(let i=0;i<n+1&&i<4;i++)o+=bld(48+i*34,104,28,22,cols[0],cols[1],{door:1,rh:12});if(n>=3)o+=tree(30,112,8);}
+    if(!n)o=lot(42,74,136,64);else{o='';const cols=[['#C9B48E','#5B4636'],['#D9CBB0','#4E5D6A'],['#E3D7C2','#3F5040']][n-1];for(let i=0;i<n&&i<3;i++)o+=bld(44+i*50,100,42,30,cols[0],cols[1],{door:1,win:1,rh:15});if(n>=3)o+=tree(26,112,15);}
     g+=hot('bunk',o);label(110,152,'Staff',n>0,n,mx('bunk'))}
   // ===== clinic & recovery =====
   {const n=lv('clinic');let o;if(!n)o=lot(200,76,74,58);else{const w=[0,44,58,72][n];o=bld(237-w/2,100,w,32,'#F4F4EF','#7C8A92',{win:Math.min(3,n),door:1,rh:14})+`<rect x="${237-w/2+3}" y="86" width="12" height="12" rx="2" fill="#fff" stroke="#C0392B"/><path d="M${237-w/2+9} 89 v6 M${237-w/2+6} 92 h6" stroke="#C0392B" stroke-width="2.4"/>`+(n>=3?`<rect x="${237+w/2-14}" y="122" width="12" height="9" fill="#C0392B" opacity=".85"/>`:'')}
@@ -3373,7 +3374,7 @@ function ranchMap(){
     if(n===0)for(let i=1;i<5;i++)o+=`<line x1="${x}" y1="${y+i*h/5}" x2="${x+w}" y2="${y+i*h/5}" stroke="rgba(0,0,0,.22)" stroke-width=".8"/>`;
     if(porch)o+=`<rect x="${x-3}" y="${312-6}" width="${w+6}" height="6" fill="${C.woodL}"/>${[0,1,2,3].map(i=>`<rect x="${x+i*(w/3)-1}" y="${y+h*.45}" width="2" height="${h*.55-6}" fill="${C.white}"/>`).join('')}<rect x="${x-3}" y="${y+h*.42}" width="${w+6}" height="3" fill="${roof}"/>`;
     if(n>=3)o+=`<rect x="${x}" y="${312-12}" width="${w}" height="6" fill="${C.stone}"/>`+[x-10,x+w+10].map(cx=>`<circle cx="${cx}" cy="306" r="5" fill="#C96A7A"/><circle cx="${cx+4}" cy="304" r="3.5" fill="#E7B04A"/>`).join('');
-    if(n>=2)o+=tree(x-14,y+10,9);
+    if(n>=2)o+=tree(x-22,y+8,17);
     g+=hot('house',o);label(110,322,'House',true,n,mx('house'))}
   // ===== barn =====
   {const n=lv('barn');const w=104+n*11,h=54+n*3,x=285-w/2,y=310-h,d=14,dy=8,rh=h*.56;const red='#A23E2C';
@@ -3390,7 +3391,7 @@ function ranchMap(){
     ${n>=3?`<rect x="${284}" y="${y-rh-12}" width="7" height="10" fill="#9AA6AD"/><path d="M${283} ${y-rh-12} l4.5 -6 l4.5 6z" fill="#7C8A92"/><path d="M${287.5} ${y-rh-18} l0 -6 l6 2 z" fill="#C9A227"/>`:''}`;
     g+=hot('barn',o);label(285,322,'Barn · '+STALLS[n]+' stalls',true,n,mx('barn'))}
   // ===== foaling =====
-  {const n=lv('foaling');let o;if(!n)o=lot(384,232,70,66);else{const w=[0,50,66][n];o=bld(419-w/2,272,w,38,'#DCC6A2','#5F7A5A',{win:n+1,door:1,rh:18})+(n>=2?`<rect x="${419+w/2-16}" y="284" width="12" height="16" fill="#C9B48E" stroke="rgba(0,0,0,.25)"/>`:'')+pony(395,306,'#9A4822','#B8672E')+pony(405,309,'#C89955','#231D19',1)}
+  {const n=lv('foaling');let o;if(!n)o=lot(384,232,70,66);else{const w=[0,60,78][n];o=bld(419-w/2,268,w,42,'#DCC6A2','#5F7A5A',{win:n+1,door:1,rh:20})+(n>=2?`<rect x="${419+w/2-16}" y="284" width="12" height="16" fill="#C9B48E" stroke="rgba(0,0,0,.25)"/>`:'')+pony(395,306,'#9A4822','#B8672E')+pony(405,309,'#C89955','#231D19',1)}
     g+=hot('foaling',o);label(419,322,'Foaling',n>0,n,mx('foaling'))}
   // ===== livestock yard (side-view animals to match the storybook angle) =====
   {const ids=['chickens','goats','sheep','cattle'];const any=ids.some(x=>lv(x))||lv('bees');let o='';
@@ -3406,28 +3407,28 @@ function ranchMap(){
       else if(id==='chickens'){o+=ground(x,y,w,h,'#C2C48E')+`<ellipse cx="${x+w*.6}" cy="${y+h*.65}" rx="${w*.38}" ry="${h*.25}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.55:.8}" filter="url(#mSoft)"/>`;
         o+=shadow(x+22,y+38,20,5)+`<rect x="${x+6}" y="${y+16}" width="30" height="22" fill="#B8432F"/><rect x="${x+6}" y="${y+16}" width="30" height="22" fill="none" stroke="#7E2A1E" stroke-width=".8"/>${roofTri(x+6,y+17,30,12,'#EDE6D6')}<rect x="${x+12}" y="${y+24}" width="7" height="14" fill="#5A2A1E"/><rect x="${x+24}" y="${y+22}" width="8" height="6" fill="#F4E7B8" stroke="#7E2A1E" stroke-width=".6"/><path d="M${x+19} ${y+38} L${x+30} ${y+48}" stroke="#9C7550" stroke-width="3"/><path d="M${x+20} ${y+40} l2 -1 M${x+23} ${y+43} l2 -1 M${x+26} ${y+46} l2 -1" stroke="#6B4A30" stroke-width=".7"/>`;
         o+=`<rect x="${x+42}" y="${y+12}" width="${w-48}" height="${h-20}" fill="none" stroke="#B9B6AA" stroke-width=".8" stroke-dasharray="1.6 1.6"/><rect x="${x+w-18}" y="${y+h-26}" width="9" height="11" rx="1" fill="#9AA3A6"/><ellipse cx="${x+w-13.5}" cy="${y+h-15}" rx="6" ry="1.6" fill="#7D868A"/>`;
-        for(let i=0;i<3+n*3;i++)o+=A(x+10+r()*(w-22),y+52+r()*(h-60),1.5,hen(0,0,['#F7F3E8','#B9733A','#F7F3E8','#3A2F28','#C98A4A'][i%5]));
+        for(let i=0;i<3+n*3;i++)o+=A(x+10+r()*(w-22),y+50+r()*(h-56),1.1,hen(0,0,['#F7F3E8','#B9733A','#F7F3E8','#3A2F28','#C98A4A'][i%5]));
         if(n>=3)o+=shadow(x+w-22,y+40,10,3)+`<rect x="${x+w-32}" y="${y+26}" width="20" height="14" fill="#C9A06B"/>${roofTri(x+w-32,y+27,20,8,'#8E3A2C')}`}
       else if(id==='goats'){o+=ground(x,y,w,h,'#B3B67E')+`<ellipse cx="${x+w/2}" cy="${y+h*.62}" rx="${w*.4}" ry="${h*.28}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.5:.75}" filter="url(#mSoft)"/>`;
         o+=shadow(x+24,y+36,22,5)+`<path d="M${x+6} ${y+36} V${y+18} L${x+44} ${y+12} V${y+36}Z" fill="#8A6542"/><path d="M${x+3} ${y+19} L${x+47} ${y+11}" stroke="#5E6B74" stroke-width="3.4"/><rect x="${x+10}" y="${y+22}" width="30" height="14" fill="#3E2C1E"/><path d="M${x+14} ${y+36} V${y+22} M${x+20} ${y+36} V${y+22} M${x+26} ${y+36} V${y+22} M${x+32} ${y+36} V${y+22}" stroke="#5A4030" stroke-width=".6" opacity=".6"/>`;
-        const sx=x+w-24,sy=y+h-34;o+=shadow(sx,sy+14,14,4)+`<ellipse cx="${sx}" cy="${sy+12}" rx="13" ry="4" fill="#7A5434"/><rect x="${sx-13}" y="${sy}" width="26" height="12" fill="#8E6640"/><ellipse cx="${sx}" cy="${sy}" rx="13" ry="4" fill="#B08654"/><ellipse cx="${sx}" cy="${sy}" rx="4" ry="1.4" fill="#6B4A30"/>${A(sx,sy-.5,1.6,goat(0,0,'#EDE6D6',1))}`;
-        o+=`<path d="M${x+12} ${y+h-12} q6 -10 14 -2 q5 -8 11 0 q4 4 0 8 h-24 q-4 -2 -1 -6Z" fill="#9A958A"/><path d="M${x+18} ${y+h-16} q4 -4 8 0" stroke="#C9C4B8" stroke-width="1" fill="none"/>${A(x+26,y+h-17,1.5,goat(0,0,'#5A4636',0))}`;
-        for(let i=0;i<1+n*2;i++)o+=A(x+14+r()*(w-46),y+50+r()*(h-74),1.6,goat(0,0,['#D2B58C','#F0EADD','#5A4636','#C9A27A'][i%4],i%2))}
+        const sx=x+w-24,sy=y+h-34;o+=shadow(sx,sy+14,14,4)+`<ellipse cx="${sx}" cy="${sy+12}" rx="13" ry="4" fill="#7A5434"/><rect x="${sx-13}" y="${sy}" width="26" height="12" fill="#8E6640"/><ellipse cx="${sx}" cy="${sy}" rx="13" ry="4" fill="#B08654"/><ellipse cx="${sx}" cy="${sy}" rx="4" ry="1.4" fill="#6B4A30"/>${A(sx,sy-.5,1.15,goat(0,0,'#EDE6D6',1))}`;
+        o+=`<path d="M${x+12} ${y+h-12} q6 -10 14 -2 q5 -8 11 0 q4 4 0 8 h-24 q-4 -2 -1 -6Z" fill="#9A958A"/><path d="M${x+18} ${y+h-16} q4 -4 8 0" stroke="#C9C4B8" stroke-width="1" fill="none"/>${A(x+26,y+h-17,1.1,goat(0,0,'#5A4636',0))}`;
+        for(let i=0;i<1+n*2;i++)o+=A(x+14+r()*(w-46),y+48+r()*(h-66),1.15,goat(0,0,['#D2B58C','#F0EADD','#5A4636','#C9A27A'][i%4],i%2))}
       else if(id==='sheep'){o+=ground(x,y,w,h,'#AFC68A')+[...Array(10)].map(()=>`<path d="M${(x+6+r()*(w-12)).toFixed(1)} ${(y+14+r()*(h-20)).toFixed(1)} l-1.4 -3 M${(x+8+r()*(w-12)).toFixed(1)} ${(y+14+r()*(h-20)).toFixed(1)} l1 -3" stroke="#7E9852" stroke-width="1"/>`).join('');
         o+=shadow(x+w-24,y+34,20,5)+`<rect x="${x+w-42}" y="${y+18}" width="34" height="16" fill="#5A3A22"/><path d="M${x+w-46} ${y+19} L${x+w-25} ${y+8} L${x+w-4} ${y+19}Z" fill="#8E3A2C"/><path d="M${x+w-42} ${y+34} V${y+18} M${x+w-8} ${y+34} V${y+18}" stroke="#7A5434" stroke-width="2.4"/>`;
         o+=`<rect x="${x+8}" y="${y+h-22}" width="22" height="7" rx="2.5" fill="#7D8A92"/><rect x="${x+9.5}" y="${y+h-21}" width="19" height="3" fill="${C.water}"/>`;
-        for(let i=0;i<3+n*3;i++)o+=A(x+12+r()*(w-26),y+44+r()*(h-58),1.6,sheep(0,0,i%3===0))}
+        for(let i=0;i<3+n*3;i++)o+=A(x+12+r()*(w-26),y+44+r()*(h-56),1.25,sheep(0,0,i%3===0))}
       else if(id==='cattle'){o+=ground(x,y,w,h,'#A9BF84')+`<ellipse cx="${x+w*.42}" cy="${y+h*.72}" rx="${w*.22}" ry="${h*.08}" fill="${C.dirt}" opacity=".75" filter="url(#mSoft)"/>`;
-        o+=tree(x+w-20,y+20,12);
+        o+=tree(x+w-24,y+28,17);
         const bx=x+w*.42,by=y+h*.7;o+=shadow(bx,by+6,16,4)+`<circle cx="${bx}" cy="${by}" r="9" fill="#D2AE48"/><path d="M${bx-6} ${by-4} q6 -3 12 0 M${bx-7} ${by+1} q7 -3 14 0" stroke="#B48F34" stroke-width="1" fill="none"/><ellipse cx="${bx}" cy="${by+2}" rx="12" ry="5" fill="none" stroke="#6E6E6E" stroke-width="1.6"/><path d="M${bx-12} ${by+2} V${by-5} M${bx-6} ${by+6} V${by-1} M${bx+6} ${by+6} V${by-1} M${bx+12} ${by+2} V${by-5}" stroke="#6E6E6E" stroke-width="1.2"/>`;
         o+=`<ellipse cx="${x+18}" cy="${y+h-16}" rx="12" ry="4.5" fill="#7D8A92"/><ellipse cx="${x+18}" cy="${y+h-17.5}" rx="10" ry="3.2" fill="${C.water}"/>`;
-        for(let i=0;i<2+n*2;i++){const cx=x+16+r()*(w-34),cy=y+44+r()*(h-70);o+=A(cx,cy,1.5,cow(0,0,['#5A3B26','#2E2420','#8A4A28','#2E2420','#6B3A20'][i%5],i%2,i%4===1))}}
+        for(let i=0;i<2+n*2;i++){const cx=x+16+r()*(w-34),cy=y+44+r()*(h-70);o+=A(cx,cy,1.9,cow(0,0,['#5A3B26','#2E2420','#8A4A28','#2E2420','#6B3A20'][i%5],i%2,i%4===1))}}
       if(n)o+=fence(x,y,w,h,id==='chickens'?'#D8D4C8':'#E9DFC8');
       g+=hot(id,o);label(x+w/2,y+h+16,nm,n>0,n,mx(id))}}
   // ===== pasture =====
   {const n=lv('pasture');let o=`<rect x="472" y="60" width="236" height="118" rx="6" fill="${['#B9C690','#A8C483','#9CC077','#8FBC6E'][n]}"/>`;
     if(n>=3)o+=`<ellipse cx="660" cy="144" rx="30" ry="13" fill="${C.waterD}"/><ellipse cx="660" cy="143" rx="26" ry="10" fill="${C.water}"/><path d="M482 118 C540 106 600 128 632 140" stroke="${C.water}" stroke-width="3" fill="none"/>${[640,648,684].map(x=>`<path d="M${x} 134 v-8" stroke="#4F7A3C" stroke-width="1.4"/>`).join('')}`;
-    if(n>=2)for(const [x,y] of [[500,78],[690,80],[560,150]])o+=tree(x,y,11);
+    if(n>=2)for(const [x,y] of [[498,84],[688,86],[556,150]])o+=tree(x,y,17);
     if(n>=1)o+=fence(472,60,236,118,'#F1EADA');
     const herd=S.horses.filter(h=>stage(h)!=='Foal').slice(0,7);herd.forEach((h,i)=>{const c=coat(h.genes),p=c.grey?GREYPAL:PAL[c.base+c.cr];o+=pony(520+(i%4)*42+(i>3?20:0),98+Math.floor(i/4)*34+(i%2)*6,p.b,p.m,i%2)});
     g+=hot('pasture',o);label(590,202,'Pastures',true,n,mx('pasture'))}
@@ -3475,9 +3476,9 @@ function ranchMap(){
     o+=`<rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="3" fill="none" stroke="${C.dirtD}" stroke-width="1"/>`+[...Array(13)].map((_,i)=>`<rect x="${X+i*12-1}" y="${Y+H-6}" width="2" height="7" fill="${C.wood}"/>`).join('')+`<path d="M${X} ${Y+H-3} H${X+W}" stroke="#8C7A5A" stroke-width=".7"/>`;
     g+=hot('hayfield',o);label(797,330-1,'Hay fields',true,n,mx('hayfield'))}
   // ===== feed barn & tack =====
-  {const n=lv('feedbarn');let o;if(!n)o=lot(882,242,66,64);else{o=bld(886,276,[0,44,52][n],34,'#8C6A4A','#3E3A36',{door:1,rh:16});if(n>=2)o+=`${shadow(946,312,10,3)}<rect x="936" y="252" width="18" height="58" fill="#C9CDD0" stroke="rgba(0,0,0,.3)"/><ellipse cx="945" cy="252" rx="9" ry="5" fill="#A9AFB4"/>${[262,274,286,298].map(y=>`<line x1="936" y1="${y}" x2="954" y2="${y}" stroke="rgba(0,0,0,.18)"/>`).join('')}`}
+  {const n=lv('feedbarn');let o;if(!n)o=lot(882,242,66,64);else{o=bld(880,272,[0,50,58][n],38,'#8C6A4A','#3E3A36',{door:1,win:1,rh:18});if(n>=2)o+=`${shadow(950,312,10,3)}<rect x="940" y="246" width="20" height="64" fill="#C9CDD0" stroke="rgba(0,0,0,.3)"/><ellipse cx="950" cy="246" rx="10" ry="5.5" fill="#A9AFB4"/>${[258,272,286,300].map(y=>`<line x1="940" y1="${y}" x2="960" y2="${y}" stroke="rgba(0,0,0,.18)"/>`).join('')}`}
     g+=hot('feedbarn',o);label(915,322,'Feed barn',n>0,n,mx('feedbarn'))}
-  {const n=lv('tackroom');const o=n?bld(960,286,30,24,'#A4835F','#3E3A36',{door:1,rh:11})+(n>=2?`<rect x="964" y="290" width="8" height="5" fill="#C9A227"/>`:''):lot(958,272,34,36);
+  {const n=lv('tackroom');const o=n?bld(956,282,38,28,'#A4835F','#3E3A36',{door:1,rh:13})+(n>=2?`<rect x="964" y="290" width="8" height="5" fill="#C9A227"/>`:''):lot(958,272,34,36);
     g+=hot('tackroom',o);label(962,346,'Tack',n>0,n,mx('tackroom'))}
   // ===== truck + horse trailer parked on the gravel pad =====
   {const n=lv('trailer');let o;const B=346;
