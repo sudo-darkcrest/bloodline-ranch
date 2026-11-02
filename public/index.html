@@ -960,14 +960,44 @@ function festEnter(k,id){const F=festState();if(!F||F.k!==k||F.done)return toast
 function festBooth(){const F=festState();if(!F||F.k!=='harvest'||F.booth)return;const n=['chickens','goats','sheep','cattle','bees'].reduce((a,x)=>a+L(x),0);const amt=r10((80+n*120)*festMult());S.money+=amt;F.booth=amt;pxp('biz',3);log('good','Your Harvest Fair booth sold out. '+money(amt)+(n?' from your livestock goods.':' from lemonade and pie. More livestock would sell more.'));toast('Booth earned '+money(amt)+'.');save()}
 function festBuyLot(i){const F=festState();if(!F||F.k!=='wintersale')return;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<h.price)return toast('Not enough money.');
   S.money-=h.price;h.acted=0;h.lastCare=S.day;h.stallClean=100;delete h.sale;S.horses.push(h);F.lots.splice(i,1);F.bought++;unlock('wintersale');story(h,'Bought at the Winter Horse Sale for '+money(h.price)+'.');log('info','Bought '+h.name+' at the Winter Horse Sale for '+money(h.price)+'.');toast(h.name+' is home on your ranch.');pxp('biz',3);checkAch();save()}
-function festArt(k){const id='fa'+k;const flags=[...Array(18)].map((_,i)=>`<path d="M${40+i*52} ${18+Math.sin(i*1.3)*3} l9 16 l9 -16z" fill="${['#C0392B','#F2C14E','#2E6FD8','#2D8A4E','#E67E22','#8E44AD'][i%6]}"/>`).join('');
-  const sky=k==='wintersale'?['#C9D6E2','#EEF2F4']:k==='harvest'?['#E9C07A','#F6E3B8']:['#A9D0EA','#EAF1E2'];const grass=k==='wintersale'?'#E9EEF0':k==='harvest'?'#C9B36A':'#8DB86A';
-  let o=`<defs>${bSky(id+'s',sky[0],sky[1])}</defs><rect width="1000" height="80" fill="url(#${id}s)"/><rect y="56" width="1000" height="24" fill="${grass}"/><path d="M30 20 Q500 44 970 20" stroke="#6B4A30" stroke-width="1.6" fill="none"/>${flags}`;
-  o+=`<g transform="translate(470 22)"><path d="M0 40 L30 0 L60 40Z" fill="#F4EBD5"/><path d="M30 0 L60 40 L30 40Z" fill="#000" opacity=".12"/><path d="M0 40 L30 0 L60 40" stroke="#C0392B" stroke-width="2.5" fill="none"/><path d="M14 16 L46 16" stroke="#C0392B" stroke-width="1.2"/><rect x="24" y="24" width="12" height="16" fill="#8A6038"/></g>`;
-  if(k==='foalshow')o+=`<g transform="translate(120 20)">${bHorse(BH(930,BG.bay,'quarter',6),0,-6,64,{view:'front'})}</g><g transform="translate(820 14)">${bHorse(BH(931,BG.chestnut,'morgan',60),0,0,70,{flip:1})}</g>${[[200,60],[300,66],[700,62],[760,58]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-5 -5 -8 2 0 6 C8 2 5 -5 0 0Z" fill="#F39BB5"/></g>`).join('')}`;
-  else if(k==='harvest')o+=`${[[160,62],[190,66],[215,60]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${10+i*2}" ry="${8+i*1.5}" fill="#E67E22"/><path d="M${x-5} ${y-3} q5 -3 10 0 M${x} ${y-9} v-5" stroke="#9A5A1A" stroke-width="1.4" fill="none"/>`).join('')}<g transform="translate(760 40)"><rect width="40" height="26" rx="3" fill="#D9B95E"/><rect x="42" width="40" height="26" rx="3" fill="#D9B95E"/><rect x="20" y="-24" width="40" height="26" rx="3" fill="#D9B95E"/><path d="M4 8 h32 M4 18 h32 M46 8 h32 M46 18 h32 M24 -16 h32 M24 -6 h32" stroke="#B48F34" stroke-width="1"/></g><g transform="translate(300 20)">${bHorse(BH(932,BG.pal,'haflinger',60),0,0,70)}</g>`;
-  else o+=`${snowFlakes(53,1000,80,60)}<g transform="translate(150 14)">${bHorse(BH(933,BG.grey,'andalusian',60),0,0,72)}</g><g transform="translate(760 24)"><rect x="-4" y="0" width="4" height="40" fill="#6B4A30"/><rect x="-40" y="-2" width="80" height="22" rx="3" fill="#F4EBD5" stroke="#6B4A30"/><text x="0" y="13" text-anchor="middle" font-size="12" font-weight="800" fill="#C0392B" font-family="system-ui,sans-serif">SALE</text></g>`;
-  return `<div class="festart" aria-hidden="true"><svg viewBox="0 0 1000 80" preserveAspectRatio="xMidYMid slice">${o}</svg></div>`}
+function festArt(k){const id='fa'+k;const f1=v=>v.toFixed(1);
+  /* bunting: one sagging string, each flag hung exactly on it */
+  const qy=x=>{const t=(x-20)/960;return (1-t)*(1-t)*5+2*(1-t)*t*15+t*t*5};
+  const bunting=`<path d="M20 5 Q500 15 980 5" stroke="#6B4A30" stroke-width="1.2" fill="none"/>${[...Array(19)].map((_,i)=>{const x=40+i*50,y=qy(x);return `<path d="M${f1(x-6)} ${f1(y)} L${f1(x+6)} ${f1(y)} L${f1(x)} ${f1(y+10)}Z" fill="${['#C0392B','#F2C14E','#2E6FD8','#2D8A4E','#E67E22','#8E44AD'][i%6]}"/>`}).join('')}<rect x="17" y="2" width="4" height="66" fill="#6B4A30"/><rect x="979" y="2" width="4" height="66" fill="#6B4A30"/>`;
+  const sky=k==='wintersale'?['#BFD0E0','#EEF2F4']:k==='harvest'?['#E9C07A','#F6E3B8']:['#A9D0EA','#EAF1E2'];const grass=k==='wintersale'?'#EEF2F2':k==='harvest'?'#C9B36A':'#8DB86A';
+  const G=66;const horse=(hh,x,w,o={})=>bHorse(hh,x,G-w*272/330,w,o);
+  let o=`<defs>${bSky(id+'s',sky[0],sky[1])}</defs><rect width="1000" height="80" fill="url(#${id}s)"/>`;
+  if(k==='wintersale'){
+    o+=`<path d="M0 44 Q120 30 260 40 T560 36 T1000 40 V80 H0Z" fill="#DCE5EA"/><rect y="${G-6}" width="1000" height="${86-G}" fill="${grass}"/>`;
+    /* the sale barn: a red gambrel barn with a big HORSE SALE sign, snow on the roof and open doors */
+    const bx=410,bw=180,by=38;
+    o+=`<ellipse cx="${bx+bw/2+6}" cy="${G}" rx="${bw/2+14}" ry="3" fill="rgba(0,0,0,.18)"/>
+     <path d="M${bx-6} ${by} L${bx+bw*.18} ${by-9} L${bx+bw/2} ${by-15} L${bx+bw*.82} ${by-9} L${bx+bw+6} ${by}Z" fill="#4A3E38"/>
+     <path d="M${bx-6} ${by} L${bx+bw*.18} ${by-9} L${bx+bw/2} ${by-15} L${bx+bw*.82} ${by-9} L${bx+bw+6} ${by} L${bx+bw+2} ${by+2} L${bx+bw*.82} ${by-6} L${bx+bw/2} ${by-12} L${bx+bw*.18} ${by-6} L${bx-2} ${by+2}Z" fill="#FFFFFF"/>
+     <rect x="${bx}" y="${by}" width="${bw}" height="${G-by}" fill="#A23E2C"/>${[...Array(18)].map((_,i)=>`<path d="M${bx+5+i*10} ${by} V${G}" stroke="#000" stroke-opacity=".12"/>`).join('')}
+     <rect x="${bx}" y="${by}" width="${bw}" height="${G-by}" fill="none" stroke="#F7F3EA" stroke-width="2"/>
+     <rect x="${bx+bw/2-26}" y="${by+6}" width="52" height="${G-by-6}" fill="#3A2418"/><rect x="${bx+bw/2-22}" y="${by+9}" width="44" height="${G-by-9}" fill="#F2C97A" opacity=".55"/>
+     <path d="M${bx+bw/2-26} ${by+6} V${G} M${bx+bw/2+26} ${by+6} V${G}" stroke="#F7F3EA" stroke-width="2"/>
+     <rect x="${bx+12}" y="${by+6}" width="20" height="13" fill="#3A2418" stroke="#F7F3EA" stroke-width="1.6"/><path d="M${bx+12} ${by+6} L${bx+32} ${by+19} M${bx+32} ${by+6} L${bx+12} ${by+19}" stroke="#F7F3EA" stroke-width="1.2"/>
+     <rect x="${bx+bw-32}" y="${by+6}" width="20" height="13" fill="#3A2418" stroke="#F7F3EA" stroke-width="1.6"/><path d="M${bx+bw-32} ${by+6} L${bx+bw-12} ${by+19} M${bx+bw-12} ${by+6} L${bx+bw-32} ${by+19}" stroke="#F7F3EA" stroke-width="1.2"/>
+     <rect x="${bx+bw/2-40}" y="${by-11}" width="80" height="13" rx="2" fill="#F4EBD5" stroke="#5A3A22" stroke-width="1.4"/><text x="${bx+bw/2}" y="${by-1.5}" text-anchor="middle" font-size="9" font-weight="800" fill="#A23E2C" font-family="Rye,Georgia,serif" letter-spacing=".08em">HORSE SALE</text>
+     ${bHorse(BH(934,BG.bay,'quarter',60),bx+bw/2-16,G-30*272/330,30)}`;
+    /* holding pen on the left with two blanketed horses */
+    o+=`${horse({...BH(935,BG.buck,'mustang',60),showGear:[{s:'blanket',r:'rare'}]},90,54)}${horse({...BH(936,BG.chestnut,'morgan',60),showGear:[{s:'blanket',r:'epic'}]},190,54,{flip:1})}${horse(BH(937,BG.grey,'andalusian',60),286,52,{view:'front'})}
+     <g>${[60,110,160,210,260,310,360].map(x=>`<rect x="${x-1.6}" y="${G-22}" width="3.2" height="23" fill="#6B4A30"/>`).join('')}<path d="M58 ${G-17} H362 M58 ${G-8} H362" stroke="#8A6040" stroke-width="2.6"/></g>`;
+    /* right: a grey led by a handler toward the barn, a pinto at the hitching rail, the SALE board and a couple of buyers */
+    o+=`${horse({...BH(938,BG.pinto,'paint',60),showGear:[{s:'bridle',r:'common'}]},640,56,{flip:1})}${bPerson(626,G,'#2E6FD8',{s:.7})}
+     ${horse({...BH(939,BG.pal,'quarter',60),showGear:[{s:'blanket',r:'common'}]},740,54)}<path d="M724 ${G-14} H812 M728 ${G-14} V${G} M808 ${G-14} V${G}" stroke="#6B4A30" stroke-width="2.4"/>
+     ${bPerson(842,G,'#2D8A4E',{s:.7})}${bPerson(862,G,'#8E44AD',{s:.68})}
+     <g transform="translate(920 ${G})"><rect x="-2" y="-30" width="4" height="30" fill="#6B4A30"/><rect x="-34" y="-46" width="68" height="20" rx="3" fill="#F4EBD5" stroke="#6B4A30" stroke-width="1.4"/><text x="0" y="-32" text-anchor="middle" font-size="12" font-weight="800" fill="#C0392B" font-family="system-ui,sans-serif">SALE</text></g>
+     ${snowFlakes(53,1000,80,60)}`}
+  else{o+=`<rect y="56" width="1000" height="24" fill="${grass}"/>`;
+    /* a small judges’ stand instead of a bare tent */
+    o+=`<g transform="translate(470 24)"><rect x="-2" y="20" width="64" height="20" fill="#F4EBD5" stroke="#8A6040"/><path d="M-8 22 L30 4 L68 22Z" fill="#C0392B"/><path d="M-8 22 L30 4 L68 22" stroke="#8E2A1E" stroke-width="1.2" fill="none"/><rect x="6" y="26" width="48" height="8" fill="#3A2418"/><text x="30" y="32.2" text-anchor="middle" font-size="5.5" font-weight="800" fill="#F2C14E" font-family="system-ui" letter-spacing=".1em">JUDGES</text></g>`;
+    if(k==='foalshow')o+=`${horse(BH(940,BG.bay,'morgan',60),110,58)}${horse(BH(930,BG.bay,'quarter',6),186,40,{view:'front'})}${horse(BH(931,BG.chestnut,'morgan',60),810,58,{flip:1})}${horse(BH(941,BG.chestnut,'haflinger',7),762,38,{flip:1})}${[[330,60],[380,66],[640,62],[700,58]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-5 -5 -8 2 0 6 C8 2 5 -5 0 0Z" fill="#F39BB5"/></g>`).join('')}`;
+    else o+=`${[[150,62],[180,66],[205,60]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${10+i*2}" ry="${8+i*1.5}" fill="#E67E22"/><path d="M${x-5} ${y-3} q5 -3 10 0 M${x} ${y-9} v-5" stroke="#9A5A1A" stroke-width="1.4" fill="none"/>`).join('')}<g transform="translate(760 40)"><rect width="40" height="26" rx="3" fill="#D9B95E"/><rect x="42" width="40" height="26" rx="3" fill="#D9B95E"/><rect x="20" y="-24" width="40" height="26" rx="3" fill="#D9B95E"/><path d="M4 8 h32 M4 18 h32 M46 8 h32 M46 18 h32 M24 -16 h32 M24 -6 h32" stroke="#B48F34" stroke-width="1"/></g>${horse(BH(932,BG.pal,'haflinger',60),290,58)}${horse(BH(942,BG.bay,'quarter',60),620,56,{flip:1})}`}
+  o+=bunting;
+  return `<div class="festart" aria-hidden="true"><svg viewBox="0 0 1000 80" preserveAspectRatio="xMidYMid meet">${o}</svg></div>`}
 function festPanel(where){const k=festKey();const F=k?festState():null;const dp=dateParts(S.day);
   if(!F){if(where!=='compete')return '';const rows=Object.entries(FESTS).map(([kk,f])=>{const n=festNext(kk);return `<div class="calrow"><b>${f.n}</b><span class="note">${SEASONS[f.s]} day ${f.d}, once a year</span><span class="note">${n===0?'Today':'in '+n+' day'+(n>1?'s':'')}</span></div>`}).join('');
     return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Festivals</div><div class="calgrid">${rows}</div></div>`}
@@ -1249,6 +1279,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Festival banners redrawn: the bunting now hangs properly on its string, strung between two poles above everything instead of disappearing behind the building. The Winter Horse Sale has a red sale barn with a HORSE SALE sign and a horse in the doorway, a holding pen with blanketed horses, a pinto being led in and a palomino at the hitching rail. The Foal Show and Harvest Fair get a judges’ stand and an extra horse each.',
   'Auto compete rule: under the Auto compete buttons, pick the minimum chance to win and the minimum chance to place top 3. Auto compete (and Auto compete all) enter the highest level that meets both. Saved with your ranch.',
   'Every horse card has a 📖 Story button that opens the horse’s life story in its own window.',
   'The pictures at the top of each tab now scale to fit the screen, like the Tack Shop’s, so you see the whole scene on a phone held upright instead of a cropped middle.',
