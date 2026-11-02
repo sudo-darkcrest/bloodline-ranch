@@ -204,7 +204,7 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .shinyfx i:nth-child(1){left:6px;top:6px}.shinyfx i:nth-child(2){right:8px;top:10px;animation-delay:.4s;width:10px;height:10px}.shinyfx i:nth-child(3){left:10px;bottom:10px;animation-delay:.9s;width:10px;height:10px}.shinyfx i:nth-child(4){right:6px;bottom:6px;animation-delay:1.3s}.shinyfx i:nth-child(5){left:48%;top:4px;animation-delay:1.7s;width:8px;height:8px}.shinyfx i:nth-child(6){left:30%;bottom:5px;animation-delay:2s;width:8px;height:8px}
 @keyframes twinkle{0%,100%{opacity:.25;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(20deg)}}@media (prefers-reduced-motion:reduce){.shinyfx i{animation:none;opacity:.9}}
 .shinytag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;color:#5a4300;background:linear-gradient(90deg,#FFE27A,#FFF4C2,#F2C94C);box-shadow:0 0 0 1px #D9A92A inset;white-space:nowrap}
-.crategrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.crateitem{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);border-left:4px solid var(--r-common);background:var(--card)}.crateitem.r-rare{border-left-color:var(--r-rare)}.crateitem.r-epic{border-left-color:var(--r-epic)}.crateitem.r-legendary{border-left-color:var(--r-legendary)}
+.crategrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.crateitem{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);border-left:4px solid var(--r-common);background:var(--card)}.crateitem.r-uncommon{border-left-color:var(--r-uncommon)}.crateitem.r-rare{border-left-color:var(--r-rare)}.crateitem.r-epic{border-left-color:var(--r-epic)}.crateitem.r-legendary{border-left-color:var(--r-legendary)}
 .studbook{margin:4px 0 0;padding-left:0;list-style:none;font-size:13px;display:grid;gap:3px}
 .tackgrp{border-bottom:1px solid var(--line);padding:6px 0}.tackgrp summary{cursor:pointer;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .wornline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line)}.wchips{display:flex;flex-wrap:wrap;gap:4px;flex:1;min-width:0}.wchip{font-size:11.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);font-weight:600;white-space:nowrap}
@@ -519,7 +519,7 @@ const randRanch=()=>{const a=pick(RFIRST);let b=pick(RSECOND);if(a===b)b='Creek'
 
 /* ---------- rarity, breeds, items ---------- */
 const RARITY={common:{n:'Common',m:1.1},uncommon:{n:'Uncommon',m:1.3},rare:{n:'Rare',m:1.7},epic:{n:'Epic',m:2.5},legendary:{n:'Legendary',m:4},mythical:{n:'Mythical',m:6.5}};
-const RORDER=['common','rare','epic','legendary'];
+const RORDER=['common','uncommon','rare','epic','legendary'];
 const HRORDER=['common','uncommon','rare','epic','legendary','mythical'];
 const BREEDS={
   grade:{n:'Grade Horse',r:'common',b:{},d:'Mixed ranch stock with no papers. Tough and cheap.'},
@@ -604,6 +604,13 @@ const SLOTS=[{k:'saddle',n:'Saddle'},{k:'bridle',n:'Bridle'},{k:'boots',n:'Boots
 const SLOTN=Object.fromEntries(SLOTS.map(x=>[x.k,x.n]));
 const ITEMS={
   straw:{n:'Straw Bedding',s:'bedding',r:'common',p:80,e:{happy:1}},
+  pellets:{n:'Pelleted Bedding',s:'bedding',r:'uncommon',p:160,e:{health:1,happy:1}},
+  fleecesheet:{n:'Fleece Stable Sheet',s:'blanket',r:'uncommon',p:170,e:{energy:2,health:1}},
+  mintlick:{n:'Peppermint Lick',s:'toy',r:'uncommon',p:130,e:{happy:2}},
+  youthsaddle:{n:'Lightweight Youth Saddle',s:'saddle',r:'uncommon',p:230,e:{comp:1,train:3,ev:{pony:6}}},
+  paddedhalter:{n:'Padded Training Halter',s:'bridle',r:'uncommon',p:150,e:{train:5,bond:1}},
+  openfront:{n:'Open-Front Jump Boots',s:'boots',r:'uncommon',p:170,e:{inj:.85,ev:{jump:4}}},
+  tailbag:{n:'Braided Tail Bag',s:'flair',r:'uncommon',p:150,e:{happy:1,ev:{rein:3,barrel:2}}},
   shavings:{n:'Pine Shavings',s:'bedding',r:'rare',p:300,e:{happy:2,energy:3}},
   foam:{n:'Memory-Foam Stall Mat',s:'bedding',r:'epic',p:900,e:{happy:3,energy:6}},
   down:{n:'Royal Down Bedding',s:'bedding',r:'legendary',p:3000,e:{happy:5,energy:10,health:2}},
@@ -632,39 +639,39 @@ const ITEMS={
   conchos:{n:'Silver Conchos',s:'flair',r:'rare',p:350,e:{comp:3}},
   breastplate:{n:'Turquoise Breastplate',s:'flair',r:'epic',p:1100,e:{comp:5,ev:{pull:4}}},
   sash:{n:'Champion’s Sash',s:'flair',r:'legendary',p:4000,e:{comp:8,rep:1}},
-  trailsaddle:{n:'Trail Saddle',s:'saddle',r:'common',p:130,e:{comp:1,energy:2}},
+  trailsaddle:{n:'Trail Saddle',s:'saddle',r:'uncommon',p:220,e:{comp:2,energy:2}},
   endursaddle:{n:'Endurance Saddle',s:'saddle',r:'rare',p:480,e:{comp:1,energy:2,ev:{endur:10}}},
   barrelsaddle:{n:'Barrel Racing Saddle',s:'saddle',r:'rare',p:480,e:{comp:2,ev:{barrel:10}}},
   harness:{n:'Pulling Harness',s:'saddle',r:'rare',p:450,e:{comp:1,ev:{pull:12}}},
   tooledsaddle:{n:'Hand-Tooled Saddle',s:'saddle',r:'epic',p:1600,e:{comp:6,bond:1,happy:1}},
   goldsaddle:{n:'Gold-Horn Champion Saddle',s:'saddle',r:'legendary',p:5500,e:{comp:10,ev:{race:5,barrel:5},rep:1}},
-  snaffle:{n:'Snaffle Bridle',s:'bridle',r:'common',p:70,e:{train:4,happy:1}},
+  snaffle:{n:'Snaffle Bridle',s:'bridle',r:'uncommon',p:160,e:{train:6,happy:1}},
   sidepull:{n:'Bitless Sidepull',s:'bridle',r:'rare',p:300,e:{train:6,happy:2}},
   doublebridle:{n:'Double Bridle',s:'bridle',r:'epic',p:1000,e:{train:10,ev:{dress:5}}},
   silverbridle:{n:'Heirloom Silver Bridle',s:'bridle',r:'legendary',p:3800,e:{train:16,comp:4}},
-  bellboots:{n:'Bell Boots',s:'boots',r:'common',p:55,e:{inj:.9}},
+  bellboots:{n:'Bell Boots',s:'boots',r:'uncommon',p:150,e:{inj:.8}},
   splintboots:{n:'Splint Boots',s:'boots',r:'rare',p:320,e:{inj:.75,ev:{barrel:3}}},
   magboots:{n:'Magnetic Therapy Boots',s:'boots',r:'epic',p:1050,e:{inj:.6,health:2}},
   dragonboots:{n:'Dragonhide Boots',s:'boots',r:'legendary',p:3600,e:{inj:.4,comp:4}},
-  flysheet:{n:'Fly Sheet',s:'blanket',r:'common',p:75,e:{happy:1}},
+  flysheet:{n:'Fly Sheet',s:'blanket',r:'uncommon',p:160,e:{happy:1,health:1}},
   cooler:{n:'Wool Cooler',s:'blanket',r:'rare',p:340,e:{energy:3,happy:1}},
   showsheet:{n:'Embroidered Show Sheet',s:'blanket',r:'epic',p:1100,e:{ev:{dress:4},happy:2,health:2}},
   aurora:{n:'Aurora Blanket',s:'blanket',r:'legendary',p:3400,e:{happy:4,health:4,bond:2}},
-  sawdust:{n:'Sawdust Bedding',s:'bedding',r:'common',p:70,e:{energy:1}},
+  sawdust:{n:'Sawdust Bedding',s:'bedding',r:'uncommon',p:150,e:{energy:2,happy:1}},
   rubbermats:{n:'Rubber Stall Mats',s:'bedding',r:'rare',p:320,e:{health:1,energy:2}},
   hemp:{n:'Hemp Bedding',s:'bedding',r:'epic',p:950,e:{happy:2,health:2,energy:4}},
-  jollyball:{n:'Jolly Ball',s:'toy',r:'common',p:45,e:{happy:1}},
+  jollyball:{n:'Jolly Ball',s:'toy',r:'uncommon',p:120,e:{happy:1,bond:1}},
   haynet:{n:'Hay Net Puzzle',s:'toy',r:'rare',p:240,e:{happy:2,energy:1}},
   lickwheel:{n:'Herbal Lick Wheel',s:'toy',r:'epic',p:750,e:{happy:2,bond:1,health:1}},
   barncat:{n:'Barn Cat',s:'toy',r:'legendary',p:2600,e:{happy:4,bond:3}},
-  earbonnet:{n:'Crocheted Ear Bonnet',s:'flair',r:'common',p:60,e:{happy:1,ev:{dress:1}}},
+  earbonnet:{n:'Crocheted Ear Bonnet',s:'flair',r:'uncommon',p:140,e:{happy:1,comp:1,ev:{dress:2}}},
   browband:{n:'Braided Browband',s:'flair',r:'rare',p:360,e:{comp:2,bond:1}},
   showhalter:{n:'Silver Show Halter',s:'flair',r:'epic',p:1150,e:{comp:4,ev:{dress:4}}},
   laurels:{n:'Crown of Laurels',s:'flair',r:'legendary',p:4200,e:{comp:6,rep:1,happy:3}},
 };
-const CRATE={common:65,rare:26,epic:7.5,legendary:1.5};
+const CRATE={common:46,uncommon:26,rare:20,epic:6.5,legendary:1.5};
 const itemsOf=r=>Object.keys(ITEMS).filter(k=>ITEMS[k].r===r);
-function refreshShop(st=S){const ep=itemsOf('epic').sort(()=>R()-.5);const shop=[...itemsOf('common'),...itemsOf('rare').sort(()=>R()-.5).slice(0,3)];if(R()<.55)shop.push(ep[0]);if(R()<.18)shop.push(ep[1]);if(R()<.08)shop.push(pick(itemsOf('legendary')));st.shop=shop}
+function refreshShop(st=S){const ep=itemsOf('epic').sort(()=>R()-.5);const shop=[...itemsOf('common'),...itemsOf('uncommon').sort(()=>R()-.5).slice(0,4),...itemsOf('rare').sort(()=>R()-.5).slice(0,3)];if(R()<.55)shop.push(ep[0]);if(R()<.18)shop.push(ep[1]);if(R()<.08)shop.push(pick(itemsOf('legendary')));st.shop=shop}
 function grantItem(r){const x={uid:S.nextItem++,id:pick(itemsOf(r)),on:null};S.inv.push(x);return x}
 function gearOf(h){return (S.inv||[]).filter(x=>x.on===h.id).map(x=>ITEMS[x.id])}
 function gearSum(h,k){return gearOf(h).reduce((a,i)=>a+(i.e[k]||0),0)}
@@ -1279,6 +1286,9 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Tack Shop: a new Uncommon tier between Common and Rare. Seven new Uncommon pieces (Pelleted Bedding, Fleece Stable Sheet, Peppermint Lick, Lightweight Youth Saddle, Padded Training Halter, Open-Front Jump Boots, Braided Tail Bag), and the stronger common pieces (Trail Saddle, Snaffle Bridle, Bell Boots, Fly Sheet, Sawdust Bedding, Jolly Ball, Ear Bonnet) moved up to Uncommon with slightly better effects. The shop stocks four Uncommon pieces each week, and crate odds are now 46% Common, 26% Uncommon, 20% Rare, 6.5% Epic, 1.5% Legendary.',
+  'After opening several crates, the results window has Open 5 more and Open 10 more buttons (and a single crate offers Open 5).',
+  'The life story button on horse cards is now just “Story”.',
   'Festival banners redrawn: the bunting now hangs properly on its string, strung between two poles above everything instead of disappearing behind the building. The Winter Horse Sale has a red sale barn with a HORSE SALE sign and a horse in the doorway, a holding pen with blanketed horses, a pinto being led in and a palomino at the hitching rail. The Foal Show and Harvest Fair get a judges’ stand and an extra horse each.',
   'Auto compete rule: under the Auto compete buttons, pick the minimum chance to win and the minimum chance to place top 3. Auto compete (and Auto compete all) enter the highest level that meets both. Saved with your ranch.',
   'Every horse card has a 📖 Story button that opens the horse’s life story in its own window.',
@@ -3265,7 +3275,7 @@ function horseCard(h,mode){
     if(canCompete(h))actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">Event</button>`;
     if(stage(h)!=='Foal'&&pregOk(h)){actions+=`<span class="lbl">Train</span>`+STATS.map(s=>`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'} title="Train ${s.n}">${s.s}</button>`).join('')}
     if(canWork(h))actions+=jobSelect(h);
-    if(lifeStory(h).length)actions+=`<button class="btn small storybtn" data-a="storyopen" data-id="${h.id}" title="Read ${esc(h.name)}’s life story">📖 Story</button>`;
+    if(lifeStory(h).length)actions+=`<button class="btn small storybtn" data-a="storyopen" data-id="${h.id}" title="Read ${esc(h.name)}’s life story">Story</button>`;
   }
   return `<article class="horse r-${rarityOf(h)}" data-a="open" data-id="${h.id}" ${mode==='market'?'data-m="market"':''} tabindex="0" aria-label="${esc(h.name)}">
   <div class="portrait${h.shiny?' shiny':''}">${horseSVG(h)}${shinyFx(h)}<span class="pill ${sc}">${sl}</span>${mode!=='market'&&!h.client?`<button class="favbtn${h.fav?' on':''}" data-a="fav" data-id="${h.id}" aria-pressed="${h.fav?'true':'false'}" title="${h.fav?'Remove from favorites':'Mark as a favorite'}">${h.fav?'★':'☆'}</button>`:''}${h.gen?`<span class="tag-gen">GEN ${h.gen}</span>`:''}</div>
@@ -4132,9 +4142,9 @@ function renderModal(){
     body=h?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="portrait${h.shiny?' shiny':''}" style="width:180px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><p style="margin:0 0 6px">Sell <b>${esc(h.name)}</b> ${m.why?'('+esc(m.why)+') ':''}for <b class="mono">${money(m.amt)}</b>?</p><p class="note">Changed your mind later? You can buy ${h.sex==='M'?'him':'her'} back from the Market for 7 days, for ${money(Math.round(m.amt*1.15/10)*10)}.</p></div></div>
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sellyes" data-id="${h.id}" data-amt="${m.amt}" data-why="${esc(m.why||'')}">Yes, sell for ${money(m.amt)}</button><button class="btn" data-a="sellno">Keep ${h.sex==='M'?'him':'her'}</button></div>`:'';
   }else if(m.type==='reveal'){
-    if(m.ids){title='You opened '+m.ids.length+' crates';const srt=[...m.ids].sort((a,b)=>RORDER.indexOf(ITEMS[b].r)-RORDER.indexOf(ITEMS[a].r));body=`<div class="crategrid">${srt.map(id=>{const it=ITEMS[id];return `<div class="crateitem r-${it.r}">${rbadge(it.r)}<b class="rc-${it.r}">${it.n}</b><span class="note">${SLOTN[it.s]}</span></div>`}).join('')}</div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put them in the tack room</button></div>`}else{
+    if(m.ids){title='You opened '+m.ids.length+' crates';const srt=[...m.ids].sort((a,b)=>RORDER.indexOf(ITEMS[b].r)-RORDER.indexOf(ITEMS[a].r));body=`<div class="crategrid">${srt.map(id=>{const it=ITEMS[id];return `<div class="crateitem r-${it.r}">${rbadge(it.r)}<b class="rc-${it.r}">${it.n}</b><span class="note">${SLOTN[it.s]}</span></div>`}).join('')}</div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put them in the tack room</button>${[5,10].map(n=>S.money>=crateCost()*n?`<button class="btn" data-a="crate" data-n="${n}">Open ${n} more · ${money(crateCost()*n)}</button>`:'').join('')}</div>`}else{
     const it=ITEMS[m.id];title='You opened the crate';
-    body=`<div class="reveal">${rbadge(it.r)}<div class="big rc-${it.r}">${it.n}</div><div class="note">${SLOTN[it.s]} · ${itemEffects(it)}</div></div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put it in the tack room</button>${S.money>=crateCost()?'<button class="btn" data-a="crate">Open another · '+money(crateCost())+'</button>':''}</div>`;}
+    body=`<div class="reveal">${rbadge(it.r)}<div class="big rc-${it.r}">${it.n}</div><div class="note">${SLOTN[it.s]} · ${itemEffects(it)}</div></div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put it in the tack room</button>${S.money>=crateCost()?'<button class="btn" data-a="crate">Open another · '+money(crateCost())+'</button>':''}${S.money>=crateCost()*5?'<button class="btn" data-a="crate" data-n="5">Open 5 · '+money(crateCost()*5)+'</button>':''}</div>`;}
   }else if(m.type==='creator'){title=m.mode==='edit'?'Change your look':'Create your rancher';body=creatorBody(m);
   }else if(m.type==='tutintro'){title='Spring at Hank’s Place';body=`<div class="tuthead">${hankSVG(72)}<p><b>Hank:</b> “Welcome, ${esc(S.player.name.split(' ')[0])}! I’m Hank. I’ve been raising horses on this land for forty years. Spend the spring with me and I’ll show you how it’s done. After that, you’ll be ready for a ranch of your own.”</p></div><p class="note">The tutorial lasts four game days (one spring). Hank gives you a short checklist each day. When it’s over, he’ll let you pick one of his horses to keep.</p><div class="actions"><button class="btn primary" data-a="close">Let’s get to work</button><button class="btn" data-a="tutskip">Skip the tutorial</button></div>`;
   }else if(m.type==='gift'){title='Hank’s parting gift';body=giftBody();
