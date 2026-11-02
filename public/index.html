@@ -1167,6 +1167,7 @@ const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
   'Three yearly festivals, each with its own banner: the Spring Foal Show (spring day 2: enter a foal or yearling, judged on breeding, condition and trust), the Harvest Fair (fall day 2: a Best in Show class for grown horses with prize tack for the winner, plus a ranch booth that sells your livestock goods), and the Winter Horse Sale (winter day 3: three good horses at about 30% off, and anything you sell that day fetches 20% more). Prizes grow a little each year. A Festivals list under the show calendar shows when the next one is, and the morning report reminds you the day before.',
+  'The riding ring is redrawn as an oval arena from the same high angle as everything else: short posts and a rail along the back, taller posts with two rails along the front, a kickboard, a gate on the near side, and lights and flags on the upgrades.',
   'Facilities map: the hay field is now a proper 3/4 field with a far fence and a near fence, sloping windrows and shadows under the bales; the trail loop is flatter with marker posts that cast shadows; the pasture grass matches the rest of the ranch; a white rail fence runs along the road frontage with a gap at the gate; and the tack room no longer sits on top of the feed barn.',
   'Feed Barn is worth building now: level 1 cuts hay use 10% (dry storage) and gives 15% off bulk buys; the Feed Mill cuts hay use 20%, gives 20% off bulk buys and feeds every horse a grain ration for +3 energy overnight.',
   'Facilities map scale pass: everything is now sized against one ruler (a pickup truck is about 5.5 m, a horse 2.4 m). Trees are twice as big, chickens, goats and sheep are smaller, cattle a little bigger, the windmill and fence posts taller, the staff cabins are real cabins instead of sheds, and the feed barn, tack room and foaling barn grew to match the house and barn.',
@@ -3436,13 +3437,22 @@ function ranchMap(){
     const herd=S.horses.filter(h=>stage(h)!=='Foal').slice(0,7);herd.forEach((h,i)=>{const c=coat(h.genes),p=c.grey?GREYPAL:PAL[c.base+c.cr];o+=pony(520+(i%4)*42+(i>3?20:0),98+Math.floor(i/4)*34+(i%2)*6,p.b,p.m,i%2)});
     g+=hot('pasture',o);label(590,202,'Pastures',true,n,mx('pasture'))}
   // ===== ring =====
-  {const n=lv('ring');let o;if(!n)o=lot(474,224,114,82);else{const X=476,Y=246,W=112,Hh=56;
-      o=`<rect x="${X}" y="${Y}" width="${W}" height="${Hh}" rx="22" fill="#CDB383"/><rect x="${X+3}" y="${Y+3}" width="${W-6}" height="${Hh-6}" rx="20" fill="${C.sand}"/><path d="M500 266 q30 -16 60 0 t-60 0" stroke="#C4AC7C" stroke-width="1.2" fill="none"/><path d="M${X+10} ${Y+8} q${W/2-10} -4 ${W-20} 0" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none"/>`;
-      const posts=[];for(let i=0;i<=8;i++)posts.push(X+8+i*(W-16)/8);
-      o+=`<rect x="${X}" y="${Y-4}" width="${W}" height="${Hh}" rx="22" fill="none" stroke="${C.white}" stroke-width="1.4" opacity=".8"/>`+posts.map(px=>`<rect x="${px-1}" y="${Y-6}" width="2" height="6" fill="#DCD5C6"/>`).join('');
-      o+=posts.map(px=>`<rect x="${px-1.1}" y="${Y+Hh-7}" width="2.2" height="8" fill="#E9E4D8"/>`).join('')+`<path d="M${X+14} ${Y+Hh-2.5} H${X+W-14} M${X+14} ${Y+Hh-6} H${X+W-14}" stroke="${C.white}" stroke-width="1.8"/>`;
-      if(n>=2)o+=[[X+2,Y-2],[X+W-2,Y-2]].map(([px,py])=>`<path d="M${px} ${py} v-26" stroke="#5B6B7A" stroke-width="1.6"/><rect x="${px-4}" y="${py-30}" width="8" height="4" rx="1" fill="#5B6B7A"/><rect x="${px-3}" y="${py-27}" width="6" height="1.6" fill="#FFF3C4"/>`).join('');
-      if(n>=3)o+=`${[[X+6,Y-4],[X+W/2,Y-4]].map(([px,py])=>`<path d="M${px} ${py} v-14" stroke="${C.ink}" stroke-width="1.2"/><path d="M${px} ${py-14} l10 3.5 -10 3.5 z" fill="#C0392B"/>`).join('')}`}
+  {const n=lv('ring');let o;if(!n)o=lot(474,224,114,82);else{const cx=532,cy=272,rx=58,ry=27;/* an oval arena seen from the same high angle as the barns */
+      const pt=a=>[cx+rx*Math.cos(a),cy+ry*Math.sin(a)];const f=v=>v.toFixed(1);
+      o=`<ellipse cx="${cx}" cy="${cy+3}" rx="${rx+4}" ry="${ry+2}" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#CDB383"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="${C.sand}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="url(#mPlH)"/>
+        <path d="M${cx-30} ${cy+4} q30 -14 60 0" stroke="#C4AC7C" stroke-width="1.2" fill="none"/><ellipse cx="${cx}" cy="${cy-6}" rx="${rx-14}" ry="${ry-12}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2.5"/>`;
+      /* kickboard along the inside of the near rail */
+      o+=`<path d="M${f(pt(Math.PI*.12)[0])} ${f(pt(Math.PI*.12)[1])} A${rx-1} ${ry-1} 0 0 1 ${f(pt(Math.PI*.88)[0])} ${f(pt(Math.PI*.88)[1])}" stroke="#A88A5C" stroke-width="2.2" fill="none" opacity=".7"/>`;
+      /* back half: short posts and one rail; front half: taller posts and two rails */
+      const N=22;let back='',front='';const tops=[];
+      for(let k=0;k<N;k++){const a=k/N*Math.PI*2,[px,py]=pt(a),sn=Math.sin(a),ht=5+5*(sn+1)/2,wd=1.6+.8*(sn+1)/2;const post=`<rect x="${f(px-wd/2)}" y="${f(py-ht)}" width="${f(wd)}" height="${f(ht+1)}" fill="#E9E4D8"/><rect x="${f(px-wd/2)}" y="${f(py-ht)}" width="${f(wd*.4)}" height="${f(ht+1)}" fill="#fff" opacity=".5"/>`;if(sn<0)back+=post;else front+=post;tops.push([a,px,py-ht,py-ht*.55])}
+      const arc=(from,to,r2,off)=>{let d='';for(let k=0;k<=24;k++){const a=from+(to-from)*k/24,[px,py]=pt(a);const sn=Math.sin(a),ht=5+5*(sn+1)/2;d+=(k?' L':'M')+f(px)+' '+f(py-ht*r2+off)}return d};
+      o+=back+`<path d="${arc(Math.PI,Math.PI*2,1,.5)}" stroke="${C.white}" stroke-width="1.1" fill="none" opacity=".9"/>`;
+      o+=front+`<path d="${arc(0,Math.PI,1,.6)}" stroke="${C.white}" stroke-width="1.6" fill="none"/><path d="${arc(0,Math.PI,.5,.4)}" stroke="${C.white}" stroke-width="1.4" fill="none"/>`;
+      /* gate on the near side */
+      o+=`<rect x="${cx-5}" y="${cy+ry-10}" width="10" height="11" fill="none" stroke="${C.wood}" stroke-width="1.2"/><path d="M${cx-5} ${cy+ry-10} l10 11" stroke="${C.wood}" stroke-width="1"/>`;
+      if(n>=2)o+=[[cx-rx+6,cy-4],[cx+rx-6,cy-4]].map(([px,py])=>`<path d="M${px} ${py} v-30" stroke="#5B6B7A" stroke-width="1.6"/><rect x="${px-4}" y="${py-34}" width="8" height="4" rx="1" fill="#5B6B7A"/><rect x="${px-3}" y="${py-31}" width="6" height="1.6" fill="#FFF3C4"/><ellipse cx="${px}" cy="${py+1}" rx="3" ry="1" fill="rgba(25,35,15,.3)"/>`).join('');
+      if(n>=3)o+=`${[[cx-rx*.45,cy-ry+1],[cx+rx*.45,cy-ry+1]].map(([px,py])=>`<path d="M${f(px)} ${f(py)} v-16" stroke="${C.ink}" stroke-width="1.2"/><path d="M${f(px)} ${f(py-16)} l10 3.5 -10 3.5 z" fill="#C0392B"/>`).join('')}`}
     g+=hot('ring',o);label(532,322,'Ring',n>0,n,mx('ring'))}
   // ===== training =====
   {const n=lv('training');let o;if(!n)o=lot(604,224,102,82);else if(n===1){o=`<ellipse cx="655" cy="276" rx="40" ry="24" fill="#D9C39A"/><ellipse cx="655" cy="276" rx="40" ry="24" fill="none" stroke="#BFA77A" stroke-width="1.4"/><ellipse cx="655" cy="271" rx="40" ry="24" fill="none" stroke="${C.woodL}" stroke-width="1.6"/>`+Array.from({length:18},(_,i)=>{const a=i/18*Math.PI*2;const px=655+40*Math.cos(a),py=276+24*Math.sin(a);return `<rect x="${(px-1.1).toFixed(1)}" y="${(py-7).toFixed(1)}" width="2.2" height="7.5" fill="${C.wood}"/>`}).join('')+`<path d="M615 271 A40 24 0 0 0 695 271" stroke="${C.woodL}" stroke-width="2.2" fill="none"/>`}
