@@ -1291,6 +1291,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='73';
 const CHANGELOG=[
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
+  'Other riders at live events now wear 24 different colors, each rider a different one, so a field looks varied (none of them close to your ranch color).',
   'Ranch colors: pick your ranch color (12 colors or any custom color) when you name your ranch, or any time under Office → Settings. Your riders wear it at every live event (silks, helmet, shirt and saddle cloth; the teamster in the Draft Pull too), the other riders never wear a color close to yours, the arrow over your horse, the leaderboard highlight, the confetti and the finish banner all use it, and it shows on the results tables, the flag next to your ranch name, your pickup truck, the trailer stripe, the gate sign and flags on the ranch map, and the Office banner.',
   'Horse papers are tidier: the long life story moved behind a Read life story button (it opens the same window as the Story button on the card), and several long notes were shortened.',
   'Boarded horses: the owner now pays 70% of every vet bill (checkups, seasonal auto checkups and injury treatments). You pay 30%. Prices on a boarded horse’s papers show your share.',
@@ -2865,7 +2866,7 @@ function ranchDark(){const c=ranchCol();return colLum(c)<.18?hexMix(c,'#ffffff',
 function setRanchCol(c){if(!/^#[0-9a-f]{6}$/i.test(c||''))return;c=c.toLowerCase();if(S){if(S.phase!=='tutorial'||S.ranchName)S.ranchColor=c;if(S.player)S.player.ranchColor=c}UI.rcolor=c;applyRanchCol()}
 function applyRanchCol(){try{const c=ranchCol(),r=document.documentElement.style;r.setProperty('--ranch',c);r.setProperty('--ranch-soft',hexMix(c,'#ffffff',.78));r.setProperty('--ranch-ink',inkOn(c))}catch(e){}}
 function colPicker(){const cur=ranchCol();return `<div class="rcolpick">${RANCH_COLORS.map(([c,n])=>`<button type="button" class="rcsw${c.toLowerCase()===cur.toLowerCase()?' on':''}" style="--c:${c}" data-a="rcolor" data-col="${c}" title="${n}" aria-label="${n}"></button>`).join('')}<label class="rccustom" title="Pick any color you like"><input type="color" data-c="rcolor" value="${cur}"><span>Custom</span></label></div><div class="note" style="margin-top:4px">Your ranch color: <b>${ranchColName(cur)}</b>. Your riders wear it at every event, and it shows on your truck, trailer, gate sign and results.</div>`}
-function oppSilks(){const me=ranchCol();const pool=SILKS.filter(c=>colDist(c,me)>150);return pool.length>=4?pool:SILKS}
+function oppSilks(rs){const me=ranchCol();let pool=SILKS.filter(c=>colDist(c,me)>135);if(pool.length<10)pool=SILKS.filter(c=>colDist(c,me)>80);pool=pool.slice();const r=rs||Math.random;for(let i=pool.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}return pool}
 function hexMix(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=p(a),B=p(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
 function horseAnchors(h,foal,st){const bt={hot:0,draft:0,tall:0,small:0};for(const [k,f] of Object.entries(bloodOf(h))){const b=BODYTYPE[k]||{};for(const x in bt)bt[x]+=(b[x]||0)*f}
   const A={};for(const k of Object.keys(HB))A[k]=[HB[k][0]+HD.hot[k][0]*bt.hot+HD.draft[k][0]*bt.draft,HB[k][1]+HD.hot[k][1]*bt.hot+HD.draft[k][1]*bt.draft,HB[k][2]];
@@ -4196,7 +4197,7 @@ function renderModal(){
 /* ---------- watching events ---------- */
 let WATCH=null,watchN=0;
 const RUNNER_COLS=[['#7A3D1C','#1E1A18'],['#9A4822','#B8672E'],['#211D1B','#141211'],['#BEBEB8','#8C8C87'],['#C89955','#231D19'],['#D7AC57','#F2E6C3'],['#3C322B','#201B18'],['#E3D4B3','#C6B18B'],['#6E3418','#18120E']];
-const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480','#F1C40F','#1F3A68','#7B2335','#5DADE2','#F4F1EA','#26262B'];
+const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480','#F1C40F','#1F3A68','#7B2335','#5DADE2','#F4F1EA','#26262B','#7FBF3F','#FF6F61','#00A6D6','#B5651D','#E84393','#6C5CE7','#FFD866','#0B6E4F','#A3195B','#9AA5B1'];
 function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='race')return {v:24.5-s*.08,f:v=>v.toFixed(2)+'s',low:1};
   if(evid==='jump')return {v:84-s*.36,f:v=>v.toFixed(2)+'s',low:1};
@@ -4271,7 +4272,7 @@ function rSprite_raw(col,mane,silk,o={}){const trot=o.gait==='trot';const gait=t
   ${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${bodySvg}</g></g>`).join('')}
   ${nearLegs}${poses.map(k=>`<g class="pz" data-k="${k}"${o.pose==null&&k?' style="display:none"':''}>${bodyG(k)}${harness}${rider}${o.me?`<path d="M-1 -${o.rider?56:50} l3 4.6 l3 -4.6z" fill="${ranchCol()}" stroke="#ffffff" stroke-width=".9"/>`:''}</g></g>`).join('')}</g>`}
 function watchSetup(m){const ev0=EVENTS[m.res.ev],ev=ev0.only?{...ev0,id:{drive:'dress',pony:'barrel',desert:'endur'}[ev0.id]}:ev0,T=TIERS[m.res.t];const myH=H(m.res.h)||{};const c=myH.genes?coat(myH.genes):null;const myP=c?(c.grey?GREYPAL:PAL[c.base+c.cr]):{b:'#7A3D1C',m:'#1E1A18'};
-  const rs=srng(m.wid*31+7);const OPP=oppSilks();const field=m.res.field.map((f,i)=>{const met=evMetric(ev.id,f.score);const col=f.me?[myP.b,myP.m]:RUNNER_COLS[Math.floor(rs()*RUNNER_COLS.length)];return {...f,rank:i,met,col,silk:f.me?ranchCol():OPP[(i*3+1)%OPP.length],ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
+  const rs=srng(m.wid*31+7);const OPP=oppSilks(srng(m.wid*17+3));let oi=0;const field=m.res.field.map((f,i)=>{const met=evMetric(ev.id,f.score);const col=f.me?[myP.b,myP.m]:RUNNER_COLS[Math.floor(rs()*RUNNER_COLS.length)];return {...f,rank:i,met,col,silk:f.me?ranchCol():OPP[(oi++)%OPP.length],ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
   const lanes=field.map((f,i)=>i);for(let i=lanes.length-1;i>0;i--){const j=Math.floor(rs()*(i+1));[lanes[i],lanes[j]]=[lanes[j],lanes[i]]}field.forEach((f,i)=>f.lane=lanes[i]);
   return {ev,T,field,me:field.find(f=>f.me),rs}}
 const CROWD_SHIRTS=['#F2F0EA','#E8E4DA','#3F5F8F','#5B7DB1','#8FA9CC','#B03A2E','#D2694F','#2F3E52','#6E8B5A','#C9A15A','#7A4E8A','#DCC9A6','#2B2B2B','#A0A7AD','#E0B84C','#4E8C8A'];
