@@ -46,6 +46,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,[tabindex]:focus-v
 /* header */
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;padding-block:18px 14px;border-bottom:2px solid var(--ink)}
 .brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+.rnrow{display:flex;align-items:center;gap:.45em;min-width:0}.rnrow h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rflag{flex:none;width:16px;height:22px;padding:0;border:0;border-radius:3px 3px 3px 0;background:var(--ranch,#E2B007);box-shadow:0 0 0 2px rgba(255,255,255,.75),0 1px 3px rgba(0,0,0,.25);cursor:pointer;transition:transform .15s}.rflag-r{border-radius:3px 3px 0 3px}.rflag:hover{transform:scale(1.12)}.rflag:focus-visible{outline:2px solid var(--accent);outline-offset:3px}body.titlemode .rflag{display:none}
 .brand h1{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4vw,36px);letter-spacing:.5px;line-height:1}
 .brand .date{color:var(--muted);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
 .ledger{display:flex;flex-wrap:wrap;gap:6px 22px;margin-left:auto;align-items:center}
@@ -259,7 +260,6 @@ td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabula
 .subh{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:16px 0 6px}
 .report li{margin:6px 0} .report{padding-left:18px;margin:0}
 .result tr.me td{background:var(--ranch-soft,var(--accent-soft));font-weight:700}tr.me td:first-child{box-shadow:inset 4px 0 0 var(--ranch,#E2B007)}
-#ranchName::before{content:'';display:inline-block;width:.5em;height:.72em;margin-right:.38em;vertical-align:-.04em;border-radius:2px 2px 2px 0;background:var(--ranch,#E2B007);box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
 .rcolpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.rcsw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:var(--c);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}.rcsw.on{box-shadow:0 0 0 3px var(--ink,#222)}.rcsw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.rccustom{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-left:4px}.rccustom input{width:34px;height:30px;border:1px solid var(--line);border-radius:8px;padding:2px;background:none;cursor:pointer}
 .bigplace{font-family:var(--f-display);font-size:42px;line-height:1;color:var(--brass)}
 
@@ -421,7 +421,7 @@ details.howto>summary{cursor:pointer;font-weight:700;font-size:15px;list-style:r
 
 <div class="wrap">
   <header class="top">
-    <div class="brand"><h1 id="ranchName">Bloodline Ranch</h1><div class="date" id="dateLine"></div></div>
+    <div class="brand"><div class="rnrow"><button type="button" class="rflag" data-a="rcolopen" title="Change ranch color" aria-label="Change ranch color"></button><h1 id="ranchName">Bloodline Ranch</h1><button type="button" class="rflag rflag-r" data-a="rcolopen" title="Change ranch color" aria-label="Change ranch color"></button></div><div class="date" id="dateLine"></div></div>
     <div class="ledger" id="ledger"></div>
   </header>
   <nav class="tabs" id="tabs" role="tablist"></nav>
@@ -1291,6 +1291,7 @@ const KEY='bloodline-ranch-v1';
 const BUILD='73';
 const CHANGELOG=[
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
+  'The two little flags on either side of your ranch name (top left) are in your ranch color. Click either one to change it.',
   'Other riders at live events now wear 24 different colors, each rider a different one, so a field looks varied (none of them close to your ranch color).',
   'Ranch colors: pick your ranch color (12 colors or any custom color) when you name your ranch, or any time under Office → Settings. Your riders wear it at every live event (silks, helmet, shirt and saddle cloth; the teamster in the Draft Pull too), the other riders never wear a color close to yours, the arrow over your horse, the leaderboard highlight, the confetti and the finish banner all use it, and it shows on the results tables, the flag next to your ranch name, your pickup truck, the trailer stripe, the gate sign and flags on the ranch map, and the Office banner.',
   'Horse papers are tidier: the long life story moved behind a Read life story button (it opens the same window as the Story button on the card), and several long notes were shortened.',
@@ -4147,6 +4148,7 @@ function renderModal(){
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="buygearok">Buy all for ${money(tot)}</button><button class="btn" data-a="close">Cancel</button></div>`;
   }else if(m.type==='story'){const h=H(m.id);if(!h){UI.modal=null;ov.hidden=true;return}title=esc(h.name)+'’s life story';
     body=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><div class="portrait${h.shiny?' shiny':''}" style="width:200px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><b>${esc(h.name)}</b><div class="note">${sexLabel(h)} · ${ageLabel(h)} · ${breedLabel(h)}</div><div class="note">${h.wins} win${h.wins===1?'':'s'} in ${h.starts} start${h.starts===1?'':'s'} · ${money(h.earnings||0)} won</div></div></div>${storySection(h).replace('<div class="subh">Life story</div>','')}<div class="actions" style="margin-top:14px"><button class="btn" data-a="open" data-id="${h.id}">Open papers</button><button class="btn primary" data-a="close">Close</button></div>`;
+  }else if(m.type==='rcolor'){title='Ranch color';body=colPicker()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Done</button></div>`;
   }else if(m.type==='guide'){title='Game Guide';body=guideBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Close</button></div>`;
   }else if(m.type==='changelog'){title='What’s new in each build';body=changelogBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="${m.back?'clback':'close'}">${m.back?'Back':'Close'}</button></div>`;
   }else if(m.type==='autoall'){const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const ran=m.rows.filter(r=>r.ev!=null),sk=m.rows.filter(r=>r.ev==null);
@@ -4758,6 +4760,7 @@ const ACT={
   tocreator:()=>{UI.pdraft=defaultDraft();UI.modal={type:'creator',lock:1,mode:'existing'}},
   tutskip:()=>{UI.modal={type:'gift',lock:1}},
   giftpick:d=>{const h=H(d.id);if(!h)return;freeGear(h.id);const g=JSON.parse(JSON.stringify(h));g.ageDays=age(h);UI.gift=g;UI.modal={type:'path',lock:1}},
+  rcolopen:()=>{if(!S)return;UI.modal={type:'rcolor'}},
   rcolor:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol(d.col)},
   pathpick:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;buildRanch(d.p,UI.gift);UI.gift=null;UI.tab='stable';UI.modal={type:'welcome'}},
   loanpay:d=>{const l=S.bank.loans.find(x=>x.id==d.id);if(!l)return;const amt=d.v==='due'?l.due:d.v==='all'?Math.ceil(l.bal):+d.v;const paid=payLoan(l,amt,d.v==='all'?'Paid off: '+l.name:d.v==='due'?'Payment: '+l.name:'Extra payment: '+l.name);toast(paid?'Paid '+money(paid)+'.':'Not enough money.')},
