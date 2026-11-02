@@ -1286,18 +1286,19 @@ function wages(){return STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S.staff[x.id
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='72';
+const BUILD='73';
 const CHANGELOG=[
- {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+ {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
   'Horse papers are tidier: the long life story moved behind a Read life story button (it opens the same window as the Story button on the card), and several long notes were shortened.',
   'Boarded horses: the owner now pays 70% of every vet bill (checkups, seasonal auto checkups and injury treatments). You pay 30%. Prices on a boarded horse’s papers show your share.',
   'Tack Shop: a new Uncommon tier between Common and Rare. Seven new Uncommon pieces (Pelleted Bedding, Fleece Stable Sheet, Peppermint Lick, Lightweight Youth Saddle, Padded Training Halter, Open-Front Jump Boots, Braided Tail Bag), and the stronger common pieces (Trail Saddle, Snaffle Bridle, Bell Boots, Fly Sheet, Sawdust Bedding, Jolly Ball, Ear Bonnet) moved up to Uncommon with slightly better effects. The shop stocks four Uncommon pieces each week, and crate odds are now 46% Common, 26% Uncommon, 20% Rare, 6.5% Epic, 1.5% Legendary.',
   'After opening several crates, the results window has Open 5 more and Open 10 more buttons (and a single crate offers Open 5).',
-  'The life story button on horse cards is now just “Story”.',
   'Festival banners redrawn: the bunting now hangs properly on its string, strung between two poles above everything instead of disappearing behind the building. The Winter Horse Sale has a red sale barn with a HORSE SALE sign and a horse in the doorway, a holding pen with blanketed horses, a pinto being led in and a palomino at the hitching rail. The Foal Show and Harvest Fair get a judges’ stand and an extra horse each.',
   'Auto compete rule: under the Auto compete buttons, pick the minimum chance to win and the minimum chance to place top 3. Auto compete (and Auto compete all) enter the highest level that meets both. Saved with your ranch.',
-  'Every horse card has a 📖 Story button that opens the horse’s life story in its own window.',
+  'Every horse card has a Story button that opens the horse’s life story in its own window.',
   'The pictures at the top of each tab now scale to fit the screen, like the Tack Shop’s, so you see the whole scene on a phone held upright instead of a cropped middle.',
+ ]},
+ {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
   'Horse papers reordered: Vet care now sits right under the stats (with its own checkup button), and the pedigree and life story have moved to the bottom.',
   'Fixed: the truck and trailer on the ranch map no longer sit on top of the road fence.',
   'Training centers hold your horse: if your barn is full on the day a horse is due home, the center keeps it instead of overcrowding you. The first night costs the normal daily rate and each night after costs 35% more, until you free a stall. You get a warning the day before, “Bring home” is blocked while the barn is full, and if you can’t pay the fee they send the horse home anyway.',
