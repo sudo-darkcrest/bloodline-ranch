@@ -1245,6 +1245,8 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Training centers hold your horse: if your barn is full on the day a horse is due home, the center keeps it instead of overcrowding you. The first night costs the normal daily rate and each night after costs 35% more, until you free a stall. You get a warning the day before, “Bring home” is blocked while the barn is full, and if you can’t pay the fee they send the horse home anyway.',
+  'Sending your own horses away is much stronger. Dusty Creek ($90/day): three stats a day at 80% strength. Silver Spur ($280/day): four stats at 105%, more skills, and the horse comes home vet-checked. Royal Oak Elite ($950/day): all five stats at 145%, a 20% daily chance of a new skill, a 10% daily chance to raise a stat’s potential by 1, no bond loss, and a vet check on the way home.',
   'A full Game Guide: on the title screen between Load Game and Settings, and on the Office tab. Thirteen sections cover daily care, stats and traits, training, breeding and genetics, the show calendar and the Olympics, festivals, trouble, the rival, money, facilities, staff, tack, saving and tips.',
   'New top-of-tab art for the Office (a window onto your own horses, a bulletin board with your best ribbons, calendar, clock, safe and desk) and the Journal (an open journal with the date, polaroids of your horses, pen, glasses, candle and coffee). Every open-sky banner now has drifting clouds and birds.',
   'Economy: hay costs about a dollar more a bale and the hay fields yield 15% less, so a Feed Barn and a Ranch Manager matter more. Horses cost more across the board, and the rare ones are properly expensive: rarity now multiplies value by 1.3× (Uncommon), 1.7× (Rare), 2.5× (Epic), 4× (Legendary) and 6.5× (Mythical). Sale-barn markup is a little higher too.',
@@ -2321,9 +2323,11 @@ function coatOdds(s,d){const t={};const N=600;for(let i=0;i<N;i++){const c=coat(
 
 /* ---------- boarding: send horses away & board clients ---------- */
 const CENTERS=[
-  {id:'low',n:'Dusty Creek Training Barn',sk:2,cost:70,stats:2,mult:.55,skill:.02,mood:60,rep:0,d:'A friendly small-town barn. Steady, basic training on two stats a day.'},
-  {id:'mid',n:'Silver Spur Equestrian Center',sk:3,cost:180,stats:3,mult:.72,skill:.05,mood:72,rep:20,d:'A respected regional center. Good coaches work three stats a day.'},
-  {id:'high',n:'Royal Oak Elite Academy',sk:5,cost:450,stats:4,mult:.92,skill:.11,mood:85,rep:50,d:'World-class trainers. Four stats a day, and horses often come home with new skills.'}];
+  {id:'low',n:'Dusty Creek Training Barn',sk:2,cost:90,stats:3,mult:.8,skill:.04,mood:66,rep:0,bond:1,d:'A friendly small-town barn. Steady, honest training on three stats a day.'},
+  {id:'mid',n:'Silver Spur Equestrian Center',sk:3,cost:280,stats:4,mult:1.05,skill:.09,mood:78,rep:20,bond:.5,d:'A respected regional center. Good coaches work four stats a day, and horses come home vet-checked.',vet:1},
+  {id:'high',n:'Royal Oak Elite Academy',sk:5,cost:950,stats:5,mult:1.45,skill:.2,mood:92,rep:50,bond:0,pot:.1,d:'World-class trainers and sports science. Every stat, every day, at full strength and more. Horses often learn new skills, can raise their potential, keep their bond, and come home vet-checked.',vet:1}];
+/* when a horse is due home and there’s no free stall, the center keeps it, and each extra day costs more than the last */
+function holdCost(c,n){return Math.round(c.cost*(1+.35*n)/10)*10}
 const STAYS=[4,8,16];
 function stayCost(c,d){return Math.round(c.cost*d*(d>=16?.85:d>=8?.93:1)/10)*10}
 function canSendAway(h){return h&&!h.client&&!h.preg&&!h.injury&&(stage(h)!=='Foal')&&!h.retired}
@@ -2334,16 +2338,18 @@ function sendAway(h,cid,days){const c=CENTERS.find(x=>x.id===cid);if(!c||!canSen
   log('info','Sent '+h.name+' to '+c.n+' for '+days+' days ('+money(cost)+').');UI.modal=null;toast(h.name+' is off to '+c.n+'. Any gear went back to the tack room.')}
 function awayGain(h,k,c){const yf=stage(h)==='Yearling'?.5:1;let g=(2.5+R()*2)*Math.pow(Math.max(0,1-h.tr[k]/h.pot[k]),.6)*smtTrain(h)*c.mult*yf;
   if(TRAIN_BOOST[k]&&has(h,TRAIN_BOOST[k]))g*=1.4;if(has(h,'clever'))g*=1.2;if(has(h,'lazy'))g*=.75;if(has(h,'stubborn'))g*=.9;return g}
-function comeHome(a,ev,early){const h=a.h,c=CENTERS.find(x=>x.id===a.c);S.away=S.away.filter(x=>x!==a);h.energy=100;h.health=Math.max(h.health,90);h.acted=S.day;h.lastCare=S.day;S.horses.push(h);
+function comeHome(a,ev,early){const h=a.h,c=CENTERS.find(x=>x.id===a.c);S.away=S.away.filter(x=>x!==a);h.energy=100;h.health=Math.max(h.health,90);h.acted=S.day;h.lastCare=S.day;if(c.vet)h.lastVet=S.day;S.horses.push(h);
   const g=Object.entries(a.gains).filter(([k,v])=>v>=.05).map(([k,v])=>STATS.find(x=>x.k===k).n+' +'+v.toFixed(1)).join(', ');
-  const msg=h.name+' came home from '+c.n+(early?' early':'')+'. '+(g?'Gains: '+g+'.':'No stat gains.')+(a.skills.length?' Learned: '+a.skills.map(k=>SKILLS[k].n).join(', ')+'!':'')+(S.horses.length>S.stalls?' Your barn is now overcrowded.':'');
+  const msg=h.name+' came home from '+c.n+(early?' early':'')+'. '+(g?'Gains: '+g+'.':'No stat gains.')+(a.skills.length?' Learned: '+a.skills.map(k=>SKILLS[k].n).join(', ')+'!':'')+(a.pot?' Potential raised: '+Object.entries(a.pot).map(([k,v])=>STATS.find(x=>x.k===k).n+' +'+v).join(', ')+'!':'')+(a.held?' (Held '+a.held+' extra day'+(a.held>1?'s':'')+' for '+money(a.heldPaid||0)+'.)':'')+(S.horses.length>S.stalls?' Your barn is now overcrowded.':'');
   if(ev)ev.push(['good',msg]);else{log('good',msg);toast(msg)}}
 function awayNight(ev){for(const a of [...S.away]){const h=a.h,c=CENTERS.find(x=>x.id===a.c);
     const ks=STATS.map(x=>x.k).filter(k=>h.tr[k]<h.pot[k]).sort((x,y)=>(h.pot[y]-h.tr[y])-(h.pot[x]-h.tr[x])).slice(0,c.stats);
     for(const k of ks){const g=awayGain(h,k,c);const nv=Math.min(h.pot[k],Math.round((h.tr[k]+g)*10)/10);a.gains[k]=(a.gains[k]||0)+(nv-h.tr[k]);h.tr[k]=nv}
     if(h.skills.length<MAXSKILLS&&R()<c.skill*(stage(h)==='Yearling'?.5:1)){const pool=Object.keys(SKILLS).filter(k=>!h.skills.includes(k));if(pool.length){const k=pick(pool);h.skills.push(k);story(h,'Learned a skill: '+SKILLS[k].n+'.');a.skills.push(k)}}
-    h.happy=clamp(h.happy+(c.mood-h.happy)*.4,0,100);h.bond=clamp(h.bond-1,0,100);h.health=clamp(h.health+5,0,100);h.jobs=[];h.streak=0;
-    if(S.day+1>=a.until)comeHome(a,ev)}}
+    if(c.pot&&R()<c.pot){const k=pick(STATS.map(x=>x.k).filter(k=>h.pot[k]<100));if(k){h.pot[k]++;a.pot=(a.pot||{});a.pot[k]=(a.pot[k]||0)+1;if(h.reg)register(h)}}
+    h.happy=clamp(h.happy+(c.mood-h.happy)*.4,0,100);h.bond=clamp(h.bond-(c.bond??1),0,100);h.health=clamp(h.health+5,0,100);h.jobs=[];h.streak=0;
+    if(S.day+1>=a.until){if(S.horses.length<S.stalls)comeHome(a,ev);else{const n=(a.held||0);const fee=holdCost(c,n);if(S.money>=fee){S.money-=fee;a.held=n+1;a.heldPaid=(a.heldPaid||0)+fee;ev.push(['warn',c.n+' is keeping '+h.name+' because your barn has no free stall. That cost '+money(fee)+' tonight, and tomorrow will be '+money(holdCost(c,n+1))+'. Free a stall to bring them home.'])}else{comeHome(a,ev);ev.push(['bad','You couldn’t pay '+c.n+' to keep '+h.name+', so they sent the horse home to an overcrowded barn.'])}}}
+    else if(S.day+2>=a.until&&S.horses.length>=S.stalls&&!a.warned){a.warned=1;ev.push(['warn',h.name+' is due home from '+c.n+' tomorrow, but your barn is full. If no stall is free, they’ll keep '+(h.sex==='M'?'him':'her')+' for '+money(holdCost(c,0))+' the first night and more each night after.'])}}}
 // ---- clients ----
 function boardFacScore(){return L('barn')+L('training')+L('ring')+L('track')+L('pasture')+L('clinic')+L('trails')}
 function boardRate(){return Math.round((40+Math.min(S.rep,250)*.75+boardFacScore()*10)*BAL.boardMult/5)*5}
@@ -2379,11 +2385,11 @@ function renderBoarding(){
   const cands=S.horses.filter(canSendAway);const sel=cands.find(h=>h.id==UI.awayH)||cands[0];const days=+UI.awayD||8;
   const centers=CENTERS.map(c=>{const ok=S.rep>=c.rep,cost=stayCost(c,days);const per=sel?Math.round(c.stats*awayExp(sel,c)*days*10)/10:0;
     return `<div class="panel ctr r-${c.id}"><div class="subh" style="margin-top:0">${'★'.repeat(c.sk)}${'☆'.repeat(5-c.sk)} ${c.id==='high'?'High':c.id==='mid'?'Medium':'Low'} skill</div><h3 style="margin:2px 0 4px">${c.n}</h3><p class="note">${c.d}</p>
-     <ul class="note" style="margin:6px 0 8px;padding-left:18px"><li>${money(c.cost)} a day${days>=8?' (discount for long stays)':''}</li><li>Trains ${c.stats} stats a day at ${Math.round(c.mult*100)}% strength</li><li>${Math.round(c.skill*100)}% chance a day to learn a skill</li><li>Keeps horses around ${c.mood} happiness. Bond fades 1 a day while away.</li>${c.rep?`<li>Needs ${c.rep} reputation</li>`:''}</ul>
+     <ul class="note" style="margin:6px 0 8px;padding-left:18px"><li>${money(c.cost)} a day${days>=8?' (discount for long stays)':''}</li><li>Trains ${c.stats===5?'all five':c.stats} stats a day at ${Math.round(c.mult*100)}% strength</li><li>${Math.round(c.skill*100)}% chance a day to learn a skill</li>${c.pot?`<li><b>${Math.round(c.pot*100)}% chance a day to raise a stat’s potential by 1</b></li>`:''}${c.vet?'<li>Comes home vet-checked (good for 8 days)</li>':''}<li>Keeps horses around ${c.mood} happiness. ${c.bond?'Bond fades '+c.bond+' a day while away.':'Bond doesn’t fade.'}</li>${c.rep?`<li>Needs ${c.rep} reputation</li>`:''}</ul>
      ${sel?`<p class="note">Expected for ${esc(sel.name)}: about <b>+${per}</b> stat points in ${days} days${c.skill*days>=.3?' and a good chance of a new skill':''}.</p>`:''}
      <button class="btn ${c.id==='high'?'primary':''}" data-a="sendaway" data-c="${c.id}" ${!sel||!ok||S.money<cost?'disabled':''}>${ok?'Send for '+money(cost):'Locked'}</button></div>`}).join('');
   const away=S.away.map(a=>{const c=CENTERS.find(x=>x.id===a.c),h=a.h;const g=Object.entries(a.gains).filter(([k,v])=>v>=.05).map(([k,v])=>STATS.find(x=>x.k===k).s+' +'+v.toFixed(1)).join(' · ');
-    return `<div class="awayrow"><div><b>${esc(h.name)}</b> <span class="note">at ${c.n} · home in ${a.until-S.day} day${a.until-S.day===1?'':'s'}</span><div class="note mono">${g||'Just arrived'}${a.skills.length?' · learned '+a.skills.map(k=>SKILLS[k].n).join(', '):''}</div></div><button class="btn small" data-a="bringhome" data-id="${h.id}">Bring home early</button></div>`}).join('');
+    return `<div class="awayrow"><div><b>${esc(h.name)}</b> <span class="note">at ${c.n} · ${a.held?`<b class="bad">held ${a.held} day${a.held>1?'s':''}: no free stall</b> · tonight ${money(holdCost(c,a.held))}`:'home in '+(a.until-S.day)+' day'+(a.until-S.day===1?'':'s')}</span><div class="note mono">${g||'Just arrived'}${a.skills.length?' · learned '+a.skills.map(k=>SKILLS[k].n).join(', '):''}</div></div><button class="btn small" data-a="bringhome" data-id="${h.id}" ${S.horses.length>=S.stalls?'disabled title="No free stall"':''}>${a.held?'Bring home':'Bring home early'}</button></div>`}).join('');
   const req=(S.boardReq||[]).map((r,i)=>{const h=r.h;return `<div class="panel clientreq"><div style="display:flex;gap:10px;align-items:center"><div class="portrait${h.shiny?' shiny':''}" style="width:120px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><b>${esc(h.name)}</b> <span class="note">${sexLabel(h)} · ${ageLabel(h)}</span><div>${rbadge(rarityOf(h))} ${breedLabel(h)}</div><div class="note">Owner: ${esc(r.owner)}, ${esc(r.farm)}</div>${r.fromRival?'<div class="note good">Left your rival’s barn to board with you after seeing your record. Pays 25% more.</div>':''}</div></div>
      <p style="margin:8px 0 4px"><b>${r.days} days</b> at <b>${money(r.pay)}/day</b> (${money(r.pay*r.days)}) · bonus <b>${money(r.bonus)}</b> if every goal is met</p>
      <div class="subh" style="margin:4px 0">What the owner expects</div><ul class="note" style="margin:0 0 8px;padding-left:18px">${r.goals.map(g=>`<li>${goalText(g,h)}</li>`).join('')}</ul>
@@ -2394,7 +2400,7 @@ function renderBoarding(){
   <div class="subh">Send a horse to a training center</div>
   <div class="panel" style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:12px"><div class="field"><label for="awayH">Horse</label><select id="awayH" data-c="awayh">${cands.length?cands.map(h=>`<option value="${h.id}" ${sel===h?'selected':''}>${esc(h.name)} · ${stage(h)} · avg ${Math.round(avg(h.tr))}/${Math.round(avg(h.pot))}</option>`).join(''):'<option>No horse can go right now</option>'}</select></div>
    <div class="field"><label for="awayD">Stay</label><select id="awayD" data-c="awayd">${STAYS.map(d=>`<option value="${d}" ${d===days?'selected':''}>${d} days (${d===4?'one season':d===8?'two seasons':'a full year'})</option>`).join('')}</select></div>
-   <p class="note" style="flex:1 1 260px;margin:0">Horses away don’t use a stall, hay or your time, and can’t compete or breed. Pregnant, injured, retired horses and foals can’t go.</p></div>
+   <p class="note" style="flex:1 1 260px;margin:0">Horses away don’t use a stall, hay or your time, and can’t compete or breed. If your barn is full when one is due home, the center keeps it for a fee that rises every night. Pregnant, injured, retired horses and foals can’t go.</p></div>
   <div class="ctrgrid">${centers}</div>
   <div class="panel" style="margin-top:12px"><div class="subh" style="margin-top:0">Away now (${S.away.length})</div>${away||'<p class="note">None of your horses are away.</p>'}</div>
   <div class="subh" style="margin-top:22px">Board other owners’ horses</div>
@@ -4776,7 +4782,7 @@ const ACT={
   bestgear1:d=>{const h=H(d.id);if(!h)return;const n=optimizeGear(h);toast(n?'Moved '+n+' piece'+(n>1?'s':'')+' of gear. '+h.name+' now has the best fit in every slot.':h.name+' already has the best gear you own.')},
   sendaway:(d,b)=>{const h=S.horses.find(x=>x.id==UI.awayH&&canSendAway(x))||S.horses.find(canSendAway);if(!h)return;const days=+UI.awayD||8;const c=CENTERS.find(x=>x.id===d.c);
     if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again: send '+h.name+' for '+money(stayCost(c,days));return 'skip'}sendAway(h,d.c,days)},
-  bringhome:d=>{const a=S.away.find(x=>x.h.id==d.id);if(!a)return;const c=CENTERS.find(x=>x.id===a.c);const left=Math.max(0,a.until-S.day);const ref=Math.round(c.cost*left*.5/10)*10;S.money+=ref;comeHome(a,null,true);if(ref)log('info','Refund for unused days: '+money(ref)+'.')},
+  bringhome:d=>{const a=S.away.find(x=>x.h.id==d.id);if(!a)return;if(S.horses.length>=S.stalls)return toast('There’s no free stall for '+a.h.name+'. Sell a horse, send a client home or upgrade the barn first.');const c=CENTERS.find(x=>x.id===a.c);const left=Math.max(0,a.until-S.day);const ref=Math.round(c.cost*left*.5/10)*10;S.money+=ref;comeHome(a,null,true);if(ref)log('info','Refund for unused days: '+money(ref)+'.')},
   awaytab:d=>{UI.awayH=String(d.id);UI.tab='boarding';UI.modal=null},
   acceptclient:d=>acceptClient(+d.i),
   declineclient:d=>{S.boardReq.splice(+d.i,1);toast('You turned down the request.')},
