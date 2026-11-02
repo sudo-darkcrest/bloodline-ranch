@@ -119,6 +119,7 @@ main{padding-block:20px}
 .specline{color:var(--ink)}.specline b{color:var(--brass,#9a6b1f)}
 .story{list-style:none;margin:4px 0 6px;padding:0 0 0 14px;border-left:2px solid var(--line)}.story li{position:relative;padding:3px 0 6px 8px;display:flex;flex-direction:column;font-size:14px}.story li::before{content:'';position:absolute;left:-20px;top:8px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:2px solid var(--muted)}.story li.big::before{background:var(--brass);border-color:var(--brass)}.story .sw{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.02em}.story li.big span:last-child{font-weight:700}.story li.gap::before{display:none}
 .trophyroom .shelf{display:flex;flex-wrap:wrap;gap:14px 0;padding:6px 0 0}.trophyroom .cup{display:flex;flex-direction:column;align-items:center;width:80px;text-align:center;padding:0 3px 4px;border-bottom:7px solid #6B4A2E;box-shadow:0 3px 0 #4A3020}.trophyroom .cup .cn{font-size:11px;font-weight:700;line-height:1.15;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:74px}.trophyroom .cup .ct{font-size:10px;color:var(--muted)}.trophyroom .cup.more{justify-content:center;font-weight:700;color:var(--muted)}.ribbonwall.big{gap:6px}
+.festart{margin:-16px -18px 0;border-radius:12px 12px 0 0;overflow:hidden;aspect-ratio:1000/80}.festart svg{width:100%;height:100%;display:block}
 .rivalpanel{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px}.rivalhead{display:flex;gap:12px;align-items:center;flex:1;min-width:260px}.rivalhead>.grow{min-width:0;flex:1 1 200px}.rivalface{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:var(--pasture)}.rivalface svg{width:64px;height:64px;display:block}.rivalbarn{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}.rivalhorse{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 8px}.rivalrec{display:flex;align-items:baseline;gap:4px;flex-direction:row;flex-wrap:wrap;justify-content:center;min-width:90px}.rivalrec .rw,.rivalrec .rl{font-family:var(--f-display,serif);font-size:30px;font-weight:700}.rivalrec .rw{color:var(--good,#2e7d32)}.rivalrec .rl{color:var(--bad,#b3261e)}.rivalrec .note{flex-basis:100%;text-align:center}.rivallast{flex-basis:100%}.rivalchip{background:#7A1E1E;color:#fff;border-color:#7A1E1E;font-size:10px;padding:1px 6px}tr.rivalrow td{background:color-mix(in srgb,#B03A2E 10%,transparent)}
 .note.brk{font-size:11.5px;line-height:1.35}.note.brk span{display:block;white-space:nowrap}
 .tackchk{display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;margin:2px 0}.tackchk input{width:18px;height:18px;accent-color:var(--accent)}
@@ -841,6 +842,51 @@ function trophyRoom(){const all=ranchRibbons();if(!all.length)return `<div class
   </div>`}
 /* rival ranch */
 const RIVAL_HORSES=['Dusty Star','Black Jack','Sundance Kid','Cimarron','Rio Bravo','Prairie Fire','Smoke Signal','Desert Rose','Thunder Road','Midnight Rider','Copper Penny','Wild Card'];
+
+/* ---------- seasonal festivals (Build 72) ---------- */
+const FESTS={foalshow:{n:'Spring Foal Show',s:0,d:2,fee:50,prize:[600,300,150],rep:[4,2,1],blurb:'The county judges pick the best young horse of the year. Enter one of your foals or yearlings; it’s judged on breeding, condition, happiness and how well it trusts you.'},
+  harvest:{n:'Harvest Fair',s:2,d:2,fee:100,prize:[1500,700,300],rep:[6,3,1],blurb:'Pies, pumpkins and the Best in Show halter class. Enter one grown horse to be judged on training, condition, coat and show record. Your ranch booth sells eggs, cheese, wool and honey.'},
+  wintersale:{n:'Winter Horse Sale',s:3,d:3,fee:0,prize:[],rep:[],blurb:'The big winter auction. Three good horses go cheap, and buyers pay 20% more for anything you sell today.'}};
+function festKey(day=S.day){const dp=dateParts(day);for(const k in FESTS){const f=FESTS[k];if(f.s===dp.sIdx&&f.d===dp.sday)return k}return null}
+function festMult(){return 1+(dateParts(S.day).year-1)*.12}
+function festState(){const k=festKey();if(!k)return null;const yr=dateParts(S.day).year;if(!S.fest||S.fest.k!==k||S.fest.year!==yr){S.fest={k,year:yr,done:0,booth:0,lots:[],bought:0};if(k==='wintersale'){const lift=Math.min(18,S.rep/8);for(let i=0;i<3;i++){const h=genHorse({ageDays:ri(ADULT,ADULT+DPY*4),potMid:ri(52,64)+lift,nTraits:ri(1,2),origin:'Winter Horse Sale'});enrichSale(h);h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*.7/10)*10;h.sale=1;S.fest.lots.push(h)}}}return S.fest}
+function festNext(k){const f=FESTS[k];for(let d=S.day;d<S.day+DPY+1;d++){const dp=dateParts(d);if(dp.sIdx===f.s&&dp.sday===f.d)return d-S.day}return null}
+function judgeYoung(h){return avg(h.pot)*.55+h.happy*.15+h.health*.1+h.bond*.12+(h.shiny?6:0)+HRORDER.indexOf(rarityOf(h))*1.5+(h.vigor?2:0)-(h.coi>=.0625?4:0)}
+function judgeShow(h){return avg(h.tr)*.45+avg(h.pot)*.15+h.happy*.15+h.health*.12+HRORDER.indexOf(rarityOf(h))*2+Math.min(8,awardsOf(h).length)+(coat(h.genes).cr?2:0)+(h.shiny?5:0)}
+function festEnter(k,id){const F=festState();if(!F||F.k!==k||F.done)return toast('That contest isn’t open right now.');const f=FESTS[k];const h=H(id);if(!h||h.client)return toast('Pick one of your own horses.');
+  const young=k==='foalshow';if(young&&!isYoung(h))return toast('Only foals and yearlings can enter the Foal Show.');if(!young&&!isAdult(h))return toast('Only grown horses can enter Best in Show.');
+  if(h.injury)return toast(h.name+' is hurt and can’t be shown.');if(S.money<f.fee)return toast('You need '+money(f.fee)+' for the entry.');S.money-=f.fee;
+  const me=(young?judgeYoung(h):judgeShow(h))*(.93+R()*.14);const base=young?42+Math.min(S.rep,200)/9:40+Math.min(S.rep,250)/8;const field=[{name:h.name,farm:S.ranchName,score:me,me:1}];
+  for(let i=0;i<(young?5:7);i++)field.push({name:randName(),farm:pick(FARMS),score:Math.max(5,base+gauss()*7)});
+  if(S.rival&&S.rival.horses&&R()<.5){const rh=pick(S.rival.horses.filter(x=>young?isYoung(x):isAdult(x)));if(rh){field[1].name=rh.name;field[1].farm=S.rival.farm;field[1].rival=1;field[1].score=Math.max(5,(young?judgeYoung(rh):judgeShow(rh))*(.93+R()*.14))}}
+  field.sort((a,b)=>b.score-a.score);const place=field.findIndex(x=>x.me)+1;const m=festMult();let prize=0,rep=0,drop=null;
+  if(place<=3){prize=r10(f.prize[place-1]*m);rep=gainRep(f.rep[place-1]);S.money+=prize;h.earnings=(h.earnings||0)+prize;h.happy=clamp(h.happy+5,0,100);if(place===1){h.wins++;unlock(k);if(!young)drop=grantItem(rollRarity({rare:60,epic:35,legendary:5}));story(h,(young?'Best Young Horse at the ':'Best in Show at the ')+f.n+'.')}}
+  h.acted=S.day;F.done=1;F.res={place,prize,rep,drop:drop&&drop.id,field:field.map(x=>({...x,score:Math.round(x.score*10)/10})),h:h.id};
+  const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];log(place===1?'good':place<=3?'info':'warn',h.name+' placed '+ord[place-1]+' at the '+f.n+(prize?' and won '+money(prize):'')+(rep?' (+'+rep+' reputation)':'')+'.');
+  if(F.res.field.some(x=>x.rival&&x.me!==1)){const rp=F.res.field.findIndex(x=>x.rival)+1;if(S.rival)log('info','Your rival '+S.rival.owner+' showed '+F.res.field[rp-1].name+' and placed '+ord[rp-1]+'.')}
+  pxp('show',3);checkAch();save();UI.modal={type:'festres',k}}
+function festBooth(){const F=festState();if(!F||F.k!=='harvest'||F.booth)return;const n=['chickens','goats','sheep','cattle','bees'].reduce((a,x)=>a+L(x),0);const amt=r10((80+n*120)*festMult());S.money+=amt;F.booth=amt;pxp('biz',3);log('good','Your Harvest Fair booth sold out. '+money(amt)+(n?' from your livestock goods.':' from lemonade and pie. More livestock would sell more.'));toast('Booth earned '+money(amt)+'.');save()}
+function festBuyLot(i){const F=festState();if(!F||F.k!=='wintersale')return;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<h.price)return toast('Not enough money.');
+  S.money-=h.price;h.acted=0;h.lastCare=S.day;h.stallClean=100;delete h.sale;S.horses.push(h);F.lots.splice(i,1);F.bought++;unlock('wintersale');story(h,'Bought at the Winter Horse Sale for '+money(h.price)+'.');log('info','Bought '+h.name+' at the Winter Horse Sale for '+money(h.price)+'.');toast(h.name+' is home on your ranch.');pxp('biz',3);checkAch();save()}
+function festArt(k){const id='fa'+k;const flags=[...Array(18)].map((_,i)=>`<path d="M${40+i*52} ${18+Math.sin(i*1.3)*3} l9 16 l9 -16z" fill="${['#C0392B','#F2C14E','#2E6FD8','#2D8A4E','#E67E22','#8E44AD'][i%6]}"/>`).join('');
+  const sky=k==='wintersale'?['#C9D6E2','#EEF2F4']:k==='harvest'?['#E9C07A','#F6E3B8']:['#A9D0EA','#EAF1E2'];const grass=k==='wintersale'?'#E9EEF0':k==='harvest'?'#C9B36A':'#8DB86A';
+  let o=`<defs>${bSky(id+'s',sky[0],sky[1])}</defs><rect width="1000" height="80" fill="url(#${id}s)"/><rect y="56" width="1000" height="24" fill="${grass}"/><path d="M30 20 Q500 44 970 20" stroke="#6B4A30" stroke-width="1.6" fill="none"/>${flags}`;
+  o+=`<g transform="translate(470 22)"><path d="M0 40 L30 0 L60 40Z" fill="#F4EBD5"/><path d="M30 0 L60 40 L30 40Z" fill="#000" opacity=".12"/><path d="M0 40 L30 0 L60 40" stroke="#C0392B" stroke-width="2.5" fill="none"/><path d="M14 16 L46 16" stroke="#C0392B" stroke-width="1.2"/><rect x="24" y="24" width="12" height="16" fill="#8A6038"/></g>`;
+  if(k==='foalshow')o+=`<g transform="translate(120 20)">${bHorse(BH(930,BG.bay,'quarter',6),0,-6,64,{view:'front'})}</g><g transform="translate(820 14)">${bHorse(BH(931,BG.chestnut,'morgan',60),0,0,70,{flip:1})}</g>${[[200,60],[300,66],[700,62],[760,58]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-5 -5 -8 2 0 6 C8 2 5 -5 0 0Z" fill="#F39BB5"/></g>`).join('')}`;
+  else if(k==='harvest')o+=`${[[160,62],[190,66],[215,60]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${10+i*2}" ry="${8+i*1.5}" fill="#E67E22"/><path d="M${x-5} ${y-3} q5 -3 10 0 M${x} ${y-9} v-5" stroke="#9A5A1A" stroke-width="1.4" fill="none"/>`).join('')}<g transform="translate(760 40)"><rect width="40" height="26" rx="3" fill="#D9B95E"/><rect x="42" width="40" height="26" rx="3" fill="#D9B95E"/><rect x="20" y="-24" width="40" height="26" rx="3" fill="#D9B95E"/><path d="M4 8 h32 M4 18 h32 M46 8 h32 M46 18 h32 M24 -16 h32 M24 -6 h32" stroke="#B48F34" stroke-width="1"/></g><g transform="translate(300 20)">${bHorse(BH(932,BG.pal,'haflinger',60),0,0,70)}</g>`;
+  else o+=`${snowFlakes(53,1000,80,60)}<g transform="translate(150 14)">${bHorse(BH(933,BG.grey,'andalusian',60),0,0,72)}</g><g transform="translate(760 24)"><rect x="-4" y="0" width="4" height="40" fill="#6B4A30"/><rect x="-40" y="-2" width="80" height="22" rx="3" fill="#F4EBD5" stroke="#6B4A30"/><text x="0" y="13" text-anchor="middle" font-size="12" font-weight="800" fill="#C0392B" font-family="system-ui,sans-serif">SALE</text></g>`;
+  return `<div class="festart" aria-hidden="true"><svg viewBox="0 0 1000 80" preserveAspectRatio="xMidYMid slice">${o}</svg></div>`}
+function festPanel(where){const k=festKey();const F=k?festState():null;const dp=dateParts(S.day);
+  if(!F){if(where!=='compete')return '';const rows=Object.entries(FESTS).map(([kk,f])=>{const n=festNext(kk);return `<div class="calrow"><b>${f.n}</b><span class="note">${SEASONS[f.s]} day ${f.d}, once a year</span><span class="note">${n===0?'Today':'in '+n+' day'+(n>1?'s':'')}</span></div>`}).join('');
+    return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Festivals</div><div class="calgrid">${rows}</div></div>`}
+  const f=FESTS[k];if(where==='market'&&k!=='wintersale')return '';
+  let body='';
+  if(k==='wintersale'){body=`<p class="note">Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price.</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/<button class="btn small" data-a="open"[^>]*>View papers<\/button>/,'')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
+  else{const young=k==='foalshow';const cands=S.horses.filter(h=>!h.client&&!h.injury&&(young?isYoung(h):isAdult(h)));const m=festMult();
+    if(F.done){const r=F.res;const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];body=`<p><b>${esc((H(r.h)||{}).name||'Your horse')}</b> placed <b>${ord[r.place-1]}</b>${r.prize?' and won <b>'+money(r.prize)+'</b>':''}.</p>`+(k==='harvest'?(F.booth?`<p class="note">Your booth earned ${money(F.booth)}.</p>`:`<button class="btn small" data-a="festbooth">Run the ranch booth</button>`):'')}
+    else body=`<p class="note">Prizes this year: <b>${f.prize.map(v=>money(r10(v*m))).join(' / ')}</b> for 1st / 2nd / 3rd, plus reputation${k==='harvest'?' and a piece of prize tack for the winner':''}. Entry ${money(f.fee)}. One entry per year.</p>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select data-c="festhorse" style="max-width:320px"><option value="">Choose a horse…</option>${cands.map(h=>`<option value="${h.id}" ${UI.festHorse==h.id?'selected':''}>${esc(h.name)} · ${sexLabel(h)} · ${ageLabel(h)} · ${young?'potential '+Math.round(avg(h.pot)):'trained '+Math.round(avg(h.tr))}</option>`).join('')}</select><button class="btn primary small" data-a="festenter" data-k="${k}" ${UI.festHorse&&cands.some(h=>h.id==UI.festHorse)?'':'disabled'}>Enter the ${young?'Foal Show':'Best in Show class'}</button>${k==='harvest'&&!F.booth?'<button class="btn small" data-a="festbooth">Run the ranch booth</button>':''}</div>${cands.length?'':'<p class="note bad">You have no '+(young?'foal or yearling':'grown, healthy horse')+' to enter this year.</p>'}`}
+  return `<div class="panel festpanel" style="margin-bottom:16px">${festArt(k)}<div class="subh" style="margin-top:8px">${esc(f.n)} · today only</div><p class="note" style="margin-top:0">${esc(f.blurb)}</p>${body}</div>`}
 function rivalLevel(){const yrs=dateParts(S.day).year-1;return clamp(46+yrs*2.5+S.rep/30+(S.rival?S.rival.boost||0:0),46,84)}
 function rivalHorse(o={}){const r=S.rival;const h=genHorse({sex:o.sex,ageDays:o.ageDays??ri(ADULT+DPY,ADULT+DPY*7),potMid:rivalLevel()+(o.d||0),potSpread:6,trFrac:o.young?[.3,.5]:[.7,.95],nTraits:ri(1,2),origin:'Raised at '+r.farm+' Ranch'});h.happy=75;h.bond=40;h.rival=1;return h}
 const RIVAL_BIOS=['grew up showing ponies at the county fair and never lost the taste for a blue ribbon.','took over the family ranch young and runs it like a business: every horse has to earn its hay.','is the quiet type at the rail. Says little, remembers everything.','came out of the racing world and still thinks every event is a sprint.','breeds for the long game and loves nothing more than beating a bought horse with a homebred one.','is friendly enough at the feed store. In the ring, not so much.'];
@@ -1120,6 +1166,8 @@ const KEY='bloodline-ranch-v1';
 const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
+  'Three yearly festivals, each with its own banner: the Spring Foal Show (spring day 2: enter a foal or yearling, judged on breeding, condition and trust), the Harvest Fair (fall day 2: a Best in Show class for grown horses with prize tack for the winner, plus a ranch booth that sells your livestock goods), and the Winter Horse Sale (winter day 3: three good horses at about 30% off, and anything you sell that day fetches 20% more). Prizes grow a little each year. A Festivals list under the show calendar shows when the next one is, and the morning report reminds you the day before.',
+  'Facilities map: the pens, pasture and ring are now drawn from the same high angle as the buildings, with short posts and a rail along the back and a taller two-rail fence along the front, so everything sits on one ground plane. Far-row buildings are a touch smaller and the near row a touch bigger for depth, and a light haze sits near the horizon.',
   'Your rival is now a real ranch. They have a face, a short bio and four actual horses (see them on the Compete tab, with papers). Their horses train every week, grow old, retire and get replaced, so their strength comes from their barn, not from copying your score. They bring a horse that suits the show, so a Local Show no longer draws their champion.',
   'Rival frequency: rare at Local Shows (1 in 10), sometimes at County, and usually at State level and above. Beating them pays a bonus (10% of the top prize) and +1 reputation; losing costs nothing. Winning streaks are tracked, with two new achievements: Rival Beaten and Nemesis (5 in a row).',
   'Things to do with your rival: their retired or cash-sale horses show up at the sale barn with a “From your rival” tag (buy one for the Poached achievement); their stallion stands at stud for double the usual fee; they sometimes ask to breed to your stallion at 1.5× the going rate; once you’re ahead in the record, their boarders may move to your barn and pay 25% more.',
@@ -1707,7 +1755,7 @@ const REP_MAX=300;
 function repGainMult(){return Math.max(.3,160/(160+S.rep))}
 function gainRep(n){if(!(n>0))return 0;const g=Math.max(1,Math.round(n*repGainMult()));S.rep=Math.min(REP_MAX,S.rep+g);S.lastRepGain=S.day;return g}
 function repSaleMult(){return 1+Math.min(.3,S.rep/500)}
-function saleValue(h){return Math.round(value(h)*repSaleMult()*(vetClear(h)?1:.9)*pskM('biz',.02)/10)*10}
+function saleValue(h){return Math.round(value(h)*repSaleMult()*(vetClear(h)?1:.9)*pskM('biz',.02)*(festKey()==='wintersale'?1.2:1)/10)*10}
 function loseRep(n,why,ev){const b=S.rep;S.rep=Math.max(0,S.rep-n);if(S.rep<b){const m=why+' Reputation −'+(b-S.rep)+'.';if(ev)ev.push(['bad',m]);else log('bad',m)}}
 const SPONSORS=[{id:'feedco',n:'Dry Creek Feed & Supply',req:40,pay:150,starts:1},{id:'tackco',n:'Silver Spur Tack Co.',req:80,pay:400,starts:2},{id:'brand',n:'Frontier Equine Nutrition',req:130,pay:1000,starts:3}];
 function bestSponsor(){return [...SPONSORS].reverse().find(x=>S.rep>=x.req)}
@@ -1732,6 +1780,9 @@ const ACH=[
   {id:'olympic',n:'Olympic Gold',d:'Win at the Olympics.'},
   {id:'studsvc',n:'In Demand',d:'Another ranch pays to breed to your stallion.'},
   {id:'rival1',n:'Rival Beaten',d:'Beat your rival ranch for the first time.'},
+  {id:'foalshow',n:'Best Young Horse',d:'Win the Spring Foal Show.'},
+  {id:'harvest',n:'Best in Show',d:'Win Best in Show at the Harvest Fair.'},
+  {id:'wintersale',n:'Bargain Hunter',d:'Buy a horse at the Winter Horse Sale.'},
   {id:'rival5',n:'Nemesis',d:'Beat your rival five times in a row.'},
   {id:'rivalbuy',n:'Poached',d:'Buy a horse that came from your rival’s ranch.'},
   {id:'skill',n:'Kindred Spirit',d:'A horse learns a skill through its bond with you.'},
@@ -2514,6 +2565,7 @@ function endDay(){
   if(R()<.03){S.hay+=10;ev.push(['good','A neighbor dropped off 10 spare bales of hay.'])}
   S.hayPrice=Math.max(3,Math.round(([7,6,8,11][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]));
   if(dp.sday===1&&S.day>1)rivalChallenge(ev);
+  {const fk=festKey();if(fk)ev.push(['good','🎪 Today is the '+FESTS[fk].n+'! '+(fk==='wintersale'?'See the Market or Compete tab.':'Enter a horse on the Compete tab.')]);const fn=festKey(S.day+1);if(fn)ev.push(['info','Tomorrow is the '+FESTS[fn].n+'. Get a horse ready.'])}
   if(dp.sday===1)ev.push(['info',SEASONS[dp.sIdx]+' has arrived. Hay costs about '+money(S.hayPrice)+' a bale'+(dp.sIdx===3?' and horses eat more in the cold.':dp.sIdx===1?' and the pasture is lush, so horses eat less.':'.')]);
   if((S.day-1)%7===0){
     if(S.sponsor){const sp=SPONSORS.find(x=>x.id===S.sponsor.id);if(sp){if((S.weekStarts||0)>=sp.starts){S.money+=sp.pay;pxp('biz',4);ev.push(['good',sp.n+' paid your weekly sponsorship of '+money(sp.pay)+'.'])}else{S.sponsor.strikes=(S.sponsor.strikes||0)+1;ev.push(['warn',sp.n+' expected '+sp.starts+' event entr'+(sp.starts>1?'ies':'y')+' last week and got '+(S.weekStarts||0)+'. No payment. Strike '+S.sponsor.strikes+' of 2.'])}
@@ -3193,6 +3245,7 @@ function renderCompete(){
   const ok=canCompete(h);
   return `<div class="section-head"><h2>Show Grounds</h2><span class="sub">Each horse can enter one event per day. Entry fees are about 6–8% of the purse. Only Local Shows run every day. The rest follow the show calendar.</span></div>
   <div class="panel showcal"><div class="subh" style="margin-top:0">Show calendar · ${SEASONS[dateParts(S.day).sIdx]} day ${dateParts(S.day).sday}, year ${dateParts(S.day).year}</div><div class="calgrid">${TIERS.map((t,ti)=>t.invite?'':`<div class="calrow ${tierOpen(ti)?'open':''}"><b>${t.n}</b><span class="note">${t.when}</span><span class="${tierOpen(ti)?'good':'note'}">${tierOpen(ti)?'● Open now':openText(ti)}</span>${S.rep<t.req?`<span class="note">needs ${t.req} rep</span>`:''}</div>`).join('')}</div></div>
+  ${festPanel('compete')}
   ${rivalPanel()}
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+(trainerHeld(x)?'reserved for trainer':status(x)[1])}</option>`).join('')}</select></div>
@@ -3210,6 +3263,7 @@ function renderCompete(){
 function renderMarket(){
   const days=7-((S.day-1)%7);
   return `<div class="section-head"><h2>Sale Barn</h2><span class="sub">New stock arrives every 7 days (next in ${days} day${days>1?'s':''}). Better horses show up as your reputation grows.</span></div>
+  ${festPanel('market')}
   ${S.market.length?`<div class="grid">${S.market.map(h=>horseCard(h,'market')).join('')}</div>`:'<div class="empty">Sold out. New stock arrives in '+days+' days.</div>'}
   ${(S.soldBack||[]).filter(r=>r.until>=S.day).length?`<div class="section-head" style="margin-top:26px"><h2>Buy back</h2><span class="sub">Horses you sold recently. Their buyers will sell them back for a little more, for 7 days.</span></div><div class="panel">${S.soldBack.map((r,i)=>r.until<S.day?'':`<div class="staff"><div class="portrait" style="width:110px;aspect-ratio:200/120;flex:none">${horseSVG(r.h)}</div><div class="grow"><b>${esc(r.h.name)}</b> ${rbadge(rarityOf(r.h))}${shinyTag(r.h)}<div class="note">${breedLabel(r.h)} · ${sexLabel(r.h)} · ${r.until-S.day+1} day${r.until-S.day?'s':''} left</div></div><button class="btn small primary" data-a="buyback" data-i="${i}" ${S.money<r.price?'disabled':''}>Buy back · ${money(r.price)}</button></div>`).join('')}</div>`:''}
   <div class="section-head" style="margin-top:26px"><h2>Breed Guide</h2><span class="sub">Rarer breeds start with higher potential and sell for more. They turn up more often as your reputation grows.</span></div>
@@ -3232,8 +3286,8 @@ function ranchMap(){
   const lv=L,C={grass:'#A9BE85',grassD:'#869F63',grass3:'#B7CA92',dirt:'#D1B486',dirtD:'#B9996A',road:'#8F8270',water:'#7DB2D2',waterD:'#5B92B6',wood:'#7A5638',woodL:'#9C7550',white:'#F7F3EA',ink:'#2B2A26',sand:'#E6D3A6',sh:'rgba(35,45,25,.28)',stone:'#A8A296'};
   let g='',labels='';
   // bigger 1200x640 layout: every facility keeps its drawing but is moved and enlarged around its label point
-  const LIVE=[420,214,1.25,42];const OFF={bunk:[110,152,1.2,30],clinic:[237,152,1.2,30],recovery:[327,152,1.2,30],pasture:[590,202,1.3,42],track:[855,202,1.15,42],trails:[855,230,1.2,70],
-    house:[110,322,1.15,200],barn:[285,322,1.15,200],foaling:[419,322,1.15,200],ring:[532,322,1.15,200],training:[655,322,1.15,200],hayfield:[797,329,1.15,200],feedbarn:[915,322,1.15,200],tackroom:[962,346,1.15,190]};
+  const LIVE=[420,214,1.25,42];const OFF={bunk:[110,152,1.08,30],clinic:[237,152,1.08,30],recovery:[327,152,1.08,30],pasture:[590,202,1.3,42],track:[855,202,1.15,42],trails:[855,230,1.2,70],
+    house:[110,322,1.2,200],barn:[285,322,1.2,200],foaling:[419,322,1.2,200],ring:[532,322,1.2,200],training:[655,322,1.2,200],hayfield:[797,329,1.2,200],feedbarn:[915,322,1.2,200],tackroom:[962,346,1.2,190]};
   let CO=null;const mp=(x,y)=>CO?[CO[0]*1.2+(x-CO[0])*CO[2],CO[1]+CO[3]+(y-CO[1])*CO[2]]:[x,y];
   const shadow=(cx,cy,rx,ry=5)=>`<ellipse cx="${cx}" cy="${cy-ry*.7}" rx="${rx}" ry="${ry*.75}" fill="rgba(25,35,15,.3)" filter="url(#mSh)"/>`;
   const tree=(x,y,r=11,c='#5E8C4A')=>`${shadow(x+r*.5,y+r*.95,r*1.05,r*.32)}<path d="M${x-2} ${y+r*1.05} L${x-1.2} ${y+r*.2} L${x+1.2} ${y+r*.2} L${x+2} ${y+r*1.05}Z" fill="#6B4A30"/><circle cx="${x+r*.38}" cy="${y+r*.18}" r="${r*.72}" fill="url(#mTree)"/><circle cx="${x-r*.42}" cy="${y+r*.12}" r="${r*.7}" fill="url(#mTree)"/><circle cx="${x}" cy="${y-r*.28}" r="${r*.82}" fill="url(#mTree)"/><circle cx="${x-r*.28}" cy="${y-r*.5}" r="${r*.34}" fill="#C9E3A0" opacity=".35"/>`;
@@ -3250,11 +3304,13 @@ function ranchMap(){
     <polygon points="${x-5},${y} ${x+w/2},${y-rh} ${x+w+5},${y}" fill="${roof}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="${wall}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="url(#mWall)"/><path d="M${x} ${y+.8} H${x+w}" stroke="#000" stroke-opacity=".25" stroke-width="1.6"/>
     ${wins(x,y,w,h,o.win||0)}${o.door?`<rect x="${x+w/2-6}" y="${y+h-17}" width="12" height="17" fill="#F7F3EA"/><rect x="${x+w/2-5}" y="${y+h-16}" width="10" height="16" fill="${C.wood}"/><path d="M${x+w/2-3} ${y+h-13} h6 v5 h-6z M${x+w/2-3} ${y+h-7} h6 v5 h-6z" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".7"/><circle cx="${x+w/2+3}" cy="${y+h-8}" r=".9" fill="#E8C76A"/>`:''}`};
   const pony=(x,y,col,mane,flip)=>`<g transform="translate(${x} ${y+4.6}) scale(${flip?-1:1} 1) scale(.44)">${rSprite(col,mane,'#000',{gait:'trot',pose:(Math.round(x+y)%2)*2+1})}</g>`;
-  const fence=(x,y,w,h,col=C.white)=>{let o='';const post=(px,py)=>`<rect x="${px-1}" y="${py-6}" width="2.2" height="7" fill="${C.wood}"/><rect x="${px-1}" y="${py-6}" width=".8" height="7" fill="#fff" opacity=".25"/>`;
-    o+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(30,40,20,.18)" stroke-width="1.2"/>`;
-    for(let i=x;i<=x+w;i+=12)o+=post(i,y);for(let j=y+12;j<y+h;j+=12)o+=post(x,j)+post(x+w,j);
-    o+=`<path d="M${x} ${y-2.4} H${x+w} M${x} ${y-5} H${x+w}" stroke="${col}" stroke-width="1.1" opacity=".9"/><path d="M${x} ${y-2.4} V${y+h-2.4} M${x} ${y-5} V${y+h-5} M${x+w} ${y-2.4} V${y+h-2.4} M${x+w} ${y-5} V${y+h-5}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
-    for(let i=x;i<=x+w;i+=12)o+=post(i,y+h);o+=`<path d="M${x} ${y+h-2.4} H${x+w} M${x} ${y+h-5} H${x+w}" stroke="${col}" stroke-width="1.4"/>`;return o};
+  const fence=(x,y,w,h,col=C.white)=>{/* seen from a high 3/4 angle: short posts and one rail along the back, taller posts and two rails along the front */
+    let o='';const post=(px,py,ht,wd=2.2)=>`<rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${wd}" height="${ht+1}" fill="${C.wood}"/><rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${(wd*.35).toFixed(1)}" height="${ht+1}" fill="#fff" opacity=".25"/>`;
+    o+=`<linearGradient id="mPl${x}_${y}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#mPl${x}_${y})"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(30,40,20,.2)" stroke-width="1.2"/><ellipse cx="${x+w/2}" cy="${y+h+2}" rx="${w/2}" ry="3.5" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/>`;
+    for(let i=x;i<=x+w;i+=12)o+=post(i,y,4,1.8);o+=`<path d="M${x} ${y-2.2} H${x+w}" stroke="${col}" stroke-width="1" opacity=".85"/>`;
+    for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4+3.5*t;o+=post(x,j,ht,1.8+.5*t)+post(x+w,j,ht,1.8+.5*t)}
+    o+=`<path d="M${x} ${y-2.2} L${x} ${y+h-2.6} M${x} ${y+h-5.4} L${x} ${y+h*.5-3} M${x+w} ${y-2.2} L${x+w} ${y+h-2.6} M${x+w} ${y+h-5.4} L${x+w} ${y+h*.5-3}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
+    for(let i=x;i<=x+w;i+=12)o+=post(i,y+h,7.5,2.4);o+=`<path d="M${x} ${y+h-2.6} H${x+w} M${x} ${y+h-5.6} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
   const hot=(id,inner)=>{CO=OFF[id]||null;const tf=CO?`<g transform="translate(${(CO[0]*1.2-CO[0]*CO[2]).toFixed(1)} ${(CO[1]+CO[3]-CO[1]*CO[2]).toFixed(1)}) scale(${CO[2]})">${inner}</g>`:inner;return `<g class="hot" data-a="facjump" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}"><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${tf}</g>`};
   const mx=id=>FACI[id].lv.length-1;
 
@@ -3272,7 +3328,7 @@ function ranchMap(){
 <linearGradient id="mGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57E"/><stop offset=".5" stop-color="#ABC188"/><stop offset="1" stop-color="#A2BA80"/></linearGradient>
 <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE3EA"/><stop offset="1" stop-color="#E8EFD9"/></linearGradient>
 <pattern id="mTuft" width="46" height="38" patternUnits="userSpaceOnUse"><path d="M6 30 l1.6 -5 M8.5 30.5 l-.4 -4.6 M10.4 30 l-1.6 -4.2 M30 12 l1.4 -4.4 M32.2 12.4 l-.4 -4 M34 12 l-1.4 -3.8" stroke="#6E8E4E" stroke-width="1" opacity=".55"/><circle cx="22" cy="24" r="1.1" fill="#F2E6A0" opacity=".7"/><circle cx="40" cy="34" r="1" fill="#F4F0EA" opacity=".7"/><circle cx="16" cy="6" r=".9" fill="#E9B7C9" opacity=".6"/></pattern></defs>
-<rect width="1200" height="640" fill="url(#mGround)"/><rect width="1200" height="640" fill="url(#mTuft)"/><rect width="1200" height="22" fill="url(#mSky)"/>`;
+<rect width="1200" height="640" fill="url(#mGround)"/><rect width="1200" height="640" fill="url(#mTuft)"/><rect width="1200" height="22" fill="url(#mSky)"/><linearGradient id="mHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE7E2" stop-opacity=".55"/><stop offset="1" stop-color="#DCE7E2" stop-opacity="0"/></linearGradient><rect y="22" width="1200" height="150" fill="url(#mHaze)"/>`;
   g+=`<path d="M0 26 C84 8 180 20 276 10 S 468 0 576 14 S 780 2 888 12 S 1080 0 1200 16 L1200 0 L0 0 Z" fill="#8FA97A"/><path d="M0 38 C108 24 204 36 312 26 S 504 18 624 30 S 840 20 960 30 S 1116 22 1200 32 L1200 0 L0 0 Z" fill="#9DB585" opacity=".65"/>`;
   g+=`<defs><filter id="mSoft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="6"/></filter><pattern id="mMow" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)"><rect width="10" height="20" fill="#fff" opacity=".12"/></pattern>
    <pattern id="mGravel" width="9" height="7" patternUnits="userSpaceOnUse"><rect width="9" height="7" fill="#CFC3A6"/><circle cx="2" cy="2" r=".8" fill="#A99C80"/><circle cx="6.5" cy="5" r=".9" fill="#B8AB8F"/><circle cx="5" cy="1.4" r=".6" fill="#E3D9C2"/></pattern></defs>`;
@@ -3344,7 +3400,7 @@ function ranchMap(){
     const cow=(x,y,c,f,spots)=>`<g transform="translate(${x} ${y}) scale(${f?-1:1} 1)"><path d="M-5.4 0 v4.6 M-3.6 0 v4.6 M3.6 0 v4.6 M5.4 0 v4.6" stroke="${hexMix(c,'#000000',.25)}" stroke-width="1.4"/><rect x="-7" y="-5" width="14" height="6.4" rx="3" fill="${c}"/>${spots?`<ellipse cx="-2.6" cy="-2.6" rx="2.2" ry="1.6" fill="#F4F0E6"/><ellipse cx="3" cy="-1.4" rx="1.8" ry="1.3" fill="#F4F0E6"/>`:''}<path d="M6.4 -4.4 L10.2 -3.4 L10.4 -.6 L7.4 -.8Z" fill="${c}"/><ellipse cx="10.2" cy="-1" rx="1.4" ry="1" fill="${spots?'#E5B3A6':hexMix(c,'#000000',.3)}"/><path d="M7.4 -4.6 l-.6 -1.4 M8.8 -4.3 l.8 -1.2" stroke="#E9DFC6" stroke-width=".7"/><path d="M-7 -3.4 q-1.6 2 -1 4.4" stroke="${c}" stroke-width=".8" fill="none"/></g>`;
     const A=(x,y,sc,inner)=>`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc})">${inner}</g>`;
     const ground=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${c}"/>`;
-    const PENS={chickens:[24,204,76,128,'Chickens'],goats:[108,204,88,128,'Goats'],sheep:[204,204,96,128,'Sheep'],cattle:[452,66,100,174,'Cattle']};
+    const PENS={chickens:[22,226,100,86,'Chickens'],goats:[130,226,108,86,'Goats'],sheep:[246,226,112,86,'Sheep'],cattle:[446,78,104,122,'Cattle']};
     for(const id of ids){const n=lv(id);const [x,y,w,h,nm]=PENS[id];const r=srng(70+ids.indexOf(id)*13);o='';
       if(!n){o=lot(x,y,w,h)}
       else if(id==='chickens'){o+=ground(x,y,w,h,'#C2C48E')+`<ellipse cx="${x+w*.6}" cy="${y+h*.65}" rx="${w*.38}" ry="${h*.25}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.55:.8}" filter="url(#mSoft)"/>`;
@@ -3369,14 +3425,14 @@ function ranchMap(){
       if(n)o+=fence(x,y,w,h,id==='chickens'?'#D8D4C8':'#E9DFC8');
       g+=hot(id,o);label(x+w/2,y+h+16,nm,n>0,n,mx(id))}}
   // ===== pasture =====
-  {const n=lv('pasture');let o=`<rect x="472" y="52" width="236" height="136" rx="6" fill="${['#B9C690','#A8C483','#9CC077','#8FBC6E'][n]}"/>`;
-    if(n>=3)o+=`<ellipse cx="660" cy="150" rx="30" ry="15" fill="${C.waterD}"/><ellipse cx="660" cy="149" rx="26" ry="12" fill="${C.water}"/><path d="M482 120 C540 108 600 132 632 146" stroke="${C.water}" stroke-width="3" fill="none"/>${[640,648,684].map(x=>`<path d="M${x} 140 v-8" stroke="#4F7A3C" stroke-width="1.4"/>`).join('')}`;
-    if(n>=2)for(const [x,y] of [[500,74],[690,76],[560,160]])o+=tree(x,y,11);
-    if(n>=1)o+=fence(472,52,236,136,'#F1EADA');
-    const herd=S.horses.filter(h=>stage(h)!=='Foal').slice(0,7);herd.forEach((h,i)=>{const c=coat(h.genes),p=c.grey?GREYPAL:PAL[c.base+c.cr];o+=pony(520+(i%4)*42+(i>3?20:0),100+Math.floor(i/4)*36+(i%2)*6,p.b,p.m,i%2)});
+  {const n=lv('pasture');let o=`<rect x="472" y="60" width="236" height="118" rx="6" fill="${['#B9C690','#A8C483','#9CC077','#8FBC6E'][n]}"/>`;
+    if(n>=3)o+=`<ellipse cx="660" cy="144" rx="30" ry="13" fill="${C.waterD}"/><ellipse cx="660" cy="143" rx="26" ry="10" fill="${C.water}"/><path d="M482 118 C540 106 600 128 632 140" stroke="${C.water}" stroke-width="3" fill="none"/>${[640,648,684].map(x=>`<path d="M${x} 134 v-8" stroke="#4F7A3C" stroke-width="1.4"/>`).join('')}`;
+    if(n>=2)for(const [x,y] of [[500,78],[690,80],[560,150]])o+=tree(x,y,11);
+    if(n>=1)o+=fence(472,60,236,118,'#F1EADA');
+    const herd=S.horses.filter(h=>stage(h)!=='Foal').slice(0,7);herd.forEach((h,i)=>{const c=coat(h.genes),p=c.grey?GREYPAL:PAL[c.base+c.cr];o+=pony(520+(i%4)*42+(i>3?20:0),98+Math.floor(i/4)*34+(i%2)*6,p.b,p.m,i%2)});
     g+=hot('pasture',o);label(590,202,'Pastures',true,n,mx('pasture'))}
   // ===== ring =====
-  {const n=lv('ring');let o;if(!n)o=lot(474,224,114,82);else{const X=476,Y=232,W=112,Hh=70;
+  {const n=lv('ring');let o;if(!n)o=lot(474,224,114,82);else{const X=476,Y=246,W=112,Hh=56;
       o=`<rect x="${X}" y="${Y}" width="${W}" height="${Hh}" rx="22" fill="#CDB383"/><rect x="${X+3}" y="${Y+3}" width="${W-6}" height="${Hh-6}" rx="20" fill="${C.sand}"/><path d="M500 266 q30 -16 60 0 t-60 0" stroke="#C4AC7C" stroke-width="1.2" fill="none"/><path d="M${X+10} ${Y+8} q${W/2-10} -4 ${W-20} 0" stroke="#fff" stroke-opacity=".25" stroke-width="3" fill="none"/>`;
       const posts=[];for(let i=0;i<=8;i++)posts.push(X+8+i*(W-16)/8);
       o+=`<rect x="${X}" y="${Y-4}" width="${W}" height="${Hh}" rx="22" fill="none" stroke="${C.white}" stroke-width="1.4" opacity=".8"/>`+posts.map(px=>`<rect x="${px-1}" y="${Y-6}" width="2" height="6" fill="#DCD5C6"/>`).join('');
@@ -3863,6 +3919,9 @@ function renderModal(){
   }else if(m.type==='foreclose'){title='Foreclosure';body=forecloseBody();
   }else if(m.type==='gameover'){title='Game over';body=gameoverBody();
   }else if(m.type==='whatsnew'){title='New in Bloodline Ranch';body=whatsNewBody();
+  }else if(m.type==='festres'){const F=S.fest,f=FESTS[m.k],r=F&&F.res;const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];const h=r&&H(r.h);title=f.n;
+    body=r?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${h?`<div class="portrait${h.shiny?' shiny':''}" style="width:200px;aspect-ratio:200/120;flex:none">${horseSVG(h)}</div>`:''}<div class="grow"><p style="margin:0 0 6px"><b>${esc(h?h.name:'Your horse')}</b> placed <b class="${r.place===1?'good':''}">${ord[r.place-1]}</b>${r.prize?' and won <b>'+money(r.prize)+'</b>':''}${r.rep?' · reputation +'+r.rep:''}.${r.drop?' Prize tack: <b class="rc-'+ITEMS[r.drop].r+'">'+ITEMS[r.drop].n+'</b> '+rbadge(ITEMS[r.drop].r):''}</p>
+    <div class="tablewrap"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${r.field.map((x,i)=>`<tr class="${x.me?'me':x.rival?'rivalrow':''}"><td>${ord[i]}</td><td>${esc(x.name)}${x.rival?' <span class="chip rivalchip">Rival</span>':''}</td><td>${esc(x.farm)}</td><td class="n">${x.score.toFixed(1)}</td></tr>`).join('')}</table></div></div></div><div class="actions" style="margin-top:12px"><button class="btn primary" data-a="close">Done</button></div>`:'<p>No result.</p>';
   }else if(m.type==='chal'){const h=H(m.h);const r=ensureRival();title=m.won?'You won the challenge!':'You lost the challenge';
     body=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">${h?`<div class="portrait${h.shiny?' shiny':''}" style="width:200px;aspect-ratio:200/120;flex:none">${horseSVG(h)}</div>`:''}<div class="grow"><p style="margin:0 0 6px"><b>${esc(h?h.name:'Your horse')}</b> vs <b>${esc(m.rh)}</b> of ${esc(r.farm)} Ranch<br>${EVENTS[m.ev].n}, ${TIERS[m.ti].n} level.</p>
     <table class="result"><tr><th>Horse</th><th class="n">Score</th></tr><tr class="${m.won?'me':''}"><td>${esc(h?h.name:'You')} (${esc(S.ranchName)})</td><td class="n">${m.mine.toFixed(1)}</td></tr><tr class="${m.won?'':'rivalrow'}"><td>${esc(m.rh)} <span class="chip rivalchip">Rival</span></td><td class="n">${m.theirs.toFixed(1)}</td></tr></table>
@@ -4421,6 +4480,9 @@ const ACT={
   decline:d=>{S.offers=S.offers.filter(x=>x.id!==+d.id);toast('Offer declined.')},
   pickSire:d=>{UI.breedSire=d.v},
   rivaltoggle:()=>{UI.rivalOpen=!UI.rivalOpen},
+  festenter:d=>festEnter(d.k,UI.festHorse),
+  festbooth:()=>festBooth(),
+  festbuy:d=>festBuyLot(+d.i),
   chalyes:()=>acceptChallenge(),
   chalno:()=>{const r=ensureRival();if(r.chal){r.chal.done=1;r.chal.won=0;r.chal.declined=1;log('info',r.owner+' shrugged when you passed on the challenge. “Thought so.”')}},
   hview:d=>{UI.hview=d.v==='side'?'':d.v},
@@ -4570,6 +4632,7 @@ document.addEventListener('change',e=>{
   if(c==='feeddays'){S.feedDays=+e.target.value;save();render();return}
   if(c==='tplan'){const h=H(e.target.dataset.id);if(h){h.tplan=h.tplan||{pri:'normal',stats:{}};h.tplan.stats=h.tplan.stats||{};const f=e.target.dataset.f;if(f==='pri')h.tplan.pri=e.target.value;else h.tplan.stats[f.slice(2)]=e.target.value}save();render();return}
   if(c==='awayh'){UI.awayH=e.target.value;render();return}
+  if(c==='festhorse'){UI.festHorse=e.target.value;render();return}
   if(c==='awayd'){UI.awayD=e.target.value;render();return}
   if(c==='pname'){UI.pdraft.name=e.target.value;return}
   if(c==='rnamec'){UI.pdraft.ranch=e.target.value;return}
