@@ -81,6 +81,13 @@ main{padding-block:20px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
 .horse{background:var(--card);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;border:1px solid transparent}
 .horse:hover{border-color:var(--line)}
+@keyframes anTail{0%,100%{transform:rotate(0)}30%{transform:rotate(-2.4deg)}55%{transform:rotate(1.6deg)}75%{transform:rotate(-1deg)}}
+@keyframes anEar{0%,80%,100%{transform:rotate(0)}86%{transform:rotate(-14deg)}92%{transform:rotate(4deg)}}
+@keyframes anEar2{0%,60%,100%{transform:rotate(0)}66%{transform:rotate(12deg)}72%{transform:rotate(-3deg)}}
+@keyframes anEye{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.08)}}
+.papers .portrait .an-tail{animation:anTail 5.2s ease-in-out infinite}.papers .portrait .an-ear{animation:anEar 7s ease-in-out infinite 1.3s}.papers .portrait .an-ear2{animation:anEar2 9s ease-in-out infinite .4s}.papers .portrait .an-eye{animation:anEye 4.6s linear infinite 2s}
+@media (prefers-reduced-motion:reduce){.papers .portrait .an-tail,.papers .portrait .an-ear,.papers .portrait .an-ear2,.papers .portrait .an-eye{animation:none}}
+.match{display:flex;gap:10px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:10px;margin:6px 0}.match.on{border-color:var(--accent,#7a5a3a);background:rgba(122,90,58,.06)}
 .vtog{position:absolute;top:6px;right:6px;z-index:2;display:flex;gap:2px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.12);border-radius:999px;padding:2px}.vtog button{border:0;background:none;font:inherit;font-size:12px;padding:3px 9px;border-radius:999px;cursor:pointer;color:#5a4a36}.vtog button.on{background:#7a5a3a;color:#fff}
 .favbtn{position:absolute;bottom:6px;right:6px;z-index:2;width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.85);color:#9A8A70;font-size:17px;line-height:1;padding:0;display:grid;place-items:center;cursor:pointer}.favbtn.on{color:#E0A800;background:#FFF6D6;border-color:#E0A800}.favbtn:hover{transform:scale(1.08)}.portrait{position:relative;background:linear-gradient(180deg,var(--pasture) 0 72%,var(--pasture2) 72% 100%);aspect-ratio:200/120;max-width:100%}
 .portrait svg{width:100%;height:100%;display:block}
@@ -1076,6 +1083,9 @@ const KEY='bloodline-ranch-v1';
 const BUILD='71';
 const CHANGELOG=[
  {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+  'Breeding planner: pick a mare in the Breeding Shed and it lists her three best matches (your stallions and outside studs), with the foal’s likely potential, the fee, conception odds and a family check. Tap Choose to fill in the stallion.',
+  'The horse in the papers now comes alive a little: a tail swish, an ear flick and a blink now and then. (Turned off automatically if your device asks for reduced motion.)',
+  'Two foals in the breeding pasture now face you or trot away, using the new front and back views.',
   'Fixed: in the front view, the back legs now join the body (they used to float under the belly on some horses).',
   'Fixed: the chicken and goat pens on the ranch map now change with the seasons like the other pens (greener in spring, golden in fall, snow-covered in winter).',
   'Redrawn horses: the body outline has many more points, so the back, croup, hamstring, belly, chest and legs curve the way real horses do, and the joints (knees, hocks, fetlocks) line up properly. New soft muscle shading shows the shoulder, forearm, neck, barrel, hip and gaskin, with a light rim along the topline.',
@@ -2880,8 +2890,8 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   ${boo?`<g clip-path="url(#${id}fh)">${boots}</g><g clip-path="url(#${id}ff)">${boots}</g>`:''}
   <path d="${farH}" fill="#000" opacity=".12"/><path d="${farF}" fill="#000" opacity=".12"/>
   ${hoof('h',16,1)}${hoof('f',-17,1)}${feath('h',16,1)}${feath('f',-17,1)}</g>
- ${ear(9,-2,1)}
- <g>${tailSVG}</g>
+ <g class="an-ear2" style="transform-box:view-box;transform-origin:${A.ear[0]+9}px ${A.ear[1]+2}px">${ear(9,-2,1)}</g>
+ <g class="an-tail" style="transform-box:view-box;transform-origin:${tb[0]}px ${tb[1]}px">${tailSVG}</g>
  <path d="${O}" fill="${body}"/>
  <g clip-path="url(#${id}c)">
   ${points?`<rect x="0" y="${pointY-16}" width="400" height="120" fill="url(#${id}pg)"/>`:''}
@@ -2903,7 +2913,7 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   ${senior?`<ellipse cx="${A.mzB[0]-4}" cy="${A.mzB[1]-8}" rx="14" ry="11" fill="#E8E4DA" opacity=".45" filter="url(#${id}b2)"/><ellipse cx="${E[0]}" cy="${E[1]-2}" rx="10" ry="7" fill="#E8E4DA" opacity=".35" filter="url(#${id}b2)"/>`:''}
  </g>
  ${(()=>{const X=(x,y)=>`${(E[0]+x).toFixed(2)} ${(E[1]+y).toFixed(2)}`;const lash=[[-5.4,-4.2],[-3.6,-5.6],[-1.5,-6.3],[.8,-6.5],[3,-6]].map(([x,y],i)=>`<path d="M${X(x,y)} q${(-1.3+i*.1).toFixed(2)} -.5 ${(-2.1+i*.15).toFixed(2)} -1.2" stroke="#140c07" stroke-width=".5" fill="none" stroke-linecap="round" opacity=".6"/>`).join('');
-  return `<g transform="rotate(14 ${E[0]} ${E[1]}) translate(${E[0]} ${E[1]}) scale(${A.hf?.74:.8}) translate(${-E[0]} ${-E[1]})">
+  return `<g class="an-eye" style="transform-box:view-box;transform-origin:${E[0]}px ${E[1]}px"><g transform="rotate(14 ${E[0]} ${E[1]}) translate(${E[0]} ${E[1]}) scale(${A.hf?.74:.8}) translate(${-E[0]} ${-E[1]})">
   <ellipse cx="${E[0]}" cy="${E[1]+.6}" rx="10.5" ry="7.8" fill="#000" opacity=".2" filter="url(#${id}b2)"/>
   <path d="M${X(-7,-.3)} C${X(-4.2,-6.4)} ${X(3.8,-6.6)} ${X(7.2,1.1)} C${X(4,4.8)} ${X(-3.6,4.6)} ${X(-7,-.3)}Z" fill="url(#${id}e)"/>
   <ellipse cx="${E[0]+.7}" cy="${E[1]+.5}" rx="3.7" ry="1.9" fill="#0b0604" opacity=".8" filter="url(#${id}b4)"/>
@@ -2915,13 +2925,13 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   <path d="M${X(-5.6,2)} C${X(-2.2,5.1)} ${X(3.4,5.2)} ${X(6.6,2.3)}" stroke="#fff" stroke-opacity=".18" stroke-width=".6" fill="none" stroke-linecap="round"/>
   <path d="M${X(-6.6,-3.6)} C${X(-3,-9)} ${X(4.2,-9.2)} ${X(7.6,-2.4)}" stroke="#000" stroke-opacity=".22" stroke-width=".9" fill="none" stroke-linecap="round"/>
   ${lash}
- </g>`})()}
+ </g></g>`})()}
  <ellipse cx="${N[0]-4}" cy="${N[1]+1}" rx="5" ry="6" fill="#000" opacity=".14" filter="url(#${id}b2)"/>
  <path d="M${N[0]-2} ${N[1]-4.5} C${N[0]-6.5} ${N[1]-4} ${N[0]-8} ${N[1]+1} ${N[0]-5.5} ${N[1]+4.5} C${N[0]-4} ${N[1]+2} ${N[0]-3.5} ${N[1]-1} ${N[0]-2} ${N[1]-4.5}Z" fill="#160d08" opacity=".7"/>
  <path d="M${N[0]-1.5} ${N[1]-5} C${N[0]-7.5} ${N[1]-5} ${N[0]-9.5} ${N[1]+1} ${N[0]-6.5} ${N[1]+6}" stroke="#fff" stroke-opacity=".18" stroke-width="1.1" fill="none"/>
  ${A.hf?(()=>{const q=(a,b)=>A.hf.L(a,b).slice(0,2).map(v=>v.toFixed(1)).join(' ');return `<path d="M${q(.9,.12)} C${q(.93,.115)} ${q(.955,.11)} ${q(.975,.105)}" stroke="#1a0f0a" stroke-width="1.1" fill="none" opacity=".55" stroke-linecap="round"/>`})():`<path d="M${A.mzB[0]-8} ${A.mzB[1]-4} C${A.mzB[0]-3} ${A.mzB[1]-3} ${A.mzB[0]+2} ${A.mzB[1]-4} ${A.mzF[0]-1} ${A.mzF[1]+4}" stroke="#1a0f0a" stroke-width="1.2" fill="none" opacity=".55"/>`}
  ${blanket}${saddle}
- ${ear(0,0,0)}
+ <g class="an-ear" style="transform-box:view-box;transform-origin:${A.ear[0]}px ${A.ear[1]+4}px">${ear(0,0,0)}</g>
  <g>${maneSVG}</g>${forelock}${bridle}
  ${hoof('h',0,0)}${hoof('f',0,0)}${feath('h',0,0)}${feath('f',0,0)}
 </g></svg>`;
@@ -3061,6 +3071,10 @@ function upgradesPanel(){
   return `<div class="panel"><div class="subh" style="margin-top:0">Ranch improvements</div><p class="note">One-time purchases that help forever.</p>
   ${UPGRADES.map(u=>{const own=S.upgrades[u.id];return `<div class="staff ${own?'on':''}"><div class="grow"><b>${u.n}${own?' · built':''}</b><div class="note">${u.d}</div></div>${own?'':`<button class="btn small" data-a="upgrade" data-u="${u.id}" ${S.money<u.cost?'disabled':''}>Build · ${money(u.cost)}</button>`}</div>`}).join('')}</div>`;
 }
+function planMatches(m){const cands=[...eligibleSires().map(h=>({h,v:'h:'+h.id,fee:0})),...S.studs.map(x=>({h:x,v:'s:'+x.id,fee:studPrice(x),stud:1}))];
+  return cands.map(c=>{const s=c.h,ib=inbreedInfo(s,m);const bonus=(has(s,'bloodline')?4:0)+(has(m,'bloodline')?4:0)+(isFirstCross(s,m)?2:0)-ib.loss;
+    const foal=STATS.reduce((a,st)=>a+(s.pot[st.k]+m.pot[st.k])/2+bonus,0)/STATS.length;const good=s.traits.filter(t=>TRAITS[t]&&(TRAITS[t].good||TRAITS[t].rare)).length,bad=s.traits.filter(t=>TRAITS[t]&&!TRAITS[t].good&&!TRAITS[t].rare).length;
+    const score=foal+good*1.5-bad*2-(ib.bad?8:0)-(ib.fragile||0)*20-Math.min(6,c.fee/2500);return {...c,ib,foal:Math.round(foal),score,cc:conception(m,s)}}).sort((a,b)=>b.score-a.score)}
 function renderBreeding(){
   const mares=eligibleMares(),sires=eligibleSires();
   const m=H(UI.breedMare),sr=resolveSire(UI.breedSire);
@@ -3098,6 +3112,8 @@ function renderBreeding(){
     <div class="field"><label for="selSire">Stallion</label><select id="selSire" data-c="sire"><option value="">Choose a stallion…</option>
      ${sires.length?`<optgroup label="Your stallions">${sires.map(h=>`<option value="h:${h.id}" ${UI.breedSire==='h:'+h.id?'selected':''}>${esc(h.name)} · avg ${Math.round(avg(h.pot))} · free</option>`).join('')}</optgroup>`:''}
      <optgroup label="Outside studs (fee)">${S.studs.map(s=>`<option value="s:${s.id}" ${UI.breedSire==='s:'+s.id?'selected':''}>${esc(s.name)} · ${breedLabel(s)} (${RARITY[rarityOf(s)].n}) · avg ${Math.round(avg(s.pot))} · ${isRetry(s)?money(studPrice(s))+' retry':money(s.fee)}</option>`).join('')}</optgroup></select></div>
+    ${m?(()=>{const top=planMatches(m).slice(0,3);if(!top.length)return '';return `<div class="subh">Best matches for ${esc(m.name)}</div><p class="note" style="margin-top:0">The three stallions most likely to give her a strong, healthy foal (potential, skills, family and fee all considered).</p>
+     ${top.map((c,i)=>`<div class="match${UI.breedSire===c.v?' on':''}"><div class="grow"><b>${i+1}. ${esc(c.h.name)}</b> ${c.stud?rbadge(rarityOf(c.h)):'<span class="chip good">yours</span>'}<div class="note">Foal potential about <b>${c.foal}</b> · ${c.stud?'fee '+money(c.fee):'free'} · conceives ${pct(c.cc)} · ${c.ib.bad?'<b class="bad">'+c.ib.tier.n+'</b>':c.ib.line?'line-bred':'unrelated'}</div>${c.h.traits.length?`<div class="chips" style="margin-top:3px">${traitChips(c.h)}</div>`:''}</div><button class="btn small${UI.breedSire===c.v?' primary':''}" data-a="pickSire" data-v="${c.v}">${UI.breedSire===c.v?'Chosen':'Choose'}</button></div>`).join('')}`})():''}
     ${preview}
    </div>
    <div class="panel">
@@ -4171,7 +4187,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
     ${SEAS<2?`<!--ns-->${[...Array(60)].map(()=>`<circle cx="${(rs()*1000).toFixed(0)}" cy="${(86+rs()*32).toFixed(0)}" r="${(1.2+rs()*1.3).toFixed(1)}" fill="${['#fff','#F7D44C','#F29BB8','#C9A2F2'][Math.floor(rs()*4)]}"/>`).join('')}<!--/ns-->`:''}
     ${SEAS===0?`<!--ns--><g transform="translate(110 22)"><rect x="-3" y="20" width="6" height="64" fill="#6B4A30"/>${[...Array(14)].map((_,i)=>`<circle cx="${(-30+rs()*60).toFixed(0)}" cy="${(rs()*36).toFixed(0)}" r="${(12+rs()*6).toFixed(0)}" fill="${i%3?'#F6C6D6':'#FBE3EC'}"/>`).join('')}</g><!--/ns-->`:wTree(110,96,46,12)}
     ${bFence(86,'#F4F0E6',0,1000,70)}
-    ${bHorse(BH(905,BG.bay,'morgan',60),330,16,126)}${bHorse(BH(906,BG.bay,'morgan',4),462,54,72)}
+    ${bHorse(BH(905,BG.bay,'morgan',60),330,16,126)}${bHorse(BH(906,BG.bay,'morgan',4),452,46,84,{view:'front'})}${bHorse(BH(919,BG.chestnut,'haflinger',9),548,44,86,{view:'back'})}
     ${bHorse(BH(907,BG.chestnut,'haflinger',60),700,18,122,{flip:1})}${bHorse(BH(908,BG.chestnut,'haflinger',6),636,56,66,{flip:1})}
     ${SEAS<2?`<!--ns-->${[[300,30],[620,24],[880,40]].map(([x,y])=>`<g transform="translate(${x} ${y})"><path d="M0 0 C-6 -6 -10 2 0 6 C10 2 6 -6 0 0Z" fill="#F39BB5"/><path d="M0 0 C-6 6 -8 10 0 8 C8 10 6 6 0 0Z" fill="#F7C5D4"/></g>`).join('')}<!--/ns-->`:SEAS===2?`<!--ns-->${[[180,40,20],[300,62,-30],[560,30,50],[760,58,-15],[900,36,35]].map(([x,y,r],i)=>`<path transform="translate(${x} ${y}) rotate(${r})" d="M0 -5 C4 -3 4 3 0 6 C-4 3 -4 -3 0 -5Z M0 -5 V6" fill="${['#D9822B','#C0562A','#E3A43A'][i%3]}" stroke="#7A3E1A" stroke-width=".5"/>`).join('')}<!--/ns-->`:''}`}
   if(t==='compete'){defs=bSky(p+'s','#8FB9DA','#E6ECE0');
@@ -4339,6 +4355,7 @@ const ACT={
   studno:d=>{S.studReq=S.studReq.filter(x=>x.id!==+d.id);toast('Request declined.')},
   accept:d=>{const o=S.offers.find(x=>x.id===+d.id);const h=H(d.id);if(h&&h.client){S.offers=S.offers.filter(x=>x.id!==h.id);toast(h.name+' belongs to a client, so it can’t be sold.');return}if(o&&h)UI.modal={type:'confirmSell',id:h.id,amt:o.amt,why:'offer from '+o.who,back:UI.modal}},
   decline:d=>{S.offers=S.offers.filter(x=>x.id!==+d.id);toast('Offer declined.')},
+  pickSire:d=>{UI.breedSire=d.v},
   hview:d=>{UI.hview=d.v==='side'?'':d.v},
   fav:d=>{const h=H(d.id);if(!h||h.client)return;h.fav=h.fav?0:1;toast(h.fav?'★ '+h.name+' is a favorite. Favorites show first and get the best stalls in the barn picture.':h.name+' removed from favorites.')},
   rename:d=>{const h=H(d.id);if(h&&h.client){toast('You can’t rename a client’s horse.');return}const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
