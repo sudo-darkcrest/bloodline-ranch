@@ -714,7 +714,7 @@ const FAC=[
   {id:'trails',g:'train',n:'Trail Course',lv:[{n:'None',d:'Just the back roads.'},{n:'Marked Trails',c:2500,d:'Stamina training +8%. +5% in Endurance. Trail rides +1 bond.'},{n:'Cross-Country Course',c:6000,d:'Stamina training +15%. +10% in Endurance. Trail rides +2 bond.'}]},
   {id:'trailer',g:'train',n:'Horse Trailer',lv:[{n:'None',d:'You borrow a neighbor’s.'},{n:'Stock Trailer',c:2500,d:'Events use 8 less energy.'},{n:'Gooseneck with Living Quarters',c:6000,d:'Events use 15 less energy. Entry fees 20% lower.'}]},
   {id:'hayfield',g:'farm',n:'Hay Fields',lv:[{n:'Back Forty',d:'Cut about 10 bales by hand.'},{n:'Hay Meadow',c:2500,d:'Cut twice as much hay.'},{n:'Irrigated Fields',c:6000,d:'Cut three times as much hay.'},{n:'Hay Operation',c:12000,d:'Cut three times as much, plus 3 free bales every night spring through fall.'}]},
-  {id:'feedbarn',g:'farm',n:'Feed Barn',lv:[{n:'Lean-To',d:'Hay at town prices.'},{n:'Feed Barn',c:2000,d:'Hay costs 15% less.'},{n:'Feed Mill',c:5500,d:'Hay costs 25% less.'}]},
+  {id:'feedbarn',g:'farm',n:'Feed Barn',lv:[{n:'Lean-To',d:'Hay at town prices, and some of it spoils.'},{n:'Feed Barn',c:2000,d:'Hay costs 15% less and dry storage means the herd uses 10% less. Bulk buys of 150 bales get 15% off instead of 10%.'},{n:'Feed Mill',c:5500,d:'Hay costs 25% less, the herd uses 20% less, bulk buys get 20% off, and a grain ration gives every horse +3 energy overnight.'}]},
   {id:'tackroom',g:'farm',n:'Tack Room',lv:[{n:'Hooks on a Wall',d:'Gear sells back for 50%.'},{n:'Tack Room',c:1500,d:'Gear sells back for 65%. Crates 10% cheaper.'},{n:'Saddlery',c:4000,d:'Gear sells back for 75%. Crates 20% cheaper.'}]},
   {id:'chickens',g:'stock',n:'Chickens',inc:[0,20,40,70],hay:[0,0,0,0],lv:[{n:'None',d:'No eggs.'},{n:'Small Flock',c:400,d:'Eggs earn $20 a day.'},{n:'Laying Barn',c:700,d:'Eggs earn $40 a day.'},{n:'Poultry Farm',c:1200,d:'Eggs earn $70 a day.'}]},
   {id:'goats',g:'stock',n:'Goats',inc:[0,40,80,135],hay:[0,.5,1,1.5],lv:[{n:'None',d:'No goats.'},{n:'A Few Goats',c:900,d:'Milk and cheese earn $40 a day. Eat 0.5 bales.'},{n:'Goat Herd',c:1500,d:'$80 a day. Eat 1 bale. Goats keep horses company: +1 happiness nightly.'},{n:'Goat Dairy',c:2500,d:'$135 a day. Eat 1.5 bales. +1 horse happiness nightly.'}]},
@@ -1167,6 +1167,8 @@ const BUILD='72';
 const CHANGELOG=[
  {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
   'Three yearly festivals, each with its own banner: the Spring Foal Show (spring day 2: enter a foal or yearling, judged on breeding, condition and trust), the Harvest Fair (fall day 2: a Best in Show class for grown horses with prize tack for the winner, plus a ranch booth that sells your livestock goods), and the Winter Horse Sale (winter day 3: three good horses at about 30% off, and anything you sell that day fetches 20% more). Prizes grow a little each year. A Festivals list under the show calendar shows when the next one is, and the morning report reminds you the day before.',
+  'Facilities map: the hay field is now a proper 3/4 field with a far fence and a near fence, sloping windrows and shadows under the bales; the trail loop is flatter with marker posts that cast shadows; the pasture grass matches the rest of the ranch; a white rail fence runs along the road frontage with a gap at the gate; and the tack room no longer sits on top of the feed barn.',
+  'Feed Barn is worth building now: level 1 cuts hay use 10% (dry storage) and gives 15% off bulk buys; the Feed Mill cuts hay use 20%, gives 20% off bulk buys and feeds every horse a grain ration for +3 energy overnight.',
   'Facilities map scale pass: everything is now sized against one ruler (a pickup truck is about 5.5 m, a horse 2.4 m). Trees are twice as big, chickens, goats and sheep are smaller, cattle a little bigger, the windmill and fence posts taller, the staff cabins are real cabins instead of sheds, and the feed barn, tack room and foaling barn grew to match the house and barn.',
   'Facilities map: the pens, pasture and ring are now drawn from the same high angle as the buildings, with short posts and a rail along the back and a taller two-rail fence along the front, so everything sits on one ground plane. Far-row buildings are a touch smaller and the near row a touch bigger for depth, and a light haze sits near the horizon.',
   'Your rival is now a real ranch. They have a face, a short bio and four actual horses (see them on the Compete tab, with papers). Their horses train every week, grow old, retire and get replaced, so their strength comes from their barn, not from copying your score. They bring a horse that suits the show, so a Local Show no longer draws their champion.',
@@ -1681,7 +1683,7 @@ function value(h){
 }
 function hayNeed(h){let n=stage(h)==='Foal'?.5:1;if(has(h,'easykeeper'))n*=.7;if(has(h,'hardkeeper'))n*=1.4;const s=dateParts(S.day).sIdx;n*=s===3?1.3:s===1?.75:1;if(h.pastured===S.day&&s<2)n*=.5;return n}
 function horseHay(){return S.horses.reduce((a,h)=>a+hayNeed(h),0)}
-function herdHay(){return Math.round((horseHay()+stockHay())*10)/10}
+function herdHay(){return Math.round((horseHay()+stockHay())*[1,.9,.8][L('feedbarn')]*10)/10}
 function H(id){return S.horses.find(h=>h.id===+id)}
 function status(h){
   if(h.inj)return ['bad',COND[h.inj.id].n+' · '+Math.ceil(h.inj.days)+'d'];
@@ -2512,7 +2514,7 @@ function endDay(){
     {const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;h.streak=worked?(h.streak||0)+1:0}
     for(const [v,t,tag] of happyNight(h,{sIdx,fed,crowded,endE})){h.happy+=v;if(tag==='bored')bored.push(h.name);if(tag==='overworked')overworked.push(h.name);if(tag==='cooped')cooped.push(h.name)}
     if(stallOf(h)<25)h.health-=2;
-    if(!h.injury)h.health+=[0,0,1,2][L('clinic')];h.energy=clamp(h.energy+gearSum(h,'energy'),0,100);addBond(h,gearSum(h,'bond'));if(fed&&!h.injury)h.health+=gearSum(h,'health');
+    if(!h.injury)h.health+=[0,0,1,2][L('clinic')];h.energy=clamp(h.energy+gearSum(h,'energy')+(fed?[0,0,3][L('feedbarn')]:0),0,100);addBond(h,gearSum(h,'bond'));if(fed&&!h.injury)h.health+=gearSum(h,'health');
     if(hasS(h,'loyalheart'))h.happy=Math.max(h.happy,50);
     h.happy=clamp(h.happy,0,100);h.health=clamp(h.health,0,100);
     if(careAge(h)>=2&&!hasS(h,'loyalheart')&&h.bond>0){h.bond=clamp(h.bond-(has(h,'stubborn')?3:has(h,'gentle')?1:2),0,100);faded.push(h.name)}
@@ -3326,7 +3328,7 @@ function ranchMap(){
 <pattern id="mBoards" width="5" height="6" patternUnits="userSpaceOnUse"><path d="M4.6 0 V6" stroke="#000" stroke-opacity=".16" stroke-width=".8"/></pattern>
 <pattern id="mShingle" width="8" height="5" patternUnits="userSpaceOnUse"><path d="M0 4.5 H8 M4 0 V4.5" stroke="#000" stroke-opacity=".35" stroke-width=".7"/></pattern>
 <pattern id="mStone" width="6" height="5" patternUnits="userSpaceOnUse"><path d="M0 2.5 H6 M3 0 V2.5 M1 2.5 V5" stroke="#000" stroke-opacity=".2" stroke-width=".6"/></pattern>
-<linearGradient id="mGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57E"/><stop offset=".5" stop-color="#ABC188"/><stop offset="1" stop-color="#A2BA80"/></linearGradient>
+<linearGradient id="mPlH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".14"/><stop offset=".4" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient><linearGradient id="mGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57E"/><stop offset=".5" stop-color="#ABC188"/><stop offset="1" stop-color="#A2BA80"/></linearGradient>
 <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE3EA"/><stop offset="1" stop-color="#E8EFD9"/></linearGradient>
 <pattern id="mTuft" width="46" height="38" patternUnits="userSpaceOnUse"><path d="M6 30 l1.6 -5 M8.5 30.5 l-.4 -4.6 M10.4 30 l-1.6 -4.2 M30 12 l1.4 -4.4 M32.2 12.4 l-.4 -4 M34 12 l-1.4 -3.8" stroke="#6E8E4E" stroke-width="1" opacity=".55"/><circle cx="22" cy="24" r="1.1" fill="#F2E6A0" opacity=".7"/><circle cx="40" cy="34" r="1" fill="#F4F0EA" opacity=".7"/><circle cx="16" cy="6" r=".9" fill="#E9B7C9" opacity=".6"/></pattern></defs>
 <rect width="1200" height="640" fill="url(#mGround)"/><rect width="1200" height="640" fill="url(#mTuft)"/><rect width="1200" height="22" fill="url(#mSky)"/><linearGradient id="mHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE7E2" stop-opacity=".55"/><stop offset="1" stop-color="#DCE7E2" stop-opacity="0"/></linearGradient><rect y="22" width="1200" height="150" fill="url(#mHaze)"/>`;
@@ -3355,6 +3357,7 @@ function ranchMap(){
   // road, gate, mailbox
   g+=`<rect x="0" y="596" width="1200" height="30" fill="${C.road}"/><path d="M0 611 H1200" stroke="#E9DFA8" stroke-width="2" stroke-dasharray="16 12"/><path d="M0 597 H1200 M0 625 H1200" stroke="#7B6F5E" stroke-width="1.2"/><text x="1190" y="636" text-anchor="end" font-size="10" fill="#5E5547" font-family="ui-monospace,monospace" letter-spacing="1">COUNTY RD 9</text>`;
   g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><rect x="112" y="552" width="40" height="11" rx="2" fill="${C.wood}"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${C.white}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
+  {let f='';const FY=591;for(let x=0;x<=1200;x+=14){if(x>96&&x<170)continue;f+=`<rect x="${x-1.2}" y="${FY-10}" width="2.4" height="11" fill="${C.wood}"/>`}g+=f+`<path d="M0 ${FY-3} H96 M170 ${FY-3} H1200 M0 ${FY-7.5} H96 M170 ${FY-7.5} H1200" stroke="${C.white}" stroke-width="1.5"/><path d="M0 ${FY-1} H96 M170 ${FY-1} H1200" stroke="#000" stroke-opacity=".18"/>`}
   g+=`<rect x="172" y="580" width="2.4" height="15" fill="${C.wood}"/><rect x="166" y="573" width="14" height="8" rx="2.5" fill="#5B6E7E"/><rect x="178" y="572" width="1.4" height="5" fill="#C0392B"/>`;
 
   // ===== staff housing =====
@@ -3426,7 +3429,7 @@ function ranchMap(){
       if(n)o+=fence(x,y,w,h,id==='chickens'?'#D8D4C8':'#E9DFC8');
       g+=hot(id,o);label(x+w/2,y+h+16,nm,n>0,n,mx(id))}}
   // ===== pasture =====
-  {const n=lv('pasture');let o=`<rect x="472" y="60" width="236" height="118" rx="6" fill="${['#B9C690','#A8C483','#9CC077','#8FBC6E'][n]}"/>`;
+  {const n=lv('pasture');let o=`<rect x="472" y="60" width="236" height="118" rx="6" fill="${['#A9BE85','#A4BD80','#9FBC7A','#99BB74'][n]}"/><rect x="472" y="60" width="236" height="118" rx="6" fill="url(#mTuft)"/><rect x="472" y="60" width="236" height="118" rx="6" fill="url(#mMow)" opacity=".35"/>`;
     if(n>=3)o+=`<ellipse cx="660" cy="144" rx="30" ry="13" fill="${C.waterD}"/><ellipse cx="660" cy="143" rx="26" ry="10" fill="${C.water}"/><path d="M482 118 C540 106 600 128 632 140" stroke="${C.water}" stroke-width="3" fill="none"/>${[640,648,684].map(x=>`<path d="M${x} 134 v-8" stroke="#4F7A3C" stroke-width="1.4"/>`).join('')}`;
     if(n>=2)for(const [x,y] of [[498,84],[688,86],[556,150]])o+=tree(x,y,17);
     if(n>=1)o+=fence(472,60,236,118,'#F1EADA');
@@ -3459,26 +3462,27 @@ function ranchMap(){
       o+=rail(r[0],r[1],1)+rail(R[0],R[1],1)}
     g+=hot('track',o);label(855,202,'Track',n>0,n,mx('track'))}
   // ===== trails (a long loop through the back fields) =====
-  {const n=lv('trails');const TP='M535 214 C600 192 700 236 780 214 S 930 190 990 214 C1000 240 962 262 902 258 S 760 244 680 256 S 560 252 535 214';
-    const o=n?`<path d="${TP}" stroke="${C.dirt}" stroke-width="${n*2+4}" fill="none" stroke-linecap="round" opacity=".6"/><path d="${TP}" stroke="${C.dirtD}" stroke-width="${n*1.4+1}" fill="none" stroke-dasharray="7 5" stroke-linecap="round"/>
-      ${[[620,206],[880,201],[950,256],[700,252]].map(([x,y])=>`<path d="M${x} ${y-14} v14" stroke="#7A5434" stroke-width="1.2"/><path d="M${x} ${y-14} l6 2 l-6 2z" fill="${['#E25B7A','#2E6FD8','#F2C14E','#2D8A4E'][(x/10|0)%4]}"/>`).join('')}
+  {const n=lv('trails');const TP='M535 216 C600 198 700 232 780 216 S 930 196 990 216 C1000 236 962 254 902 252 S 760 240 680 250 S 560 246 535 216';
+    const o=n?`<path d="${TP}" stroke="rgba(25,35,15,.18)" stroke-width="${n*2+7}" fill="none" stroke-linecap="round" transform="translate(0 2)"/><path d="${TP}" stroke="${C.dirt}" stroke-width="${n*2+4}" fill="none" stroke-linecap="round" opacity=".75"/><path d="${TP}" stroke="${C.dirtD}" stroke-width="${n*1.4+1}" fill="none" stroke-dasharray="7 5" stroke-linecap="round"/>
+      ${[[620,208],[880,203],[950,250],[700,247]].map(([x,y])=>`<ellipse cx="${x}" cy="${y+1}" rx="4" ry="1.3" fill="rgba(25,35,15,.3)"/><path d="M${x} ${y-16} v16" stroke="#7A5434" stroke-width="1.4"/><path d="M${x} ${y-14} l6 2 l-6 2z" fill="${['#E25B7A','#2E6FD8','#F2C14E','#2D8A4E'][(x/10|0)%4]}"/>`).join('')}
       ${n>=2?`<rect x="760" y="218" width="18" height="4" rx="2" fill="${C.wood}"/><rect x="800" y="246" width="18" height="4" rx="2" fill="${C.wood}"/><g transform="translate(560 232)"><rect x="-8" y="-6" width="16" height="3" fill="${C.wood}"/><path d="M-6 -3 v5 M6 -3 v5" stroke="${C.wood}" stroke-width="1.4"/></g>`:''}`
       :`<path d="${TP}" stroke="#7F7A6A" stroke-width="1.2" fill="none" stroke-dasharray="3 6" opacity=".6"/>`;
     g+=hot('trails',o);label(855,230,'Trails',n>0,n,mx('trails'))}
   // ===== hay fields (cut windrows, round bales, a square-bale stack, tractor) =====
-  {const n=lv('hayfield');const X=724,Y=240,W=146,H=76;let o=`<rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="3" fill="${n?'#D6C27A':'#C8BF8E'}"/>`;
-    if(n){o+=`<rect x="${X}" y="${Y}" width="${W*.32}" height="${H}" fill="#B9B36A"/>${[...Array(30)].map((_,i)=>`<path d="M${X+3+(i*7)%(W*.3)} ${Y+5+Math.floor(i/6)*14} l-1 -4 M${X+5+(i*7)%(W*.3)} ${Y+5+Math.floor(i/6)*14} l1 -4" stroke="#8E8A48" stroke-width=".8"/>`).join('')}`;
-      for(let i=0;i<6;i++)o+=`<path d="M${X+W*.34} ${Y+8+i*12} C${X+W*.55} ${Y+5+i*12} ${X+W*.75} ${Y+11+i*12} ${X+W-4} ${Y+7+i*12}" stroke="#B99A3E" stroke-width="3" fill="none" opacity=".75" stroke-linecap="round"/>`;}
-    for(let i=0;i<n+1;i++){const bx=744+i*32,by=298;o+=`<ellipse cx="${bx+2}" cy="${by+7}" rx="11" ry="2.6" fill="rgba(25,35,15,.3)"/><rect x="${bx-10}" y="${by-8}" width="16" height="15" rx="2" fill="#C9A23E"/><ellipse cx="${bx+6}" cy="${by-.5}" rx="5" ry="7.5" fill="#D9B651" stroke="#8A6A12" stroke-width=".7"/><path d="M${bx+6} ${by-.5} m-3 0 a3 4.5 0 1 1 3 4.5 a2 3 0 1 1 -2 -3" stroke="#9C7A22" stroke-width=".6" fill="none"/>${[-6,-2,2].map(dx=>`<path d="M${bx+dx} ${by-8} v15" stroke="#B48E30" stroke-width=".6"/>`).join('')}`}
-    if(n>=2)o+=`<g transform="translate(${X+8} ${Y+34})">${[[0,0],[12,0],[24,0],[6,-7],[18,-7],[12,-14]].map(([x,y])=>`<rect x="${x}" y="${y}" width="12" height="7" fill="#D9BE62" stroke="#9C7A22" stroke-width=".6"/><path d="M${x+4} ${y} v7 M${x+8} ${y} v7" stroke="#9C7A22" stroke-width=".4"/>`).join('')}</g>`;
+  {const n=lv('hayfield');const X=722,Y=240,W=138,H=76;const sk=10;/* seen from the same high angle: the far edge is narrower and the rows run toward us */
+    const quad=`M${X+sk} ${Y} H${X+W-sk} L${X+W} ${Y+H} H${X}Z`;let o=`<ellipse cx="${X+W/2}" cy="${Y+H+2}" rx="${W/2}" ry="4" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/><path d="${quad}" fill="${n?'#D6C27A':'#C8BF8E'}"/><path d="${quad}" fill="url(#mPlH)"/>`;
+    if(n){o+=`<path d="M${X+sk} ${Y} H${X+sk+W*.3} L${X+W*.32} ${Y+H} H${X}Z" fill="#B9B36A"/>${[...Array(30)].map((_,i)=>{const row=Math.floor(i/6),t2=row/5,yy=Y+5+row*14,xx=X+sk*(1-t2)+3+(i*7)%(W*.3);return `<path d="M${xx.toFixed(1)} ${yy} l-1 -4 M${(xx+2).toFixed(1)} ${yy} l1 -4" stroke="#8E8A48" stroke-width=".8"/>`}).join('')}`;
+      for(let i=0;i<6;i++){const t2=i/5,x0=X+sk*(1-t2)+W*.34,x1=X+W-sk*(1-t2)-4;o+=`<path d="M${x0.toFixed(1)} ${Y+8+i*12} C${(x0+(x1-x0)*.3).toFixed(1)} ${Y+5+i*12} ${(x0+(x1-x0)*.7).toFixed(1)} ${Y+11+i*12} ${x1.toFixed(1)} ${Y+7+i*12}" stroke="#B99A3E" stroke-width="${(2.2+t2*1.4).toFixed(1)}" fill="none" opacity=".75" stroke-linecap="round"/>`}}
+    for(let i=0;i<n+1;i++){const bx=744+i*32,by=300;o+=`<ellipse cx="${bx+2}" cy="${by+7}" rx="12" ry="2.8" fill="rgba(25,35,15,.3)"/><rect x="${bx-10}" y="${by-9}" width="16" height="16" rx="2" fill="#C9A23E"/><ellipse cx="${bx+6}" cy="${by-1}" rx="5.5" ry="8" fill="#D9B651" stroke="#8A6A12" stroke-width=".7"/><path d="M${bx+6} ${by-1} m-3 0 a3 4.5 0 1 1 3 4.5 a2 3 0 1 1 -2 -3" stroke="#9C7A22" stroke-width=".6" fill="none"/>${[-6,-2,2].map(dx=>`<path d="M${bx+dx} ${by-9} v16" stroke="#B48E30" stroke-width=".6"/>`).join('')}`}
+    if(n>=2)o+=`<g transform="translate(${X+14} ${Y+34})"><ellipse cx="18" cy="9" rx="22" ry="3" fill="rgba(25,35,15,.25)"/>${[[0,0],[12,0],[24,0],[6,-7],[18,-7],[12,-14]].map(([x,y])=>`<rect x="${x}" y="${y}" width="12" height="7" fill="#D9BE62" stroke="#9C7A22" stroke-width=".6"/><path d="M${x+4} ${y} v7 M${x+8} ${y} v7" stroke="#9C7A22" stroke-width=".4"/>`).join('')}</g>`;
     if(n>=3)o+=`<g transform="translate(838 268)"><ellipse cx="10" cy="10" rx="16" ry="2.4" fill="rgba(25,35,15,.3)"/><rect x="2" y="-1" width="16" height="7" rx="1.5" fill="#B23A2B"/><path d="M8 -1 V-8 H16 V-1" fill="none" stroke="#2B2A26" stroke-width="1.4"/><rect x="9" y="-7" width="6" height="5" fill="#BFD7EA" opacity=".8"/><path d="M5 -1 V-6" stroke="#444" stroke-width="1.2"/><circle cx="15" cy="6.5" r="5" fill="#2B2A26"/><circle cx="15" cy="6.5" r="2" fill="#B23A2B"/><circle cx="3" cy="7.5" r="3" fill="#2B2A26"/><circle cx="3" cy="7.5" r="1.2" fill="#B23A2B"/></g>`;
-    if(lv('bees'))for(let i=0;i<lv('bees');i++)o+=`<g transform="translate(${X+W-14-i*11} ${Y+10})"><rect x="0" y="0" width="8" height="9" fill="#F0E2B6" stroke="#8A6A12" stroke-width=".6"/><path d="M0 3 h8 M0 6 h8" stroke="#C9A23E" stroke-width=".6"/><rect x="-1" y="-2" width="10" height="2.5" fill="#FFFFFF" stroke="#999" stroke-width=".4"/><circle cx="${10+i}" cy="-3" r=".7" fill="#2B2A26"/><circle cx="${12-i}" cy="-6" r=".7" fill="#2B2A26"/></g>`;
-    o+=`<rect x="${X}" y="${Y}" width="${W}" height="${H}" rx="3" fill="none" stroke="${C.dirtD}" stroke-width="1"/>`+[...Array(13)].map((_,i)=>`<rect x="${X+i*12-1}" y="${Y+H-6}" width="2" height="7" fill="${C.wood}"/>`).join('')+`<path d="M${X} ${Y+H-3} H${X+W}" stroke="#8C7A5A" stroke-width=".7"/>`;
+    if(lv('bees'))for(let i=0;i<lv('bees');i++)o+=`<g transform="translate(${X+W-sk-14-i*11} ${Y+10})"><rect x="0" y="0" width="8" height="9" fill="#F0E2B6" stroke="#8A6A12" stroke-width=".6"/><path d="M0 3 h8 M0 6 h8" stroke="#C9A23E" stroke-width=".6"/><rect x="-1" y="-2" width="10" height="2.5" fill="#FFFFFF" stroke="#999" stroke-width=".4"/><circle cx="${10+i}" cy="-3" r=".7" fill="#2B2A26"/><circle cx="${12-i}" cy="-6" r=".7" fill="#2B2A26"/></g>`;
+    o+=`<path d="${quad}" fill="none" stroke="${C.dirtD}" stroke-width="1"/>`+[...Array(13)].map((_,i)=>`<rect x="${X+i*12-1.2}" y="${Y+H-9}" width="2.4" height="10" fill="${C.wood}"/>`).join('')+`<path d="M${X} ${Y+H-3} H${X+W} M${X} ${Y+H-6.5} H${X+W}" stroke="${C.white}" stroke-width="1.3"/>`+[...Array(11)].map((_,i)=>`<rect x="${X+sk+i*(W-2*sk)/10-.9}" y="${Y-4}" width="1.8" height="5" fill="${C.wood}"/>`).join('')+`<path d="M${X+sk} ${Y-2} H${X+W-sk}" stroke="${C.white}" stroke-width="1"/>`;
     g+=hot('hayfield',o);label(797,330-1,'Hay fields',true,n,mx('hayfield'))}
   // ===== feed barn & tack =====
-  {const n=lv('feedbarn');let o;if(!n)o=lot(882,242,66,64);else{o=bld(880,272,[0,50,58][n],38,'#8C6A4A','#3E3A36',{door:1,win:1,rh:18});if(n>=2)o+=`${shadow(950,312,10,3)}<rect x="940" y="246" width="20" height="64" fill="#C9CDD0" stroke="rgba(0,0,0,.3)"/><ellipse cx="950" cy="246" rx="10" ry="5.5" fill="#A9AFB4"/>${[258,272,286,300].map(y=>`<line x1="940" y1="${y}" x2="960" y2="${y}" stroke="rgba(0,0,0,.18)"/>`).join('')}`}
+  {const n=lv('feedbarn');let o;if(!n)o=lot(864,242,66,64);else{o=bld(862,272,[0,50,58][n],38,'#8C6A4A','#3E3A36',{door:1,win:1,rh:18});if(n>=2)o+=`${shadow(932,312,10,3)}<rect x="922" y="246" width="20" height="64" fill="#C9CDD0" stroke="rgba(0,0,0,.3)"/><ellipse cx="932" cy="246" rx="10" ry="5.5" fill="#A9AFB4"/>${[258,272,286,300].map(y=>`<line x1="922" y1="${y}" x2="942" y2="${y}" stroke="rgba(0,0,0,.18)"/>`).join('')}`}
     g+=hot('feedbarn',o);label(915,322,'Feed barn',n>0,n,mx('feedbarn'))}
-  {const n=lv('tackroom');const o=n?bld(956,282,38,28,'#A4835F','#3E3A36',{door:1,rh:13})+(n>=2?`<rect x="964" y="290" width="8" height="5" fill="#C9A227"/>`:''):lot(958,272,34,36);
+  {const n=lv('tackroom');const o=n?bld(958,284,36,26,'#A4835F','#3E3A36',{door:1,rh:12})+(n>=2?`<rect x="964" y="290" width="8" height="5" fill="#C9A227"/>`:''):lot(958,272,34,36);
     g+=hot('tackroom',o);label(962,346,'Tack',n>0,n,mx('tackroom'))}
   // ===== truck + horse trailer parked on the gravel pad =====
   {const n=lv('trailer');let o;const B=346;
@@ -3696,7 +3700,7 @@ function renderOffice(){
   <div class="cols">
    <div class="panel"><div class="subh" style="margin-top:0">Hay loft</div>
     <p>You have <b>${S.hay}</b> bales, enough for about <b>${daysHay}</b> days. Hay costs <b>${money(S.hayPrice)}</b> a bale this ${SEASONS[si].toLowerCase()}.</p>
-    <div class="actions"><button class="btn" data-a="hay" data-n="10">Buy 10 · ${money(S.hayPrice*10)}</button><button class="btn" data-a="hay" data-n="50">Buy 50 · ${money(Math.round(S.hayPrice*50*.95))}</button><button class="btn" data-a="hay" data-n="150">Buy 150 · ${money(Math.round(S.hayPrice*150*.9))}</button></div>
+    <div class="actions"><button class="btn" data-a="hay" data-n="10">Buy 10 · ${money(S.hayPrice*10)}</button><button class="btn" data-a="hay" data-n="50">Buy 50 · ${money(Math.round(S.hayPrice*50*.95))}</button><button class="btn" data-a="hay" data-n="150">Buy 150 · ${money(Math.round(S.hayPrice*150*[.9,.85,.8][L('feedbarn')]))}</button></div>
     <p class="note">${S.staff.feed?esc(S.staff.feed.name)+' (Ranch Manager) reorders when you drop below '+S.feedDays+' days’ worth.':'Hire a Ranch Manager on the Staff tab to reorder automatically.'} Hay is cheapest in summer and priciest in winter, when horses also eat 30% more.</p>
    </div>
    <div class="panel"><div class="subh" style="margin-top:0">Reputation unlocks</div>
@@ -4490,7 +4494,7 @@ const ACT={
   fav:d=>{const h=H(d.id);if(!h||h.client)return;h.fav=h.fav?0:1;toast(h.fav?'★ '+h.name+' is a favorite. Favorites show first and get the best stalls in the barn picture.':h.name+' removed from favorites.')},
   rename:d=>{const h=H(d.id);if(h&&h.client){toast('You can’t rename a client’s horse.');return}const v=($('#renameInput')||{}).value;if(h&&v&&v.trim()){h.name=v.trim().slice(0,28);register(h);toast('Renamed to '+h.name+'.')}},
   renameRanch:()=>{const v=($('#ranchInput')||{}).value;if(v&&v.trim()){S.ranchName=v.trim().slice(0,32);toast('Ranch renamed.')}},
-  hay:d=>{const n=+d.n;const cost=Math.round(S.hayPrice*n*(n>=150?.9:n>=50?.95:1)*(1-(psk('biz')-1)*.03));pxp('biz',1);tutMark('hay');if(S.money<cost)return toast('Not enough money.');S.money-=cost;S.hay=Math.round((S.hay+n)*10)/10;toast('Bought '+n+' bales for '+money(cost)+'.')},
+  hay:d=>{const n=+d.n;const cost=Math.round(S.hayPrice*n*(n>=150?[.9,.85,.8][L('feedbarn')]:n>=50?.95:1)*(1-(psk('biz')-1)*.03));pxp('biz',1);tutMark('hay');if(S.money<cost)return toast('Not enough money.');S.money-=cost;S.hay=Math.round((S.hay+n)*10)/10;toast('Bought '+n+' bales for '+money(cost)+'.')},
   stalls:()=>{const c=1200+S.stallLevel*800;if(S.money<c)return;S.money-=c;S.stalls+=2;S.stallLevel++;log('info','Built 2 new stalls for '+money(c)+'.');toast('Two new stalls built.')},
   breed:()=>breed(),
   gobreed:d=>{UI.breedMare=String(d.id);UI.tab='breeding';UI.modal=null},
