@@ -1117,9 +1117,9 @@ function gapStat(h){let best=null,g=.5;for(const x of STATS){const d=h.pot[x.k]-
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='71';
+const BUILD='72';
 const CHANGELOG=[
- {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
+ {b:'72',d:'Nov 1, 2026',t:'New horse art, a real rival and a breeding planner',c:[
   'Your rival is now a real ranch. They have a face, a short bio and four actual horses (see them on the Compete tab, with papers). Their horses train every week, grow old, retire and get replaced, so their strength comes from their barn, not from copying your score. They bring a horse that suits the show, so a Local Show no longer draws their champion.',
   'Rival frequency: rare at Local Shows (1 in 10), sometimes at County, and usually at State level and above. Beating them pays a bonus (10% of the top prize) and +1 reputation; losing costs nothing. Winning streaks are tracked, with two new achievements: Rival Beaten and Nemesis (5 in a row).',
   'Things to do with your rival: their retired or cash-sale horses show up at the sale barn with a “From your rival” tag (buy one for the Poached achievement); their stallion stands at stud for double the usual fee; they sometimes ask to breed to your stallion at 1.5× the going rate; once you’re ahead in the record, their boarders may move to your barn and pay 25% more.',
@@ -1133,6 +1133,8 @@ const CHANGELOG=[
   'Redrawn horses: the body outline has many more points, so the back, croup, hamstring, belly, chest and legs curve the way real horses do, and the joints (knees, hocks, fetlocks) line up properly. New soft muscle shading shows the shoulder, forearm, neck, barrel, hip and gaskin, with a light rim along the topline.',
   'Turn your horse around: the horse papers now have Side, Front and Back buttons on the picture. The front and back views show the same coat, markings, spots, socks, mane, tail and feathers as the side view.',
   'The stable banner heads use the new front-view face (with the friendlier eyes), and two horses in the Market paddock now face you or walk away.',
+]},
+ {b:'71',d:'Oct 29, 2026',t:'Trophies, life stories and a rival',c:[
   'Boarding pays 25% more, and you can now board 1 client horse for every 2 stalls (was 1 for every 3).',
   'Starting a new ranch from the Office no longer warns that everything is erased (that wasn’t true). It now explains that only the autosave is replaced, and lets you keep your current ranch in a save slot or download a save file first.',
   'Fixed: a horse reserved for the trainer stayed stuck in its stall (and lost happiness) once it couldn’t be trained, such as a mare late in her pregnancy or an injured horse. A reservation now only holds a horse back when the trainer can actually work it, so “Turn out the rest” and the evening turnout include it again.',
