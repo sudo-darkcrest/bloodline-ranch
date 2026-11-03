@@ -1309,8 +1309,13 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='81';
+const BUILD='82';
 const CHANGELOG=[
+ {b:'82',d:'Nov 2, 2026',t:'Cattle pen, gate sign and ranch symbols',c:[
+  'The cattle pen on the facilities map is now as tall as the pasture next to it and shares the pasture’s fence. The cows are spread out instead of standing on top of each other.',
+  'The gate sign now always fits your ranch name: it shrinks the text, wraps long names onto two lines, and shows WELCOME if a name is too long to read.',
+  'Redrew the Horse Head, Cowboy Boot, Mountains and Wheat ranch symbols.',
+  'Two new ranch symbols: Red Barn and Windmill.']},
  {b:'81',d:'Nov 2, 2026',t:'Ribbon fixes and new horse trailers',c:[
   'Fixed ribbon wording after an event: the colour now always matches the place (blue 1st, red 2nd, yellow 3rd), and the rim is described separately, for example “a yellow 3rd-place World Cup rosette with a silver rim”. A 3rd place no longer sounds like a silver.',
   'Olympic rosettes now have a gold, silver or bronze rim for 1st, 2nd and 3rd.',
@@ -2939,26 +2944,28 @@ const symStar=(cx,cy,R,r,n,rot=-90)=>{let d='';for(let i=0;i<n*2;i++){const a=(r
 const RANCH_SYMS={
  horseshoe:{n:'Horseshoe',d:'M4.6 3 C2.4 7.6 2.8 13.6 5.8 17.4 C7.6 19.8 9.8 21 12 21 C14.2 21 16.4 19.8 18.2 17.4 C21.2 13.6 21.6 7.6 19.4 3 L16 3.8 C17.6 7.6 17.4 12.2 15.4 15.2 C14.4 16.8 13.2 17.6 12 17.6 C10.8 17.6 9.6 16.8 8.6 15.2 C6.6 12.2 6.4 7.6 8 3.8 Z'+symC(5.5,7.4,.75)+symC(6.2,12.2,.75)+symC(18.5,7.4,.75)+symC(17.8,12.2,.75)+symC(9.2,18.3,.6)+symC(14.8,18.3,.6)},
  star:{n:'Lone Star',d:symStar(12,12.6,10.4,4.3,5)},
- horse:{n:'Horse Head',d:'M16.2 2 L14.4 4.8 C10.4 5 7 7.4 5.4 11.2 L2.8 15.4 C2.2 16.6 2.8 18 4.2 17.8 L6.8 17.2 C8 16.9 8.8 16 9.4 15 C10.4 16.6 11.2 18.6 11.4 21.6 L20.4 21.6 C20.2 16.4 19.2 11.8 18 8.6 C17.4 6.8 17.6 4.6 18.6 2.4 L17 4 Z'+symC(9.6,9.4,.9)},
+ horse:{n:'Horse Head',d:'M13.2 4.6 L14.4 1.2 L15.5 3.7 L16.9 1.3 L17.4 5.1 C19.9 6.8 21.4 10.2 21.9 14.4 L22.4 22.6 H12.4 C12.8 19.8 12.6 17.6 11.4 16 C10.6 15 9.6 14.8 8.6 15.2 L5.8 16.6 C4.4 17.2 3 16.4 2.8 15 C2.6 13.8 3 12.6 3.8 11.6 L9.4 6.4 C10.6 5.3 11.8 4.8 13.2 4.6 Z M17.2 7 C19 9.4 19.8 12.8 19.9 17.4 L19.1 17.5 C18.9 13 18.2 10 16.6 7.5 Z M8.6 9 C10.7 9.8 11.8 11.8 11.4 14.2 L10.7 14.1 C11 12.1 10.1 10.6 8.3 9.7 Z'+symC(12.2,8,.95)+symE(4.4,13.4,.55,.8,-30)},
  spur:{n:'Spur Rowel',d:symStar(12,12,10.6,4.6,10)+symC(12,12,2.2)},
  hat:{n:'Cowboy Hat',d:'M1.6 14.6 C5 17.6 19 17.6 22.4 14.6 C21.6 18 17.6 20.4 12 20.4 C6.4 20.4 2.4 18 1.6 14.6 Z M6.6 15.6 C6.2 10.4 7 6.4 9.2 5.4 C10.4 4.8 11 6.2 12 6.2 C13 6.2 13.6 4.8 14.8 5.4 C17 6.4 17.8 10.4 17.4 15.6 C14 16.6 10 16.6 6.6 15.6 Z'},
- boot:{n:'Cowboy Boot',d:'M7.4 1.8 H15.4 L15 11.4 C15 12.8 15.8 13.6 17.4 14 L20.6 14.8 C22 15.2 22.6 16.4 22.4 17.8 L22.2 19.4 H15.8 L14.8 21.8 H6.6 L7.4 19.4 C6.8 14.6 6.6 10 7.2 5.8 Z M6.6 3.6 H16.2 V5 H6.6 Z'},
+ boot:{n:'Cowboy Boot',d:'M6.6 1.6 L10.8 2.8 L15.2 1.6 L14.8 12 C14.9 13.5 16 14.5 17.8 15.1 L21.4 16.4 C22.7 16.9 23.3 18.2 23.1 19.4 L22.8 20.4 H13.2 C12.2 20.4 11.5 20.9 11.1 21.6 L10.6 22.6 H7.4 L7.1 19.1 H4.5 V18.3 H6.95 C6.3 14 6 9.6 6.4 5.6 H5 V1.4 H6.6 Z M8.3 6.6 C10 5.6 12 5.6 13.4 6.8 L13.3 7.6 C12 6.5 10 6.5 8.3 7.4 Z M8.4 10.2 C10.1 9.2 12 9.4 13.3 10.6 L13.2 11.4 C12 10.3 10.1 10.1 8.4 11 Z M13.2 19.2 H22.4 V19.8 H13.2 Z'+symStar(3.5,18.7,2.2,.8,6,0)},
  cactus:{n:'Saguaro',d:'M10.2 21.6 V5 C10.2 2.8 13.8 2.8 13.8 5 V21.6 Z M13.8 12.4 H16.2 V8.2 C16.2 6.6 18.8 6.6 18.8 8.2 V12.6 C18.8 14.2 17.6 15 16 15 H13.8 Z M10.2 14.4 H7.8 C6.2 14.4 5.2 13.4 5.2 12 V9.4 C5.2 7.8 7.8 7.8 7.8 9.4 V11.8 H10.2 Z M4 21 H20 V22.4 H4 Z'},
- mountain:{n:'Mountains',d:'M.8 20.6 L8.6 7 L12.2 12.8 L15.8 5.6 L23.2 20.6 Z M4.4 20.6 L8.6 13.4 L11 17.2 L9.6 20.6 Z'+symC(19.4,4.6,1.8)},
+ mountain:{n:'Mountains',d:'M1 21.4 L10 8.4 L13.4 13.4 L16.4 5 L23.4 21.4 Z M16.4 6.6 L17.6 9.2 L16.8 8.6 L16.2 9.8 L15.5 8.6 L15.1 9.3 Z M10 9.8 L11.3 11.6 L10.5 11.1 L9.9 12 L9.2 11.1 L8.8 11.7 Z'+symC(20.4,3.4,1.8)},
  sun:{n:'Sun',d:symC(12,12,4.8)+[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180,c=Math.cos(r),s=Math.sin(r),p=(d,w)=>(12+c*d-s*w).toFixed(2)+' '+(12+s*d+c*w).toFixed(2);return 'M'+p(6.4,-1.6)+'L'+p(11,0)+'L'+p(6.4,1.6)+'Z'}).join('')},
  moon:{n:'Crescent Moon',d:'M15.4 2.2 C9.4 2.6 4.4 7.4 4.4 13.4 C4.4 19.2 9.2 22.2 13.8 22 C17 21.8 19.8 20.2 21.6 17.6 C19.6 18.6 17.4 18.8 15.4 18.2 C11.4 17 8.8 13.4 9.2 9.2 C9.6 6 11.8 3.4 15.4 2.2 Z'+symStar(17.6,8.6,2.4,1,4,0)},
  arrow:{n:'Arrow',d:'M22.6 12 L15.8 7.4 V16.6 Z M5 11 H16.4 V13 H5 Z M1.4 7.2 H5.8 L9.2 11 H4.6 Z M1.4 16.8 H5.8 L9.2 13 H4.6 Z'},
  feather:{n:'Feather',d:'M20 2.2 C11.6 3.4 5.6 9.4 5 17.4 L3 21.4 L4.6 22 L6.8 18.6 C14.6 18 20.2 11.8 21 3.4 Z M18 5.4 L7.6 17.2 L8 17.6 L18.4 5.8 Z'},
  skull:{n:'Longhorn',d:'M.6 5.6 C3.6 8.6 6.6 9.2 9.2 8.8 L14.8 8.8 C17.4 9.2 20.4 8.6 23.4 5.6 C22.2 9.8 18.8 11.8 15.6 11.8 L15.1 16.4 C14.7 19.4 13.4 21.6 12 21.6 C10.6 21.6 9.3 19.4 8.9 16.4 L8.4 11.8 C5.2 11.8 1.8 9.8 .6 5.6 Z'+symC(10.2,13,1.1)+symC(13.8,13,1.1)+symE(11.2,18.4,.5,.8,0)+symE(12.8,18.4,.5,.8,0)},
- wheat:{n:'Wheat',nz:1,d:'M11.3 8 H12.7 V22.6 H11.3 Z'+[[12,3.2,0],[9.6,6.6,-35],[14.4,6.6,35],[9.6,10.4,-35],[14.4,10.4,35],[9.6,14.2,-35],[14.4,14.2,35]].map(([x,y,a])=>symE(x,y,1.5,2.9,a)).join('')},
+ wheat:{n:'Wheat',nz:1,d:'M11.4 5.6 H12.6 V22.6 H11.4 Z'+[[12,3.2,0],[9.5,6.6,-28],[14.5,6.6,28],[9.5,10.2,-28],[14.5,10.2,28],[9.5,13.8,-28],[14.5,13.8,28]].map(([x,y,a])=>symE(x,y,1.35,2.5,a)).join('')+symE(8.8,18.6,.9,3.2,-48)+symE(15.2,18.6,.9,3.2,48)},
  pine:{n:'Pine Tree',d:'M12 1.6 L17.4 8.6 H14.8 L19.6 14.4 H16.6 L21.4 19.6 H2.6 L7.4 14.4 H4.4 L9.2 8.6 H6.6 Z M10.6 19.4 H13.4 V22.8 H10.6 Z'},
  flower:{n:'Wild Rose',nz:1,d:[0,72,144,216,288].map(a=>{const r=(a-90)*Math.PI/180;return symE(12+Math.cos(r)*5.6,12+Math.sin(r)*5.6,3.6,4.4,a)}).join(''),dot:[12,12,2.4]},
  diamond:{n:'Diamond',d:'M12 1.6 L21.6 12 L12 22.4 L2.4 12 Z M12 6.8 L16.8 12 L12 17.2 L7.2 12 Z'},
  clover:{n:'Clover',nz:1,d:symC(8.6,8.6,4.2)+symC(15.4,8.6,4.2)+symC(8.6,15.4,4.2)+symC(15.4,15.4,4.2)+'M11.4 16 L13 15.6 L15.8 22.6 L14.4 23 Z'},
  bolt:{n:'Lightning',d:'M14 1.2 L4.4 13.6 H11.2 L9.4 22.8 L19.8 9.8 H13 Z'},
  crown:{n:'Crown',d:'M3 17.6 L1.8 6.6 L7.4 10.8 L12 3.6 L16.6 10.8 L22.2 6.6 L21 17.6 Z M3 19.2 H21 V21.8 H3 Z'+symC(12,13.6,1.4)+symC(7,14.6,1)+symC(17,14.6,1)},
+ barn:{n:'Red Barn',d:'M2.6 22.4 V12.4 L5.2 7.2 L12 3.2 L18.8 7.2 L21.4 12.4 V22.4 Z M3.6 12.6 H20.4 V13.4 H3.6 Z M10.4 7.6 H13.6 V10.8 H10.4 Z M8.2 22.4 V15 H15.8 V22.4 Z M8.2 15 H9 L15.8 21.6 V22.4 H15 L8.2 15.8 Z M15.8 15 V15.8 L9 22.4 H8.2 V21.6 L15 15 Z'},
+ windmill:{n:'Windmill',nz:1,d:'M9.4 22.8 L11.4 9.6 H12.6 L14.6 22.8 H13.4 L12 12 L10.6 22.8 Z M10.3 16.4 H13.7 V17.2 H10.3 Z M10.8 12.8 H13.2 V13.5 H10.8 Z M12.8 7.6 L21 5.8 L22 9.4 L12.8 8.8 Z'+symC(12,8.2,1.7)+[...Array(12)].map((_,i)=>{const a=i*30*Math.PI/180,c=Math.cos(a),s2=Math.sin(a),p=(d,w)=>(12+c*d-s2*w).toFixed(2)+' '+(8.2+s2*d+c*w).toFixed(2);return 'M'+p(2.2,-.45)+'L'+p(6.6,-1.25)+'L'+p(6.6,1.25)+'L'+p(2.2,.45)+'Z'}).join(''),dot:[12,8.2,.7]},
  initial:{n:'Ranch Initial',d:null}};
-const RANCH_SYM_ORDER=['horseshoe','star','horse','spur','hat','boot','cactus','mountain','sun','moon','arrow','feather','skull','wheat','pine','flower','diamond','clover','bolt','crown','initial'];
+const RANCH_SYM_ORDER=['horseshoe','star','horse','spur','hat','boot','cactus','mountain','sun','moon','arrow','feather','skull','wheat','pine','flower','diamond','clover','bolt','crown','barn','windmill','initial'];
 /* the symbol as SVG paths in a 24×24 box, drawn in `ink` */
 function symPaths(sym,ink,bg){sym=sym||ranchSym();if(sym==='none')return '';if(sym==='initial'){const L=esc(((S&&S.ranchName)||UI.rname||'R').trim().charAt(0).toUpperCase()||'R');return `<circle cx="12" cy="12" r="9.6" fill="none" stroke="${ink}" stroke-width="2"/><text x="12" y="16.6" font-size="13" font-weight="900" text-anchor="middle" fill="${ink}" font-family="Rye,Georgia,serif">${L}</text>`}
   const s=RANCH_SYMS[sym];return s?`<path d="${s.d}" fill="${ink}" fill-rule="${s.nz?'nonzero':'evenodd'}"/>${s.dot&&bg?`<circle cx="${s.dot[0]}" cy="${s.dot[1]}" r="${s.dot[2]}" fill="${bg}"/>`:''}`:''}
@@ -4001,6 +4008,18 @@ function locInfoPanel(){if(!S.loc||!LOCFX[S.loc])return '';const L=LOCS[S.loc],x
 function locTroublePick(){const w=locFx().trouble||{};const ks=Object.keys(TROUBLE);let tot=0;for(const k of ks)tot+=w[k]||1;let r=R()*tot;for(const k of ks){r-=w[k]||1;if(r<0)return k}return ks[0]}
 
 function seasonMap(){const si=curSeason(),sv=SEAS,li=locId();SEAS=si;let m=ranchMap();SEAS=sv;const fx=seasonFx(si);if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx){if(fx==='snow')m=m.replace(/<\/svg>\s*$/,(li==='classic'?snowFlakes(77,1200,640,220):'<g transform="translate(0 -80)">'+snowFlakes(77,1200,720,250)+'</g>')+'</svg>')}return m}
+/* the ranch name on the gate sign (board 42×13): one line if it fits, else two lines, else drop a trailing RANCH/FARM word, else WELCOME */
+let GATE_CTX=null;
+function gateW(t){try{if(!GATE_CTX){GATE_CTX=document.createElement('canvas').getContext('2d');GATE_CTX.font='700 10px system-ui,sans-serif'}return GATE_CTX.measureText(t).width/10}catch(e){return t.length*.62}}
+function gateText(cx,y,W,ink){const MIN=3.4;const one=t=>Math.min(6.4,W/gateW(t));
+  const two=t=>{const w=t.split(/\s+/);if(w.length<2)return null;let best=null;for(let k=1;k<w.length;k++){const a=w.slice(0,k).join(' '),b=w.slice(k).join(' '),f=Math.min(4.8,W/Math.max(gateW(a),gateW(b)));if(!best||f>best.f)best={a,b,f}}return best};
+  const lay=t=>{const f1=one(t);if(f1>=4.4)return {l:[t],f:f1};const tw=two(t);if(tw&&tw.f>Math.max(f1,MIN))return {l:[tw.a,tw.b],f:tw.f};return f1>=MIN?{l:[t],f:f1}:null};
+  let t=(S.ranchName||'').trim().toUpperCase().replace(/\s+/g,' ');let L=t&&lay(t);
+  if(!L){const t2=t.replace(/\s+(RANCH|FARMS?|STABLES?|ACRES|PLACE|HORSES)$/,'');L=t2&&t2!==t?lay(t2):null}
+  if(!L)L={l:['WELCOME'],f:one('WELCOME')};
+  const f=L.f,tl=s2=>gateW(s2)*f>W*.99?` textLength="${W}" lengthAdjust="spacingAndGlyphs"`:'';
+  const ys=L.l.length===1?[y-(6.4-f)*.35]:[y-3.1,y+2.1];
+  return L.l.map((s2,k)=>`<text x="${cx}" y="${ys[k].toFixed(1)}" text-anchor="middle" font-size="${f.toFixed(2)}" font-weight="700" fill="${ink}" font-family="system-ui,sans-serif"${tl(s2)}>${esc(s2)}</text>`).join('')}
 function ranchMap(){
   const lv=L,C={grass:'#A9BE85',grassD:'#869F63',grass3:'#B7CA92',dirt:'#D1B486',dirtD:'#B9996A',road:'#8F8270',water:'#7DB2D2',waterD:'#5B92B6',wood:'#7A5638',woodL:'#9C7550',white:'#F7F3EA',ink:'#2B2A26',sand:'#E6D3A6',sh:'rgba(35,45,25,.28)',stone:'#A8A296'};
   let g='',labels='';const LI=locId(),LD=LOCS[LI];
@@ -4024,13 +4043,13 @@ function ranchMap(){
     <polygon points="${x-5},${y} ${x+w/2},${y-rh} ${x+w+5},${y}" fill="${roof}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="${wall}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="url(#mWall)"/><path d="M${x} ${y+.8} H${x+w}" stroke="#000" stroke-opacity=".25" stroke-width="1.6"/>
     ${wins(x,y,w,h,o.win||0)}${o.door?`<rect x="${x+w/2-6}" y="${y+h-17}" width="12" height="17" fill="#F7F3EA"/><rect x="${x+w/2-5}" y="${y+h-16}" width="10" height="16" fill="${C.wood}"/><path d="M${x+w/2-3} ${y+h-13} h6 v5 h-6z M${x+w/2-3} ${y+h-7} h6 v5 h-6z" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".7"/><circle cx="${x+w/2+3}" cy="${y+h-8}" r=".9" fill="#E8C76A"/>`:''}`};
   const pony=(x,y,col,mane,flip)=>`<g transform="translate(${x} ${y+4.6}) scale(${flip?-1:1} 1) scale(.44)">${rSprite(col,mane,'#000',{gait:'trot',pose:(Math.round(x+y)%2)*2+1})}</g>`;
-  const fence=(x,y,w,h,col=C.white)=>{if(LD.rail)col=LD.rail;/* seen from a high 3/4 angle: short posts and one rail along the back, taller posts and two rails along the front */
+  const fence=(x,y,w,h,col=C.white,fo={})=>{if(LD.rail)col=LD.rail;const R=!fo.noRight;/* seen from a high 3/4 angle: short posts and one rail along the back, taller posts and two rails along the front */
     let o='';const post=(px,py,ht,wd=2.2)=>`<rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${wd}" height="${ht+1}" fill="${LD.post||C.wood}"/><rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${(wd*.35).toFixed(1)}" height="${ht+1}" fill="#fff" opacity=".25"/>`;
     o+=`<linearGradient id="mPl${x}_${y}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#mPl${x}_${y})"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(30,40,20,.2)" stroke-width="1.2"/><ellipse cx="${x+w/2}" cy="${y+h+2}" rx="${w/2}" ry="3.5" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/>`;
     for(let i=x;i<=x+w;i+=12)o+=post(i,y,4,1.8);o+=`<path d="M${x} ${y-2.2} H${x+w}" stroke="${col}" stroke-width="1" opacity=".85"/>`;
-    for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4.5+5.5*t;o+=post(x,j,ht,1.8+.5*t)+post(x+w,j,ht,1.8+.5*t)}
-    o+=`<path d="M${x} ${y-2.2} L${x} ${y+h-2.6} M${x} ${y+h-5.4} L${x} ${y+h*.5-3} M${x+w} ${y-2.2} L${x+w} ${y+h-2.6} M${x+w} ${y+h-5.4} L${x+w} ${y+h*.5-3}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
-    for(let i=x;i<=x+w;i+=12)o+=post(i,y+h,10,2.6);o+=`<path d="M${x} ${y+h-3} H${x+w} M${x} ${y+h-7.2} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
+    for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4.5+5.5*t;o+=post(x,j,ht,1.8+.5*t)+(R?post(x+w,j,ht,1.8+.5*t):'')}
+    o+=`<path d="M${x} ${y-2.2} L${x} ${y+h-2.6} M${x} ${y+h-5.4} L${x} ${y+h*.5-3}${R?` M${x+w} ${y-2.2} L${x+w} ${y+h-2.6} M${x+w} ${y+h-5.4} L${x+w} ${y+h*.5-3}`:''}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
+    for(let i=x;i<=x+w-(R?0:6);i+=12)o+=post(i,y+h,10,2.6);o+=`<path d="M${x} ${y+h-3} H${x+w} M${x} ${y+h-7.2} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
   const hot=(id,inner)=>{CO=OFF[id]||null;const tf=CO?`<g transform="translate(${(CO[0]*1.2-CO[0]*CO[2]).toFixed(1)} ${(CO[1]+CO[3]-CO[1]*CO[2]).toFixed(1)}) scale(${CO[2]})">${inner}</g>`:inner;return `<g class="hot" data-a="facjump" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}"><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${tf}</g>`};
   const mx=id=>FACI[id].lv.length-1;
 
@@ -4074,7 +4093,7 @@ function ranchMap(){
   g+=`<rect x="190" y="556" width="178" height="27" rx="6" fill="${C.dirtD}" opacity=".5"/><rect x="192" y="557" width="174" height="25" rx="5" fill="url(#mGravel)"/>`+[...Array(4)].map((_,i)=>`<path d="M${210+i*44} 561 v-3" stroke="#C9C2B0" stroke-width="1.2"/>`).join('');
   // road, gate, mailbox
   g+=`<rect x="0" y="596" width="1200" height="30" fill="${C.road}"/><path d="M0 611 H1200" stroke="#E9DFA8" stroke-width="2" stroke-dasharray="16 12"/><path d="M0 597 H1200 M0 625 H1200" stroke="#7B6F5E" stroke-width="1.2"/><text x="1190" y="636" text-anchor="end" font-size="10" fill="#5E5547" font-family="ui-monospace,monospace" letter-spacing="1">COUNTY RD 9</text>`;
-  g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><path d="M110.5 544 V526 M154.5 544 V526" stroke="#6b6b66" stroke-width="1"/><path d="M110.5 526 h13 v9 h-13z M154.5 526 h13 v9 h-13z" fill="${ranchCol()}"/>${symBadge(113.5,526.6,7.8,ranchCol(),ranchCol2())}${symBadge(157.5,526.6,7.8,ranchCol(),ranchCol2())}<rect x="111" y="551" width="42" height="13" rx="2" fill="${ranchDark()}" stroke="${C.wood}" stroke-width="1.2"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${inkOn(ranchDark())}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
+  g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><path d="M110.5 544 V526 M154.5 544 V526" stroke="#6b6b66" stroke-width="1"/><path d="M110.5 526 h13 v9 h-13z M154.5 526 h13 v9 h-13z" fill="${ranchCol()}"/>${symBadge(113.5,526.6,7.8,ranchCol(),ranchCol2())}${symBadge(157.5,526.6,7.8,ranchCol(),ranchCol2())}<rect x="111" y="551" width="42" height="13" rx="2" fill="${ranchDark()}" stroke="${C.wood}" stroke-width="1.2"/>${gateText(132,560.5,38,inkOn(ranchDark()))}`;
   {let f='';const FY=591;for(let x=0;x<=1200;x+=14){if(x>96&&x<170)continue;f+=`<rect x="${x-1.2}" y="${FY-10}" width="2.4" height="11" fill="${LD.post||C.wood}"/>`}g+=f+`<path d="M0 ${FY-3} H96 M170 ${FY-3} H1200 M0 ${FY-7.5} H96 M170 ${FY-7.5} H1200" stroke="${LD.rail||C.white}" stroke-width="1.5"/><path d="M0 ${FY-1} H96 M170 ${FY-1} H1200" stroke="#000" stroke-opacity=".18"/>`}
   g+=`<rect x="172" y="580" width="2.4" height="15" fill="${C.wood}"/><rect x="166" y="573" width="14" height="8" rx="2.5" fill="#5B6E7E"/><rect x="178" y="572" width="1.4" height="5" fill="#C0392B"/>`;
 
@@ -4124,7 +4143,7 @@ function ranchMap(){
     const cow=(x,y,c,f,spots)=>`<g transform="translate(${x} ${y}) scale(${f?-1:1} 1)"><path d="M-5.4 0 v4.6 M-3.6 0 v4.6 M3.6 0 v4.6 M5.4 0 v4.6" stroke="${hexMix(c,'#000000',.25)}" stroke-width="1.4"/><rect x="-7" y="-5" width="14" height="6.4" rx="3" fill="${c}"/>${spots?`<ellipse cx="-2.6" cy="-2.6" rx="2.2" ry="1.6" fill="#F4F0E6"/><ellipse cx="3" cy="-1.4" rx="1.8" ry="1.3" fill="#F4F0E6"/>`:''}<path d="M6.4 -4.4 L10.2 -3.4 L10.4 -.6 L7.4 -.8Z" fill="${c}"/><ellipse cx="10.2" cy="-1" rx="1.4" ry="1" fill="${spots?'#E5B3A6':hexMix(c,'#000000',.3)}"/><path d="M7.4 -4.6 l-.6 -1.4 M8.8 -4.3 l.8 -1.2" stroke="#E9DFC6" stroke-width=".7"/><path d="M-7 -3.4 q-1.6 2 -1 4.4" stroke="${c}" stroke-width=".8" fill="none"/></g>`;
     const A=(x,y,sc,inner)=>`<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${sc})">${inner}</g>`;
     const ground=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${c}"/>`;
-    const PENS={chickens:[22,226,100,86,'Chickens'],goats:[130,226,108,86,'Goats'],sheep:[246,226,112,86,'Sheep'],cattle:[446,78,104,122,'Cattle']};
+    const PENS={chickens:[22,226,100,86,'Chickens'],goats:[130,226,108,86,'Goats'],sheep:[246,226,112,86,'Sheep'],cattle:(()=>{const P=OFF.pasture,mx2=v=>P[0]*1.2+(v-P[0])*P[2],my2=v=>P[1]+P[3]+(v-P[1])*P[2];const t=+my2(60).toFixed(1),b=+my2(178).toFixed(1),r=+mx2(472).toFixed(1);return [446,t,+(r-446).toFixed(1),+(b-t).toFixed(1),'Cattle']})()};
     for(const id of ids){const n=lv(id);const [x,y,w,h,nm]=PENS[id];const r=srng(70+ids.indexOf(id)*13);o='';
       if(!n){o=lot(x,y,w,h)}
       else if(id==='chickens'){o+=ground(x,y,w,h,'#C2C48E')+`<ellipse cx="${x+w*.6}" cy="${y+h*.65}" rx="${w*.38}" ry="${h*.25}" fill="${C.dirt}" opacity="${SEAS===3?.18:SEAS===2?.55:.8}" filter="url(#mSoft)"/>`;
@@ -4143,10 +4162,10 @@ function ranchMap(){
         for(let i=0;i<3+n*3;i++)o+=A(x+12+r()*(w-26),y+44+r()*(h-56),1.25,sheep(0,0,i%3===0))}
       else if(id==='cattle'){o+=ground(x,y,w,h,'#A9BF84')+`<ellipse cx="${x+w*.42}" cy="${y+h*.72}" rx="${w*.22}" ry="${h*.08}" fill="${C.dirt}" opacity=".75" filter="url(#mSoft)"/>`;
         o+=tree(x+w-24,y+28,17);
-        const bx=x+w*.42,by=y+h*.7;o+=shadow(bx,by+6,16,4)+`<circle cx="${bx}" cy="${by}" r="9" fill="#D2AE48"/><path d="M${bx-6} ${by-4} q6 -3 12 0 M${bx-7} ${by+1} q7 -3 14 0" stroke="#B48F34" stroke-width="1" fill="none"/><ellipse cx="${bx}" cy="${by+2}" rx="12" ry="5" fill="none" stroke="#6E6E6E" stroke-width="1.6"/><path d="M${bx-12} ${by+2} V${by-5} M${bx-6} ${by+6} V${by-1} M${bx+6} ${by+6} V${by-1} M${bx+12} ${by+2} V${by-5}" stroke="#6E6E6E" stroke-width="1.2"/>`;
-        o+=`<ellipse cx="${x+18}" cy="${y+h-16}" rx="12" ry="4.5" fill="#7D8A92"/><ellipse cx="${x+18}" cy="${y+h-17.5}" rx="10" ry="3.2" fill="${C.water}"/>`;
-        for(let i=0;i<2+n*2;i++){const cx=x+16+r()*(w-34),cy=y+44+r()*(h-70);o+=A(cx,cy,1.9,cow(0,0,['#5A3B26','#2E2420','#8A4A28','#2E2420','#6B3A20'][i%5],i%2,i%4===1))}}
-      if(n)o+=fence(x,y,w,h,id==='chickens'?'#D8D4C8':'#E9DFC8');
+        const bx=x+w*.48,by=y+h*.56;o+=shadow(bx,by+6,16,4)+`<circle cx="${bx}" cy="${by}" r="9" fill="#D2AE48"/><path d="M${bx-6} ${by-4} q6 -3 12 0 M${bx-7} ${by+1} q7 -3 14 0" stroke="#B48F34" stroke-width="1" fill="none"/><ellipse cx="${bx}" cy="${by+2}" rx="12" ry="5" fill="none" stroke="#6E6E6E" stroke-width="1.6"/><path d="M${bx-12} ${by+2} V${by-5} M${bx-6} ${by+6} V${by-1} M${bx+6} ${by+6} V${by-1} M${bx+12} ${by+2} V${by-5}" stroke="#6E6E6E" stroke-width="1.2"/>`;
+        o+=`<ellipse cx="${x+22}" cy="${y+30}" rx="12" ry="4.5" fill="#7D8A92"/><ellipse cx="${x+22}" cy="${y+28.5}" rx="10" ry="3.2" fill="${C.water}"/>`;
+        {const SPOT=[[22,52],[62,60],[17,82],[88,94],[28,112],[80,118],[24,140],[86,138]].slice(0,2+n*2).map(([a,b2],i)=>[x+a*w/108+(r()-.5)*4,y+b2*h/153+(r()-.5)*3,i]).sort((p,q)=>p[1]-q[1]);for(const [cx,cy,i] of SPOT)o+=A(cx,cy,1.9,cow(0,0,['#5A3B26','#2E2420','#8A4A28','#2E2420','#6B3A20','#5A3B26','#8A4A28','#2E2420'][i],cx>x+w*.5?1:0,i%4===1))}}
+      if(n)o+=fence(x,y,w,h,id==='chickens'?'#D8D4C8':id==='cattle'?'#F1EADA':'#E9DFC8',{noRight:id==='cattle'&&lv('pasture')>=1});
       g+=hot(id,o);label(x+w/2,y+h+16,nm,n>0,n,mx(id))}}
   // ===== pasture =====
   {const n=lv('pasture');let o=`<rect x="472" y="60" width="236" height="118" rx="6" fill="${['#A9BE85','#A4BD80','#9FBC7A','#99BB74'][n]}"/><rect x="472" y="60" width="236" height="118" rx="6" fill="url(#mTuft)"/><rect x="472" y="60" width="236" height="118" rx="6" fill="url(#mMow)" opacity=".35"/>`;
