@@ -341,7 +341,7 @@ label.btn{display:inline-block;cursor:pointer}
 .ribcount svg{vertical-align:middle}
 .mapwrap{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:10px;overflow-x:auto;margin-bottom:18px}
 .mapwrap svg{display:block;width:100%;min-width:680px;height:auto}
-.wrboard{background:linear-gradient(#24463A,#1B3529);border-radius:12px;padding:12px 14px 8px;box-shadow:var(--shadow);color:#F4EFD8;border:3px solid #6B4423}.wrhead{text-align:center;font-family:Rye,Georgia,serif;letter-spacing:2px;color:#F2C14E;font-size:19px;margin:2px 0 8px}.wrt{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}.wrt th{text-align:left;color:#BFD2BA;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.2)}.wrt td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.09);vertical-align:top}.wrt td.ev{font-weight:700}.wrt td.ev span,.wrt td.who span,.wrt td.yb span{display:block;font-size:11.5px;font-weight:400;color:#B6C7B1}.wrt td.v{font-size:16px;color:#FFE08A;white-space:nowrap}.wrt td.yb .mono{font-size:13.5px;color:#F4EFD8}.wrt tr.mine td{background:rgba(242,193,78,.17)}.wrt tr.mine td.ev::before{content:'★ ';color:#F2C14E}.wrboard .tablewrap{overflow-x:auto}.wrnew{margin-top:12px;padding:9px 12px;border-radius:10px;background:#24463A;color:#FFE08A;font-weight:800;border:2px solid #C9A227}.wrnew.ranch{background:transparent;color:var(--good);border-color:var(--good);font-weight:700}
+.wrboard{background:linear-gradient(#24463A,#1B3529);border-radius:12px;padding:12px 14px 8px;box-shadow:var(--shadow);color:#F4EFD8;border:3px solid #6B4423}.wrhead{text-align:center;font-family:Rye,Georgia,serif;letter-spacing:2px;color:#F2C14E;font-size:19px;margin:2px 0 8px}.wrt{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}.wrt th{text-align:left;color:#BFD2BA;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.2)}.wrt td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.09);vertical-align:top}.wrt td.ev{font-weight:700}.wrt td.ev span,.wrt td.who span,.wrt td.yb span{display:block;font-size:11.5px;font-weight:400;color:#B6C7B1}.wrt td.v{font-size:16px;color:#FFE08A;white-space:nowrap}.wrt td.yb .mono{font-size:13.5px;color:#F4EFD8}.wrt tr.mine td{background:rgba(242,193,78,.17)}.wrt tr.mine td.ev::before{content:'★ ';color:#F2C14E}.wrboard .tablewrap{overflow-x:auto}.wrnew{margin-top:12px;padding:9px 12px;border-radius:10px;background:#24463A;color:#FFE08A;font-weight:800;border:2px solid #C9A227}.wrmyth{display:flex;gap:10px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,224,138,.3);font-weight:600;color:#F4EFD8}.wrmyth b{color:#8FF0E6}.wrmyth span span{display:block;font-size:12px;font-weight:400;color:#C9D8C4}.wrnew.ranch{background:transparent;color:var(--good);border-color:var(--good);font-weight:700}
 .mapwrap .hot{cursor:pointer}.mapwrap .hot:hover>g,.mapwrap .hot:focus-visible>g{filter:brightness(1.08) saturate(1.06)}.mapwrap .hot:focus-visible{outline:none}.facpop{display:flex;flex-direction:column;gap:10px;min-width:min(420px,80vw)}.facpop .fac-head{gap:10px}
 .mapwrap .hot:hover .lbl{text-decoration:underline}
 .facgroup{margin-top:20px}
@@ -686,6 +686,12 @@ const ITEMS={
   browband:{n:'Braided Browband',s:'flair',r:'rare',p:360,e:{comp:2,bond:1}},
   showhalter:{n:'Silver Show Halter',s:'flair',r:'epic',p:1150,e:{comp:4,ev:{dress:4}}},
   laurels:{n:'Crown of Laurels',s:'flair',r:'legendary',p:4200,e:{comp:6,rep:1,happy:3}},
+  /* build 95: mythical gear. Never sold in shops or found in crates: one is awarded each time your horse sets a new world record */
+  cometsaddle:{n:'Comet-Tail Saddle',s:'saddle',r:'mythical',p:12000,e:{comp:15,train:12,energy:3},myth:1},
+  thunderbridle:{n:'Thunderbird Bridle',s:'bridle',r:'mythical',p:11000,e:{train:26,comp:6,bond:3},myth:1},
+  windboots:{n:'Windrunner Boots',s:'boots',r:'mythical',p:11000,e:{inj:.25,comp:6,energy:6},myth:1},
+  auroraborealis:{n:'Northern Lights Blanket',s:'blanket',r:'mythical',p:11000,e:{happy:5,health:6,energy:6,bond:2},myth:1},
+  worldlaurels:{n:'World-Beater’s Laurels',s:'flair',r:'mythical',p:12000,e:{comp:10,rep:1,happy:4},myth:1},
 };
 const CRATE={common:46,uncommon:26,rare:20,epic:6.5,legendary:1.5};
 const itemsOf=r=>Object.keys(ITEMS).filter(k=>ITEMS[k].r===r);
@@ -708,7 +714,7 @@ function itemScore(it,h){const e=it.e,role=gearRole(h),be=EVENTS[bestEventOf(h)]
   v+=(e.train||0)*1.5*trainW;
   if(e.inj)v+=(1-e.inj)*100*.8*(has(h,'fragile')?1.6:1)*(role==='retired'?.3:1);
   v+=(e.happy||0)*4*(has(h,'skittish')?1.4:1)+(e.energy||0)*1.5+(e.health||0)*2+(e.bond||0)*2.5+(e.rep||0)*4*compW;
-  return v+RORDER.indexOf(it.r)*.01}
+  return v+HRORDER.indexOf(it.r)*.01}
 function horsePrio(h){return (gearRole(h)==='active'?2:gearRole(h)==='young'?1.3:1)*(1+avg(h.pot)/100)}
 function autoEquip(onlyH){let n=0;const hs=(onlyH?[onlyH].filter(useTack):S.horses.filter(useTack)).sort((a,b)=>horsePrio(b)-horsePrio(a));
   for(const h of hs)for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;
@@ -1335,8 +1341,15 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='94';
+const BUILD='95';
 const CHANGELOG=[
+ {b:'95',d:'Nov 3, 2026',t:'Mythical tack, real deserts and two new ranch homes',c:[
+  'Mythical tack: five one-of-a-kind items (the Comet-Tail Saddle, Thunderbird Bridle, Windrunner Boots, Northern Lights Blanket and World-Beater’s Laurels). You cannot buy them or find them in crates. The only way to get one is to set a new world record, and the results window shows the prize. They are never sold by Sell Extras.',
+  'Desert Ride now happens in real desert and dry country. Each ranch rides its local shows somewhere dry nearby: California rides near Indio and the Mojave, Texas at the Monahans sandhills, Wyoming in the Red Desert, South Dakota in the Badlands. Ranches with no desert travel: Florida’s state championship is in El Paso, Texas, and Kentucky, Ohio and Pennsylvania ride the Little Sahara dunes in Oklahoma. Bigger shows go to Arizona, Nevada, Utah, Dubai or AlUla.',
+  'The live Desert Ride looks like where it is held: saguaro desert, low desert with palms, the Mojave with Joshua trees, Chihuahuan yucca country, sand dunes, Arabian dunes with an oasis, red-rock mesas, striped badlands, sagebrush hills or the red Outback.',
+  'Two new places to put your ranch: Cochrane, Alberta in Canada (the Rocky Mountain foothills: a Quonset barn, a prairie farmhouse, grain elevator and canola fields, cold winters, cheap hay, Show Jumping and Barrel Racing bonuses, and a summer Stampede Rodeo) and Tequila, Jalisco in Mexico (blue agave hills under the Tequila volcano: an ochre hacienda and stone stable, cheap help, warm winters, Reining and Dressage bonuses, Aztecas, and a fall Charreada).',
+  'Canadian and Mexican ranches have their own show ladder: Provincial or State Championships, Western Canada or Western Mexico Regionals, and the Canadian or Mexican National Championship.',
+ ]},
  {b:'94',d:'Nov 3, 2026',t:'Olympic entries and world records',c:[
   'Olympics: each ranch sends one horse to each Olympic event. Once a horse has ridden in, say, the Olympic Show Jumping, that event shows “Your ranch’s entry” and no other horse from your ranch can enter it that Olympics. Any horse can go again at the next Olympics, and Auto Compete knows the rule too.',
   'World Records: the Hall of Fame has a record board for every event, showing the record, who holds it, where and when it was set, and your ranch’s own best beside it. Records use the same time, score or distance you see in the live event.',
@@ -3763,8 +3776,10 @@ const LOCS={
  pennsylvania:{n:'Lancaster County, Pennsylvania',climate:'temperate',tint:{h:3,s:1.02,l:.98},dirt:'#BFA17A',dirtD:'#9E8158',rail:'#F7F3EA',post:'#F7F3EA',tree:'maple',house:'fieldstone',barn:'bank',pano:'pennsylvania'},
  montana:{n:'Miles City, Montana',climate:'north',tint:{h:-6,s:.82,l:1.03},dirt:'#C4AA86',dirtD:'#A68E6A',rail:'#8A6E52',post:'#6E5640',tree:'pine',house:'log',barn:'weathered',pano:'montana'},
  wyoming:{n:'Sheridan, Wyoming',climate:'north',tint:{h:-10,s:.72,l:1.05},dirt:'#CDB894',dirtD:'#AE9874',rail:'#8C735A',post:'#6E5A46',tree:'cottonwood',house:'lodge',barn:'logbarn',pano:'wyoming'},
- southdakota:{n:'Black Hills, South Dakota',climate:'north',tint:{h:-4,s:.86,l:1.01},dirt:'#BFA27A',dirtD:'#A08460',rail:'#8E8676',post:'#6B6458',tree:'pine',house:'aframe',barn:'gothic',pano:'southdakota'}};
-const LOC_ORDER=['texas','kentucky','oklahoma','california','ohio','florida','pennsylvania','montana','wyoming','southdakota'];
+ southdakota:{n:'Black Hills, South Dakota',climate:'north',tint:{h:-4,s:.86,l:1.01},dirt:'#BFA27A',dirtD:'#A08460',rail:'#8E8676',post:'#6B6458',tree:'pine',house:'aframe',barn:'gothic',pano:'southdakota'},
+ alberta:{n:'Cochrane, Alberta',climate:'north',tint:{h:-2,s:.92,l:1.02},dirt:'#C2AA84',dirtD:'#A38C66',rail:'#8A6E52',post:'#6E5640',tree:'cottonwood',house:'prairie',barn:'quonset',pano:'alberta'},
+ jalisco:{n:'Tequila, Jalisco',climate:'trop',tint:{h:-8,s:.95,l:1.02},dirt:'#C08460',dirtD:'#A06842',rail:'#F3EEE4',post:'#8A5A3A',tree:'mesquite',house:'hacienda',barn:'cuadra',pano:'jalisco'}};
+const LOC_ORDER=['texas','kentucky','oklahoma','california','ohio','florida','pennsylvania','montana','wyoming','southdakota','alberta','jalisco'];
 /* ---- real place names for shows (build 85) ----
    town = local shows, county = county fair, stH = where the state championship is held,
    reg = the geographic region for regionals, regH = regional host cities (rotate each year) */
@@ -3778,7 +3793,11 @@ const LOCPLACE={
  pennsylvania:{st:'Pennsylvania',town:'Lancaster',county:'Lancaster County',stH:'Harrisburg',reg:'Mid-Atlantic',regH:['Harrisburg, Pennsylvania','Lexington, Virginia','Upper Marlboro, Maryland','Gladstone, New Jersey']},
  montana:{st:'Montana',town:'Miles City',county:'Custer County',stH:'Great Falls',reg:'Rocky Mountain',regH:['Billings, Montana','Denver, Colorado','Casper, Wyoming','Great Falls, Montana']},
  wyoming:{st:'Wyoming',town:'Sheridan',county:'Sheridan County',stH:'Douglas',reg:'Rocky Mountain',regH:['Casper, Wyoming','Denver, Colorado','Billings, Montana','Cheyenne, Wyoming']},
- southdakota:{st:'South Dakota',town:'Rapid City',county:'Pennington County',stH:'Huron',reg:'Northern Plains',regH:['Rapid City, South Dakota','Bismarck, North Dakota','Sioux Falls, South Dakota','Grand Island, Nebraska']}};
+ southdakota:{st:'South Dakota',town:'Rapid City',county:'Pennington County',stH:'Huron',reg:'Northern Plains',regH:['Rapid City, South Dakota','Bismarck, North Dakota','Sioux Falls, South Dakota','Grand Island, Nebraska']},
+ alberta:{st:'Alberta',town:'Cochrane',county:'Rocky View County',stH:'Calgary',stT:'Provincial Championship',reg:'Western Canada',regH:['Calgary, Alberta','Edmonton, Alberta','Saskatoon, Saskatchewan','Kamloops, British Columbia'],
+  natN:'Canadian National Championship',natH:['Toronto, Ontario','Calgary, Alberta','Langley, British Columbia','Bromont, Quebec'],natD:['Osoyoos, British Columbia','Medicine Hat, Alberta','Kamloops, British Columbia','Drumheller, Alberta']},
+ jalisco:{st:'Jalisco',town:'Tequila',county:'Tequila Valley',stH:'Guadalajara',reg:'Western Mexico',regH:['Guadalajara, Jalisco','León, Guanajuato','Aguascalientes, Aguascalientes','Morelia, Michoacán'],
+  natN:'Mexican National Championship',natH:['Mexico City, Mexico','Guadalajara, Jalisco','Monterrey, Nuevo León','Querétaro, Querétaro'],natD:['Hermosillo, Sonora','Chihuahua, Chihuahua','Torreón, Coahuila','Zacatecas, Zacatecas']}};
 /* the big shows move around: nationals rotate around the U.S., the world events rotate around the world */
 const NAT_HOSTS=['Oklahoma City, Oklahoma','Lexington, Kentucky','Fort Worth, Texas','Harrisburg, Pennsylvania','Las Vegas, Nevada','Columbus, Ohio','Denver, Colorado','Wellington, Florida'];
 const INTL_HOSTS=[['Calgary','Canada'],['Aachen','Germany'],['Dublin','Ireland'],['Rotterdam','Netherlands'],['Geneva','Switzerland'],['Mexico City','Mexico']];
@@ -3787,17 +3806,99 @@ const OLY_HOSTS=[['Los Angeles','USA'],['Brisbane','Australia'],['Paris','France
 const INV_HOSTS=[['Wellington','Wellington, Florida'],['Saratoga','Saratoga Springs, New York'],['Bluegrass','Lexington, Kentucky'],['Del Mar','Del Mar, California'],['Scottsdale','Scottsdale, Arizona'],['Aiken','Aiken, South Carolina'],['Lake Placid','Lake Placid, New York'],['Jackson Hole','Jackson, Wyoming']];
 function locPlace(){return (typeof S!=='undefined'&&S&&LOCPLACE[S.loc])||null}
 /* the real name of a show: n = name ("Marion County Fair"), v = where it is held ("Florida"), lv = the level ("County Fair") */
+/* ---- build 95: the Desert Ride goes to real desert or dry country ----
+   Each ranch rides its Desert Rides in the nearest real dry country: in its own state where the state has some
+   (the Monahans Sandhills in Texas, the Coachella Valley and the Mojave in California, Little Sahara in Oklahoma, the Badlands, the Red Desert),
+   and in the nearest dry country out of state where it has none (Florida rides in West Texas, the East rides at Little Sahara and on the High Plains).
+   town/county = local shows and the county fair, stH = the state (or provincial) championship, reg = regional hosts. */
+const DESERT_HOME={
+ texas:{town:'Monahans',st:'Texas',county:'Ward County',stH:'El Paso, Texas',reg:['El Paso, Texas','Tucson, Arizona','Las Cruces, New Mexico','Fort Stockton, Texas']},
+ kentucky:{town:'Waynoka',st:'Oklahoma',county:'Woods County',stH:'Guymon, Oklahoma',reg:['Waynoka, Oklahoma','Amarillo, Texas','Guymon, Oklahoma','Garden City, Kansas'],away:1},
+ oklahoma:{town:'Waynoka',st:'Oklahoma',county:'Woods County',stH:'Guymon, Oklahoma',reg:['Amarillo, Texas','Garden City, Kansas','Guymon, Oklahoma','Clovis, New Mexico']},
+ california:{town:'Indio',st:'California',county:'Riverside County',countyN:'Riverside County Fair & Date Festival',stH:'Lancaster, California',reg:['Ridgecrest, California','Bend, Oregon','Reno, Nevada','Twentynine Palms, California']},
+ ohio:{town:'Waynoka',st:'Oklahoma',county:'Woods County',stH:'Garden City, Kansas',reg:['Garden City, Kansas','Waynoka, Oklahoma','Scottsbluff, Nebraska','Guymon, Oklahoma'],away:1},
+ florida:{town:'Monahans',st:'Texas',county:'Ward County',stH:'El Paso, Texas',reg:['Monahans, Texas','El Paso, Texas','Fort Stockton, Texas','Waynoka, Oklahoma'],away:1},
+ pennsylvania:{town:'Waynoka',st:'Oklahoma',county:'Woods County',stH:'Scottsbluff, Nebraska',reg:['Scottsbluff, Nebraska','Waynoka, Oklahoma','Garden City, Kansas','Guymon, Oklahoma'],away:1},
+ montana:{town:'Miles City',st:'Montana',county:'Custer County',stH:'Glendive, Montana',reg:['Grand Junction, Colorado','Moab, Utah','Rock Springs, Wyoming','Farmington, New Mexico']},
+ wyoming:{town:'Rock Springs',st:'Wyoming',county:'Sweetwater County',stH:'Riverton, Wyoming',reg:['Grand Junction, Colorado','Moab, Utah','Rock Springs, Wyoming','Farmington, New Mexico']},
+ southdakota:{town:'Wall',st:'South Dakota',county:'Pennington County',stH:'Interior, South Dakota',reg:['Medora, North Dakota','Scottsbluff, Nebraska','Wall, South Dakota','Belle Fourche, South Dakota']},
+ alberta:{town:'Drumheller',st:'Alberta',county:'County of Newell',stH:'Medicine Hat, Alberta',reg:['Medicine Hat, Alberta','Osoyoos, British Columbia','Kamloops, British Columbia','Drumheller, Alberta']},
+ jalisco:{town:'Ojuelos de Jalisco',st:'Jalisco',county:'Ojuelos',countyN:'Ojuelos Regional Fair',stH:'Lagos de Moreno, Jalisco',reg:['Zacatecas, Zacatecas','Aguascalientes, Aguascalientes','San Luis Potosí, San Luis Potosí','Torreón, Coahuila']}};
+const DESERT_NAT=['Scottsdale, Arizona','Las Vegas, Nevada','Tucson, Arizona','St. George, Utah','El Paso, Texas','Albuquerque, New Mexico','Palm Springs, California','Reno, Nevada'];
+const DESERT_INTL=[['Dubai','United Arab Emirates'],['AlUla','Saudi Arabia'],['Hermosillo','Mexico'],['Marrakesh','Morocco'],['Alice Springs','Australia'],['Abu Dhabi','United Arab Emirates']];
+const DESERT_WC=[['AlUla','Saudi Arabia'],['Dubai','United Arab Emirates'],['Las Vegas','USA'],['Abu Dhabi','United Arab Emirates'],['Doha','Qatar'],['Tucson','USA'],['Riyadh','Saudi Arabia']];
+const DESERT_INV=[['Scottsdale','Scottsdale, Arizona'],['Palm Springs','Palm Springs, California'],['Santa Fe','Santa Fe, New Mexico'],['Moab','Moab, Utah'],['Sedona','Sedona, Arizona'],['Tucson','Tucson, Arizona'],['Borrego Springs','Borrego Springs, California'],['Marfa','Marfa, Texas']];
+/* what kind of dry country each venue is, so the live event looks like the place */
+const DESERT_KIND={'Monahans':'dunes','Waynoka':'dunes','Garden City':'sage','Guymon':'sage','Clovis':'sage','Amarillo':'redrock','El Paso':'chihuahuan','Las Cruces':'chihuahuan','Fort Stockton':'chihuahuan','Marfa':'chihuahuan','Albuquerque':'chihuahuan','Santa Fe':'chihuahuan',
+  'Tucson':'sonoran','Scottsdale':'sonoran','Hermosillo':'sonoran','Sedona':'redrock','Indio':'lowdesert','Palm Springs':'lowdesert','Borrego Springs':'lowdesert','Lancaster':'mojave','Ridgecrest':'mojave','Twentynine Palms':'mojave','Las Vegas':'mojave','St. George':'mojave',
+  'Reno':'sage','Bend':'sage','Rock Springs':'sage','Riverton':'sage','Osoyoos':'sage','Kamloops':'sage','Medicine Hat':'sage','Grand Junction':'redrock','Moab':'redrock','Farmington':'redrock','AlUla':'redrock',
+  'Miles City':'badlands','Glendive':'badlands','Wall':'badlands','Interior':'badlands','Medora':'badlands','Belle Fourche':'badlands','Scottsbluff':'badlands','Drumheller':'badlands',
+  'Ojuelos de Jalisco':'chihuahuan','Lagos de Moreno':'chihuahuan','Zacatecas':'chihuahuan','Aguascalientes':'chihuahuan','San Luis Potosí':'chihuahuan','Torreón':'chihuahuan','Chihuahua':'chihuahuan',
+  'Dubai':'arabian','Abu Dhabi':'arabian','Doha':'arabian','Riyadh':'arabian','Marrakesh':'arabian','Alice Springs':'outback'};
+function desertKind(W){const v=String((W&&W.pl&&W.pl.v)||''),city=v.split(',')[0].trim();return DESERT_KIND[city]||(DESERT_HOME[S&&S.loc]&&DESERT_KIND[DESERT_HOME[S.loc].town])||'sonoran'}
+function desertPlace(ti,ei,yr,wk,P,r,o){const pk=(a,i)=>a[((i%a.length)+a.length)%a.length],t=TIERS[ti]||{};
+  if(ti===INV){const v=pk(DESERT_INV,wk*3+(ei||0));return {...r,n:v[0]+' Invitational',v:v[1]}}
+  if(ti===T_WC){const v=pk(DESERT_WC,yr-1);return {...r,n:v[0]+' World Cup Final',v:v.join(', ')}}
+  if(ti===5){const v=pk(DESERT_INTL,yr-1);return {...r,n:v[0]+' International',v:v.join(', ')}}
+  if(ti===T_NAT)return {...r,n:(P&&P.natN)||'U.S. National Championship',v:pk((P&&P.natD)||DESERT_NAT,yr-1)};
+  const D=P&&DESERT_HOME[S.loc];if(!D)return null;
+  if(t.ranch){const who=o&&o.who;return {...r,n:who?who+' Ranch Show':t.n,v:D.town+', '+D.st}}
+  if(ti===3)return {...r,n:P.reg+' Regional',v:pk(D.reg,yr-1)};
+  if(ti===2)return {...r,n:P.st+' '+(P.stT||'State Championship'),v:D.stH};
+  if(ti===1)return {...r,n:D.countyN||D.county+' Fair',v:D.st};
+  return {...r,n:D.town+' Local Show',v:D.town+', '+D.st}}
+/* the live Desert Ride's far country, ground and plants for each kind of desert */
+function desertBack(kind){const f1=v=>v.toFixed(1);
+  const K={sonoran:{g:['#E2C18F','#EBD3A6'],far:'mesa',fc:'#C97F52',pl:'saguaro'},lowdesert:{g:['#E6CDA2','#EEDCBA'],far:'range',fc:'#B9A08C',pl:'palm'},mojave:{g:['#D9C6A2','#E6D7BA'],far:'range',fc:'#A59AAE',pl:'joshua'},
+    chihuahuan:{g:['#D8BE92','#E4CDA6'],far:'range',fc:'#B59A84',pl:'yucca'},dunes:{g:['#EBC78A','#F4DDAE'],far:'dune',fc:'#E3B676',pl:'grass'},arabian:{g:['#EDBE7E','#F5D7A2'],far:'dune',fc:'#E2A862',pl:'none'},
+    redrock:{g:['#DFA374','#EAC096'],far:'butte',fc:'#B5532F',pl:'juniper'},badlands:{g:['#D8CCAE','#E4DAC2'],far:'bad',fc:'#C9B394',pl:'grass'},sage:{g:['#CFC6A2','#DCD5B6'],far:'hill',fc:'#9AA0A8',pl:'sage'},
+    outback:{g:['#DB8F5E','#E7A97A'],far:'range',fc:'#B0533A',pl:'spinifex'}}[kind]||{g:['#E2C18F','#EBD3A6'],far:'mesa',fc:'#C97F52',pl:'saguaro'};
+  const cool=kind==='sage'||kind==='badlands';
+  let s=`<linearGradient id="wSandK" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K.g[0]}"/><stop offset="1" stop-color="${K.g[1]}"/></linearGradient>`;
+  s+=cool?`<rect width="800" height="300" fill="url(#wSky)"/><circle cx="660" cy="46" r="40" fill="url(#wSun)" opacity=".6"/>`:`<rect width="800" height="300" fill="url(#wSkyD)"/><circle cx="660" cy="46" r="60" fill="url(#wSun)"/><circle cx="660" cy="46" r="17" fill="#FFF4C8"/>`;
+  /* far country */
+  if(K.far==='mesa')s+=`<path d="M0 78 L60 78 L70 52 L118 50 L126 78 L300 80 L312 60 L346 58 L356 80 L520 82 L530 44 L590 42 L600 66 L640 66 L650 82 L800 82 V120 H0Z" fill="${K.fc}" opacity=".55"/>`;
+  else if(K.far==='range')s+=`<path d="M0 84 L40 66 L70 74 L110 50 L150 70 L190 58 L230 76 L280 54 L320 72 L370 46 L420 70 L460 60 L520 78 L570 52 L610 70 L660 56 L720 74 L760 62 L800 72 V120 H0Z" fill="${K.fc}" opacity=".7"/><path d="M0 92 L60 80 L120 88 L200 76 L280 90 L360 78 L450 88 L540 80 L640 90 L720 82 L800 88 V120 H0Z" fill="${hexMix(K.fc,K.g[0],.45)}" opacity=".8"/>`;
+  else if(K.far==='butte')s+=`<path d="M0 86 L80 86 L86 54 L150 52 L156 86 L330 88 L338 40 L360 38 L366 88 L520 88 L528 62 L640 60 L648 88 L800 88 V120 H0Z" fill="${K.fc}" opacity=".8"/>${[[86,150],[338,366],[528,648]].map(([a,b])=>`<path d="M${a+2} 66 H${b-2} M${a+3} 74 H${b-3}" stroke="${hexMix(K.fc,'#ffffff',.3)}" stroke-width="1.4" opacity=".7"/>`).join('')}`;
+  else if(K.far==='bad'){const t=srng(91);let d='M0 90 L0 88',g='';
+    for(const [gx,gw] of [[80,150],[255,170],[455,190],[640,150],[770,70]]){let x=gx-gw/2;d+=` L${f1(x)} 86`;
+      while(x<gx+gw/2-12){const w=10+t()*12,py=40+t()*30+Math.abs(x-gx)/gw*30,vy=Math.min(84,py+12+t()*16);d+=` L${f1(x+w*.5)} ${f1(py)} L${f1(x+w)} ${f1(vy)}`;
+        g+=`<path d="M${f1(x+w*.5)} ${f1(py+2)} L${f1(x+w*.5+(t()-.5)*4)} 90" stroke="#6E5440" stroke-width="1" opacity=".28"/>`;x+=w}
+      d+=` L${f1(gx+gw/2)} 86`}
+    d+=' L800 88 V120 H0Z';
+    s+=`<clipPath id="wBadClip"><path d="${d}"/></clipPath><path d="${d}" fill="${K.fc}"/><g clip-path="url(#wBadClip)">${[46,52,58,63,68,73,78,83].map((y,i)=>`<path d="M0 ${y} C200 ${y-3} 600 ${y+3} 800 ${y}" stroke="${['#E9DFC8','#B9805E','#EFE6D2','#C9946E','#E6DCC6','#A97E66','#EFE6D2','#B99A7E'][i]}" stroke-width="${i%2?2.6:3.4}" fill="none" opacity=".75"/>`).join('')}${g}</g><path d="M0 92 L800 92 V120 H0Z" fill="${hexMix(K.fc,K.g[0],.5)}" opacity=".7"/>`}
+  else if(K.far==='hill')s+=`<path d="M0 84 Q100 60 200 76 T400 70 T600 74 T800 70 V120 H0Z" fill="${K.fc}" opacity=".6"/><path d="M0 92 Q140 78 280 88 T560 84 T800 88 V120 H0Z" fill="#B7B290" opacity=".8"/>`;
+  else s+=`<path d="M0 86 Q90 58 200 80 T420 74 T640 78 T800 72 V120 H0Z" fill="${K.fc}" opacity=".8"/>`;
+  s+=`<path d="M0 90 Q120 72 240 88 T480 84 T800 86 V300 H0Z" fill="${hexMix(K.g[0],'#000000',.06)}"/><path d="M0 104 Q160 86 320 102 T640 98 T800 100 V300 H0Z" fill="url(#wSandK)"/>`;
+  s+=(K.far==='dune'?[...Array(9)].map((_,i)=>`<path d="M${i*96} ${112+(i%3)*4} q30 -6 60 0" stroke="#F8E6BE" stroke-width="1.4" fill="none" opacity=".7"/>`).join(''):[...Array(30)].map((_,i)=>`<circle cx="${(i*137)%800}" cy="${112+(i*53)%170}" r="${(1+(i%3)*.5).toFixed(1)}" fill="${hexMix(K.g[0],'#000000',.22)}" opacity=".5"/>`).join(''));
+  /* plants of that desert */
+  const P={saguaro:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0 V-26 M0 -12 H-7 V-20 M0 -16 H6 V-23" stroke="#5C8A4A" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M0 0 V-26" stroke="#4A7A3A" stroke-width="1.2"/><ellipse cx="1" cy="1" rx="8" ry="2" fill="#000" opacity=".14"/></g>`,
+    joshua:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="1" cy="1" rx="9" ry="2" fill="#000" opacity=".14"/><path d="M0 0 V-14 L-6 -20 L-9 -26 M0 -14 L5 -22 L4 -28 M-6 -20 L-3 -25" stroke="#7A6450" stroke-width="2.4" stroke-linecap="round" fill="none"/>${[[-9,-27],[4,-29],[-3,-26]].map(([a,b])=>`<path d="M${a-3} ${b} l3 -3 l3 3 l-3 2z" fill="#6E8A4E"/>`).join('')}</g>`,
+    palm:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="1" cy="1" rx="8" ry="2" fill="#000" opacity=".14"/><path d="M0 0 C-1 -10 1 -20 1 -28" stroke="#8A7458" stroke-width="2.6" fill="none"/>${[-160,-125,-90,-55,-20].map(a=>`<path d="M1 -28 l${f1(9*Math.cos(a*Math.PI/180))} ${f1(6*Math.sin(a*Math.PI/180)+3)}" stroke="#5E8A44" stroke-width="2.4" stroke-linecap="round"/>`).join('')}<path d="M-1 -26 h4 v5 h-4z" fill="#A08B66" opacity=".8"/></g>`,
+    yucca:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="1" cy="1" rx="8" ry="2" fill="#000" opacity=".14"/>${[-60,-40,-20,0,20,40,60].map(a=>`<path d="M0 -2 l${f1(10*Math.sin(a*Math.PI/180))} ${f1(-10*Math.cos(a*Math.PI/180)-2)}" stroke="#7E9452" stroke-width="1.4" stroke-linecap="round"/>`).join('')}<path d="M0 -6 V-24" stroke="#8A7A5A" stroke-width="1"/>${[-22,-19,-16].map(b=>`<circle cx="${b%2?1:-1}" cy="${b}" r="1.4" fill="#F4EBD5"/>`).join('')}<path d="M14 0 Q12 -12 16 -22 M14 0 Q17 -10 20 -18" stroke="#6E5A44" stroke-width="1" fill="none"/><circle cx="16" cy="-22" r="1" fill="#D9534F"/></g>`,
+    juniper:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="1" cy="1" rx="9" ry="2" fill="#000" opacity=".14"/><path d="M0 0 L-1 -6 M0 0 L2 -5" stroke="#6E5440" stroke-width="1.6"/><ellipse cx="0" cy="-10" rx="7" ry="6" fill="#5E7448"/><ellipse cx="-3" cy="-13" rx="4" ry="3.6" fill="#6E8656"/></g>`,
+    sage:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="0" cy="0" rx="10" ry="2.4" fill="#000" opacity=".12"/><ellipse cx="-3" cy="-4" rx="6" ry="4.2" fill="#8E9A82"/><ellipse cx="4" cy="-5" rx="5.4" ry="4.4" fill="#9AA68E"/><ellipse cx="0" cy="-7.4" rx="4.4" ry="3.4" fill="#A9B49C"/></g>`,
+    grass:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M-4 0 l-2 -8 M-2 0 l-.4 -10 M0 0 l1 -9 M2 0 l3 -8 M4 0 l4 -6" stroke="#A39A62" stroke-width="1.1" fill="none"/></g>`,
+    spinifex:(x,y,k)=>`<g transform="translate(${x} ${y}) scale(${k})"><ellipse cx="0" cy="-3" rx="9" ry="4.4" fill="#A9A25A"/>${[-6,-3,0,3,6].map(d=>`<path d="M${d} -3 l${d*.4} -6" stroke="#C9C27A" stroke-width=".8"/>`).join('')}</g>`,
+    none:()=>''};
+  const pf=P[K.pl]||P.saguaro;
+  s+=[[90,150,1],[300,120,.7],[560,110,.6],[720,210,1.1],[180,250,.9],[420,200,.8]].map(([x,y,k],i)=>K.pl==='palm'&&i%2?P.yucca(x,y,k*.8):K.pl==='sage'&&i%3===2?P.juniper(x,y,k):pf(x,y,k)).join('');
+  if(kind==='arabian')s+=`<g transform="translate(700 104)">${P.palm(0,0,1.1)}${P.palm(16,2,.9)}${P.palm(-12,3,.8)}<ellipse cx="2" cy="4" rx="20" ry="3" fill="#7FB2D1" opacity=".7"/></g>`;
+  if(kind==='outback')s+=`<g transform="translate(120 112)"><path d="M0 0 C1 -10 -1 -18 2 -26 M2 -18 l7 -6 M1 -12 l-6 -5" stroke="#F2EEE4" stroke-width="2.2" fill="none"/><ellipse cx="4" cy="-26" rx="9" ry="5" fill="#7E9A5E"/><ellipse cx="9" cy="-23" rx="5" ry="3.4" fill="#8EAA6A"/><ellipse cx="-4" cy="-18" rx="5" ry="3" fill="#7E9A5E"/></g>`;
+  s+=[[60,200],[340,160],[610,250],[250,120]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="11" ry="5" fill="${hexMix(K.g[0],'#5A3A22',.35)}"/><ellipse cx="${x-2}" cy="${y-1.6}" rx="7" ry="2.6" fill="${hexMix(K.g[0],'#ffffff',.15)}"/>`).join('');
+  return s}
 function evPlace(ti,ei,day,o){const t=TIERS[ti]||{n:'Show'};day=day==null?S.day:day;const P=locPlace(),yr=Math.max(1,dateParts(day).year),wk=Math.floor((day-1)/7),
   pk=(a,i)=>a[((i%a.length)+a.length)%a.length],r={lv:t.n};
+  if(EVENTS[ei]&&EVENTS[ei].id==='desert'&&ti!==6){const d=desertPlace(ti,ei,yr,wk,P,r,o);if(d)return d}
   if(t.ranch){const who=o&&o.who;return {...r,n:who?who+' Ranch Show':t.n,v:P?P.town+', '+P.st:''}}
   if(ti===INV){const v=pk(INV_HOSTS,wk*3+(ei||0));return {...r,n:v[0]+' Invitational',v:v[1]}}
   if(ti===6){const v=pk(OLY_HOSTS,Math.floor(yr/4)-1);return {...r,n:v[0]+' Olympics',v:v.join(', ')}}
   if(ti===T_WC){const v=pk(WC_HOSTS,yr-1);return {...r,n:v[0]+' World Cup Final',v:v.join(', ')}}
   if(ti===5){const v=pk(INTL_HOSTS,yr-1);return {...r,n:v[0]+' International',v:v.join(', ')}}
-  if(ti===T_NAT)return {...r,n:'U.S. National Championship',v:pk(NAT_HOSTS,yr-1)};
+  if(ti===T_NAT)return {...r,n:(P&&P.natN)||'U.S. National Championship',v:pk((P&&P.natH)||NAT_HOSTS,yr-1)};
   if(!P)return {...r,n:t.n,v:''};
   if(ti===3)return {...r,n:P.reg+' Regional',v:pk(P.regH,yr-1)};
-  if(ti===2)return {...r,n:P.st+' State Championship',v:P.stH+', '+P.st};
+  if(ti===2)return {...r,n:P.st+' '+(P.stT||'State Championship'),v:P.stH+', '+P.st};
   if(ti===1)return {...r,n:P.county+' Fair',v:P.st};
   return {...r,n:P.town+' Local Show',v:P.town+', '+P.st}}
 function evPlaceName(ti,ei,day,o){return evPlace(ti,ei,day,o).n}
@@ -3871,8 +3972,8 @@ function planeBanner(W,y,x){const yp=y-7;let g='';
     <circle cx="-.8" cy="${yp-.2}" r="1.6" fill="#C0392B"/><ellipse cx=".2" cy="${yp-.2}" rx="1" ry="7.4" fill="#9AA3AA" opacity=".45"/>`;
   return `<!--ns--><g class="wplane"><g transform="translate(${x} 0)">${g}</g></g><!--/ns-->`}
 /* ---- endurance ride country (build 89): shows in your own state ride through your ranch's country; the big shows ride through the host's ---- */
-const EV_TERR_CITY={'Rapid City':'southdakota','Jackson':'wyoming','Redmond':'wyoming','Denver':'montana','Calgary':'montana','Geneva':'alps','Basel':'alps','Mexico City':'southwest','Las Vegas':'southwest','Riyadh':'southwest','Tokyo':'japan','Los Angeles':'california','Brisbane':'california','Sydney':'california','Atlanta':'kentucky','Raleigh':'kentucky','Amarillo':'oklahoma','Omaha':'ohio'};
-const EV_TERR_ST={Texas:'texas',Kentucky:'kentucky',Tennessee:'kentucky',Oklahoma:'oklahoma',Kansas:'oklahoma',Nebraska:'oklahoma','North Dakota':'oklahoma','South Dakota':'oklahoma',California:'california',Oregon:'wyoming',Ohio:'ohio',Indiana:'ohio',Illinois:'ohio',Michigan:'ohio',Florida:'florida',Georgia:'florida','South Carolina':'florida','North Carolina':'pennsylvania',Pennsylvania:'pennsylvania',Virginia:'pennsylvania',Maryland:'pennsylvania','New Jersey':'pennsylvania','New York':'pennsylvania',Montana:'montana',Wyoming:'wyoming',Colorado:'montana',Arizona:'southwest','New Mexico':'southwest',Nevada:'southwest',Canada:'montana',Switzerland:'alps',Germany:'europe',Ireland:'europe',Netherlands:'europe',England:'europe',France:'europe',Sweden:'europe',Italy:'europe',Mexico:'southwest','Saudi Arabia':'southwest',Japan:'japan',Australia:'california'};
+const EV_TERR_CITY={'Rapid City':'southdakota','Jackson':'wyoming','Redmond':'wyoming','Denver':'montana','Calgary':'alberta','Edmonton':'alberta','Guadalajara':'jalisco','Geneva':'alps','Basel':'alps','Mexico City':'jalisco','Las Vegas':'southwest','Riyadh':'southwest','Tokyo':'japan','Los Angeles':'california','Brisbane':'california','Sydney':'california','Atlanta':'kentucky','Raleigh':'kentucky','Amarillo':'oklahoma','Omaha':'ohio'};
+const EV_TERR_ST={Texas:'texas',Kentucky:'kentucky',Tennessee:'kentucky',Oklahoma:'oklahoma',Kansas:'oklahoma',Nebraska:'oklahoma','North Dakota':'oklahoma','South Dakota':'oklahoma',California:'california',Oregon:'wyoming',Ohio:'ohio',Indiana:'ohio',Illinois:'ohio',Michigan:'ohio',Florida:'florida',Georgia:'florida','South Carolina':'florida','North Carolina':'pennsylvania',Pennsylvania:'pennsylvania',Virginia:'pennsylvania',Maryland:'pennsylvania','New Jersey':'pennsylvania','New York':'pennsylvania',Montana:'montana',Wyoming:'wyoming',Colorado:'montana',Arizona:'southwest','New Mexico':'southwest',Nevada:'southwest',Canada:'alberta',Alberta:'alberta',Saskatchewan:'alberta','British Columbia':'alberta',Ontario:'ohio',Quebec:'pennsylvania',Switzerland:'alps',Germany:'europe',Ireland:'europe',Netherlands:'europe',England:'europe',France:'europe',Sweden:'europe',Italy:'europe',Mexico:'jalisco',Jalisco:'jalisco',Guanajuato:'jalisco',Aguascalientes:'jalisco','Michoacán':'jalisco','Querétaro':'jalisco','Nuevo León':'southwest',Sonora:'southwest',Chihuahua:'southwest',Coahuila:'southwest',Zacatecas:'southwest','Saudi Arabia':'southwest',Japan:'japan',Australia:'california'};
 function evTerrain(W){const T=TIERS[W.ti]||{},home=(typeof S!=='undefined'&&S&&S.loc&&S.loc!=='classic'&&LOCS[S.loc])?S.loc:null;
   if(T.ranch||W.ti<=2)return home||'montana';
   const parts=String((W.pl&&W.pl.v)||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -3880,7 +3981,8 @@ function evTerrain(W){const T=TIERS[W.ti]||{},home=(typeof S!=='undefined'&&S&&S
 /* the ground colour where the backdrop meets the trail, then the colour in front; and which trees grow beside the trail */
 const EV_TERR={texas:['#B4B57A','#A3AD6A','mesquite'],kentucky:['#9DC27E','#88B868','round'],oklahoma:['#B7BF80','#A4B670','round'],california:['#C9AC6A','#B4A562','oak'],ohio:['#9CC26E','#8AB862','round'],
   florida:['#97CC6E','#86C062','palm'],pennsylvania:['#A3C47A','#8FB86A','round'],montana:['#A7B485','#96AC74','pine'],wyoming:['#AEB48C','#9CAC7C','pine'],southdakota:['#A9B27E','#98AA70','pine'],
-  europe:['#94C26E','#84B862','round'],alps:['#A6CA74','#94C066','pine'],southwest:['#D4B886','#CBAE7C','saguaro'],japan:['#94C26E','#84B862','sakura']};
+  europe:['#94C26E','#84B862','round'],alps:['#A6CA74','#94C066','pine'],southwest:['#D4B886','#CBAE7C','saguaro'],japan:['#94C26E','#84B862','sakura'],
+  alberta:['#A9B886','#98AE74','pine'],jalisco:['#A8B470','#98A862','mesquite']};
 /* your ranch's backdrop (or the host's), drawn as summer and scaled so its far edge meets the trail meadow */
 function endurBack(terr){const sv=SEAS;SEAS=1;let p='';try{p=locPano(terr)}finally{SEAS=sv}
   p=p.replace(/id="lp/g,'id="evp').replace(/url\(#lp/g,'url(#evp');return `<rect y="76" width="800" height="26" fill="${(EV_TERR[terr]||EV_TERR.montana)[0]}"/><g transform="translate(-50 60) scale(.75)">${p}</g>`}
@@ -3928,7 +4030,7 @@ function showSign(cx,y,w,h,top,sub,o={}){const bg=o.bg||'#F4E7C4',ink=o.ink||'#6
 function locId(){return (typeof S!=='undefined'&&S&&S.loc&&LOCS[S.loc])?S.loc:'classic'}
 function LOC(){return LOCS[locId()]}
 /* which seasonal effect each climate uses: [spring, summer, fall, winter] */
-const CLIMATES={temperate:['spring',null,'fall','snow'],north:['lateSpring',null,'fall','snow'],plains:['spring','dryish','fall','frost'],dry:['spring','dry','tan','frost'],med:['lush','gold','tan','spring'],sub:['lush','lush','light','muted']};
+const CLIMATES={temperate:['spring',null,'fall','snow'],north:['lateSpring',null,'fall','snow'],plains:['spring','dryish','fall','frost'],dry:['spring','dry','tan','frost'],med:['lush','gold','tan','spring'],sub:['lush','lush','light','muted'],trop:['dry','lush','light','tan']};
 function seasonFx(si,climate){return (CLIMATES[climate||LOC().climate]||CLIMATES.temperate)[si]}
 function snowy(si){return seasonFx(si==null?curSeason():si)==='snow'}
 /* shift the ground greens and dirt of a drawing toward the chosen region (sprites and pre-coloured regional art are skipped) */
@@ -4095,6 +4197,48 @@ function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
     const HERD=[[478,33,1,0,0],[500,36,1,1,0],[522,31,.7,0,1],[540,35,1,0,1],[560,32,1,1,0],[578,36,.66,1,1],[598,33,1,0,0],[620,35,1,1,1],[640,31,.7,0,0],[664,34,1,0,1]].sort((a,b)=>a[1]-b[1]);
     for(const [x,y,k,flip,graze] of HERD){const calf=k<.8,b=calf?'#7A4E2E':'#4A3424',hump=calf?'#6A4226':'#3A2818',hd=calf?'#5A3A22':'#2E2014';
       o+=`<g transform="translate(${x} ${y}) scale(${(flip?-1:1)*.55*k} ${.55*k})"><ellipse cx="1" cy="1" rx="12" ry="2" fill="rgba(25,35,15,.2)"/><ellipse cx="0" cy="-6" rx="10" ry="6" fill="${b}"/><ellipse cx="6" cy="-8.4" rx="6.4" ry="6.6" fill="${hump}"/>${graze?`<ellipse cx="11.4" cy="-2.6" rx="3.4" ry="3" fill="${hd}"/><path d="M12 -4.6 l1.4 -1.2" stroke="#D9CBB0" stroke-width=".8"/>`:`<ellipse cx="11.4" cy="-6" rx="3.4" ry="3" fill="${hd}"/><path d="M12.4 -8.4 l1.2 -1.4" stroke="#D9CBB0" stroke-width=".8"/><path d="M10 -3.4 q1.4 2.4 3 1.4" stroke="${hd}" stroke-width="1.4" fill="none"/>`}<path d="M-7 -1 v4 M-2 -1 v4 M4 -1 v4 M8 -1 v4" stroke="${hd}" stroke-width="1.6"/><path d="M-10 -6 q-2 2 -1.4 5" stroke="${hd}" stroke-width=".9" fill="none"/></g>`}}
+  else if(id==='alberta'){/* Cochrane, Alberta (build 95): the Rockies' front ranges, spruce-dark foothills, aspen bluffs, canola and barley, a grain elevator by the rail line, round bales */
+    const f1=v=>v.toFixed(1),S0=SEAS;o+=sky('#7DB0DE','#E8EEF0')+clouds(4,-70);
+    [[30,38,70],[130,48,80],[235,42,70],[330,54,86],[440,46,76],[545,60,82],[655,47,74],[765,56,84],[875,44,72],[985,52,80],[1095,40,70],[1185,46,74]].forEach(([x,h,w],i)=>o+=locMtn(x,-12,h,w,['#9AA6B8','#A3AEC0','#949FB2'][i%3],1300+i*3,{snow:.52}));
+    o+=`<linearGradient id="lpHz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8EEF0" stop-opacity="0"/><stop offset="1" stop-color="#E8EEF0" stop-opacity=".6"/></linearGradient><rect x="0" y="-46" width="${W}" height="30" fill="url(#lpHz)"/>`;
+    /* foothills, with dark spruce on the shady slopes */
+    o+=ridge(-12,22,160,'#7E9A70',1320);
+    {const t=srng(1321);let q='';for(let i=0;i<120;i++){const x=t()*W,y=-16+t()*14,s=1.8+t()*1.4;q+=`<path d="M${f1(x)} ${f1(y-s*2.4)} L${f1(x+s*.8)} ${f1(y)} L${f1(x-s*.8)} ${f1(y)}Z" fill="${['#2C4A36','#335238','#28432F'][i%3]}"/>`}o+='<!--ns-->'+q+'<!--/ns-->'}
+    o+=ridge(-2,16,140,'#8FAE74',1322);
+    /* aspen bluffs (seasonize turns them gold in the fall) */
+    {const t=srng(1323);let q='';for(let i=0;i<14;i++){const x=40+t()*1120,y=2+t()*6;if(x>860&&x<960)continue;for(let k=0;k<5;k++)q+=`<ellipse cx="${f1(x+k*5-10+t()*2)}" cy="${f1(y-2-t()*3)}" rx="${f1(3+t()*1.6)}" ry="${f1(4.6+t()*1.4)}" fill="${['#6E9A50','#7EAA5C','#62904A'][k%3]}"/>`}o+=q}
+    /* the fields: canola is yellow in summer, green in spring, stubble in the fall */
+    const can=S0===1?['#E8C53A','#F0D24A','#8DB860','#E2BE36','#9CC070']:S0===0?['#8DB86A','#9CC474','#A7C27C','#86B062']:['#C9B27A','#D6C18A','#BFA66E','#CDB984'];
+    o+=field(4,10,can,1324)+field(13,12,S0===1?['#9CC070','#E6C23A','#B9C27A','#A8BE6E']:can,1325);
+    /* the rail line and a wooden grain elevator, the prairie's landmark */
+    o+=`<path d="M0 13 H${W}" stroke="#7A6A58" stroke-width="1.2"/><path d="M0 14.4 H${W}" stroke="#5E5248" stroke-width=".6" stroke-dasharray="1.4 1.6"/>`;
+    o+=`<!--ns--><g transform="translate(905 13.6)"><ellipse cx="6" cy="0" rx="22" ry="2" fill="rgba(30,40,20,.22)"/><rect x="-10" y="-44" width="20" height="44" fill="#9A3428"/><rect x="4" y="-44" width="6" height="44" fill="#000" opacity=".16"/><path d="M-10 -44 L-6 -50 H6 L10 -44Z" fill="#7A2A20"/><rect x="-4.6" y="-60" width="9.2" height="10" fill="#9A3428"/><path d="M-6 -60 L0 -65 L6 -60Z" fill="#5C636B"/><rect x="-10" y="-38" width="20" height="3" fill="#F4F1EA"/><rect x="10" y="-20" width="14" height="20" fill="#8A2E24"/><path d="M9 -20 L25 -14 V-20Z" fill="#6E2620"/><rect x="-3" y="-10" width="6" height="10" fill="#5A2018"/>${[-30,-24].map(y=>`<rect x="-6" y="${y}" width="3" height="3" fill="#F4F1EA" opacity=".8"/>`).join('')}</g><!--/ns-->`;
+    /* round bales in the hay field */
+    {let q='';for(const [x,y] of [[140,20],[156,22],[178,19],[420,21],[436,23],[700,20],[1040,21],[1058,19],[1076,22]])q+=`<ellipse cx="${x+1}" cy="${y+3}" rx="4.4" ry="1.2" fill="rgba(30,40,20,.2)"/><circle cx="${x}" cy="${y}" r="3.4" fill="#C9A85A"/><circle cx="${x}" cy="${y}" r="2" fill="none" stroke="#A8863E" stroke-width=".6"/><circle cx="${x}" cy="${y}" r=".7" fill="#A8863E"/>`;o+='<!--ns-->'+q+'<!--/ns-->'}
+    /* a ranch fence and a few horses */
+    o+=`<path d="M0 26 H${W} M0 23.6 H${W}" stroke="#8A6E52" stroke-width=".9"/>${[...Array(41)].map((_,i)=>`<rect x="${i*30-.6}" y="22" width="1.2" height="5" fill="#6E5640"/>`).join('')}`;
+    o+=[[560,24,'#6B3A22'],[590,25,'#C9B79C'],[612,24,'#2E2420']].map(([x,y,c])=>`<g transform="translate(${x} ${y}) scale(.7)"><path d="M-9 -9 Q-10 -13 -5 -13 L6 -13 Q9 -13 10 -11 L13 -6 L15 -1 L13 -1 L10 -6 L9 -9 Q8 -6 7 -6 L-8 -6Z" fill="${c}"/><path d="M-7 -6 V0 M-4 -6 V0 M5 -6 V0 M8 -6 V0" stroke="${c}" stroke-width="1.6"/></g>`).join('');
+    o+=ridge(32,6,110,'#A9B886',1326)}
+  else if(id==='jalisco'){/* Tequila, Jalisco (build 95): the Tequila volcano with its rocky summit, the far sierra, hills striped with rows of blue agave on red earth, a town with a domed church, huizache trees */
+    const f1=v=>v.toFixed(1);o+=sky('#86BCE6','#F4EBD8')+sun(1060,-52)+clouds(4,-68);
+    o+=ridge(-24,18,190,'#AAA9C4',1401);
+    /* the volcano: a broad forested cone with a jagged plug on top */
+    o+=`<path d="M440 8 C560 -12 650 -40 700 -52 L708 -58 L714 -62 L719 -59 L724 -66 L730 -62 L736 -67 L742 -58 L748 -54 C800 -40 900 -12 1040 8Z" fill="#7E8EA6"/><path d="M708 -58 L714 -62 L719 -59 L724 -66 L730 -62 L736 -67 L742 -58 L736 -56 L728 -58 L720 -55 L712 -56Z" fill="#9A97A4"/><path d="M736 -67 C780 -44 860 -14 1040 8 H930 C850 -8 790 -32 742 -58Z" fill="#1E2A40" opacity=".13"/>${[[640,-26,630,-6],[690,-40,676,-12],[780,-36,800,-8],[840,-22,870,-2]].map(([a,b,c,d])=>`<path d="M${a} ${b} Q${(a+c)/2+4} ${(b+d)/2} ${c} ${d}" stroke="#5E6E86" stroke-width="1.2" fill="none" opacity=".5"/>`).join('')}`;
+    o+=`<linearGradient id="lpHz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4EBD8" stop-opacity="0"/><stop offset="1" stop-color="#F4EBD8" stop-opacity=".5"/></linearGradient><rect x="0" y="-26" width="${W}" height="30" fill="url(#lpHz)"/>`;
+    o+=ridge(0,18,170,'#8E9A62',1402);
+    /* blue agave on red earth, in rows that follow the hills */
+    const agaveField=(x0,x1,y0,rows,seed,amp)=>{const t=srng(seed),wv=x=>Math.sin(x/90+seed)*amp;let q=`<path d="M${x0} ${f1(y0+wv(x0)-1)} ${[...Array(13)].map((_,i)=>{const x=x0+(x1-x0)*i/12;return 'L'+f1(x)+' '+f1(y0+wv(x)-1)}).join(' ')} L${x1+6} ${y0+rows*3.4+2} L${x0-6} ${y0+rows*3.4+2}Z" fill="#A86440"/>`;
+      for(let j=0;j<rows;j++){const yy=y0+j*3.4+2.2,s=.95+j*.1;for(let x=x0+2+(j%2)*2.8;x<x1;x+=5.6){const y=yy+wv(x);q+=`<path d="M${f1(x-3.2*s)} ${f1(y)} L${f1(x-1.6*s)} ${f1(y-1.6*s)} L${f1(x-.9*s)} ${f1(y-3*s)} L${f1(x)} ${f1(y-1.8*s)} L${f1(x+.9*s)} ${f1(y-3*s)} L${f1(x+1.6*s)} ${f1(y-1.6*s)} L${f1(x+3.2*s)} ${f1(y)}Z" fill="${t()<.5?'#6E9EA8':'#82B0B6'}"/>`}}return '<!--ns-->'+q+'<!--/ns-->'};
+    o+=agaveField(0,430,5,5,1403,3.6)+agaveField(860,1200,7,5,1404,3);
+    /* the town: white and ochre houses with tile roofs, a church with a bell tower and a tiled dome */
+    {let q='';const hs=[[478,10,12,7,'#F1EBDD'],[492,11,10,6,'#E2A85E'],[504,9,14,8,'#F4EFE4'],[520,11,10,6,'#D9864E'],[600,11,11,7,'#F1EBDD'],[613,10,13,8,'#E2A85E'],[628,11,10,6,'#F4EFE4']];
+      for(const [x,y,w,h,c] of hs)q+=`<rect x="${x}" y="${y-h}" width="${w}" height="${h}" fill="${c}"/><rect x="${x-.8}" y="${y-h-1.6}" width="${w+1.6}" height="1.8" fill="#B5523A"/><rect x="${f1(x+w*.3)}" y="${f1(y-h*.6)}" width="${f1(w*.18)}" height="${f1(h*.32)}" fill="#5C4A3A" opacity=".7"/>`;
+      q+=`<g transform="translate(560 12)"><rect x="-14" y="-12" width="28" height="12" fill="#EADFC8"/><path d="M-6 -12 A6 6 0 0 1 6 -12" fill="#C96A3A"/><path d="M-6 -12 A6 6 0 0 1 6 -12Z" fill="#2E5FA8" opacity=".35"/><path d="M0 -18 v-3 M-1.4 -20 h2.8" stroke="#7A6A58" stroke-width=".7"/><rect x="14" y="-30" width="8" height="30" fill="#EADFC8"/><rect x="14.8" y="-36" width="6.4" height="6" fill="#E2D6BC"/><path d="M14 -36 Q18 -42 22 -36Z" fill="#C96A3A"/><path d="M18 -42 v-3" stroke="#7A6A58" stroke-width=".7"/><path d="M16.4 -27 a1.6 2 0 0 1 3.2 0 v3 h-3.2z M16.4 -34.6 a1.6 1.6 0 0 1 3.2 0 v2.4 h-3.2z" fill="#5C4A3A"/><path d="M-2.4 0 v-5 a2.4 2.4 0 0 1 4.8 0 v5z" fill="#6B4A30"/><rect x="18" y="-30" width="4" height="30" fill="#000" opacity=".1"/></g>`;o+='<!--ns-->'+q+'<!--/ns-->'}
+    /* huizache: flat-topped thorn trees */
+    {const t=srng(1405);let q='';for(let i=0;i<18;i++){const x=t()*W,y=14+t()*14;if((x>460&&x<660))continue;const r=4+t()*3;q+=`<ellipse cx="${f1(x+2)}" cy="${f1(y+1.6)}" rx="${f1(r*1.2)}" ry="1.4" fill="rgba(40,30,20,.2)"/><path d="M${f1(x)} ${f1(y+1)} V${f1(y-r*.6)} M${f1(x)} ${f1(y-r*.3)} l${f1(-r*.5)} ${f1(-r*.5)} M${f1(x)} ${f1(y-r*.4)} l${f1(r*.5)} ${f1(-r*.45)}" stroke="#5A4636" stroke-width="1" fill="none"/><ellipse cx="${f1(x)}" cy="${f1(y-r*.85)}" rx="${f1(r*1.3)}" ry="${f1(r*.45)}" fill="#6E8A44"/><ellipse cx="${f1(x-r*.3)}" cy="${f1(y-r*1.05)}" rx="${f1(r*.6)}" ry="${f1(r*.25)}" fill="#86A256" opacity=".8"/>`}o+=q}
+    o+=ridge(22,8,120,'#9DAE66',1406);
+    o+=`<path d="M0 31 C200 28 380 33 600 30 S1000 27 1200 31" stroke="#C9A27A" stroke-width="1.8" fill="none" opacity=".8"/>`;
+    o+=ridge(32,6,100,'#A8B470',1408)}
   /* ---- event-only backdrops (build 89): places a show can be held that no ranch sits in ---- */
   else if(id==='europe'){/* green patchwork farmland with hedgerows, a village church and a castle on the far hill */
     const f1=v=>v.toFixed(1);o+=sky('#8DB9DE','#EAF0EC')+clouds(5,-64);
@@ -4241,9 +4385,38 @@ function locHouse(style,n,C,shadow,tree){const k=[.72,.86,1,1.1][n],snow=snowy(S
     o+=`<rect x="${cx-w/2-6}" y="${B-5}" width="${w+12}" height="5" fill="#8A6A48"/>`+posts(cx-w/2-4,cx+w/2+4,B-12,B-5,9,'#6E5640',1.4)+`<path d="M${cx-w/2-4} ${B-12} H${cx+w/2+4}" stroke="#6E5640" stroke-width="1.4"/>`;
     if(n>=2)o+=sideF(cx+w/2+26,B-26,26,d*.6,dy*.6,'#6A3E24')+face(cx+w/2+4,B-26,22,26,'#7A4A2E','mBoards')+sgRoof(cx+w/2+4,B-26,22,10,d*.6,dy*.6,rf,'mShingle',2,'#6A3E24')+win(cx+w/2+10.5,B-20,9,10,{frame:'#C0392B'});
     if(n>=3)o+=`<g transform="translate(${cx-w/2-16} ${B})"><ellipse cx="0" cy="-2" rx="9" ry="4" fill="#9A9488"/><path d="M-4 -4 l2 -6 l2 6 M0 -4 l3 -8 l2 8" stroke="#E07A3A" stroke-width="1.6" fill="none"/></g>`;}
+  else if(style==='prairie'){/* Alberta (build 95): prairie farmhouse: steep side gable with a dormer, blue-grey lap siding, a glassed-in front porch, fieldstone chimney; a maple-leaf flag at the top level */
+    const x=60,w=94,h=34,y=B-h,d=12,dy=7,wall='#C9D3D6',sideC='#AAB6BA',roof='#3E5A4A',trim='#FBFAF6',cx=x+w/2;
+    if(n>=3)o+=`<path d="M${x-22} ${B} V${B-58}" stroke="#8C939A" stroke-width="1.4"/><circle cx="${x-22}" cy="${B-59}" r="1.2" fill="#C9A227"/><g transform="translate(${x-21.3} ${B-57})"><rect width="14" height="7" fill="#F4F4F2"/><rect width="3.5" height="7" fill="#D52B1E"/><rect x="10.5" width="3.5" height="7" fill="#D52B1E"/><path d="M7 1 l.6 1.2 l1 -.4 l-.3 1.3 l.9 .3 l-1.3 .9 l.2 .8 h-2.2 l.2 -.8 l-1.3 -.9 l.9 -.3 l-.3 -1.3 l1 .4z" fill="#D52B1E"/><path d="M7 5.1 v1.2" stroke="#D52B1E" stroke-width=".4"/></g>`;
+    o+=sideF(x+w,y,h,d,dy,sideC,'mSiding')+face(x,y,w,h,wall,'mSiding')+sgRoof(x,y,w,26,d,dy,roof,'mTin',5,sideC);
+    o+=chim(x+w-22,y-12,22,'#9A9488','mStone');
+    /* the dormer */
+    o+=`<rect x="${cx-8}" y="${y-18}" width="16" height="14" fill="${wall}"/><rect x="${cx-8}" y="${y-18}" width="16" height="14" fill="url(#mSiding)"/><polygon points="${cx-11},${y-17} ${cx},${y-27} ${cx+11},${y-17}" fill="${roof}"/><polygon points="${cx-11},${y-17} ${cx},${y-27} ${cx+11},${y-17}" fill="url(#mTin)" opacity=".6"/>`+win(cx-4,y-14,8,8,{frame:trim})+cap(`M${cx-11} ${y-17} L${cx} ${y-27} L${cx+11} ${y-17} L${cx+8} ${y-17} L${cx} ${y-23} L${cx-8} ${y-17}Z`);
+    o+=win(x+9,y+8,10,13,{frame:trim})+win(x+w-19,y+8,10,13,{frame:trim});
+    /* the glassed-in porch (a prairie must: keeps the wind out of the house) */
+    const px=cx-21;o+=`<rect x="${px}" y="${B-22}" width="42" height="22" fill="${trim}"/><path d="M${px-3} ${B-22} H${px+45} L${px+42} ${B-29} H${px}Z" fill="${roof}"/><path d="M${px-3} ${B-22} H${px+45} L${px+42} ${B-29} H${px}Z" fill="url(#mTin)" opacity=".6"/>`+[3,31].map(k=>`<rect x="${px+k}" y="${B-19}" width="8" height="9" fill="url(#mGlass)"/>`).join('')+`<rect x="${px}" y="${B-8}" width="42" height="8" fill="${sideC}"/><rect x="${px}" y="${B-8}" width="42" height="8" fill="url(#mSiding)"/>`+door(px+16,B-18,10,18,'#A23E2C',{frame:trim})+cap(`M${px} ${B-29} H${px+42} L${px+44} ${B-24} H${px-2}Z`);
+    o+=`<rect x="${x-4}" y="${B-2}" width="${w+8}" height="2" fill="#9A9488"/>`;
+    if(n>=2)o+=`<g transform="translate(${x+w+d+10} ${B})"><path d="M-7 0 L-7 -9 L7 -9 L7 0Z" fill="#8A6A48"/><path d="M-7 0 L-7 -9 L7 -9 L7 0Z" fill="url(#mBoards)"/><path d="M-9 -9 L9 -9 L7 -13 L-7 -13Z" fill="${roof}"/>${[-4,0,4].map(dx=>`<circle cx="${dx}" cy="-4" r="2" fill="#C9A06A" stroke="#8A6A48" stroke-width=".5"/>`).join('')}</g>`;
+    if(n>=3)o+=flowers(x+8,B+2)+flowers(x+w-8,B+2);}
+  else if(style==='hacienda'){/* Jalisco (build 95): two-storey ochre hacienda with a red tile roof, an arcade along the ground floor, iron balconies, blue doors and bougainvillea; a bell gable at the top level */
+    const x=46,w=126,h=46,y=B-h,d=12,dy=7,wall='#E2A85E',sideC='#C98E48',base='#8A3A2C',blue='#2E5FA8',trim='#F3EEE4';
+    o+=sideF(x+w,y,h,d,dy,sideC)+face(x,y,w,h,wall)+`<path d="M${x+w} ${B-5} L${x+w+d} ${B-5-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#6E2E24"/>`;
+    const rf=`M${x-5} ${y} L${x+w+5} ${y} L${x+w+d-4} ${y-12} L${x+9} ${y-12}Z`;o+=`<path d="M${x+w+5} ${y} L${x+w+5+d} ${y-dy} L${x+w+d-4} ${y-12}Z" fill="#9A4632"/><path d="${rf}" fill="#B5523A"/><path d="${rf}" fill="url(#mTile)"/><path d="M${x-5} ${y} H${x+w+5}" stroke="#7A2E1E" stroke-width="1.6"/>`+cap(`M${x+9} ${y-12} L${x+w+d-4} ${y-12} L${x+w} ${y-7} L${x+4} ${y-7}Z`);
+    if(n>=3)o+=`<g transform="translate(${x+w/2+4} ${y-11})"><path d="M-10 2 V-10 L-6 -10 Q0 -20 6 -10 L10 -10 V2Z" fill="${wall}"/><path d="M-10 2 V-10 L-6 -10 Q0 -20 6 -10 L10 -10 V2Z" fill="url(#mWall)" opacity=".5"/><path d="M-3 0 V-8 A3 3 0 0 1 3 -8 V0Z" fill="#5A3A22"/><path d="M-2 -3 Q0 -9 2 -3Z" fill="#C9A227"/><path d="M0 -16 v-4 M-1.6 -18.6 h3.2" stroke="#5A4636" stroke-width=".8"/></g>`;
+    o+=`<rect x="${x-1}" y="${y+21}" width="${w+2}" height="2.6" fill="${trim}"/><rect x="${x}" y="${B-5}" width="${w}" height="5" fill="${base}"/>`;
+    /* upper floor: shuttered windows with little iron balconies */
+    for(let i=0;i<4;i++){const wx=x+12+i*((w-34)/3);o+=win(wx,y+5,10,12,{frame:trim,shut:blue})+`<path d="M${wx-2} ${y+17.4} H${wx+12} M${wx-2} ${y+20} H${wx+12}" stroke="#2B2B2B" stroke-width=".9"/>${[0,1,2,3,4].map(k=>`<path d="M${wx-1+k*3} ${y+17.4} V${y+20}" stroke="#2B2B2B" stroke-width=".6"/>`).join('')}`}
+    /* the portal: an arcade of round arches along the ground floor */
+    const na=n>=2?6:5,aw=(w-12)/na,ar=aw/2-2.4,spr=y+27+ar;
+    for(let i=0;i<na;i++){const ax=x+6+i*aw,mid=i===Math.floor(na/2);o+=`<path d="M${ax+2.4} ${B} V${spr} A${ar} ${ar} 0 0 1 ${ax+aw-2.4} ${spr} V${B}Z" fill="#6E4A2A"/>`+(mid?`<path d="M${ax+4.4} ${B} V${spr+1} A${ar-2} ${ar-2} 0 0 1 ${ax+aw-4.4} ${spr+1} V${B}Z" fill="${blue}"/><path d="M${ax+aw/2} ${spr-ar+3} V${B}" stroke="#1E3F78" stroke-width=".8"/><circle cx="${ax+aw/2+2}" cy="${B-8}" r=".7" fill="#E8C76A"/>`:i%2?`<rect x="${ax+aw/2-3}" y="${spr-2}" width="6" height="7" fill="${blue}" opacity=".9"/>`:'')}
+    for(let i=0;i<=na;i++){const cx=x+6+i*aw;o+=`<rect x="${cx-3.2}" y="${spr-1}" width="6.4" height="1.8" fill="${trim}"/>`}
+    o+=`<rect x="${x+4}" y="${y+24}" width="${w-8}" height="2" fill="${trim}"/><rect x="${x-2}" y="${B-1.6}" width="${w+4}" height="1.6" fill="#B4673F"/>`;
+    /* bougainvillea up the corner */
+    o+=`<g><path d="M${x+3} ${B} C${x+2} ${y+30} ${x+4} ${y+16} ${x+6} ${y+4}" stroke="#4E7A3E" stroke-width="1.2" fill="none"/>${[[x+2,y+8],[x+6,y+4],[x+9,y+12],[x+3,y+20],[x+7,y+26],[x+w-4,y+6],[x+w-8,y+12]].map(([bx,by])=>`<circle cx="${bx}" cy="${by}" r="3.6" fill="#C2307A"/><circle cx="${bx+1.6}" cy="${by-1}" r="2.2" fill="#E04E9A"/>`).join('')}</g>`;
+    if(n>=2)o+=[x-8,x+w+d+6].map(px=>`<path d="M${px-4} ${B} h8 l-1.4 -7 h-5.2z" fill="#B4673F"/><path d="M${px-4} ${B-5} h8" stroke="#8A3A2C" stroke-width=".8"/><circle cx="${px}" cy="${B-10}" r="4" fill="#5E8C4A"/><circle cx="${px+1.6}" cy="${B-11.6}" r="1.4" fill="#E25B7A"/>`).join('');}
   else return null;
   const prop=n>=2&&style!=='aframe'&&style!=='adobe'&&style!=='mansion'?'':'';
-  return (n>=2&&!['mansion','stone','adobe','cracker'].includes(style)?tree(16,B-42,14):'')+`<!--ns--><g transform="translate(110 ${B}) scale(${k}) translate(-110 -${B})">${shadow(118,B+2,74,6)}${o}</g><!--/ns-->`}
+  return (n>=2&&!['mansion','stone','adobe','cracker','hacienda'].includes(style)?tree(16,B-42,14):'')+`<!--ns--><g transform="translate(110 ${B}) scale(${k}) translate(-110 -${B})">${shadow(118,B+2,74,6)}${o}</g><!--/ns-->`}
 /* ---- regional barns: centred on x=285, ground at y=310 ---- */
 function locBarn(style,n,C,shadow){const w=100+n*9,h=54+n*3,x=285-w/2,B=310,y=B-h,d=14,dy=8,snow=snowy(SEAS);const cap=(p)=>snow?`<path d="${p}" fill="#F7FAFC" opacity=".95"/>`:'';
   const sideF=(col,tex)=>`<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="${col}"/>${tex?`<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="url(#${tex})"/>`:''}<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#000" opacity=".28"/>`;
@@ -4285,6 +4458,36 @@ function locBarn(style,n,C,shadow){const w=100+n*9,h=54+n*3,x=285-w/2,B=310,y=B-
     /* hayloft door with a little hay hood under the peak */
     const hy=yA+(yw-yA)*.42;o+=`<path d="M273 ${f1(hy-4)} L285 ${f1(hy-14)} L297 ${f1(hy-4)}Z" fill="#7C8288"/><rect x="276" y="${f1(hy-4)}" width="18" height="16" fill="#3A2A24" stroke="#F7F3EA" stroke-width="1.6"/><path d="M285 ${f1(hy-4)} V${f1(hy+12)}" stroke="#F7F3EA" stroke-width="1"/><path d="M285 ${f1(hy-14)} V${f1(hy-20)}" stroke="#5a4a40" stroke-width="1"/>`;
     o+=[...Array(Math.min(4,n+2))].map((_,i,a)=>{const sx=x+8+i*((w-16-40)/Math.max(1,a.length-1||1));const xx=sx+(sx>262?44:0);return xx+9>x+w-4?'':`<rect x="${f1(xx)}" y="${f1(B-hw*.82)}" width="9" height="8" fill="url(#mGlass)" stroke="#F7F3EA" stroke-width="1.2"/>`}).join('');}
+  else if(style==='quonset'){/* Alberta (build 95): a Quonset barn: a half-round arch of corrugated steel with the barrel running back, a red sliding door in the end wall; a round steel grain bin beside it from level 2 */
+    const f1=v=>v.toFixed(1),kw=6,ah=Math.min(h+8,w*.56),rx=w/2,ry=ah-kw;
+    const arch=(sx,sy)=>`M${f1(x+sx)} ${f1(B+sy)} V${f1(B-kw+sy)} A${f1(rx)} ${f1(ry)} 0 0 1 ${f1(x+w+sx)} ${f1(B-kw+sy)} V${f1(B+sy)}Z`;
+    const arcY=f=>{const u=(f-.5)*2;return B-kw-ry*Math.sqrt(Math.max(0,1-u*u))};
+    if(n>=2){const bw=20,bh=n>=3?40:32,bx=x-26,by=B-bh;o+=`<ellipse cx="${bx+bw/2+3}" cy="${B+1}" rx="${bw*.7}" ry="2.6" fill="rgba(25,35,15,.25)"/><rect x="${bx}" y="${by}" width="${bw}" height="${bh}" fill="#B9BFC4"/>${[...Array(Math.floor(bh/4))].map((_,k)=>`<path d="M${bx} ${by+2+k*4} H${bx+bw}" stroke="#8C939A" stroke-width=".6"/>`).join('')}<rect x="${bx+bw*.68}" y="${by}" width="${bw*.32}" height="${bh}" fill="#000" opacity=".16"/><path d="M${bx-1.4} ${by} L${bx+bw/2} ${f1(by-bw*.34)} L${bx+bw+1.4} ${by}Z" fill="#A6ADB2"/><path d="M${bx+bw/2} ${f1(by-bw*.34)} L${bx+bw+1.4} ${by} L${bx+bw*.62} ${by}Z" fill="#000" opacity=".14"/><rect x="${bx+bw/2-2}" y="${f1(by-bw*.34-2.6)}" width="4" height="2.6" fill="#8C939A"/><rect x="${bx+3}" y="${B-10}" width="6" height="8" fill="#8C939A" stroke="#6E757C" stroke-width=".6"/>`+cap(`M${bx-1.4} ${by} L${bx+bw/2} ${f1(by-bw*.34)} L${bx+bw+1.4} ${by} L${bx+bw-2} ${by-1.4} L${bx+bw/2} ${f1(by-bw*.28)} L${bx+2} ${by-1.4}Z`);
+      if(n>=3)o+=`<path d="M${bx+bw/2} ${f1(by-bw*.34-2)} L${x+10} ${f1(arcY(.1)-4)}" stroke="#8C939A" stroke-width="1.6"/>`}
+    /* the barrel, then the knee wall on the side */
+    o+=`<path d="${arch(d,-dy)}" fill="#9AA2A8"/>`+[...Array(7)].map((_,k)=>{const t=(k+1)/8;return `<path d="M${f1(x+d*t)} ${f1(B-kw-dy*t)} A${f1(rx)} ${f1(ry)} 0 0 1 ${f1(x+w+d*t)} ${f1(B-kw-dy*t)}" stroke="#7C848A" stroke-width=".9" fill="none"/>`}).join('')+`<path d="${arch(d,-dy)}" fill="#000" opacity=".16"/><path d="M${x+w} ${B} L${x+w+d} ${B-dy} L${x+w+d} ${B-dy-kw} L${x+w} ${B-kw}Z" fill="#7C848A"/>`;
+    o+=cap(`M${f1(x+w*.16+d)} ${f1(arcY(.16)-dy)} A${f1(rx)} ${f1(ry)} 0 0 1 ${f1(x+w*.84+d)} ${f1(arcY(.84)-dy)} L${f1(x+w*.84)} ${f1(arcY(.84))} A${f1(rx)} ${f1(ry)} 0 0 0 ${f1(x+w*.16)} ${f1(arcY(.16))}Z`);
+    /* the end wall */
+    o+=`<path d="${arch(0,0)}" fill="#C2C8CC"/><path d="${arch(0,0)}" fill="url(#mTin)"/><path d="${arch(0,0)}" fill="url(#mWall)" opacity=".5"/><path d="M${x} ${B} V${B-kw} A${f1(rx)} ${f1(ry)} 0 0 1 ${x+w} ${B-kw} V${B}" stroke="#8C939A" stroke-width="2.4" fill="none"/>`;
+    o+=cap(`M${f1(x+w*.1)} ${f1(arcY(.1))} A${f1(rx)} ${f1(ry)} 0 0 1 ${f1(x+w*.9)} ${f1(arcY(.9))} L${f1(x+w*.86)} ${f1(arcY(.86)+3)} A${f1(rx-3)} ${f1(ry-4)} 0 0 0 ${f1(x+w*.14)} ${f1(arcY(.14)+3)}Z`);
+    /* the red sliding doors on their track */
+    o+=`<path d="M${285-28} ${B-41} H${285+28}" stroke="#5C636B" stroke-width="2.4"/><rect x="${285-22}" y="${B-39}" width="44" height="39" fill="#A33A2C"/><rect x="${285-22}" y="${B-39}" width="44" height="39" fill="url(#mBoards)" opacity=".6"/><path d="M285 ${B-39} V${B} M${285-22} ${B-39} L285 ${B-19} L${285+22} ${B-39} M${285-22} ${B} L285 ${B-19} L${285+22} ${B}" stroke="#F4F1EA" stroke-width="1.4" fill="none"/><rect x="${285-22}" y="${B-39}" width="44" height="39" fill="none" stroke="#F4F1EA" stroke-width="1.8"/>`;
+    for(const s of [-1,1]){const wx=285+s*rx*.62;o+=`<rect x="${f1(wx-5)}" y="${B-30}" width="10" height="8" fill="url(#mGlass)" stroke="#F4F1EA" stroke-width="1.2"/><path d="M${f1(wx)} ${B-30} V${B-22}" stroke="#F4F1EA" stroke-width=".6"/>`}
+    if(n>=1)o+=`<g transform="translate(285 ${f1(B-ah+10)})"><circle r="5" fill="#8C939A"/><circle r="3.8" fill="#5C636B"/>${[0,60,120].map(a=>`<path d="M${f1(-3.6*Math.cos(a*Math.PI/180))} ${f1(-3.6*Math.sin(a*Math.PI/180))} L${f1(3.6*Math.cos(a*Math.PI/180))} ${f1(3.6*Math.sin(a*Math.PI/180))}" stroke="#9AA2A8" stroke-width="1.2"/>`).join('')}</g>`;
+    if(n>=3)o+=`<g transform="translate(${f1(285+d*.5)} ${f1(B-ah-dy*.5+1)})"><rect x="-2" y="-6" width="4" height="6" fill="#8C939A"/><ellipse cx="0" cy="-6.4" rx="5" ry="2" fill="#7C848A"/></g>`;}
+  else if(style==='cuadra'){/* Jalisco (build 95): a hacienda stable (cuadra): ochre stucco over a maroon base, red tile gable roof, a big arched gateway with blue doors, blue-shuttered stall windows; a bell gable at the top level */
+    const f1=v=>v.toFixed(1),wall='#E2A85E',sideC='#C98E48',base='#8A3A2C',blue='#2E5FA8',trim='#F3EEE4',rh=h*.42;
+    o+=sideF(sideC)+face(wall)+`<rect x="${x}" y="${B-8}" width="${w}" height="8" fill="${base}"/><path d="M${x+w} ${B-8} L${x+w+d} ${B-8-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#6E2E24"/>`;
+    o+=[[x+10,B-22,14,7],[x+w-24,B-20,12,6]].map(([px,py,pw,ph])=>`<path d="M${px} ${py} q${pw*.3} ${-ph*.5} ${pw*.7} ${-ph*.2} q${pw*.4} ${ph*.3} ${pw*.3} ${ph*.8} q${-pw*.4} ${ph*.4} ${-pw*.8} ${ph*.1}Z" fill="#B9A288"/><path d="M${px} ${py} q${pw*.3} ${-ph*.5} ${pw*.7} ${-ph*.2} q${pw*.4} ${ph*.3} ${pw*.3} ${ph*.8} q${-pw*.4} ${ph*.4} ${-pw*.8} ${ph*.1}Z" fill="url(#mStone)" opacity=".7"/>`).join('');
+    o+=gable(rh,'#B5523A',wall,null,'mTile')+`<path d="M${x-6} ${y} L285 ${f1(y-rh)} L${x+w+6} ${y}" stroke="#7A2E1E" stroke-width="1.4" fill="none"/>`;
+    o+=`<circle cx="285" cy="${f1(y-rh*.42)}" r="5.4" fill="${trim}"/><circle cx="285" cy="${f1(y-rh*.42)}" r="4" fill="#3A2A24"/><path d="M281 ${f1(y-rh*.42)} h8 M285 ${f1(y-rh*.42-4)} v8" stroke="#2B2B2B" stroke-width=".6"/>`;
+    /* the gateway: a round arch with stone voussoirs and a keystone, blue plank doors with iron studs */
+    o+=`<path d="M265 ${B} V${B-26} A20 20 0 0 1 305 ${B-26} V${B}Z" fill="${blue}"/><path d="M265 ${B} V${B-26} A20 20 0 0 1 305 ${B-26} V${B}Z" fill="url(#mBoards)" opacity=".5"/><path d="M285 ${B-46} V${B}" stroke="#1E3F78" stroke-width="1.2"/>${[[272,B-30],[278,B-30],[292,B-30],[298,B-30],[272,B-14],[278,B-14],[292,B-14],[298,B-14]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r=".8" fill="#2B2B2B"/>`).join('')}<path d="M262 ${B} V${B-26} A23 23 0 0 1 308 ${B-26} V${B}" stroke="${trim}" stroke-width="3.4" fill="none"/><path d="M282 ${B-50} h6 l-1 6 h-4z" fill="${trim}"/><path d="M281.4 ${B-53} a3.6 3.6 0 0 1 7.2 0" stroke="#7C7466" stroke-width="1.4" fill="none"/>`;
+    /* stall windows with blue shutters and iron bars */
+    const per=Math.max(1,Math.floor(Math.min(6,n+2)/2)),side=(a,b)=>[...Array(per)].map((_,i)=>a+(b-a)*(i+.5)/per-4);
+    o+=[...side(x+8,285-30),...side(285+30,x+w-8)].map(sx=>`<rect x="${f1(sx-3.2)}" y="${y+14}" width="3" height="10" fill="${blue}"/><rect x="${f1(sx+8.2)}" y="${y+14}" width="3" height="10" fill="${blue}"/><rect x="${f1(sx-.8)}" y="${y+13.2}" width="9.6" height="11.6" fill="${trim}"/><rect x="${f1(sx)}" y="${y+14}" width="8" height="10" fill="#3A2A24"/>${[2,4,6].map(k=>`<path d="M${f1(sx+k)} ${y+14} V${y+24}" stroke="#2B2B2B" stroke-width=".7"/>`).join('')}`).join('');
+    if(n>=2)o+=[258,312].map(lx=>`<path d="M${lx} ${B-26} h${lx<285?-4:4}" stroke="#2B2B2B" stroke-width="1"/><path d="M${lx+(lx<285?-6:2)} ${B-26} h4 l-.6 6 h-2.8z" fill="#2B2B2B"/><rect x="${lx+(lx<285?-5.4:2.6)}" y="${B-25}" width="2.8" height="4" fill="#FFE29A"/>`).join('');
+    if(n>=3)o+=`<g transform="translate(285 ${f1(y-rh+3)})"><path d="M-9 2 V-9 L-5 -9 Q0 -18 5 -9 L9 -9 V2Z" fill="${wall}"/><path d="M-9 2 V-9 L-5 -9 Q0 -18 5 -9 L9 -9 V2Z" fill="url(#mWall)" opacity=".5"/><path d="M-2.6 0 V-7 A2.6 2.6 0 0 1 2.6 -7 V0Z" fill="#5A3A22"/><path d="M-1.8 -2.4 Q0 -8 1.8 -2.4Z" fill="#C9A227"/><path d="M0 -14.4 v-4 M-1.6 -17 h3.2" stroke="#5A4636" stroke-width=".8"/></g>`;}
   else return null;
   return '<!--ns-->'+o+'<!--/ns-->'}
 /* ---- small regional touches placed around the yard (map coords, after OFF scaling) ---- */
@@ -4305,6 +4508,13 @@ function locExtras(id){let o='';const S0=SEAS;
     if(id==='wyoming')o+=`<g><path d="M108 546 V520 M156 546 V520" stroke="#5E4430" stroke-width="4"/><path d="M104 520 H160" stroke="#5E4430" stroke-width="4"/><path d="M118 516 q-4 -8 -10 -9 M118 516 q-2 -6 -1 -11 M146 516 q4 -8 10 -9 M146 516 q2 -6 1 -11 M118 516 H146" stroke="#EDE3CF" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
     else o+=rock(862,586,.8,'#9AA0A6');}
   if(id==='southdakota'){o+=rock(520,300,1.2,'#B8B2A6')+rock(1178,240,1,'#A8A296')+rock(30,336,1,'#B8B2A6')+rock(610,302,.9,'#A8A296')+`<g transform="translate(470 270) scale(.9)"><ellipse cx="0" cy="2" rx="16" ry="3" fill="rgba(25,35,15,.25)"/><ellipse cx="0" cy="-6" rx="12" ry="7" fill="#4A3424"/><ellipse cx="9" cy="-9" rx="7" ry="7.6" fill="#3A2818"/><ellipse cx="14" cy="-5" rx="4" ry="3.4" fill="#2E2014"/><path d="M-8 0 v4 M-3 0 v4 M5 0 v4 M10 0 v4" stroke="#2E2014" stroke-width="2"/><path d="M12 -15 q2 -3 4 -2" stroke="#D8CDB8" stroke-width="1" fill="none"/></g>`;}
+  if(id==='alberta'){const bale=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="2" cy="1" rx="11" ry="2.6" fill="rgba(25,35,15,.25)"/><circle cx="0" cy="-7" r="7.4" fill="#C9A85A"/><circle cx="0" cy="-7" r="4.6" fill="none" stroke="#A8863E" stroke-width=".9"/><circle cx="0" cy="-7" r="2" fill="none" stroke="#A8863E" stroke-width=".8"/><path d="M-6 -11 q6 -3 12 0" stroke="#E2C67A" stroke-width="1" fill="none" opacity=".7"/></g>`;
+    o+=bale(520,300,1)+bale(536,302,.9)+bale(1180,240,1)+bale(28,336,1)+rock(612,302,.9,'#A8A296')+rock(862,586,.8,'#9AA0A6');
+    if(S0===0||S0===1)o+=flowersRow(400,560,584,['#F08CB4','#F6B4CC','#F08CB4','#fff'])+flowersRow(640,900,585,['#F08CB4','#F2C14E','#F6B4CC']);}
+  if(id==='jalisco'){const agave=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="1" cy="1" rx="11" ry="2.6" fill="rgba(25,35,15,.25)"/>${[-78,-56,-34,-12,12,34,56,78].map((a,i)=>{const r=a*Math.PI/180,L=i%2?11:13,tx=Math.sin(r)*L,ty=-Math.cos(r)*L*.9-1;return `<path d="M${(-1.6*Math.cos(r)).toFixed(1)} ${(-1.6*Math.sin(r)).toFixed(1)} L${tx.toFixed(1)} ${ty.toFixed(1)} L${(1.6*Math.cos(r)).toFixed(1)} ${(1.6*Math.sin(r)).toFixed(1)}Z" fill="${i%2?'#7FAEB4':'#6E9EA8'}"/>`}).join('')}<path d="M-1.4 0 L0 -12 L1.4 0Z" fill="#8CBAC0"/></g>`;
+    const nopal=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="1" rx="9" ry="2.4" fill="rgba(25,35,15,.25)"/><ellipse cx="0" cy="-6" rx="4.4" ry="6" fill="#6E9A4A"/><ellipse cx="-5" cy="-13" rx="3.6" ry="5" fill="#7AA654" transform="rotate(-25 -5 -13)"/><ellipse cx="4.6" cy="-14" rx="3.4" ry="4.8" fill="#669246" transform="rotate(22 4.6 -14)"/>${S0===0||S0===1?'<circle cx="-6" cy="-18" r="1.4" fill="#C2307A"/><circle cx="6.4" cy="-18.6" r="1.4" fill="#D9534F"/><circle cx="0" cy="-12.4" r="1.2" fill="#C2307A"/>':''}</g>`;
+    o+=agave(520,300,1.1)+agave(1180,240,1)+agave(30,332,.95)+nopal(608,300,.9)+agave(400,586,.7)+agave(980,586,.75);
+    o+=`<g transform="translate(470 272) scale(.9)"><ellipse cx="0" cy="2" rx="14" ry="3" fill="rgba(25,35,15,.25)"/><circle cx="0" cy="-7" r="8" fill="none" stroke="#6B4A30" stroke-width="2"/><circle cx="0" cy="-7" r="1.6" fill="#6B4A30"/>${[0,45,90,135].map(a=>`<path d="M${(-8*Math.cos(a*Math.PI/180)).toFixed(1)} ${(-7-8*Math.sin(a*Math.PI/180)).toFixed(1)} L${(8*Math.cos(a*Math.PI/180)).toFixed(1)} ${(-7+8*Math.sin(a*Math.PI/180)).toFixed(1)}" stroke="#6B4A30" stroke-width="1"/>`).join('')}</g>`;}
   return o?'<!--ns-->'+o+'<!--/ns-->':''}
 
 /* ---------- ranch location effects (each bonus or penalty is 5-10%) ---------- */
@@ -4348,7 +4558,15 @@ const LOCFX={
  southdakota:{tag:'Cheap but tough',diff:'Hard',blurb:'The Black Hills and the wild horse range. The cheapest land, the harshest winters.',
   ev:['endur','xc'],breeds:['mustang','mustang'],cheap:{mustang:.85},build:.85,winter:1.1,sale:.94,fee:1.1,
   pros:['Buildings cost 15% less','Mustangs show up a lot and cost 15% less','Endurance and Cross-Country: +10% score, +15% prize'],
-  cons:['Hard winters: horses eat 10% more hay in winter','Fewer buyers: horses sell for 6% less','Entry fees cost 10% more (long trips)']}};
+  cons:['Hard winters: horses eat 10% more hay in winter','Fewer buyers: horses sell for 6% less','Entry fees cost 10% more (long trips)']},
+ alberta:{tag:'Rodeo country',diff:'Medium',blurb:'Ranch land in the Rocky Mountain foothills west of Calgary. Big hay, big rodeos and big winters.',
+  ev:['jump','barrel'],breeds:['quarter','hanoverian'],hay:.88,winter:1.12,fee:1.06,
+  pros:['Hay costs 12% less (prairie hay country)','Show Jumping and Barrel Racing: +10% score, +15% prize','Quarter Horses and Hanoverians show up more'],
+  cons:['Long, cold winters: horses eat 12% more hay in winter','Entry fees cost 6% more (long drives)']},
+ jalisco:{tag:'Cheap help',diff:'Medium',blurb:'Charro country in the blue agave hills. Help is cheap and winters are warm, but the dry spring is hard on pasture.',
+  ev:['rein','dress'],breeds:['azteca','andalusian','quarter'],cheap:{azteca:.88},wage:.85,winter:.9,hayS:[1.15,1,1,1],illS:[1,1.1,1,1],
+  pros:['Staff wages cost 15% less','Reining and Dressage: +10% score, +15% prize','Aztecas show up more and cost 12% less','Warm winters: horses eat 10% less hay in winter'],
+  cons:['Dry spring: hay costs 15% more in spring','Rainy summers: 10% more sickness in summer']}};
 /* one yearly local event per location (added to the festival calendar) */
 const LOCFEST={
  texas:{n:'Cutting Futurity',s:1,d:3,type:'young',judge:['barrel','rein'],fee:80,prize:[1200,600,300],rep:[5,3,1],art:'foalshow',blurb:'Texas’s big-money class for young horses. Foals and yearlings are judged on cow sense: agility, smarts and how well they trust you.'},
@@ -4360,7 +4578,9 @@ const LOCFEST={
  pennsylvania:{n:'Grand Country Horse Show',s:1,d:3,type:'show',judge:['dress','jump'],fee:150,prize:[1800,800,400],rep:[7,4,2],art:'harvest',blurb:'A grand old horse show in the classic style. Grown horses are judged on dressage, jumping and turnout.'},
  montana:{n:'Bucking Horse Sale',s:0,d:3,type:'sale',sell:1.15,lots:{n:3,breeds:['mustang','quarter','quarter'],lift:2,price:.75},art:'foalshow',blurb:'Miles City’s famous May sale. Rugged ranch horses go cheap, and buyers pay 15% more for anything you sell today.'},
  wyoming:{n:'Big Horn Polo Cup',s:1,d:3,type:'show',judge:['race','barrel'],fee:150,prize:[1800,800,400],rep:[7,4,2],art:'foalshow',blurb:'Polo on the Big Horn fields. Grown horses are judged on speed, agility and nerve.'},
- southdakota:{n:'Wild Horse Roundup',s:1,d:3,type:'sale',sell:1.1,lots:{n:3,breeds:['mustang','mustang','mustang'],lift:4,price:.5,wild:1},art:'foalshow',blurb:'Adopt mustangs from the wild horse range for half price. Some carry rare coats and hidden good genes. Buyers pay 10% more today.'}};
+ southdakota:{n:'Wild Horse Roundup',s:1,d:3,type:'sale',sell:1.1,lots:{n:3,breeds:['mustang','mustang','mustang'],lift:4,price:.5,wild:1},art:'foalshow',blurb:'Adopt mustangs from the wild horse range for half price. Some carry rare coats and hidden good genes. Buyers pay 10% more today.'},
+ alberta:{n:'Stampede Rodeo',s:1,d:3,type:'show',judge:['barrel','rein'],fee:150,prize:[2000,900,400],rep:[8,4,2],art:'foalshow',blurb:'Ten days of rodeo and chuckwagon races in Calgary every summer. Grown horses are judged on speed, agility and cow sense.'},
+ jalisco:{n:'Charreada',s:2,d:3,type:'show',judge:['rein','dress'],fee:120,prize:[1600,800,400],rep:[9,5,2],art:'harvest',blurb:'A fall day of charrería, Mexico’s national horse sport, with mariachis and escaramuza teams. Grown horses are judged on reining, precision and nerve.'}};
 const LOC_DIFF_COL={Easy:'good',Medium:'warn',Hard:'bad'};
 function locFx(){return LOCFX[locId()]||{}}
 function locHome(ev){const f=locFx();return !!(f.ev&&ev&&f.ev.includes(ev.id))}
@@ -4420,7 +4640,9 @@ const LOC_BLD={texas:{wall:'#D8C7A0',wtex:'mStone',roof:'#A34A32',rtex:'mTin',fr
  pennsylvania:{wall:'#B8A98F',wtex:'mStone',roof:'#4B4E57',rtex:'mSlate',frame:'#F4F1EA',door:'#2F5D46'},
  montana:{wall:'#9A6B43',wtex:'mLog',roof:'#3E6650',rtex:'mTin',frame:'#E9DFC6',door:'#5A3A22'},
  wyoming:{wall:'#5E4430',wtex:'mBatten',roof:'#6B5040',rtex:'mShingle',frame:'#C9A06A',door:'#3A2A1E'},
- southdakota:{wall:'#7A4A2E',wtex:'mBoards',roof:'#2E4A3A',rtex:'mShingle',frame:'#F4F1EA',door:'#C0392B'}};
+ southdakota:{wall:'#7A4A2E',wtex:'mBoards',roof:'#2E4A3A',rtex:'mShingle',frame:'#F4F1EA',door:'#C0392B'},
+ alberta:{wall:'#C9D3D6',wtex:'mSiding',roof:'#3E5A4A',rtex:'mTin',frame:'#FBFAF6',door:'#A23E2C'},
+ jalisco:{wall:'#E2A85E',wtex:null,roof:'#B5523A',rtex:'mTile',frame:'#F3EEE4',door:'#2E5FA8'}};
 function ranchMap(){
   const lv=L,C={grass:'#A9BE85',grassD:'#869F63',grass3:'#B7CA92',dirt:'#D1B486',dirtD:'#B9996A',road:'#8F8270',water:'#7DB2D2',waterD:'#5B92B6',wood:'#7A5638',woodL:'#9C7550',white:'#F7F3EA',ink:'#2B2A26',sand:'#E6D3A6',sh:'rgba(35,45,25,.28)',stone:'#A8A296'};
   let g='',labels='';const LI=locId(),LD=LOCS[LI];
@@ -4887,11 +5109,11 @@ ${[214,780].map(x=>`<rect x="${x}" y="112" width="8" height="102" fill="#6E4C30"
 <path d="M470 232 H530 L534 240 H466Z" fill="#8C6844"/><rect x="466" y="240" width="68" height="4" fill="#4E331F"/>
 ${hay}${rail}${trough}${horse}${pickup}${props}
 </svg>`}
-function extrasList(){const r=UI.sxR??0,k=UI.sxK??1,g={};for(const x of S.inv)if(x.on==null&&RORDER.indexOf(ITEMS[x.id].r)<=r)(g[x.id]=g[x.id]||[]).push(x);return Object.values(g).flatMap(l=>l.slice(k))}
+function extrasList(){const r=UI.sxR??0,k=UI.sxK??1,g={};for(const x of S.inv)if(x.on==null&&HRORDER.indexOf(ITEMS[x.id].r)<=r)(g[x.id]=g[x.id]||[]).push(x);return Object.values(g).flatMap(l=>l.slice(k))}
 function renderTack(){
   const days=7-((S.day-1)%7);
   const shop=S.shop.map((id,i)=>{const it=ITEMS[id];return itemRow(it,`<span class="mono">${money(it.p)}</span><button class="btn small primary" data-a="buyitem" data-i="${i}" ${S.money<it.p?'disabled':''}>Buy</button>`)}).join('');
-  const rk=id=>RORDER.indexOf(ITEMS[id].r);
+  const rk=id=>HRORDER.indexOf(ITEMS[id].r);
   // unworn, stacked by item id
   const groups={};for(const x of S.inv)if(x.on==null)(groups[x.id]=groups[x.id]||[]).push(x);
   const freeRow=id=>{const it=ITEMS[id],list=groups[id],x=list[0];
@@ -5160,7 +5382,7 @@ function renderModal(){
     const ev=EVENTS[m.ev],t=TIERS[m.t];const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
     title=(m.pn||t.n)+' · '+ev.n;
     body=`${m.pv||m.pn?`<p class="note" style="margin:-4px 0 10px">${esc(t.n)} level${m.pv?' · held in '+esc(m.pv):''}</p>`:''}<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+(m.cut?' ('+money(m.cut)+' goes to '+esc(m.owner)+', the owner’s '+Math.round(CLIENT_CUT*100)+'% share)':'')+(m.ownerFee?' · '+esc(m.owner)+' paid half the entry fee ('+money(m.ownerFee)+')':'')+(m.fee!=null?'<br>Your entry fee −'+money(m.fee)+' · <b>You net '+((m.prize-(m.cut||0)-m.fee)<0?'−'+money(-(m.prize-(m.cut||0)-m.fee)):money(m.prize-(m.cut||0)-m.fee))+'</b>':'')+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(t=>t.charAt(0).toUpperCase()+t.slice(1))(ribbonText(m.place,m.t))+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.rival?'<br><span class="'+(m.rival.won?'good':'bad')+'"><b>Rival:</b> '+(m.rival.won?'You beat':'You lost to')+' '+esc(S.rival.owner)+'’s '+esc(m.rival.name)+' ('+ord[m.rival.place-1]+').'+(m.rival.counts===false?'':' Record '+m.rival.rec+'.')+(m.rival.bonus?' <b>Bonus '+money(m.rival.bonus)+' and +1 reputation.</b>':'')+'</span> <span class="note">'+esc(m.rival.line)+'</span>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
-    ${m.wr&&m.wr.world!=null?`<div class="wrnew">★ New world record: ${wrFmt(ev.id,m.wr.world)}. The best ${esc(ev.n)} ever. See it in the Hall of Fame.</div>`:m.wr&&m.wr.ranch!=null?`<div class="wrnew ranch">New ranch record: ${wrFmt(ev.id,m.wr.ranch)}, your ranch’s best ${esc(ev.n)} yet.</div>`:''}
+    ${m.wr&&m.wr.world!=null?`<div class="wrnew">★ New world record: ${wrFmt(ev.id,m.wr.world)}. The best ${esc(ev.n)} ever. See it in the Hall of Fame.${m.wr.myth&&ITEMS[m.wr.myth]?`<div class="wrmyth">${itemIcon(ITEMS[m.wr.myth].s,'mythical',30)}<span>Mythical prize: <b>${esc(ITEMS[m.wr.myth].n)}</b><span>${esc(itemEffects(ITEMS[m.wr.myth]))}</span></span></div>`:''}</div>`:m.wr&&m.wr.ranch!=null?`<div class="wrnew ranch">New ranch record: ${wrFmt(ev.id,m.wr.ranch)}, your ranch’s best ${esc(ev.n)} yet.</div>`:''}
     <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':f.rival?'rivalrow':''}"><td>${ord[i]}</td><td>${esc(f.name)}${f.rival?' <span class="chip rivalchip">Rival</span>':''}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">Auto compete next horse</button>':''}</div>`;
   }else if(m.type==='buygear'){const buy=m.plan.filter(r=>!r.none),miss=m.plan.filter(r=>r.none);const tot=buy.reduce((a,r)=>a+r.p,0);title='Buy missing gear';
@@ -5190,7 +5412,7 @@ function renderModal(){
     body=h?`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div class="portrait${h.shiny?' shiny':''}" style="width:180px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><p style="margin:0 0 6px">Sell <b>${esc(h.name)}</b> ${m.why?'('+esc(m.why)+') ':''}for <b class="mono">${money(m.amt)}</b>?</p><p class="note">Changed your mind later? You can buy ${h.sex==='M'?'him':'her'} back from the Market for 7 days, for ${money(Math.round(m.amt*1.15/10)*10)}.</p></div></div>
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="sellyes" data-id="${h.id}" data-amt="${m.amt}" data-why="${esc(m.why||'')}">Yes, sell for ${money(m.amt)}</button><button class="btn" data-a="sellno">Keep ${h.sex==='M'?'him':'her'}</button></div>`:'';
   }else if(m.type==='reveal'){
-    if(m.ids){title='You opened '+m.ids.length+' crates';const srt=[...m.ids].sort((a,b)=>RORDER.indexOf(ITEMS[b].r)-RORDER.indexOf(ITEMS[a].r));body=`<div class="crategrid">${srt.map(id=>{const it=ITEMS[id];return `<div class="crateitem r-${it.r}">${rbadge(it.r)}<b class="rc-${it.r}">${it.n}</b><span class="note">${SLOTN[it.s]}</span></div>`}).join('')}</div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put them in the tack room</button>${[5,10].map(n=>S.money>=crateCost()*n?`<button class="btn" data-a="crate" data-n="${n}">Open ${n} more · ${money(crateCost()*n)}</button>`:'').join('')}</div>`}else{
+    if(m.ids){title='You opened '+m.ids.length+' crates';const srt=[...m.ids].sort((a,b)=>HRORDER.indexOf(ITEMS[b].r)-HRORDER.indexOf(ITEMS[a].r));body=`<div class="crategrid">${srt.map(id=>{const it=ITEMS[id];return `<div class="crateitem r-${it.r}">${rbadge(it.r)}<b class="rc-${it.r}">${it.n}</b><span class="note">${SLOTN[it.s]}</span></div>`}).join('')}</div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put them in the tack room</button>${[5,10].map(n=>S.money>=crateCost()*n?`<button class="btn" data-a="crate" data-n="${n}">Open ${n} more · ${money(crateCost()*n)}</button>`:'').join('')}</div>`}else{
     const it=ITEMS[m.id];title='You opened the crate';
     body=`<div class="reveal">${rbadge(it.r)}<div class="big rc-${it.r}">${it.n}</div><div class="note">${SLOTN[it.s]} · ${itemEffects(it)}</div></div><div class="actions" style="justify-content:center;margin-top:12px"><button class="btn primary" data-a="close">Put it in the tack room</button>${S.money>=crateCost()?'<button class="btn" data-a="crate">Open another · '+money(crateCost())+'</button>':''}${S.money>=crateCost()*5?'<button class="btn" data-a="crate" data-n="5">Open 5 · '+money(crateCost()*5)+'</button>':''}</div>`;}
   }else if(m.type==='creator'){title=m.mode==='edit'?'Change your look':'Create your rancher';body=creatorBody(m);
@@ -5238,7 +5460,7 @@ function wrBetter(evid,a,b){return evMetric(wrM(evid),50).low?a<b-1e-6:a>b+1e-6}
 function checkRecords(ev,field,pl,h,ti){wrInit();const mid=wrM(ev.id),out={};
   const top=field[0],tv=evMetric(mid,top.score).v,cur=S.wr[ev.id];
   if(!cur||wrBetter(ev.id,tv,cur.v)){S.wr[ev.id]={v:tv,horse:top.name,farm:top.farm,mine:top.me?1:0,day:S.day,where:pl.n,ti};
-    if(top.me){out.world=tv;unlock('worldrec');story(h,'Set the '+ev.n+' world record ('+wrFmt(ev.id,tv)+') at the '+pl.n+'.');log('good','★ WORLD RECORD! '+h.name+' set a new '+ev.n+' world record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
+    if(top.me){out.world=tv;unlock('worldrec');{const pool=itemsOf('mythical'),own=new Set(S.inv.map(x=>x.id)),id=pick(pool.filter(k=>!own.has(k)).length?pool.filter(k=>!own.has(k)):pool);S.inv.push({uid:S.nextItem++,id,on:null});out.myth=id;log('good','✦ Mythical gear: '+h.name+'’s world record earned the '+ITEMS[id].n+' ('+itemEffects(ITEMS[id])+'). It’s in your tack room.')}story(h,'Set the '+ev.n+' world record ('+wrFmt(ev.id,tv)+') at the '+pl.n+'.');log('good','★ WORLD RECORD! '+h.name+' set a new '+ev.n+' world record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
     else log('info','New world record: '+top.name+' of '+top.farm+' set the '+ev.n+' record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
   const me=field.find(f=>f.me);if(me&&!h.client){const mv=evMetric(mid,me.score).v,rr=S.rr[ev.id];if(!rr||wrBetter(ev.id,mv,rr.v)){S.rr[ev.id]={v:mv,horse:h.name,hid:h.id,day:S.day,where:pl.n,ti};if(rr&&!out.world)out.ranch=mv}}
   return out}
@@ -5740,12 +5962,7 @@ function eventScene(W,rs){const ev=W.ev,ev0=W.ev0,T=W.T;let s=sceneDefs();const 
     const XS=xc?XJ_POS().map(f=>trailAt(f)):[];
     /* anything big (trees, tents, rocks) keeps off the trail, the river, the bridge, the tents, the fences, the start box and the finish */
     const blocked=(x,y,r)=>distPts(TP,x,y)<11+r||(river&&riverDist(x,y)<r+2)||(BR&&Math.hypot(x-BR.c[0],y-BR.c[1])<26+r)||VT.some(({P,Q,ty})=>(Math.abs(x-P[0])<36+r&&y>ty-56-r&&y<ty+6+r)||Math.hypot(x-Q[0]-4,y-Q[1]+16)<8+r)||XS.some(q=>Math.hypot(x-q[0],y-q[1])<34+r)||(xc&&x<78+r&&y>232-r)||(x>732-r&&y<122+r);
-    if(desert){s+=`<rect width="800" height="300" fill="url(#wSkyD)"/><circle cx="660" cy="46" r="60" fill="url(#wSun)"/><circle cx="660" cy="46" r="17" fill="#FFF4C8"/>
-      <path d="M0 78 L60 78 L70 52 L118 50 L126 78 L300 80 L312 60 L346 58 L356 80 L520 82 L530 44 L590 42 L600 66 L640 66 L650 82 L800 82 V120 H0Z" fill="#C97F52" opacity=".55"/>
-      <path d="M0 90 Q120 70 240 88 T480 84 T800 86 V300 H0Z" fill="#E3B676"/><path d="M0 104 Q160 86 320 102 T640 98 T800 100 V300 H0Z" fill="url(#wDune)"/>
-      ${[...Array(9)].map((_,i)=>`<path d="M${i*96} ${112+(i%3)*4} q30 -6 60 0" stroke="#F8E6BE" stroke-width="1.4" fill="none" opacity=".7"/>`).join('')}
-      ${[[90,150,1],[300,120,.7],[560,110,.6],[720,210,1.1],[180,250,.9],[420,200,.8]].map(([x,y,k])=>`<g transform="translate(${x} ${y}) scale(${k})"><path d="M0 0 V-26 M0 -12 H-7 V-20 M0 -16 H6 V-23" stroke="#5C8A4A" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M0 0 V-26" stroke="#4A7A3A" stroke-width="1.2"/><ellipse cx="1" cy="1" rx="8" ry="2" fill="#000" opacity=".14"/></g>`).join('')}
-      ${[[60,200],[340,160],[610,250],[250,120]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="11" ry="5" fill="#B98A5A"/><ellipse cx="${x-2}" cy="${y-1.6}" rx="7" ry="2.6" fill="#D2A878"/>`).join('')}`}
+    if(desert){s+=desertBack(desertKind(W))}
     else if(xc){s+=`<rect width="800" height="300" fill="url(#wSky)"/>${planeBanner(W,26,360)}${H2(64,'#A8C48E',24,41)}
       <g transform="translate(560 40)"><rect x="0" y="10" width="110" height="34" fill="#D9CDB2"/><path d="M-6 12 L55 -6 L116 12Z" fill="#8A7A6A"/><rect x="44" y="-14" width="22" height="26" fill="#D9CDB2"/><path d="M40 -14 L55 -24 L70 -14Z" fill="#8A7A6A"/>${[...Array(7)].map((_,i)=>`<rect x="${6+i*15}" y="${18}" width="7" height="10" fill="#6E8FA8"/><rect x="${6+i*15}" y="${31}" width="7" height="10" fill="#6E8FA8"/>`).join('')}<rect x="50" y="-6" width="10" height="12" fill="#6E8FA8"/><path d="M55 -24 V-34" stroke="#555" stroke-width="1"/><path d="M55 -34 l8 2 l-8 2z" fill="${ranchCol()}"/></g>
       ${WS.treeLine(88,0,800,43)}${H2(92,'#7EA85E',10,47)}`}
