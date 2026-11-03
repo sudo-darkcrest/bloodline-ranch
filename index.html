@@ -341,7 +341,7 @@ label.btn{display:inline-block;cursor:pointer}
 .ribcount svg{vertical-align:middle}
 .mapwrap{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:10px;overflow-x:auto;margin-bottom:18px}
 .mapwrap svg{display:block;width:100%;min-width:680px;height:auto}
-.mapwrap .hot{cursor:pointer}
+.mapwrap .hot{cursor:pointer}.mapwrap .hot:hover>g,.mapwrap .hot:focus-visible>g{filter:brightness(1.08) saturate(1.06)}.mapwrap .hot:focus-visible{outline:none}.facpop{display:flex;flex-direction:column;gap:10px;min-width:min(420px,80vw)}.facpop .fac-head{gap:10px}
 .mapwrap .hot:hover .lbl{text-decoration:underline}
 .facgroup{margin-top:20px}
 .facgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -1332,8 +1332,13 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='90';
+const BUILD='91';
 const CHANGELOG=[
+ {b:'91',d:'Nov 3, 2026',t:'Build from the map',c:[
+  'Click any building or empty lot on the ranch map to build or upgrade it right there. A small window shows what you have now, what the next level adds, the price, the new upkeep, and how much money you’ll have left.',
+  'The window stays open after you build, so you can keep upgrading the same building. “Show in the list” still takes you to its card below the map.',
+  'The building under your pointer lights up a little. With a keyboard, Tab to a building and press Enter.',
+ ]},
  {b:'90',d:'Nov 3, 2026',t:'Ranch maps, round five of your fix list',c:[
   'Every location: the house, barn and foaling barn have room to breathe at every level. The barn grows a little less wide, so it no longer runs into the house or the foaling barn.',
   'Staff Housing and the Foaling Barn now match each location: limestone in Texas, red brick in Kentucky, stucco and tile in California, logs in Montana, and so on.',
@@ -3703,6 +3708,15 @@ function renderMarket(){
 const UPKEEP_RATE={home:.002,care:.0025,train:.0025,farm:.002,stock:.004,prestige:.0004};
 function facUpkeep(f,lv){let c=0;for(let i=1;i<=lv;i++)c+=f.lv[i].c||0;return Math.round(c*(UPKEEP_RATE[f.g]||.002))}
 function upkeep(){return FAC.reduce((a,f)=>a+facUpkeep(f,L(f.id)),0)}
+/* build 91: the popup you get by clicking a building (or an empty lot) on the ranch map */
+function facMapBody(f){const lv=L(f.id),cur=f.lv[lv],nx=f.lv[lv+1],max=f.lv.length-1,c=nx?facCost(f,lv+1):0,can=!!nx&&S.money>=c,verb=lv?'Upgrade':f.g==='stock'?'Buy':'Build';
+  return `<div class="facpop">
+   <div class="fac-head"><span class="note">${lv?'Level '+lv+' of '+max:(f.g==='stock'?'Not bought yet':'Not built yet')}</span><span class="pips" aria-label="Level ${lv} of ${max}">${f.lv.slice(1).map((x,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</span></div>
+   ${lv?`<div class="fac-cur"><b>Now: ${esc(cur.n)}</b><div class="note" style="font-weight:400">${cur.d||''}</div><div class="note upk">Upkeep ${money(facUpkeep(f,lv))}/day</div></div>`:''}
+   ${nx?`<div class="fac-next"><div><span class="note">${lv?'Upgrade to':verb}:</span> <b>${esc(nx.n)}</b></div><div class="note">${nx.d}</div><div class="note upk">Upkeep becomes ${money(facUpkeep(f,lv+1))}/day (+${money(facUpkeep(f,lv+1)-facUpkeep(f,lv))})</div></div>`:'<div class="note good" style="font-size:14px">Fully upgraded. Nothing more to build here.</div>'}
+   <div class="note">You have ${money(S.money)}${nx?(can?`, so you’ll have ${money(S.money-c)} left after.`:`. You need ${money(c-S.money)} more.`):'.'}</div>
+   <div class="actions">${nx?`<button class="btn primary" data-a="facup" data-f="${f.id}" ${can?'':'disabled'}>${verb} · ${money(c)}</button>`:''}<button class="btn" data-a="facjump" data-f="${f.id}">Show in the list</button><button class="btn" data-a="close">Close</button></div>
+  </div>`}
 function facCard(f){
   const lv=L(f.id),cur=f.lv[lv],nx=f.lv[lv+1],max=f.lv.length-1;
   return `<div class="fac ${lv>=max?'maxed':lv?'built':''}" id="fac-${f.id}">
@@ -4414,7 +4428,7 @@ function ranchMap(){
     for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4.5+5.5*t;o+=post(x,j,ht,1.8+.5*t)+(R?post(x+w,j,ht,1.8+.5*t):'')}
     o+=`<path d="M${x} ${y-2.2} L${x} ${y+h-2.6} M${x} ${y+h-5.4} L${x} ${y+h*.5-3}${R?` M${x+w} ${y-2.2} L${x+w} ${y+h-2.6} M${x+w} ${y+h-5.4} L${x+w} ${y+h*.5-3}`:''}" stroke="${col}" stroke-width="1" opacity=".8"/>`;
     for(let i=x;i<=x+w-(R?0:6);i+=12)o+=post(i,y+h,10,2.6);o+=`<path d="M${x} ${y+h-3} H${x+w} M${x} ${y+h-7.2} H${x+w}" stroke="${col}" stroke-width="1.5"/><path d="M${x} ${y+h-1.2} H${x+w}" stroke="#000" stroke-opacity=".2" stroke-width="1"/>`;return o};
-  const hot=(id,inner)=>{CO=OFF[id]||null;const tf=CO?`<g transform="translate(${(CO[0]*1.2-CO[0]*CO[2]).toFixed(1)} ${(CO[1]+CO[3]-CO[1]*CO[2]).toFixed(1)}) scale(${CO[2]})">${inner}</g>`:inner;return `<g class="hot" data-a="facjump" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}"><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${tf}</g>`};
+  const hot=(id,inner)=>{CO=OFF[id]||null;const tf=CO?`<g transform="translate(${(CO[0]*1.2-CO[0]*CO[2]).toFixed(1)} ${(CO[1]+CO[3]-CO[1]*CO[2]).toFixed(1)}) scale(${CO[2]})">${inner}</g>`:inner;return `<g class="hot" data-a="facmap" data-f="${id}" tabindex="0" role="button" aria-label="${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}. Click to build or upgrade."><title>${esc(FACI[id].n)}: ${esc(FACI[id].lv[lv(id)].n)}</title>${tf}</g>`};
   const mx=id=>FACI[id].lv.length-1;
 
   // ===== ground, hills, water, road =====
@@ -4736,11 +4750,11 @@ function ranchMap(){
     sg+=`<text x="1188" y="621" text-anchor="end" font-size="9" fill="#E9E4D4" font-family="ui-monospace,monospace" letter-spacing="1" opacity=".85">COUNTY RD 9</text>`;
     g+=sg}
   if(LI!=='classic')g+=locExtras(LI);
-  return `<svg viewBox="0 ${LI==='classic'?'0 1200 640':'-80 1200 920'}" role="img" aria-label="Illustrated map of your ranch. Click a spot to jump to its card.">${g}${labels}</svg>`;
+  return `<svg viewBox="0 ${LI==='classic'?'0 1200 640':'-80 1200 920'}" role="img" aria-label="Illustrated map of your ranch. Click a building or an empty lot to build or upgrade it.">${g}${labels}</svg>`;
 }
 function renderFacilities(){
   const si=dateParts(S.day).sIdx;
-  return `<div class="section-head"><h2>Your Ranch</h2><span class="sub">Build and upgrade every part of the place. Click a spot on the map to jump to it.</span></div>
+  return `<div class="section-head"><h2>Your Ranch</h2><span class="sub">Build and upgrade every part of the place. Click any building or empty lot on the map to build or upgrade it right there.</span></div>
   <div class="mapwrap">${seasonMap()}</div>
   <div class="panel incomebar"><span>Facility levels <b>${facLevels()}</b></span><span>Livestock income <b>${money(stockIncome(si))}</b>/day${L('bees')&&si>1?' (bees rest until spring)':''}</span><span>Livestock hay <b>${stockHay()}</b> bales/day</span><span>Wages <b>${money(wages())}</b>/day</span><span>Facility upkeep <b>${money(upkeep())}</b>/day</span><span>Property tax <b>${money(propTax())}</b>/season</span><span>Stalls <b>${S.horses.length}/${S.stalls}</b></span></div>
   ${FGROUPS.map(([g,n])=>`<div class="facgroup"><div class="section-head"><h2>${n}</h2>${g==='stock'?'<span class="sub">Stock animals earn money every night, but some eat hay. If the hay runs out, they produce nothing.</span>':''}</div><div class="facgrid">${FAC.filter(f=>f.g===g).map(facCard).join('')}</div></div>`).join('')}`;
@@ -5128,6 +5142,7 @@ function renderModal(){
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="buygearok">Buy all for ${money(tot)}</button><button class="btn" data-a="close">Cancel</button></div>`;
   }else if(m.type==='story'){const h=H(m.id);if(!h){UI.modal=null;ov.hidden=true;return}title=esc(h.name)+'’s life story';
     body=`<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><div class="portrait${h.shiny?' shiny':''}" style="width:200px;aspect-ratio:200/120;flex:none">${horseSVG(h)}${shinyFx(h)}</div><div><b>${esc(h.name)}</b><div class="note">${sexLabel(h)} · ${ageLabel(h)} · ${breedLabel(h)}</div><div class="note">${h.wins} win${h.wins===1?'':'s'} in ${h.starts} start${h.starts===1?'':'s'} · ${money(h.earnings||0)} won</div></div></div>${storySection(h).replace('<div class="subh">Life story</div>','')}<div class="actions" style="margin-top:14px"><button class="btn" data-a="open" data-id="${h.id}">Open papers</button><button class="btn primary" data-a="close">Close</button></div>`;
+  }else if(m.type==='facmap'){const f=FACI[m.f];if(!f){UI.modal=null;ov.hidden=true;return}title=esc(f.n);body=facMapBody(f);
   }else if(m.type==='rcolor'){title='Ranch colors and symbol';body=colPicker()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Done</button></div>`;
   }else if(m.type==='guide'){title='Game Guide';body=guideBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="close">Close</button></div>`;
   }else if(m.type==='changelog'){title='What’s new in each build';body=changelogBody()+`<div class="actions" style="margin-top:14px"><button class="btn primary" data-a="${m.back?'clback':'close'}">${m.back?'Back':'Close'}</button></div>`;
@@ -6498,7 +6513,8 @@ const ACT={
     if(f.id==='feedbarn')S.hayPrice=Math.max(3,Math.round(S.hayPrice*[1,.85,.75][lv+1]/[1,.85,.75][lv]));
     log('good',(lv?'Upgraded the '+f.n+' to ':'Built: ')+nx.n+' for '+money(nc)+'.');toast(nx.n+(f.g==='stock'?' added!':' is ready!'));
     if(facLevels()>=15)unlock('builder');if(L('house')>=3)unlock('lodge');if(['chickens','goats','sheep','cattle','bees'].every(x=>L(x)))unlock('stockman')},
-  facjump:d=>{const el=document.getElementById('fac-'+d.f);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1400)}return 'skip'},
+  facmap:d=>{if(!FACI[d.f])return 'skip';UI.modal={type:'facmap',f:d.f}},
+  facjump:d=>{if(UI.modal&&UI.modal.type==='facmap'){UI.modal=null;render()}const el=document.getElementById('fac-'+d.f);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1400)}return 'skip'},
   wskip:()=>{skipWatch();return 'skip'},
   wspeed:(d,b)=>{if(WATCH){WATCH.speed=WATCH.speed>=4?1:WATCH.speed*2;PREF.speed=WATCH.speed;savePref();hoovesRate(WATCH.speed);b.textContent='Speed: '+WATCH.speed+'×'}return 'skip'},
   newgame:()=>{UI.modal={type:'confirmNew'}},
@@ -6539,6 +6555,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&UI.modal){if(UI.modal.lock)return;UI.modal=null;render();return}
   if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&UI.modal&&UI.modal.type==='horse'&&!(e.target.closest&&e.target.closest('input,textarea,select'))){e.preventDefault();navHorse(e.key==='ArrowLeft'?-1:1);save();render();return}
   if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('horse')){e.preventDefault();e.target.click()}
+  if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('hot')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}
 });
 document.addEventListener('input',e=>{if(!(e.target.dataset&&e.target.dataset.c==='offeramt'))return;const m=UI.modal;if(!m||m.type!=='offer')return;m.amt=+e.target.value;const ch=offerChance(m,m.amt);
   const v=document.getElementById('offerVal'),pc=document.getElementById('offerPct'),bt=document.querySelector('[data-a="offerok"]');if(v)v.textContent=money(m.amt);if(pc)pc.textContent=pc.textContent.replace(/^\d+%/,Math.round(ch*100)+'%');if(bt)bt.textContent='Offer '+money(m.amt)});
