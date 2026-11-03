@@ -912,6 +912,15 @@ const GUIDE=[
   'Start with the horses you’re given. Groom them (bond), turn them out to pasture (happiness and health), train them toward their potential, and enter Local Shows for small prizes and reputation.',
   'Money comes from show prizes, selling horses, boarding client horses, stud fees and livestock. Money goes to hay, wages, upkeep, entry fees and buildings. Keep a hay reserve: a herd that goes hungry loses reputation.',
   'The tabs along the top are the places on your ranch: Stable, Breeding, Compete, Market, Tack, Boarding, Facilities, Bank, Staff, Office, Hall of Fame and Journal. The morning report after each End Day tells you what happened overnight.']],
+ ['Your ranch: location, colors and symbol',[
+  'When you start your own ranch you pick <b>where it is</b>: Fort Worth (Texas), Lexington (Kentucky), Oklahoma City, Norco (California), Central Ohio, Ocala (Florida), Lancaster County (Pennsylvania), Miles City (Montana), Sheridan (Wyoming) or the Black Hills (South Dakota). Older saves are asked to pick the next time they load.',
+  'Each place has its own perks (mostly 10–15%) and drawbacks (5–10%). For example, Kentucky has better Thoroughbred studs and better sale prices but pricier buildings, Ohio has hay 20% cheaper, and Montana has cheap land but hard winters. The picker labels each place Easy, Medium or Hard. Your location’s perks are listed any time on the <b>Office</b> tab.',
+  '<b>Home events</b>: every location has one or two events it’s known for. Your horses get <b>+10% score and +15% prize money</b> there, and the Compete tab marks them with a green “Home +10%” tag.',
+  'Local breeds show up more often at the sale barn (Quarter Horses in Texas, Thoroughbreds in Kentucky, mustangs in South Dakota and so on), and some cost less there.',
+  'The weather follows the place: snow only falls in the cold states, Texas and Oklahoma get dry summers and frosty winters, California turns gold in summer and green in winter, and Florida stays green all year. Cold winters make horses eat more hay; mild ones less. Some places are more likely to get droughts, storms or disease scares.',
+  'The ranch map gets regional scenery: its own ranch house, barn, fences, trees and backdrop for every location.',
+  '<b>Moving:</b> the <b>Move ranch</b> button on the Office tab moves you to another location for 20% of your cash (at least $1,500). Your horses, buildings and reputation come with you. You can move once a year.',
+  '<b>Ranch colors and symbol:</b> click either little flag beside your ranch name (top left) to pick a main color, a second color and one of 22 symbols (or your ranch’s initial). Your riders wear the colors at every event, and the symbol goes on your flags, trailer, truck, gate sign, banners and winner’s board.']],
  ['Horses: stats, potential and traits',[
   'Every horse has five stats: <b>Speed, Stamina, Strength, Agility and Smarts</b>. Each stat has a trained value (what the horse can do today) and a <b>potential</b> (its ceiling). Training raises the trained value toward the ceiling; only breeding raises the ceiling.',
   '<b>Natural skills</b> (traits) are inborn and pass down through breeding: good ones like Powerhouse or Calm, bad ones like Lazy or Skittish, and rare ones like Champion Bloodline. <b>Learned skills</b> are picked up slowly through bond and work.',
@@ -922,7 +931,7 @@ const GUIDE=[
   '<b>Groom</b> once a day for bond and a little happiness. A Stable Hand grooms for you, but your own grooming still adds bond.',
   '<b>Turn out to pasture</b> is a free day that restores happiness and health and halves hay use. Horses stuck in a stall all day get bored and lose happiness, so turn out everyone who isn’t working.',
   '<b>Vet checkups</b> once a season keep health up and are required for National-level shows and above (and for every show during a disease scare). Injuries need treatment from the papers.',
-  '<b>Hay</b> is eaten every night. Buy it on the Office tab, cut it yourself from the Hay Fields, or let a Ranch Manager reorder it. It’s cheapest in summer and dearest in winter, when horses eat 30% more.']],
+  '<b>Hay</b> is eaten every night. Buy it on the Office tab, cut it yourself from the Hay Fields, or let a Ranch Manager reorder it. It’s cheapest in summer and dearest in winter, when horses eat 30% more. Your location can make hay cheaper or dearer and change how much horses eat in winter.']],
  ['Training',[
   'Train one stat per day yourself (costs energy; the gain shrinks as the horse nears its ceiling). A <b>Trainer</b> on staff works several idle horses every evening; mark a horse <b>Reserved</b> to put it first in line and keep it out of shows.',
   'Young horses can be trained lightly from six months (the trainer takes it easy on them). Training plans in the papers tell the trainer which stats to focus on and how hard to push.',
@@ -936,6 +945,8 @@ const GUIDE=[
  ['Shows and the calendar',[
   'Each horse can enter one event a day. Entry fees are 6–8% of the purse. Show levels: Local (daily), County Fair (last two days of every season), State (spring and fall), Regional (summer and winter), National (fall), International (late summer), World Cup (winter) and the Olympics (every 4th summer). Higher levels need more reputation.',
   'Eight standard events test different stats: Quarter-Mile Race, Barrel Racing, Endurance Ride, Dressage, Draft Pull, Show Jumping, Cross-Country and Reining. Three <b>specialty events</b> need the right type of horse: the Driving Class (drafts), the Pony Cup (ponies) and the Desert Ride (hot bloods).',
+  '<b>Ribbons:</b> the color always shows the place: blue for 1st, red for 2nd, yellow for 3rd. Local and County Fair ribbons are plain; State and higher are rosettes. The rim shows the show: gold for Nationals, teal for Internationals, purple for Invitationals, brown for Ranch Shows and silver for the World Cup. Olympic rosettes have a gold, silver or bronze rim for 1st, 2nd or 3rd. Each horse’s best 30 hang on its ribbon wall in its papers.',
+  '<b>Horse awards</b> are titles a horse earns for its record, such as First Ribbon, State Champion, World Cup Podium (top 3 at a World Cup event), Olympic Medalist (top 3 at the Olympics) and Hall of Fame. They show in the horse’s papers, and each one helps a little in Best in Show judging at the Harvest Fair.',
   '<b>Auto compete</b> enters the highest open level that meets your auto rule (set it under the Auto compete buttons: a minimum chance to win and a minimum chance to place top 3; the default is 80% to win), and skips horses that would finish sour. The odds shown are real: they come from simulating the field.',
   'After 30 Local wins, 20 County wins or 16 State wins a horse <b>graduates</b> that level: it can still enter but prizes are halved. Move up.',
   'The <b>season circuit</b> gives points for every placing (more at higher levels). The top horse when a season ends is Season Champion: cash, +5 reputation and a title.',
@@ -943,6 +954,7 @@ const GUIDE=[
   'Boarded client horses can compete too. The owner pays half the entry fee and takes 40% of the prize.']],
  ['Festivals and trouble',[
   'Three festivals a year: the <b>Spring Foal Show</b> (spring day 2, enter a foal or yearling), the <b>Harvest Fair</b> (fall day 2, Best in Show for grown horses plus a booth that sells your livestock goods) and the <b>Winter Horse Sale</b> (winter day 3, three horses about 30% off and 20% more for anything you sell).',
+  'Your location adds a fourth, <b>local yearly event</b>: a contest such as the Cutting Futurity (Texas), Draft and Harness Expo (Ohio), Winter Circuit Grand Prix (Florida) or Big Horn Polo Cup (Wyoming), or a sale such as the Bluegrass Yearling Sale (Kentucky), Bucking Horse Sale (Montana) or Wild Horse Roundup (South Dakota, half-price mustangs). It’s on the festival calendar on the Compete tab. Winning it earns the Hometown Hero achievement.',
   'Most springs the almanac warns of one problem coming later in the year: a <b>drought</b> (hay costs double that season), a <b>disease scare</b> (every show needs a recent vet check) or <b>storms</b> (a fence washout). You get a season to prepare.']],
  ['Your rival',[
   'One named rancher with four real horses competes against you, mostly at State level and above. Beating them pays a bonus and reputation; losing costs nothing but pride. Streaks earn achievements.',
@@ -958,7 +970,7 @@ const GUIDE=[
   '<b>Prestige buildings</b> are the late-game money sinks: the Covered Arena (State shows all year), Breeding Lab (better foals), Guest Lodge (tourist income from your champions) and Ranch Museum (income from your career wins, better sale prices and the Legendary Ranch title).',
   '<b>Staff:</b> a Stable Hand grooms every horse each morning and mucks out, a Trainer works idle horses every evening, a Ranch Vet heals injuries faster and cuts vet bills, a Ranch Manager buys hay cheaper and restocks it and boosts income, a Farrier keeps hooves shod so horses get hurt less, and a Livestock Hand tends your stock animals. Staff housing lowers wages and attracts better applicants.']],
  ['Tack and gear',[
-  'Gear comes in Common, Uncommon, Rare, Epic and Legendary. Saddles, bridles, boots and blankets go on a horse; bedding and toys improve the stall; flair is for the show ring. Buy from the Tack Shop, win it as prizes, or open crates. Boarded horses can use your tack if you tick the box in their papers.']],
+  'Gear comes in Common, Uncommon, Rare, Epic and Legendary. Saddles, bridles, boots and blankets go on a horse; bedding and toys improve the stall; flair is for the show ring. Buy from the Tack Shop, win it as prizes, or open mystery crates (after opening some, you can open 5 or 10 more in one go). Boarded horses can use your tack if you tick the box in their papers.']],
  ['Saving and devices',[
   'The game autosaves every day in this browser. Use the save slots and <b>Download a save file</b> on the Office tab for backups, and <b>Load Game</b> on the title screen to load a file or a transfer code on another device.',
   'Starting a new ranch replaces only the autosave; keep your current ranch in a slot or a file first.']],
@@ -1309,8 +1321,11 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='82';
+const BUILD='83';
 const CHANGELOG=[
+ {b:'83',d:'Nov 2, 2026',t:'Game Guide updated',c:[
+  'The Game Guide has a new section, “Your ranch: location, colors and symbol”, covering locations, home events, regional weather, moving your ranch, and ranch colors and symbols.',
+  'Guide updates: ribbon colors and rims, the new horse awards, local yearly events, location effects on hay, and opening 5 or 10 more mystery crates.']},
  {b:'82',d:'Nov 2, 2026',t:'Cattle pen, gate sign and ranch symbols',c:[
   'The cattle pen on the facilities map is now as tall as the pasture next to it and shares the pasture’s fence. The cows are spread out instead of standing on top of each other.',
   'The gate sign now always fits your ranch name: it shrinks the text, wraps long names onto two lines, and shows WELCOME if a name is too long to read.',
