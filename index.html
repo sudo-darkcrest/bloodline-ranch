@@ -120,6 +120,12 @@ main{padding-block:20px}
 .foalscene svg{width:100%;height:auto;display:block;border-radius:10px}.creator{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}.pcprev{flex:none}.pcprev{position:sticky;top:0;z-index:3;align-self:flex-start}@media (max-width:640px){.creator{display:block}.pcprev{display:flex;justify-content:center;background:var(--card);margin:-16px -18px 10px;padding:8px 0 6px;border-bottom:1px solid var(--line);box-shadow:0 6px 10px -8px rgba(0,0,0,.35)}.pcprev svg{width:104px;height:104px}}.pcform{flex:1;min-width:240px}
 .pcrow{display:flex;align-items:center;gap:10px;margin:6px 0;flex-wrap:wrap}.pclbl{width:76px;font-size:12.5px;color:var(--muted)}.pcopts{display:flex;gap:5px;flex-wrap:wrap}
 .pcopt{min-width:28px;height:28px;border-radius:8px;border:1.5px solid var(--line);background:var(--paper);font-size:12px;padding:0 8px;cursor:pointer;color:var(--ink);text-transform:capitalize}.pcopt.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.locmodal{max-width:1080px;width:min(1080px,96vw)}.locgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.loccard{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;background:var(--paper);overflow:hidden}.loccard.sel{outline:2px solid var(--ranch)}
+.locpano{height:62px;overflow:hidden}.locpano svg{width:100%;height:100%;display:block}.locbody{display:flex;flex-direction:column;gap:6px;padding:10px;flex:1}.locbody .btn{margin-top:auto;align-self:flex-start}
+.lochead{display:flex;justify-content:space-between;align-items:center;gap:6px}.lochead h3{margin:0;font-size:15px}
+.locpros,.loccons{margin:0;padding-left:18px;font-size:12.5px;line-height:1.35}.locpros li::marker{content:'+  ';color:var(--good,#2D8A4E);font-weight:800}.loccons li::marker{content:'−  ';color:var(--bad,#C0392B);font-weight:800}
+.locinfo{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;margin-bottom:6px}
 .bggrid,.giftgrid,.pathgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .bgcard{text-align:left;display:flex;flex-direction:column;gap:3px;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);cursor:pointer;color:var(--ink);font:inherit}.bgcard.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 .giftcard,.pathcard{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}.pathcard ul{padding-left:18px;margin:4px 0}.pathcard .btn{margin-top:auto}
@@ -767,17 +773,17 @@ const FACI=Object.fromEntries(FAC.map(f=>[f.id,f]));
 function L(id){return (S&&S.fac&&S.fac[id])||0}
 function stockHay(){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+f.hay[L(f.id)],0)}
 function stockIncome(sIdx){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+((f.seasonal&&sIdx>1)?0:f.inc[L(f.id)]*(specOf('stock')===f.id?1.25:1)),0)}
-function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85}
+function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85*(locFx().harvest||1)}
 function houseMult(){return [1,1.05,1.1,1.2][L('house')]}
 const OWNER_VET=.7;function vetShare(h,c){return h&&h.client?Math.round(c*(1-OWNER_VET)):c}
 function vetCost(h){return vetShare(h,vetFull(h))}
 function vetFull(h){return Math.round(80*(1-(psk('care')-1)*.04)*(S.staff.vet?1-(.3+.05*sk('vet')):1)*[1,.75,.5,.3][L('clinic')])}
 const FEE_RATE=[.06,.08,.10,.12,.15,.18,.2,.18,0,.19];
 const r10=x=>Math.max(10,Math.round(x/10)*10);
-function prizesFor(ev,t){const k=TIERS.indexOf(t)>=T_NAT&&!t.ranch?BAL.topPrize:1;return t.prize.map(p=>r10(p*k*(ev?ev.purse||1:1)))}
-function baseFee(ev,t){const ti=TIERS.indexOf(t);return r10(prizesFor(ev,t).reduce((a,b)=>a+b,0)*FEE_RATE[ti])}
+function prizesFor(ev,t,raw){const k=TIERS.indexOf(t)>=T_NAT&&!t.ranch?BAL.topPrize:1,lm=raw?1:locPrizeMult(ev);return t.prize.map(p=>r10(p*k*(ev?ev.purse||1:1)*lm))}
+function baseFee(ev,t){const ti=TIERS.indexOf(t);return r10(prizesFor(ev,t,1).reduce((a,b)=>a+b,0)*FEE_RATE[ti])}
 function myFee(h,t,ev){const f=entryFee(t,ev);return h&&h.client?Math.round(f/2):f}
-function entryFee(t,ev){return r10(baseFee(ev,t)*(L('trailer')>=2?.8:1))}
+function entryFee(t,ev){return r10(baseFee(ev,t)*(L('trailer')>=2?.8:1)*(locFx().fee||1))}
 function sellRate(){return [.5,.65,.75][L('tackroom')]}
 const CRATE_BASE=350;function crateCost(){return Math.round(CRATE_BASE*[1,.9,.8][L('tackroom')])}
 function facLevels(){return FAC.reduce((a,f)=>a+L(f.id),0)}
@@ -959,26 +965,26 @@ const FESTS={foalshow:{n:'Spring Foal Show',s:0,d:2,fee:50,prize:[600,300,150],r
   wintersale:{n:'Winter Horse Sale',s:3,d:3,fee:0,prize:[],rep:[],blurb:'The big winter auction. Three good horses go cheap, and buyers pay 20% more for anything you sell today.'}};
 function festKey(day=S.day){const dp=dateParts(day);for(const k in FESTS){const f=FESTS[k];if(f.s===dp.sIdx&&f.d===dp.sday)return k}return null}
 function festMult(){return 1+(dateParts(S.day).year-1)*.12}
-function festState(){const k=festKey();if(!k)return null;const yr=dateParts(S.day).year;if(!S.fest||S.fest.k!==k||S.fest.year!==yr){S.fest={k,year:yr,done:0,booth:0,lots:[],bought:0};if(k==='wintersale'){const lift=Math.min(18,S.rep/8);for(let i=0;i<3;i++){const h=genHorse({ageDays:ri(ADULT,ADULT+DPY*4),potMid:ri(52,64)+lift,nTraits:ri(1,2),origin:'Winter Horse Sale'});enrichSale(h);h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*.7/10)*10;h.sale=1;S.fest.lots.push(h)}}}return S.fest}
+function festState(){const k=festKey();if(!k)return null;const yr=dateParts(S.day).year;if(!S.fest||S.fest.k!==k||S.fest.year!==yr){S.fest={k,year:yr,done:0,booth:0,lots:[],bought:0};if(k==='wintersale'){const lift=Math.min(18,S.rep/8);for(let i=0;i<3;i++){const h=genHorse({ageDays:ri(ADULT,ADULT+DPY*4),potMid:ri(52,64)+lift,nTraits:ri(1,2),origin:'Winter Horse Sale'});enrichSale(h);h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*.7/10)*10;h.sale=1;S.fest.lots.push(h)}}else if(FESTS[k].type==='sale')S.fest.lots=locSaleLots(FESTS[k])}return S.fest}
 function festNext(k){const f=FESTS[k];for(let d=S.day;d<S.day+DPY+1;d++){const dp=dateParts(d);if(dp.sIdx===f.s&&dp.sday===f.d)return d-S.day}return null}
 function judgeYoung(h){return avg(h.pot)*.55+h.happy*.15+h.health*.1+h.bond*.12+(h.shiny?6:0)+HRORDER.indexOf(rarityOf(h))*1.5+(h.vigor?2:0)-(h.coi>=.0625?4:0)}
 function judgeShow(h){return avg(h.tr)*.45+avg(h.pot)*.15+h.happy*.15+h.health*.12+HRORDER.indexOf(rarityOf(h))*2+Math.min(8,awardsOf(h).length)+(coat(h.genes).cr?2:0)+(h.shiny?5:0)}
 function festEnter(k,id){const F=festState();if(!F||F.k!==k||F.done)return toast('That contest isn’t open right now.');const f=FESTS[k];const h=H(id);if(!h||h.client)return toast('Pick one of your own horses.');
-  const young=k==='foalshow';if(young&&!isYoung(h))return toast('Only foals and yearlings can enter the Foal Show.');if(!young&&!isAdult(h))return toast('Only grown horses can enter Best in Show.');
+  const young=k==='foalshow'||f.type==='young';if(young&&!isYoung(h))return toast('Only foals and yearlings can enter the '+f.n+'.');if(!young&&!isAdult(h))return toast('Only grown horses can enter the '+(k==='harvest'?'Best in Show':f.n)+'.');
   if(h.injury)return toast(h.name+' is hurt and can’t be shown.');if(S.money<f.fee)return toast('You need '+money(f.fee)+' for the entry.');S.money-=f.fee;
-  const me=(young?judgeYoung(h):judgeShow(h))*(.93+R()*.14);const base=young?42+Math.min(S.rep,200)/9:40+Math.min(S.rep,250)/8;const field=[{name:h.name,farm:S.ranchName,score:me,me:1}];
+  const me=(f.loc?judgeLocal(h,f):young?judgeYoung(h):judgeShow(h))*(.93+R()*.14);const base=young?42+Math.min(S.rep,200)/9:40+Math.min(S.rep,250)/8;const field=[{name:h.name,farm:S.ranchName,score:me,me:1}];
   for(let i=0;i<(young?5:7);i++)field.push({name:randName(),farm:pick(FARMS),score:Math.max(5,base+gauss()*7)});
-  if(S.rival&&S.rival.horses&&R()<.5){const rh=pick(S.rival.horses.filter(x=>young?isYoung(x):isAdult(x)));if(rh){field[1].name=rh.name;field[1].farm=S.rival.farm;field[1].rival=1;field[1].score=Math.max(5,(young?judgeYoung(rh):judgeShow(rh))*(.93+R()*.14))}}
+  if(S.rival&&S.rival.horses&&R()<.5){const rh=pick(S.rival.horses.filter(x=>young?isYoung(x):isAdult(x)));if(rh){field[1].name=rh.name;field[1].farm=S.rival.farm;field[1].rival=1;field[1].score=Math.max(5,(f.loc?judgeLocal(rh,f):young?judgeYoung(rh):judgeShow(rh))*(.93+R()*.14))}}
   field.sort((a,b)=>b.score-a.score);const place=field.findIndex(x=>x.me)+1;const m=festMult();let prize=0,rep=0,drop=null;
-  if(place<=3){prize=r10(f.prize[place-1]*m);rep=gainRep(f.rep[place-1]);S.money+=prize;h.earnings=(h.earnings||0)+prize;h.happy=clamp(h.happy+5,0,100);if(place===1){h.wins++;unlock(k);if(!young)drop=grantItem(rollRarity({rare:60,epic:35,legendary:5}));story(h,(young?'Best Young Horse at the ':'Best in Show at the ')+f.n+'.')}}
+  if(place<=3){prize=r10(f.prize[place-1]*m);rep=gainRep(f.rep[place-1]);S.money+=prize;h.earnings=(h.earnings||0)+prize;h.happy=clamp(h.happy+5,0,100);if(place===1){h.wins++;unlock(f.loc?'localfest':k);if(!young)drop=grantItem(rollRarity({rare:60,epic:35,legendary:5}));story(h,(f.loc?'Won the ':young?'Best Young Horse at the ':'Best in Show at the ')+f.n+'.')}}
   h.acted=S.day;F.done=1;F.res={place,prize,rep,drop:drop&&drop.id,field:field.map(x=>({...x,score:Math.round(x.score*10)/10})),h:h.id};
   const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];log(place===1?'good':place<=3?'info':'warn',h.name+' placed '+ord[place-1]+' at the '+f.n+(prize?' and won '+money(prize):'')+(rep?' (+'+rep+' reputation)':'')+'.');
   if(F.res.field.some(x=>x.rival&&x.me!==1)){const rp=F.res.field.findIndex(x=>x.rival)+1;if(S.rival)log('info','Your rival '+S.rival.owner+' showed '+F.res.field[rp-1].name+' and placed '+ord[rp-1]+'.')}
   pxp('show',3);checkAch();save();UI.modal={type:'festres',k}}
 function festBooth(){const F=festState();if(!F||F.k!=='harvest'||F.booth)return;const n=['chickens','goats','sheep','cattle','bees'].reduce((a,x)=>a+L(x),0);const amt=r10((80+n*120)*festMult());S.money+=amt;F.booth=amt;pxp('biz',3);log('good','Your Harvest Fair booth sold out. '+money(amt)+(n?' from your livestock goods.':' from lemonade and pie. More livestock would sell more.'));toast('Booth earned '+money(amt)+'.');save()}
-function festBuyLot(i){const F=festState();if(!F||F.k!=='wintersale')return;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<h.price)return toast('Not enough money.');
-  S.money-=h.price;h.acted=0;h.lastCare=S.day;h.stallClean=100;delete h.sale;S.horses.push(h);F.lots.splice(i,1);F.bought++;unlock('wintersale');story(h,'Bought at the Winter Horse Sale for '+money(h.price)+'.');log('info','Bought '+h.name+' at the Winter Horse Sale for '+money(h.price)+'.');toast(h.name+' is home on your ranch.');pxp('biz',3);checkAch();save()}
-function festArt(k){const id='fa'+k;const f1=v=>v.toFixed(1);
+function festBuyLot(i){const F=festState();if(!F||!isSaleFest(F.k))return;const fn=FESTS[F.k].n;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<h.price)return toast('Not enough money.');
+  S.money-=h.price;h.acted=0;h.lastCare=S.day;h.stallClean=100;delete h.sale;S.horses.push(h);F.lots.splice(i,1);F.bought++;if(F.k==='wintersale')unlock('wintersale');story(h,'Bought at the '+fn+' for '+money(h.price)+'.');log('info','Bought '+h.name+' at the '+fn+' for '+money(h.price)+'.');toast(h.name+' is home on your ranch.');pxp('biz',3);checkAch();save()}
+function festArt(k0){const k=(FESTS[k0]&&FESTS[k0].art)||k0,id='fa'+k0;const f1=v=>v.toFixed(1);
   /* bunting: one sagging string, each flag hung exactly on it */
   const qy=x=>{const t=(x-20)/960;return (1-t)*(1-t)*5+2*(1-t)*t*15+t*t*5};
   const bunting=`<path d="M20 5 Q500 15 980 5" stroke="#6B4A30" stroke-width="1.2" fill="none"/>${[...Array(19)].map((_,i)=>{const x=40+i*50,y=qy(x);return `<path d="M${f1(x-6)} ${f1(y)} L${f1(x+6)} ${f1(y)} L${f1(x)} ${f1(y+10)}Z" fill="${['#C0392B','#F2C14E','#2E6FD8','#2D8A4E','#E67E22','#8E44AD'][i%6]}"/>`}).join('')}<rect x="17" y="2" width="4" height="66" fill="#6B4A30"/><rect x="979" y="2" width="4" height="66" fill="#6B4A30"/>`;
@@ -1019,10 +1025,10 @@ function festArt(k){const id='fa'+k;const f1=v=>v.toFixed(1);
 function festPanel(where){const k=festKey();const F=k?festState():null;const dp=dateParts(S.day);
   if(!F){if(where!=='compete')return '';const rows=Object.entries(FESTS).map(([kk,f])=>{const n=festNext(kk);return `<div class="calrow"><b>${f.n}</b><span class="note">${SEASONS[f.s]} day ${f.d}, once a year</span><span class="note">${n===0?'Today':'in '+n+' day'+(n>1?'s':'')}</span></div>`}).join('');
     return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Festivals</div><div class="calgrid">${rows}</div></div>`}
-  const f=FESTS[k];if(where==='market'&&k!=='wintersale')return '';
+  const f=FESTS[k];if(where==='market'&&!isSaleFest(k))return '';
   let body='';
-  if(k==='wintersale'){body=`<p class="note">Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price.</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="-?\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/data-m="market"/g,'data-m="fest"')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
-  else{const young=k==='foalshow';const cands=S.horses.filter(h=>!h.client&&!h.injury&&(young?isYoung(h):isAdult(h)));const m=festMult();
+  if(isSaleFest(k)){body=`<p class="note">${k==='wintersale'?'Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price.':'Sell '+(f.sellYoung?'a foal or yearling':'any horse')+' today and buyers pay <b>'+Math.round((f.sell-1)*100)+'% more</b> than usual. The lots below are about '+Math.round((1-f.lots.price)*100)+'% under the sale-barn price.'}</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="-?\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/data-m="market"/g,'data-m="fest"')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
+  else{const young=k==='foalshow'||f.type==='young';const cands=S.horses.filter(h=>!h.client&&!h.injury&&(young?isYoung(h):isAdult(h)));const m=festMult();
     if(F.done){const r=F.res;const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];body=`<p><b>${esc((H(r.h)||{}).name||'Your horse')}</b> placed <b>${ord[r.place-1]}</b>${r.prize?' and won <b>'+money(r.prize)+'</b>':''}.</p>`+(k==='harvest'?(F.booth?`<p class="note">Your booth earned ${money(F.booth)}.</p>`:`<button class="btn small" data-a="festbooth">Run the ranch booth</button>`):'')}
     else body=`<p class="note">Prizes this year: <b>${f.prize.map(v=>money(r10(v*m))).join(' / ')}</b> for 1st / 2nd / 3rd, plus reputation${k==='harvest'?' and a piece of prize tack for the winner':''}. Entry ${money(f.fee)}. One entry per year.</p>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select data-c="festhorse" style="max-width:320px"><option value="">Choose a horse…</option>${cands.map(h=>`<option value="${h.id}" ${UI.festHorse==h.id?'selected':''}>${esc(h.name)} · ${sexLabel(h)} · ${ageLabel(h)} · ${young?'potential '+Math.round(avg(h.pot)):'trained '+Math.round(avg(h.tr))}</option>`).join('')}</select><button class="btn primary small" data-a="festenter" data-k="${k}" ${UI.festHorse&&cands.some(h=>h.id==UI.festHorse)?'':'disabled'}>Enter the ${young?'Foal Show':'Best in Show class'}</button>${k==='harvest'&&!F.booth?'<button class="btn small" data-a="festbooth">Run the ranch booth</button>':''}</div>${cands.length?'':'<p class="note bad">You have no '+(young?'foal or yearling':'grown, healthy horse')+' to enter this year.</p>'}`}
@@ -1290,12 +1296,18 @@ const CHORES=[
   {id:'show',n:'Host a horse show',d:'Needs a Show Arena. Earn $400–900 and +1–2 reputation.'},
   {id:'scout',n:'Scout other ranches',d:'$60. Fresh horses and studs at the sale barn now.'},
 ];
-function wages(){return STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S.staff[x.id],x.id):0),0)}
+function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S.staff[x.id],x.id):0),0)*(locFx().wage||1))}
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='73';
+const BUILD='74';
 const CHANGELOG=[
+ {b:'74',d:'Nov 2, 2026',t:'Ranch locations',c:[
+  'Pick where your ranch is: Texas, Kentucky, Oklahoma, California, Ohio, Florida, Pennsylvania, Montana, Wyoming or South Dakota. Existing ranches choose the next time they play.',
+  'Each place has small perks and drawbacks (5 to 10%): home events with a score and prize bonus, cheaper or pricier hay, land and buildings, winter feed, local breeds in the market, and more. See them any time on the Office tab.',
+  'Every location has its own yearly local event, such as the Cutting Futurity, Bucking Horse Sale, Wild Horse Roundup or Winter Circuit Grand Prix.',
+  'New ranch map art for every region: a different ranch house, barn, fences, trees and scenery, with seasons that match the local weather. Snow only falls where it really snows.',
+  'Winter snow now also covers the hay fields and the riding ring.']},
  {b:'73',d:'Nov 2, 2026',t:'Uncommon tack, vet bill sharing and tidier papers',c:[
   'The two little flags on either side of your ranch name (top left) are in your ranch color. Click either one to change it.',
   'Fixed wording in the morning report: one horse now “loves to work and was sad to have the day off” and “is getting sour” (several horses still “love” and “are”).',
@@ -1627,7 +1639,7 @@ async function readCode(code){code=String(code).replace(/\s+/g,'');let x;
   if(code.startsWith('BR2.')){if(typeof DecompressionStream==='undefined')throw new Error('old browser');x=JSON.parse(await unzipBytes(B64U.dec(code.slice(4))))}
   else if(code.startsWith('{'))x=JSON.parse(code);else x=JSON.parse(decodeURIComponent(escape(atob(code))));
   if(!validSave(x))throw new Error('bad');return x}
-function enterGame(){UI.screen='game';stopTitleAnim();if(!UI.pdraft)UI.pdraft=defaultDraft();if(S.phase==='gameover')UI.modal={type:'gameover',lock:1};else if(S.needChar&&!(UI.modal&&UI.modal.lock))UI.modal={type:'whatsnew',lock:1}}
+function enterGame(){UI.screen='game';stopTitleAnim();locFestSync();if(!UI.pdraft)UI.pdraft=defaultDraft();if(S.phase==='gameover')UI.modal={type:'gameover',lock:1};else if(S.needChar&&!(UI.modal&&UI.modal.lock))UI.modal={type:'whatsnew',lock:1};else if(S.phase==='play'&&!S.tut&&!S.loc&&!(UI.modal&&UI.modal.lock))UI.modal={type:'locpick',lock:1,existing:1}}
 function loadState(x,msg){S=migrate(x);if(!S.market||!S.market.length||!S.studs)refreshMarket();if(!S.shop)refreshShop(S);UI={tab:'stable',modal:null,breedMare:'',breedSire:'',compHorse:''};enterGame();save();toast(msg)}
 function load(){try{const t=localStorage.getItem(KEY);if(t){const s=JSON.parse(t);if(validSave(s))return migrate(s)}}catch(e){}return null}
 function saveFileName(){return 'Bloodline Ranch - '+(S.ranchName||'Ranch').replace(/[^\w ]+/g,'').trim()+' - Day '+S.day+'.json'}
@@ -1855,7 +1867,7 @@ function value(h){
   if(h.happy!=null)v*=happyValueMult(h);
   return Math.max(100,Math.round(v/10)*10);
 }
-function hayNeed(h){let n=stage(h)==='Foal'?.5:1;if(has(h,'easykeeper'))n*=.7;if(has(h,'hardkeeper'))n*=1.4;const s=dateParts(S.day).sIdx;n*=s===3?1.3:s===1?.75:1;if(h.pastured===S.day&&s<2)n*=.5;return n}
+function hayNeed(h){let n=stage(h)==='Foal'?.5:1;if(has(h,'easykeeper'))n*=.7;if(has(h,'hardkeeper'))n*=1.4;const s=dateParts(S.day).sIdx;n*=s===3?1.3*(locFx().winter||1):s===1?.75:1;if(h.pastured===S.day&&s<2)n*=.5;return n}
 function horseHay(){return S.horses.reduce((a,h)=>a+hayNeed(h),0)}
 function herdHay(){return Math.round((horseHay()+stockHay())*[1,.9,.8][L('feedbarn')]*10)/10}
 function H(id){return S.horses.find(h=>h.id===+id)}
@@ -1903,7 +1915,7 @@ function pedChip(h){const k=h.pedKnown;const pc=h.prevCareer;return `<div class=
 function refreshMarket(){
   const lift=Math.min(18,S.rep/8);
   S.market=[];
-  for(let i=0;i<4;i++)S.market.push(genHorse({potMid:ri(36,56)+lift,origin:pick(FARMS)+' Ranch'}));
+  {const lb=locFx().breeds;for(let i=0;i<4;i++)S.market.push(genHorse({potMid:ri(36,56)+lift,breed:lb&&(i<1||(i<2&&R()<.5))?pick(lb):undefined,origin:pick(FARMS)+' Ranch'}))}
   for(let i=0;i<2;i++)S.market.push(genHorse({ageDays:ri(YEARLING,ADULT-2),potMid:ri(44,60)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({ageDays:ADULT+DPY*ri(9,13),potMid:ri(40,58)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({potMid:ri(60,68)+lift,nTraits:2,origin:pick(FARMS)+' Ranch'}));
@@ -1911,20 +1923,20 @@ function refreshMarket(){
   const firstStar=!!S.starOffer;if(firstStar||(S.starUnlocked&&R()<BAL.starWeekly)){S.starOffer=0;const sh=genHorse({breed:'starfall',potMid:ri(58,66)+lift,nTraits:2,origin:'A drifter from the high country'});S.market.push(sh);log('good',firstStar?'Word of your champions spread. A drifter has brought a Starfall Horse to the market!':'A drifter from the high country is back with another Starfall Horse. Check the market!')}
   S.market.forEach(enrichSale);
   if(S.rival&&S.rival.sales&&S.rival.sales.length){for(const h of S.rival.sales){h.fromRival=1;h.origin=S.rival.farm+' Ranch (your rival)';h.acted=0;S.market.push(h)}S.rival.sales=[]}
-  S.market.forEach(h=>h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*(h.fromRival?1.1:1)/10)*10);
+  S.market.forEach(h=>h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*(h.fromRival?1.1:1)*((locFx().cheap||{})[h.breed]||1)/10)*10);
   S.studs=[];
-  for(let i=0;i<3;i++){const s=genHorse({sex:'M',rarity:rollRarity(rarityWeights(1.6)),potMid:ri(55,72)+lift,trFrac:[.6,.9],nTraits:ri(1,3),origin:pick(FARMS)+' Stud'});
+  for(let i=0;i<3;i++){const lst=i===0&&locFx().stud;const s=genHorse({sex:'M',rarity:rollRarity(rarityWeights(1.6)),breed:lst?lst.breed:undefined,potMid:ri(55,72)+lift+(lst?lst.lift:0),trFrac:[.6,.9],nTraits:ri(1,3),origin:pick(FARMS)+' Stud'});
     if(i===2&&R()<.35)addTrait(s.traits,'bloodline');enrichSale(s);s.fee=Math.max(200,Math.round(value(s)*.22/50)*50);register(s);S.studs.push(s)}
   if(S.rival&&S.rival.horses&&typeof S.rival.horses[0]==='object'){const st=S.rival.horses.find(h=>h.sex==='M'&&isAdult(h));if(st){const c=JSON.parse(JSON.stringify(st));c.rivalStud=1;c.fee=Math.max(300,Math.round(value(st)*.44/50)*50);c.origin=S.rival.farm+' Ranch (your rival)';S.studs.push(c)}}
 }
 
 /* ---------- new game / save ---------- */
 const REP_MAX=300;
-function repGainMult(){return Math.max(.3,160/(160+S.rep))}
+function repGainMult(){return Math.max(.3,160/(160+S.rep))*(locFx().rep||1)}
 function gainRep(n){if(!(n>0))return 0;const g=Math.max(1,Math.round(n*repGainMult()));S.rep=Math.min(REP_MAX,S.rep+g);S.lastRepGain=S.day;return g}
 function repSaleMult(){return (1+Math.min(.3,S.rep/500))*(L('museum')?1.15:1)}
 function prestigeIncome(){let n=0;if(L('lodge')){const hof=S.horses.filter(h=>!h.client&&awardsOf(h).some(a=>a.id==='hof'));n+=300+hof.length*150+S.horses.filter(h=>!h.client).reduce((a,h)=>a+awardsOf(h).length*20,0)}if(L('museum'))n+=Math.min(3000,500+10*(S.stats.wins||0));return n}
-function saleValue(h){return Math.round(value(h)*repSaleMult()*(vetClear(h)?1:.9)*pskM('biz',.02)*(festKey()==='wintersale'?1.2:1)/10)*10}
+function saleValue(h){return Math.round(value(h)*repSaleMult()*(vetClear(h)?1:.9)*pskM('biz',.02)*festSellMult(h)*(locFx().sale||1)/10)*10}
 function loseRep(n,why,ev){const b=S.rep;S.rep=Math.max(0,S.rep-n);if(S.rep<b){const m=why+' Reputation −'+(b-S.rep)+'.';if(ev)ev.push(['bad',m]);else log('bad',m)}}
 const SPONSORS=[{id:'feedco',n:'Dry Creek Feed & Supply',req:40,pay:150,starts:1},{id:'tackco',n:'Silver Spur Tack Co.',req:80,pay:400,starts:2},{id:'brand',n:'Frontier Equine Nutrition',req:130,pay:1000,starts:3}];
 function bestSponsor(){return [...SPONSORS].reverse().find(x=>S.rep>=x.req)}
@@ -1956,6 +1968,7 @@ const ACH=[
   {id:'foalshow',n:'Best Young Horse',d:'Win the Spring Foal Show.'},
   {id:'harvest',n:'Best in Show',d:'Win Best in Show at the Harvest Fair.'},
   {id:'wintersale',n:'Bargain Hunter',d:'Buy a horse at the Winter Horse Sale.'},
+  {id:'localfest',n:'Hometown Hero',d:'Win your location’s yearly local event.'},
   {id:'rival5',n:'Nemesis',d:'Beat your rival five times in a row.'},
   {id:'rivalbuy',n:'Poached',d:'Buy a horse that came from your rival’s ranch.'},
   {id:'skill',n:'Kindred Spirit',d:'A horse learns a skill through its bond with you.'},
@@ -2009,7 +2022,7 @@ function trainGain(h,k){
   if(S.staff.trainer)g*=(1.08+.04*sk('trainer'))*(specOf('trainer')===k?1.15:1);g*=1+h.bond/400;if(hasS(h,'quickstudy'))g*=1.15;g*=1+gearSum(h,'train')/100;g*=[1,1.1,1.18,1.28][L('training')]*(L('ring')>=2?1.05:1);if(k==='spd')g*=1+[0,.1,.2,.3][L('track')];if(k==='sta')g*=1+[0,.08,.15][L('trails')];
   return g;
 }
-function injuryRisk(h,base){let r=base;if(fenceSafe())r*=.85;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r}
+function injuryRisk(h,base){let r=base*(locFx().injS?locFx().injS[dateParts(S.day).sIdx]:1);if(fenceSafe())r*=.85;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r}
 const SEV=['minor','moderate','serious','severe'];
 const SEVN={minor:'Minor',moderate:'Moderate',serious:'Serious',severe:'Severe'};
 const COND={
@@ -2248,7 +2261,7 @@ const TROUBLE={drought:{n:'Drought',warn:s=>'The almanac calls for a dry '+s+'. 
 function troubleActive(k){const t=S.trouble;if(!t||!t.active)return false;const dp=dateParts(S.day);return t.k===k&&dp.year===t.yr&&dp.sIdx===t.si}
 function troubleTick(ev){const dp=dateParts(S.day);if(dp.sday!==1)return;
   if(S.trouble&&S.trouble.active&&(dp.year!==S.trouble.yr||dp.sIdx!==S.trouble.si)){ev.push(['info',TROUBLE[S.trouble.k].end]);S.trouble=null}
-  if(dp.sIdx===0&&dp.year>=2&&(!S.trouble||S.trouble.yr<dp.year)){if(R()<.7){const k=pick(Object.keys(TROUBLE)),si=ri(1,3);S.trouble={k,yr:dp.year,si,active:0};ev.push(['warn','⚠ '+TROUBLE[k].warn(SEASONS[si].toLowerCase())])}}
+  if(dp.sIdx===0&&dp.year>=2&&(!S.trouble||S.trouble.yr<dp.year)){if(R()<.7){const k=locTroublePick(),si=ri(1,3);S.trouble={k,yr:dp.year,si,active:0};ev.push(['warn','⚠ '+TROUBLE[k].warn(SEASONS[si].toLowerCase())])}}
   if(S.trouble&&!S.trouble.active&&dp.year===S.trouble.yr&&dp.sIdx===S.trouble.si){S.trouble.active=1;const k=S.trouble.k;if(k==='drought')S.hayPrice*=2;if(k==='storm')S.fence=Math.min(S.fence??80,20);ev.push(['bad','⚠ '+TROUBLE[k].start])}}
 function troublePanel(){const t=S.trouble;if(!t)return '';const dp=dateParts(S.day);if(t.active)return `<div class="inbox bad" style="margin-bottom:16px"><b>${TROUBLE[t.k].n}:</b> ${esc(TROUBLE[t.k].start)}</div>`;if(dp.year===t.yr&&dp.sIdx<t.si)return `<div class="inbox warn" style="margin-bottom:16px"><b>Forecast:</b> ${esc(TROUBLE[t.k].warn(SEASONS[t.si].toLowerCase()))}</div>`;return ''}
 const SC_PTS=[10,6,4,2,2,1,1,1],SC_TW=[1,2,3,4,5,6,8,6,2,7];
@@ -2312,11 +2325,12 @@ function compMult(h,ev){
   if(ev.id==='dress'){if(has(h,'showstopper'))m*=1.12;if(has(h,'calm'))m*=1.06;m*=[1,1,1.03,1.05][L('ring')]}
   if(ev.id==='race'||ev.id==='barrel')m*=[1,1.04,1.08,1.12][L('track')];if(ev.id==='endur'||ev.id==='xc')m*=1+[0,.05,.1][L('trails')];if(ev.id==='jump'||ev.id==='rein')m*=[1,1,1.03,1.05][L('ring')];
   m*=1+(gearSum(h,'comp')+gearEv(h,ev.id))/100;
+  m*=locEvMult(ev);
   return m;
 }
 function baseScore(h,ev){let s=0;for(const k in ev.w)s+=ev.w[k]*h.tr[k];return s}
 function rollScore(h,ev){return baseScore(h,ev)*compMult(h,ev)*(.88+R()*.24)}
-function npc(t){return Math.max(5,t.base+gauss()*t.spread)}
+function npc(t){return Math.max(5,(t.base+gauss()*t.spread)*(locFx().npc||1))}
 function odds(h,ev,t){const pl=[0,0,0];const N=500;
   // same horse + event + level on the same day always gives the same numbers (no re-rolling by clicking)
   let st=((h.id*2654435761)^(EVENTS.indexOf(ev)*97+TIERS.indexOf(t)*7919+S.day*104729))>>>0;const rr=()=>{st=(st+0x6D2B79F5)>>>0;let z=st;z=Math.imul(z^(z>>>15),z|1);z^=z+Math.imul(z^(z>>>7),z|61);return((z^(z>>>14))>>>0)/4294967296};
@@ -2432,7 +2446,7 @@ function boardRate(){return Math.round((40+Math.min(S.rep,250)*.75+boardFacScore
 function clientSlots(){return S.rep<10?0:Math.min(4,1+Math.floor(S.rep/40)+(L('barn')>=2?1:0))}
 function genClient(){const farm=pick(FARMS),owner=pick(STAFF_FN)+' '+pick(STAFF_LN);
   const h=genHorse({ageDays:ri(ADULT,ADULT+DPY*5),potMid:42+Math.min(S.rep,200)/8,origin:'Client horse ('+farm+')'});h.bond=15;h.happy=ri(65,78);
-  const days=pick([6,8,8,10,12]),pay=Math.round(boardRate()*(.8+R()*.5)/5)*5;const goals=[{t:'care'}];
+  const days=pick([6,8,8,10,12]),pay=Math.round(boardRate()*(.8+R()*.5)*(locFx().client||1)/5)*5;const goals=[{t:'care'}];
   const gaps=STATS.map(x=>x.k).filter(k=>h.pot[k]-h.tr[k]>=6);if(gaps.length){const k=pick(gaps);goals.push({t:'stat',k,n:Math.min(h.pot[k]-h.tr[k]-1,Math.round(days*.55)+(S.rep>=80?1:0))})}
   const extra=[];if(S.rep>=40&&isAdult(h))extra.push({t:'place',n:S.rep>=120&&days>=10?2:1});if(S.rep>=25)extra.push({t:'bond',n:days>=10?45:days>=8?40:32});
   if(extra.length&&R()<.6)goals.push(pick(extra));
@@ -2793,12 +2807,12 @@ function endDay(){
   // random events
   const adults=S.horses.filter(h=>isAdult(h)&&!h.client);
   if(adults.length&&R()<.14){const h=pick(adults);if(!S.offers.some(o=>o.id===h.id)){const amt=Math.round(saleValue(h)*(1.15+R()*.4)*houseMult()/10)*10;S.offers.push({id:h.id,amt,exp:S.day+2,who:pick(FARMS)});ev.push(['info','A buyer from '+S.offers[S.offers.length-1].who+' offered '+money(amt)+' for '+h.name+'. See the Stable tab.'])}}
-  if(S.horses.length&&R()<.04*(specOf('vet')==='med'?.7:1)*[1,1,.5,.25][L('clinic')]*(dirtyStalls(25)?2:1)){const dh=S.horses.filter(x=>stallOf(x)<25&&!x.inj);const ok=S.horses.filter(x=>!x.inj);if(ok.length){const h=dh.length&&R()<.7?pick(dh):pick(ok);if(vaccinated(h)&&R()<.5)ev.push(['good',h.name+' fought off a bug going around. The vaccine from the last checkup helped.']);else if(!h.brew&&R()<.6)h.brew={id:illPick(),at:S.day+ri(1,3)};else ev.push(['warn',sicken(h)])}}
+  if(S.horses.length&&R()<.04*(locFx().illS?locFx().illS[dateParts(S.day).sIdx]:1)*(specOf('vet')==='med'?.7:1)*[1,1,.5,.25][L('clinic')]*(dirtyStalls(25)?2:1)){const dh=S.horses.filter(x=>stallOf(x)<25&&!x.inj);const ok=S.horses.filter(x=>!x.inj);if(ok.length){const h=dh.length&&R()<.7?pick(dh):pick(ok);if(vaccinated(h)&&R()<.5)ev.push(['good',h.name+' fought off a bug going around. The vaccine from the last checkup helped.']);else if(!h.brew&&R()<.6)h.brew={id:illPick(),at:S.day+ri(1,3)};else ev.push(['warn',sicken(h)])}}
   if(R()<.03){S.hay+=10;ev.push(['good','A neighbor dropped off 10 spare bales of hay.'])}
-  S.hayPrice=Math.max(3,Math.round(([8,7,9,12][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]));
+  S.hayPrice=Math.max(3,Math.round(([8,7,9,12][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]*locHayMult(dp.sIdx)));
   if(dp.sday===1&&S.day>1){scFinish(ev);scState();rivalChallenge(ev)}
   troubleTick(ev);
-  {const fk=festKey();if(fk)ev.push(['good','🎪 Today is the '+FESTS[fk].n+'! '+(fk==='wintersale'?'See the Market or Compete tab.':'Enter a horse on the Compete tab.')]);const fn=festKey(S.day+1);if(fn)ev.push(['info','Tomorrow is the '+FESTS[fn].n+'. Get a horse ready.'])}
+  {const fk=festKey();if(fk)ev.push(['good','🎪 Today is the '+FESTS[fk].n+'! '+(isSaleFest(fk)?'See the Market or Compete tab.':'Enter a horse on the Compete tab.')]);const fn=festKey(S.day+1);if(fn)ev.push(['info','Tomorrow is the '+FESTS[fn].n+'. Get a horse ready.'])}
   if(dp.sday===1)ev.push(['info',SEASONS[dp.sIdx]+' has arrived. Hay costs about '+money(S.hayPrice)+' a bale'+(dp.sIdx===3?' and horses eat more in the cold.':dp.sIdx===1?' and the pasture is lush, so horses eat less.':'.')]);
   if((S.day-1)%7===0){
     if(S.sponsor){const sp=SPONSORS.find(x=>x.id===S.sponsor.id);if(sp){if((S.weekStarts||0)>=sp.starts){S.money+=sp.pay;pxp('biz',4);ev.push(['good',sp.n+' paid your weekly sponsorship of '+money(sp.pay)+'.'])}else{S.sponsor.strikes=(S.sponsor.strikes||0)+1;ev.push(['warn',sp.n+' expected '+sp.starts+' event entr'+(sp.starts>1?'ies':'y')+' last week and got '+(S.weekStarts||0)+'. No payment. Strike '+S.sponsor.strikes+' of 2.'])}
@@ -3549,7 +3563,7 @@ function renderCompete(){
   ${ranchInvPanel(h,ok)}
   ${(S.invites||[]).filter(v=>v.until>=S.day).length?`<div class="invites">${S.invites.filter(v=>v.until>=S.day).map(v=>{const ev=EVENTS[v.ei],t=TIERS[INV];let o='';if(ok){const od=odds(h,ev,t);const fe=myFee(h,t,ev),net=od.avg-fe;o=`<span class="o ${od.win>.3?'good':od.top3>.3?'warn':'bad'}">Win ${pct(od.win)} · Top 3 ${pct(od.top3)}</span><span class="s ${net>=0?'good':'bad'}">Avg payout ${h&&h.client?'to you ':''}${money(od.avg)} (${net>=0?'+':''}${money(net)} after fee)</span>`}
     return `<div class="invite"><div><span class="invtag">By invitation only</span><h3>The ${esc(ev.n)} Invitational</h3><div class="note">Only the best ranches are asked. Invitation good through day ${v.until}. One entry.</div></div><button class="tierbtn" data-a="compete" data-e="${v.ei}" data-t="${INV}" ${!ok||!vetClear(h)||S.money<myFee(h,t,ev)?'disabled':''}><span class="t">Enter</span><span class="s">Entry ${money(myFee(h,t,ev))}${h&&h.client?' (owner pays half)':''}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${o}</button></div>`}).join('')}</div>`:(S.rep>=100?'<p class="note" style="margin:-6px 0 14px">No invitations this week. New ones arrive with the weekly market.</p>':'')}
-  <div class="events">${EVENTS.map((ev,ei)=>`<div class="event"><div><div class="evart">${eventArt(ev.id)}</div><h3>${ev.n}${ev.only?' <span class="chip rare">Specialty</span>':''}</h3><div class="w">${ev.b}</div><div class="w mono">${Object.entries(ev.w).map(([k,v])=>STATS.find(s=>s.k===k).s+' '+Math.round(v*100)+'%').join(' · ')}</div></div>
+  <div class="events">${EVENTS.map((ev,ei)=>`<div class="event"><div><div class="evart">${eventArt(ev.id)}</div><h3>${ev.n}${locHomeChip(ev)}${ev.only?' <span class="chip rare">Specialty</span>':''}</h3><div class="w">${ev.b}</div><div class="w mono">${Object.entries(ev.w).map(([k,v])=>STATS.find(s=>s.k===k).s+' '+Math.round(v*100)+'%').join(' · ')}</div></div>
    <div class="tiers">${TIERS.map((t,ti)=>{if(t.invite)return '';const locked=S.rep<t.req,closed=!tierOpen(ti);if(locked||closed)return '';let o='';if(ok&&!locked&&!closed){const od=odds(h,ev,t);const fe=myFee(h,t,ev),net=od.avg-fe;o=`<span class="o ${od.win>.3?'good':od.top3>.3?'warn':'bad'}">Win ${pct(od.win)} · Top 3 ${pct(od.top3)}</span><span class="s ${net>=0?'good':'bad'}">Avg payout ${h&&h.client?'to you ':''}${money(od.avg)} (${net>=0?'+':''}${money(net)} after fee)</span>`}
      const nv=(ti>=T_NAT||troubleActive('disease'))&&h&&!vetClear(h),grad=!classOk(h,ti),cn=classNote(h,ti),inel=h&&!evEligible(ev,h),oly=!eventOpen(ti,ei),wcq=ti===6&&h&&!h.wcQual;if(oly&&ei>=8)return '';return `<button class="tierbtn ${closed||oly?'closed':''}" data-a="compete" data-e="${ei}" data-t="${ti}" ${!ok||locked||closed||nv||inel||oly||wcq||S.money<myFee(h,t,ev)?'disabled':''}><span class="t">${t.n}</span><span class="s">Entry ${money(myFee(h,t,ev))}${h&&h.client?' (owner pays half)':''}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${locked?`<span class="o note">Needs ${t.req} reputation</span>`:closed?`<span class="o note">${openText(ti)}</span>`:oly?`<span class="o note">${olyDayText(ei)}</span>`:wcq?`<span class="o note bad">Needs a World Cup top-3 to qualify</span>`:inel?`<span class="o note bad">${evOnlyText(ev)}</span>`:nv?`<span class="o note bad">Needs a vet checkup (last 8 days)</span>`:o+(cn?`<span class="o note ${grad?'bad':'warn'}">${cn}</span>`:'')}</button>`}).join('')}</div></div>`).join('')}</div>`;
 }
@@ -3572,19 +3586,345 @@ function facCard(f){
   return `<div class="fac ${lv>=max?'maxed':lv?'built':''}" id="fac-${f.id}">
   <div class="fac-head"><b>${f.n}</b><span class="pips" aria-label="Level ${lv} of ${max}">${f.lv.slice(1).map((x,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</span></div>
   <div class="fac-cur">${lv?esc(cur.n):'<span class="note">'+(f.g==='stock'?'Not bought':'Not built')+'</span>'}<div class="note" style="font-weight:400">${cur.d||''}</div>${lv?`<div class="note upk">Upkeep ${money(facUpkeep(f,lv))}/day</div>`:''}</div>
-  ${nx?`<div class="fac-next"><div><span class="note">${lv?'Upgrade to':'Build'}:</span> <b>${nx.n}</b></div><div class="note">${nx.d}</div><div class="note upk">Upkeep becomes ${money(facUpkeep(f,lv+1))}/day (+${money(facUpkeep(f,lv+1)-facUpkeep(f,lv))})</div><button class="btn small primary" data-a="facup" data-f="${f.id}" ${S.money<nx.c?'disabled':''}>${lv?'Upgrade':f.g==='stock'?'Buy':'Build'} · ${money(nx.c)}</button></div>`:'<div class="note good">Fully upgraded</div>'}
+  ${nx?`<div class="fac-next"><div><span class="note">${lv?'Upgrade to':'Build'}:</span> <b>${nx.n}</b></div><div class="note">${nx.d}</div><div class="note upk">Upkeep becomes ${money(facUpkeep(f,lv+1))}/day (+${money(facUpkeep(f,lv+1)-facUpkeep(f,lv))})</div><button class="btn small primary" data-a="facup" data-f="${f.id}" ${S.money<facCost(f,lv+1)?'disabled':''}>${lv?'Upgrade':f.g==='stock'?'Buy':'Build'} · ${money(facCost(f,lv+1))}</button></div>`:'<div class="note good">Fully upgraded</div>'}
   </div>`;
 }
-function seasonMap(){const si=curSeason(),sv=SEAS;SEAS=si;let m=ranchMap();SEAS=sv;if(si!==1){m=seasonize(m,si);if(si===3)m=m.replace(/<\/svg>\s*$/,snowFlakes(77,1200,640,220)+'</svg>')}return m}
+/* ---------- ranch locations: look, climate and regional buildings (art prep; nothing picks a location yet) ---------- */
+const LOCS={
+ classic:{n:'Classic',climate:'temperate'},
+ texas:{n:'Fort Worth, Texas',climate:'dry',tint:{h:-14,s:.82,l:1.05},dirt:'#D8C49A',dirtD:'#BFA77A',rail:'#5B524A',post:'#5B524A',tree:'mesquite',house:'stone',barn:'metal',pano:'texas'},
+ kentucky:{n:'Lexington, Kentucky',climate:'temperate',tint:{h:6,s:1.12,l:.97},dirt:'#C9AE84',dirtD:'#A98E64',rail:'#1E1E20',post:'#1E1E20',tree:'oak',house:'mansion',barn:'black',pano:'kentucky'},
+ oklahoma:{n:'Oklahoma City, Oklahoma',climate:'plains',tint:{h:-6,s:.92,l:1.02},dirt:'#C27A52',dirtD:'#A3603C',rail:'#F7F3EA',post:'#7A5638',tree:'oak',house:'farm',barn:'red',pano:'oklahoma'},
+ california:{n:'Norco, California',climate:'med',tint:{h:-8,s:.9,l:1.04},dirt:'#DCC59C',dirtD:'#C3A97C',rail:'#F7F3EA',post:'#9C7550',tree:'liveoak',house:'adobe',barn:'mission',pano:'california'},
+ ohio:{n:'Central Ohio',climate:'temperate',tint:{h:2,s:1.05,l:.99},dirt:'#B39A72',dirtD:'#957C56',rail:'#F7F3EA',post:'#F7F3EA',tree:'maple',house:'ell',barn:'gambrel',pano:'ohio'},
+ florida:{n:'Ocala, Florida',climate:'sub',tint:{h:8,s:1.14,l:.98},dirt:'#E6D7B2',dirtD:'#CDBB92',rail:'#F7F3EA',post:'#F7F3EA',tree:'liveoakmoss',house:'cracker',barn:'shedrow',pano:'florida'},
+ pennsylvania:{n:'Lancaster County, Pennsylvania',climate:'temperate',tint:{h:3,s:1.02,l:.98},dirt:'#BFA17A',dirtD:'#9E8158',rail:'#F7F3EA',post:'#F7F3EA',tree:'maple',house:'fieldstone',barn:'bank',pano:'pennsylvania'},
+ montana:{n:'Miles City, Montana',climate:'north',tint:{h:-6,s:.82,l:1.03},dirt:'#C4AA86',dirtD:'#A68E6A',rail:'#8A6E52',post:'#6E5640',tree:'pine',house:'log',barn:'weathered',pano:'montana'},
+ wyoming:{n:'Sheridan, Wyoming',climate:'north',tint:{h:-10,s:.72,l:1.05},dirt:'#CDB894',dirtD:'#AE9874',rail:'#8C735A',post:'#6E5A46',tree:'cottonwood',house:'lodge',barn:'logbarn',pano:'wyoming'},
+ southdakota:{n:'Black Hills, South Dakota',climate:'north',tint:{h:-4,s:.86,l:1.01},dirt:'#BFA27A',dirtD:'#A08460',rail:'#8E8676',post:'#6B6458',tree:'pine',house:'aframe',barn:'gothic',pano:'southdakota'}};
+const LOC_ORDER=['texas','kentucky','oklahoma','california','ohio','florida','pennsylvania','montana','wyoming','southdakota'];
+function locId(){return (typeof S!=='undefined'&&S&&S.loc&&LOCS[S.loc])?S.loc:'classic'}
+function LOC(){return LOCS[locId()]}
+/* which seasonal effect each climate uses: [spring, summer, fall, winter] */
+const CLIMATES={temperate:['spring',null,'fall','snow'],north:['lateSpring',null,'fall','snow'],plains:['spring','dryish','fall','frost'],dry:['spring','dry','tan','frost'],med:['lush','gold','tan','spring'],sub:['lush','lush','light','muted']};
+function seasonFx(si,climate){return (CLIMATES[climate||LOC().climate]||CLIMATES.temperate)[si]}
+function snowy(si){return seasonFx(si==null?curSeason():si)==='snow'}
+/* shift the ground greens and dirt of a drawing toward the chosen region (sprites and pre-coloured regional art are skipped) */
+function locTint(svg,id){const L=LOCS[id||locId()];if(!L||!L.tint||!svg)return svg;
+  const parts=svg.split(/(<!--ns-->[\s\S]*?<!--\/ns-->|<!--lt-->[\s\S]*?<!--\/lt-->)/);
+  const T=L.tint,cache={},DIRT={'#d1b486':L.dirt,'#b9996a':L.dirtD,'#d8c599':L.dirt,'#cfc3a6':hexMix(L.dirt,'#ffffff',.25)};
+  const hsl=(r,g,b)=>{r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0;const l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return [h,s,l]};
+  const hex=(h,s,l)=>{s=Math.max(0,Math.min(1,s));l=Math.max(0,Math.min(1,l));const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')};
+  return parts.map(p=>p.startsWith('<!--')?p:p.replace(/#([0-9a-fA-F]{6})\b/g,(m0,x)=>{const lx='#'+x.toLowerCase();if(cache[lx])return cache[lx];let out=m0;
+    if(DIRT[lx])out=DIRT[lx];else{const r=parseInt(x.slice(0,2),16),g=parseInt(x.slice(2,4),16),b=parseInt(x.slice(4,6),16);const [h,s,l]=hsl(r,g,b);if(h>=58&&h<=172&&s>.1&&l>.08&&l<.92)out=hex(h+T.h,s*T.s,l*T.l)}
+    cache[lx]=out;return out})).join('')}
+const lt=s=>'<!--lt-->'+s+'<!--/lt-->';
+/* extra patterns the regional buildings use (added once to the map) */
+function locDefs(){return `<defs><pattern id="mBrick" width="8" height="4" patternUnits="userSpaceOnUse"><rect width="8" height="4" fill="none"/><path d="M0 3.7 H8 M2 0 V1.85 M6 1.85 V3.7 M0 1.85 H8" stroke="#000" stroke-opacity=".22" stroke-width=".55"/></pattern>
+ <pattern id="mTile" width="6" height="4.4" patternUnits="userSpaceOnUse"><path d="M0 4.2 Q1.5 2.4 3 4.2 Q4.5 2.4 6 4.2" stroke="#5E1E12" stroke-opacity=".45" stroke-width=".7" fill="none"/><path d="M1.5 3 V.6 M4.5 3 V.6" stroke="#fff" stroke-opacity=".18" stroke-width=".9"/></pattern>
+ <pattern id="mTin" width="3.2" height="10" patternUnits="userSpaceOnUse"><path d="M1.6 0 V10" stroke="#000" stroke-opacity=".22" stroke-width=".7"/><path d="M.6 0 V10" stroke="#fff" stroke-opacity=".18" stroke-width=".5"/></pattern>
+ <pattern id="mLog" width="10" height="4.2" patternUnits="userSpaceOnUse"><path d="M0 4 H10" stroke="#3A2414" stroke-opacity=".55" stroke-width=".9"/><path d="M0 1.4 H10" stroke="#fff" stroke-opacity=".16" stroke-width=".9"/></pattern>
+ <pattern id="mBatten" width="5" height="6" patternUnits="userSpaceOnUse"><rect x="4" width="1.2" height="6" fill="#000" opacity=".28"/></pattern>
+ <pattern id="mRock" width="9" height="7" patternUnits="userSpaceOnUse"><ellipse cx="2.4" cy="2" rx="2.2" ry="1.6" fill="#fff" opacity=".14"/><ellipse cx="6.8" cy="5" rx="2.4" ry="1.7" fill="#000" opacity=".14"/><path d="M0 3.6 Q4 2.4 9 3.8" stroke="#000" stroke-opacity=".2" stroke-width=".5" fill="none"/></pattern>
+ <pattern id="mSlate" width="7" height="4" patternUnits="userSpaceOnUse"><path d="M0 3.8 H7 M3.5 0 V1.9 M0 1.9 H7" stroke="#000" stroke-opacity=".3" stroke-width=".5"/></pattern></defs>`}
+/* ---- trees by region (local map units; x,y = crown centre) ---- */
+function locTree(kind,x,y,r,shadow){const sh=shadow(x+r*.5,y+r*.95,r*1.05,r*.32);const tr=(w=2)=>`<path d="M${x-w} ${y+r*1.05} L${x-w*.6} ${y+r*.2} L${x+w*.6} ${y+r*.2} L${x+w} ${y+r*1.05}Z" fill="#6B4A30"/>`;
+  if(kind==='pine'){const c=['#2F5E3A','#3A6B44','#2A5233'][Math.floor((x*7+y)%3)],sn=snowy(SEAS);return sh+'<!--ns-->'+`<rect x="${x-1.4}" y="${y+r*.7}" width="2.8" height="${r*.4}" fill="#5A4030"/>`+[0,1,2].map(i=>{const yy=y+r*.75-i*r*.52,w=r*(1-i*.24);return `<path d="M${x} ${yy-r*.8} L${x+w*.85} ${yy} L${x-w*.85} ${yy}Z" fill="${c}"/><path d="M${x} ${yy-r*.8} L${x+w*.85} ${yy} L${x} ${yy}Z" fill="#000" opacity=".16"/>`+(sn?`<path d="M${x} ${yy-r*.8} L${x+w*.5} ${yy-r*.34} Q${x+w*.2} ${yy-r*.28} ${x} ${yy-r*.4} Q${x-w*.25} ${yy-r*.26} ${x-w*.52} ${yy-r*.32}Z" fill="#F4F8FB"/><path d="M${x-w*.8} ${yy-.6} Q${x-w*.4} ${yy-2.4} ${x-w*.1} ${yy-1}" stroke="#F4F8FB" stroke-width="1.4" fill="none"/>`:'')}).join('')+'<!--/ns-->'}
+  if(kind==='palm'){let o=sh+'<!--ns-->'+`<path d="M${x-1} ${y+r*1.05} C${x-2} ${y+r*.4} ${x-1} ${y-r*.2} ${x+1} ${y-r*.75}" stroke="#8A7358" stroke-width="2.6" fill="none"/>`;for(const a of [-160,-120,-70,-30,10,40,170,200]){const ra=a*Math.PI/180,ex=x+1+Math.cos(ra)*r*1.1,ey=y-r*.75+Math.sin(ra)*r*.6+r*.25;o+=`<path d="M${x+1} ${y-r*.75} Q${(x+1+ex)/2} ${y-r*1.05} ${ex.toFixed(1)} ${ey.toFixed(1)}" stroke="${a%20?'#4E8A3E':'#3E7432'}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`}return o+`<circle cx="${x+1}" cy="${y-r*.72}" r="1.6" fill="#6B5A3A"/><!--/ns-->`}
+  if(kind==='mesquite'){let o=sh+`<path d="M${x} ${y+r*1.05} C${x-1} ${y+r*.5} ${x-4} ${y+r*.2} ${x-r*.5} ${y-r*.1} M${x} ${y+r*.6} C${x+2} ${y+r*.2} ${x+r*.4} ${y} ${x+r*.6} ${y-r*.2}" stroke="#5A4030" stroke-width="1.8" fill="none"/>`;for(const [dx,dy,k] of [[-.55,-.25,.42],[.6,-.3,.4],[0,-.55,.45],[-.2,-.05,.35],[.3,-.05,.33]])o+=`<ellipse cx="${x+dx*r}" cy="${y+dy*r}" rx="${r*k*1.25}" ry="${r*k*.75}" fill="#7E9150"/><ellipse cx="${x+dx*r-1}" cy="${y+dy*r-1.2}" rx="${r*k*.8}" ry="${r*k*.42}" fill="#9AAB68" opacity=".7"/>`;return o}
+  if(kind==='liveoak'||kind==='liveoakmoss'){let o=sh+tr(2.4);for(const [dx,dy,k] of [[-.7,0,.55],[.7,0,.55],[-.3,-.35,.6],[.35,-.35,.58],[0,-.05,.6]])o+=`<ellipse cx="${x+dx*r}" cy="${y+dy*r}" rx="${r*k*1.1}" ry="${r*k*.8}" fill="url(#mTree)"/>`;
+    if(kind==='liveoakmoss')for(const dx of [-.8,-.35,.2,.65])o+=`<path d="M${x+dx*r} ${y+r*.2} q-1 ${r*.3} .4 ${r*.55} M${x+dx*r+2} ${y+r*.15} q1 ${r*.25} -.4 ${r*.45}" stroke="#B9C2A6" stroke-width="1.1" fill="none" opacity=".9"/>`;return o}
+  if(kind==='cottonwood'){let o=sh+tr(2.2);for(const [dx,dy,k] of [[0,-.45,.62],[-.42,-.05,.52],[.42,-.08,.5],[0,.05,.5]])o+=`<ellipse cx="${x+dx*r}" cy="${y+dy*r}" rx="${r*k*.85}" ry="${r*k*1.08}" fill="url(#mTree)"/>`;return o+`<ellipse cx="${x-r*.2}" cy="${y-r*.62}" rx="${r*.2}" ry="${r*.3}" fill="#D6E9A6" opacity=".35"/>`}
+  if(kind==='maple'){let o=sh+tr(2);for(const [dx,dy,k] of [[0,-.4,.72],[-.48,0,.6],[.48,0,.6],[0,.1,.62]])o+=`<circle cx="${x+dx*r}" cy="${y+dy*r}" r="${r*k}" fill="url(#mTree)"/>`;return o+`<circle cx="${x-r*.3}" cy="${y-r*.65}" r="${r*.28}" fill="#CDE6A0" opacity=".35"/>`}
+  return null}
+/* ---- panorama strip behind the ranch (y -80..44 in map units) ---- */
+function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
+  const sky=(a,b)=>`<linearGradient id="lpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient><rect x="0" y="-80" width="${W}" height="112" fill="url(#lpSky)"/>`;
+  const ridge=(y,amp,step,col,seed,sharp)=>{const t=srng(seed);let d=`M0 ${y}`;for(let x=0;x<=W;x+=step){const yy=y-amp*(.35+t()*.65);d+=sharp?` L${x+step/2} ${yy.toFixed(1)} L${x+step} ${(y-amp*t()*.35).toFixed(1)}`:` Q${x+step/2} ${yy.toFixed(1)} ${x+step} ${(y-amp*t()*.3).toFixed(1)}`}return `<path d="${d} V48 H0Z" fill="${col}"/>`};
+  const clouds=(n,y0)=>{let c='';for(let i=0;i<n;i++){const x=60+i*(W/n)+r()*60,y=y0+r()*16,k=.7+r()*.6;c+=`<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${k.toFixed(2)})" opacity=".92"><ellipse rx="34" ry="9" fill="#fff"/><ellipse cx="-16" cy="-5" rx="16" ry="9" fill="#fff"/><ellipse cx="12" cy="-8" rx="18" ry="11" fill="#fff"/><ellipse cx="0" cy="4" rx="36" ry="4" fill="#DDE8EE"/></g>`}return c};
+  const silo=(x,y,s,col='#C9C2B0')=>`<g transform="translate(${x} ${y}) scale(${s})"><rect x="-5" y="-30" width="10" height="30" fill="${col}"/><path d="M-5 -30 Q0 -37 5 -30Z" fill="#8C939A"/><path d="M-5 -24 H5 M-5 -16 H5 M-5 -8 H5" stroke="#000" stroke-opacity=".12"/></g>`;
+  const farm=(x,y,s,barn='#A23E2C',house='#F4F1EA')=>`<g transform="translate(${x} ${y}) scale(${s})"><rect x="0" y="-10" width="18" height="10" fill="${barn}"/><path d="M-1 -10 L9 -17 L19 -10Z" fill="#5a4a40"/><rect x="24" y="-9" width="11" height="9" fill="${house}"/><path d="M23 -9 L29.5 -14 L36 -9Z" fill="#5C636B"/>${silo(20,0,.5)}</g>`;
+  const field=(y0,h,cols,seed)=>{const t=srng(seed);let f='',x=0;while(x<W){const w=60+t()*110,c0=cols[Math.floor(t()*cols.length)],c=snowy(SEAS)?hexMix(c0,'#F3F6F9',.86):c0;f+=`<path d="M${x} ${y0} L${x+w} ${y0+(t()-.5)*3} L${x+w+6} ${y0+h} L${x-4} ${y0+h}Z" fill="${c}"/>`;if(t()<.5)for(let k=1;k<5;k++)f+=`<path d="M${x+4} ${y0+k*h/5} L${x+w} ${y0+k*h/5}" stroke="#000" stroke-opacity=".07"/>`;x+=w}return f};
+  const sun=(x,y,c='#FFF3C0')=>`<circle cx="${x}" cy="${y}" r="26" fill="${c}" opacity=".35"/><circle cx="${x}" cy="${y}" r="13" fill="${c}"/>`;
+  if(id==='kentucky'){o+=sky('#9CC6E4','#E5EFE6')+clouds(5,-64)+ridge(-4,26,140,'#9FC28A',11)+ridge(8,20,110,'#86B474',12);
+    for(let i=0;i<5;i++){const x=40+i*250+r()*60,y=10+r()*8;o+=`<path d="M${x} ${y} C${x+60} ${y-4} ${x+140} ${y+3} ${x+210} ${y-2}" stroke="#1E1E20" stroke-width="1.4" fill="none"/><path d="M${x} ${y+3} C${x+60} ${y-1} ${x+140} ${y+6} ${x+210} ${y+1}" stroke="#1E1E20" stroke-width="1" fill="none"/>`}
+    o+=`<g transform="translate(860 6)"><rect x="0" y="-14" width="40" height="14" fill="#1E1E20"/><path d="M-3 -14 L20 -24 L43 -14Z" fill="#2A2A2E"/><rect x="17" y="-30" width="6" height="7" fill="#F4F1EA"/><path d="M16 -30 L20 -34 L24 -30Z" fill="#2A2A2E"/><path d="M4 -10 h7 v10 h-7z M29 -10 h7 v10 h-7z" fill="none" stroke="#F4F1EA" stroke-width=".8"/></g>`;
+    o+=[[150,0],[420,4],[640,-2],[1050,2]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="26" ry="11" fill="#5E8C4A"/><ellipse cx="${x-6}" cy="${y-4}" rx="14" ry="6" fill="#79A55E"/>`).join('')+ridge(30,10,90,'#9DC27E',13)}
+  else if(id==='texas'){o+=sky('#7FB4DF','#F1E6CC')+sun(1030,-48)+clouds(3,-66);
+    o+=`<path d="M0 6 L140 4 L170 -14 L330 -16 L350 -2 L520 0 L560 -20 L760 -22 L790 0 L1200 2 V48 H0Z" fill="#C98E62"/><path d="M170 -14 L330 -16 L333 -10 L168 -8Z M560 -20 L760 -22 L764 -15 L558 -13Z" fill="#B0704A"/><path d="M168 -6 L338 -8 M558 -11 L768 -13" stroke="#E2B48A" stroke-width="1.2"/>`;
+    o+=ridge(14,6,90,'#B9AF7A',21)+`<g transform="translate(980 18)"><path d="M-4 0 L-1 -34 M4 0 L1 -34 M-3 -12 H3 M-2 -24 H2" stroke="#6E6458" stroke-width="1"/>${[0,40,80,120,160,200,240,280,320].map(a=>`<path d="M0 -36 L${(8*Math.cos(a*Math.PI/180)).toFixed(1)} ${(-36+8*Math.sin(a*Math.PI/180)).toFixed(1)}" stroke="#7C7468" stroke-width="1.3"/>`).join('')}</g>`;
+    for(let i=0;i<14;i++){const x=r()*W,y=18+r()*16,s=.4+r()*.4;o+=`<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(${s.toFixed(2)})"><path d="M0 0 C-1 -8 -5 -12 -10 -14 M0 -4 C2 -10 6 -13 11 -14" stroke="#5A4A3A" stroke-width="2" fill="none"/><ellipse cx="-9" cy="-16" rx="9" ry="5" fill="#7E9150"/><ellipse cx="9" cy="-16" rx="9" ry="5" fill="#71854A"/><ellipse cx="0" cy="-19" rx="8" ry="4.6" fill="#8A9C58"/></g>`}
+    o+=ridge(32,6,80,'#B4B57A',23)}
+  else if(id==='oklahoma'){o+=sky('#86B9E0','#EFE9D8')+clouds(4,-62)+`<path d="M0 0 H${W} V48 H0Z" fill="#B7BF80"/>`+field(-2,22,['#D9C06A','#C9B060','#A8B870','#B9C47E','#E0C878'],31)+field(18,14,['#C9A85A','#B3B972','#D4BB66'],32);
+    o+=`<g transform="translate(760 0)"><rect x="0" y="-38" width="26" height="38" fill="#D8D2C4"/><rect x="26" y="-28" width="10" height="28" fill="#C4BDAE"/><rect x="6" y="-44" width="14" height="6" fill="#C4BDAE"/>${[0,1,2,3].map(i=>`<path d="M${i*6.5} -38 V0" stroke="#000" stroke-opacity=".1"/>`).join('')}<text x="13" y="-24" font-size="5" font-weight="800" text-anchor="middle" fill="#7A2E24" font-family="system-ui">CO-OP</text></g>`;
+    o+=`<g transform="translate(300 18)"><path d="M-14 0 L-2 -16 L2 -16 L14 0" stroke="#3A3A3A" stroke-width="1.6" fill="none"/><path d="M-20 -18 L18 -24" stroke="#2B2B2B" stroke-width="3" stroke-linecap="round"/><path d="M18 -24 q6 2 4 10" stroke="#2B2B2B" stroke-width="2.4" fill="none"/><circle cx="0" cy="-20" r="2" fill="#555"/><rect x="-22" y="-14" width="6" height="8" fill="#555"/></g>`;
+    o+=farm(120,12,.9)+farm(1020,14,.8,'#A23E2C')}
+  else if(id==='california'){o+=sky('#8EC0E6','#F6E9CF')+sun(980,-46)+clouds(3,-66)+ridge(-6,36,160,'#9AA7C0',41,1)+`<path d="M0 -10 L60 -24 L120 -16 L180 -30 L260 -18 L340 -34 L420 -20" fill="none"/>`;
+    o+=ridge(10,26,120,'#D4B878',42)+ridge(24,18,100,'#C9AC6A',43);
+    for(let i=0;i<22;i++){const x=r()*W,y=8+r()*26;o+=`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(6+r()*6).toFixed(1)}" ry="${(4+r()*3).toFixed(1)}" fill="#4E6B3E"/>`}
+    for(const x of [600,620,1110])o+=`<path d="M${x} 30 C${x-1} 10 ${x+1} -10 ${x+2} -24" stroke="#7A6A50" stroke-width="1.6" fill="none"/>${[-150,-110,-60,-20,20].map(a=>`<path d="M${x+2} -24 l${(10*Math.cos(a*Math.PI/180)).toFixed(1)} ${(6*Math.sin(a*Math.PI/180)+3).toFixed(1)}" stroke="#4E7A3E" stroke-width="2" stroke-linecap="round"/>`).join('')}`}
+  else if(id==='ohio'){o+=sky('#94BEE0','#EAEFE4')+clouds(5,-64)+`<path d="M0 -4 H${W} V48 H0Z" fill="#9FBF78"/>`+field(-6,20,['#7FAE5C','#9CC070','#C9B868','#6E9E4E','#B4C67E'],51)+field(14,18,['#86B060','#A9C47A','#D0BE70'],52);
+    o+=farm(240,10,1.1)+farm(900,8,.9)+[60,520,700,1150].map(x=>`<ellipse cx="${x}" cy="-4" rx="40" ry="8" fill="#4E7E3E"/>`).join('')}
+  else if(id==='florida'){o+=sky('#79B7E6','#EEF2E4')+clouds(7,-60)+`<path d="M0 -2 H${W} V48 H0Z" fill="#8FC06A"/><path d="M0 6 C200 2 420 10 640 5 S 1000 2 1200 6 V18 C1000 14 640 20 400 16 S 100 14 0 18Z" fill="#7DB6D4"/><path d="M80 10 h60 M500 12 h40 M880 9 h70" stroke="#fff" stroke-width="1.2" opacity=".6"/>`;
+    for(let i=0;i<10;i++){const x=40+i*120+r()*40,y=-2;o+=`<ellipse cx="${x}" cy="${y}" rx="${30+r()*14}" ry="10" fill="#4F8A44"/>`+[0,1].map(k=>`<path d="M${x-12+k*18} ${y+6} q-1 7 .5 11" stroke="#B9C2A6" stroke-width="1" fill="none"/>`).join('')}
+    for(const x of [210,330,760,1080,1130])o+=`<path d="M${x} 30 C${x-2} 14 ${x} -6 ${x+3} -22" stroke="#8A7358" stroke-width="2" fill="none"/>${[-160,-120,-70,-30,10,40].map(a=>`<path d="M${x+3} -22 q${(6*Math.cos(a*Math.PI/180)).toFixed(1)} -4 ${(12*Math.cos(a*Math.PI/180)).toFixed(1)} ${(7*Math.sin(a*Math.PI/180)+4).toFixed(1)}" stroke="#3E7A34" stroke-width="2.2" fill="none" stroke-linecap="round"/>`).join('')}`;
+    o+=`<path d="M0 26 H${W} V48 H0Z" fill="#95C46E"/>`}
+  else if(id==='pennsylvania'){o+=sky('#98C0DE','#ECEFE6')+clouds(4,-62)+ridge(-26,22,150,'#8FA7B4',61)+ridge(-12,22,130,'#7E9C86',62)+ridge(2,18,110,'#8FAE74',63);
+    o+=field(6,22,['#9FBF78','#C9BE72','#86AE62','#B6C68A','#D7C77E'],64);for(let i=0;i<6;i++)o+=`<path d="M0 ${8+i*4} C300 ${4+i*4} 900 ${12+i*4} 1200 ${7+i*4}" stroke="#000" stroke-opacity=".05" fill="none"/>`;
+    o+=farm(180,6,1.1,'#A23E2C','#F4F1EA')+farm(640,10,1,'#A23E2C')+farm(1000,4,.9,'#8E3A2C');
+    o+=`<g transform="translate(470 22)"><rect x="-10" y="-10" width="20" height="9" rx="2" fill="#2B2B2B"/><path d="M-10 -10 Q0 -16 10 -10" fill="#3a3a3a"/><circle cx="-6" cy="0" r="3.4" fill="none" stroke="#2B2B2B" stroke-width="1"/><circle cx="6" cy="0" r="3.4" fill="none" stroke="#2B2B2B" stroke-width="1"/><path d="M10 -4 L22 -4" stroke="#2B2B2B"/><path d="M22 -8 l8 0 l1 6 l-8 0z" fill="#5A3A22"/><path d="M24 -2 v4 M29 -2 v4" stroke="#5A3A22" stroke-width="1.2"/></g>`}
+  else if(id==='montana'){o+=sky('#7DAEDB','#E4ECEC')+clouds(3,-68)+ridge(-8,62,90,'#8496AE',71,1);
+    {const t=srng(72);let d='';for(let x=0;x<=W;x+=90){const px=x+45,py=-8-62*(.35+t()*.65);d+=`M${px} ${py.toFixed(1)} l-11 15 l5 -2 l6 5 l5 -4 l6 3Z `}o+=`<path d="${d}" fill="#F4F6F8" opacity=".95"/>`}
+    o+=ridge(4,30,120,'#6F8A7E',73)+[...Array(40)].map((_,i)=>{const x=i*31+r()*10,y=10+r()*10;return `<path d="M${x.toFixed(0)} ${(y-12).toFixed(0)} l5 12 h-10z" fill="${i%2?'#2F5E3A':'#3A6B44'}"/>`}).join('')+ridge(28,10,100,'#A7B485',74)}
+  else if(id==='wyoming'){o+=sky('#86B6E2','#EEEDE2')+clouds(3,-66)+ridge(-12,46,170,'#8B9CB8',81)+`<path d="M0 -40" />`;
+    {const t=srng(82);let d='';for(let x=0;x<=W;x+=170){const px=x+85,py=-12-46*(.35+t()*.65);d+=`M${px-14} ${(py+12).toFixed(1)} Q${px} ${(py-2).toFixed(1)} ${px+16} ${(py+12).toFixed(1)} q-6 -3 -12 2 q-5 -4 -10 0Z `}o+=`<path d="${d}" fill="#F4F6F8" opacity=".9"/>`}
+    o+=ridge(4,18,140,'#9AA38C',83)+`<path d="M180 14 L200 -4 L260 -6 L278 14Z M820 12 L836 -2 L880 -3 L894 12Z" fill="#B7926A"/>`+ridge(22,8,90,'#AEB48C',84);
+    for(let i=0;i<60;i++){const x=r()*W,y=18+r()*22;o+=`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(3+r()*3).toFixed(1)}" ry="${(1.6+r()*1.2).toFixed(1)}" fill="#8E9A82"/>`}}
+  else if(id==='southdakota'){o+=sky('#89B5DD','#ECEDE2')+clouds(4,-64)+ridge(-6,34,80,'#2E3E34',91)+ridge(2,26,70,'#24352B',92);
+    o+=[[300,-30],[316,-36],[330,-26],[700,-34],[712,-40]].map(([x,y])=>`<path d="M${x-5} 0 L${x-2} ${y} L${x+2} ${y+2} L${x+5} 0Z" fill="#B8B2A6"/>`).join('');
+    o+=ridge(14,12,110,'#3B5040',93)+ridge(28,8,100,'#A9B27E',94);
+    for(let i=0;i<7;i++){const x=480+i*26+r()*10,y=30+r()*6;o+=`<g transform="translate(${x.toFixed(0)} ${y.toFixed(0)}) scale(.55)"><ellipse cx="0" cy="-6" rx="10" ry="6" fill="#4A3424"/><ellipse cx="7" cy="-8" rx="6" ry="6.6" fill="#3A2818"/><ellipse cx="11" cy="-5" rx="3.4" ry="3" fill="#2E2014"/><path d="M-7 -1 v4 M-2 -1 v4 M4 -1 v4 M8 -1 v4" stroke="#2E2014" stroke-width="1.6"/></g>`}}
+  return o}
+/* ---- regional ranch houses: local map units, centred on x=110, ground at y=312. n = house level 0..3 ---- */
+function locHouse(style,n,C,shadow,tree){const k=[.72,.86,1,1.1][n],snow=snowy(SEAS),cap=(d)=>snow?`<path d="${d}" fill="#F7FAFC" opacity=".95"/>`:'';
+  const win=(x,y,w,h,o={})=>`${o.shut?`<rect x="${x-3.4}" y="${y}" width="3" height="${h}" fill="${o.shut}"/><rect x="${x+w+.4}" y="${y}" width="3" height="${h}" fill="${o.shut}"/>`:''}<rect x="${x-1}" y="${y-1}" width="${w+2}" height="${h+2}" fill="${o.frame||'#F7F3EA'}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${o.dark?'#3C4A58':'url(#mGlass)'}"/><path d="M${x+w/2} ${y} V${y+h} M${x} ${y+h/2} H${x+w}" stroke="${o.frame||'#F7F3EA'}" stroke-width=".9"/>${o.grille?[1,2,3].map(i=>`<path d="M${x+i*w/4} ${y} V${y+h}" stroke="#2B2B2B" stroke-width=".6"/>`).join(''):''}`;
+  const door=(x,y,w,h,col,o={})=>`<rect x="${x-1}" y="${y-1}" width="${w+2}" height="${h+1}" fill="${o.frame||'#F7F3EA'}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${col}"/><path d="M${x+2} ${y+3} h${w-4} v${h*.35} h${-(w-4)}z M${x+2} ${y+h*.5} h${w-4} v${h*.35} h${-(w-4)}z" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".6"/><circle cx="${x+w-2.4}" cy="${y+h*.55}" r=".8" fill="#E8C76A"/>${o.fan?`<path d="M${x} ${y-1} A${w/2} ${w/2} 0 0 1 ${x+w} ${y-1}Z" fill="url(#mGlass)" stroke="${o.frame||'#F7F3EA'}" stroke-width=".9"/>`:''}`;
+  const sideF=(x,y,h,d,dy,col,tex)=>`<path d="M${x} ${y} L${x+d} ${y-dy} L${x+d} ${y+h-dy} L${x} ${y+h}Z" fill="${col}"/>${tex?`<path d="M${x} ${y} L${x+d} ${y-dy} L${x+d} ${y+h-dy} L${x} ${y+h}Z" fill="url(#${tex})"/>`:''}<path d="M${x} ${y} L${x+d} ${y-dy} L${x+d} ${y+h-dy} L${x} ${y+h}Z" fill="#000" opacity=".26"/>`;
+  const face=(x,y,w,h,col,tex)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${col}"/>${tex?`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#${tex})"/>`:''}<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mWall)"/>`;
+  /* side-gabled roof: ridge runs left-right; front plane + right gable end */
+  const sgRoof=(x,y,w,rh,d,dy,col,tex,ov=5)=>{const p=`M${x-ov} ${y} L${x+w+ov} ${y} L${x+w+ov+d*.5} ${y-rh} L${x-ov+d*.5} ${y-rh}Z`;return `<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+ov+d*.5} ${y-rh}Z" fill="#000" opacity=".0"/><path d="M${x+w+ov} ${y} L${x+w+ov+d} ${y-dy} L${x+w+ov+d*.5} ${y-rh}Z" fill="${col}"/><path d="M${x+w+ov} ${y} L${x+w+ov+d} ${y-dy} L${x+w+ov+d*.5} ${y-rh}Z" fill="#000" opacity=".3"/><path d="${p}" fill="${col}"/>${tex?`<path d="${p}" fill="url(#${tex})" opacity=".7"/>`:''}<path d="M${x-ov+d*.5} ${y-rh} H${x+w+ov+d*.5}" stroke="#000" stroke-opacity=".3" stroke-width="1.2"/><path d="M${x-ov} ${y} H${x+w+ov}" stroke="#000" stroke-opacity=".25" stroke-width="1.4"/>`+cap(`M${x-ov+d*.5} ${y-rh} H${x+w+ov+d*.5} L${x+w+ov+d*.3} ${y-rh*.55} C${x+w*.7} ${y-rh*.62} ${x+w*.3} ${y-rh*.5} ${x-ov+d*.3} ${y-rh*.6}Z`)};
+  /* front-gabled roof (gable faces us), like bld() */
+  const fgRoof=(x,y,w,rh,d,dy,col,wall,tex,ov=5)=>`<path d="M${x+w/2} ${y-rh} L${x+w/2+d} ${y-rh-dy} L${x+w+ov+d} ${y-dy} L${x+w+ov} ${y}Z" fill="${col}"/>${tex?`<path d="M${x+w/2} ${y-rh} L${x+w/2+d} ${y-rh-dy} L${x+w+ov+d} ${y-dy} L${x+w+ov} ${y}Z" fill="url(#${tex})" opacity=".6"/>`:''}<path d="M${x+w/2} ${y-rh} L${x+w/2+d} ${y-rh-dy} L${x+w+ov+d} ${y-dy} L${x+w+ov} ${y}Z" fill="#000" opacity=".12"/><polygon points="${x-ov},${y} ${x+w/2},${y-rh} ${x+w+ov},${y}" fill="${col}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+4} ${x+w-1},${y}" fill="${wall}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+4} ${x+w-1},${y}" fill="url(#mWall)"/>`+cap(`M${x+w/2} ${y-rh} L${x+w/2+d} ${y-rh-dy} L${x+w+ov+d} ${y-dy} L${x+w+ov+d-4} ${y-dy+2} C${x+w*.8} ${y-rh*.4} ${x+w*.6} ${y-rh*.75} ${x+w/2+2} ${y-rh+3}Z M${x-ov} ${y} L${x+w/2} ${y-rh} L${x+w/2} ${y-rh+4} L${x-ov+4} ${y-1}Z`);
+  const chim=(x,y,h,col,tex='mStone')=>`<rect x="${x}" y="${y-h}" width="8" height="${h}" fill="${col}"/><rect x="${x}" y="${y-h}" width="8" height="${h}" fill="url(#${tex})"/><rect x="${x+5.6}" y="${y-h}" width="2.4" height="${h}" fill="#000" opacity=".18"/><rect x="${x-1}" y="${y-h-2}" width="10" height="2.6" fill="#7D776C"/>`;
+  const posts=(x0,x1,y0,y1,nP,col,w=2.2)=>[...Array(nP)].map((_,i)=>{const px=x0+(x1-x0)*i/(nP-1);return `<rect x="${(px-w/2).toFixed(1)}" y="${y0}" width="${w}" height="${y1-y0}" fill="${col}"/><rect x="${(px-w/2).toFixed(1)}" y="${y0}" width="${(w*.35).toFixed(1)}" height="${y1-y0}" fill="#fff" opacity=".25"/>`}).join('');
+  const flowers=(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="7" ry="3" fill="#5E8C4A"/><circle cx="${x-3}" cy="${y-1.4}" r="1.6" fill="#E25B7A"/><circle cx="${x+2}" cy="${y-2}" r="1.6" fill="#F2C14E"/><circle cx="${x+4}" cy="${y}" r="1.3" fill="#fff"/>`;
+  const B=312;let o='';
+  if(style==='mansion'){/* Kentucky: red brick Georgian with a white columned portico, black shutters */
+    const x=62,w=96,h=50,y=B-h,d=12,dy=7;
+    if(n>=2)o+=sideF(x-30+30,y+22,h-22,0,0,'#9C4A3A')+face(x-30,y+20,30,h-20,'#9C4A3A','mBrick')+sgRoof(x-30,y+20,30,10,0,0,'#3C3F46','mSlate',3)+win(x-23,y+28,8,11,{shut:'#1E1E20'})+win(x-12,y+28,8,11,{shut:'#1E1E20'});
+    o+=sideF(x+w,y,h,d,dy,'#9C4A3A','mBrick')+face(x,y,w,h,'#9C4A3A','mBrick')+chim(x+4,y-14,18,'#8A3E30','mBrick')+chim(x+w-12,y-14,18,'#8A3E30','mBrick')+sgRoof(x,y,w,18,d,dy,'#3C3F46','mSlate');
+    if(n>=3)o+=[x+16,x+w-26].map(dx=>`<rect x="${dx}" y="${y-13}" width="10" height="9" fill="#F4F1EA"/><path d="M${dx-1} ${y-13} L${dx+5} ${y-18} L${dx+11} ${y-13}Z" fill="#3C3F46"/><rect x="${dx+2.5}" y="${y-11}" width="5" height="6" fill="url(#mGlass)"/>`).join('');
+    for(const r2 of [y+6,y+28])for(const wx of [x+8,x+22,x+w-30,x+w-16])o+=win(wx,r2,8,12,{shut:'#1E1E20'});
+    o+=`<rect x="${x-2}" y="${y+22}" width="${w+4}" height="2" fill="#E9E3D6"/>`;
+    const px=x+w/2-22;o+=`<polygon points="${px-3},${y+4} ${px+22},${y-10} ${px+47},${y+4}" fill="#F4F1EA"/><polygon points="${px+3},${y+3} ${px+22},${y-6} ${px+41},${y+3}" fill="#E4DED0"/><circle cx="${px+22}" cy="${y-1}" r="2.2" fill="url(#mGlass)"/><rect x="${px-3}" y="${y+4}" width="50" height="3" fill="#F4F1EA"/>`+posts(px+1,px+43,y+7,B-4,4,'#FBFAF6',3.4)+door(px+17,B-20,10,18,'#1E1E20',{fan:1})+`<rect x="${px-4}" y="${B-4}" width="52" height="4" fill="#D9D2C2"/><rect x="${px+6}" y="${B-2}" width="32" height="2" fill="#C9C1B0"/>`;
+    if(n>=3)o+=[x-8,x+w+8].map(cx=>`<ellipse cx="${cx}" cy="${B-3}" rx="9" ry="5" fill="#3F6A32"/><ellipse cx="${cx-2}" cy="${B-5}" rx="5" ry="2.6" fill="#5E8C4A"/>`).join('')+[px-10,px+54].map(lx=>`<rect x="${lx}" y="${B-18}" width="1.4" height="18" fill="#2B2B2B"/><rect x="${lx-1.6}" y="${B-22}" width="4.6" height="5" rx="1" fill="#FFF3C4" stroke="#2B2B2B" stroke-width=".7"/>`).join('');}
+  else if(style==='stone'){/* Texas: limestone ranch house, long cedar-post porch, rust tin roof, star */
+    const x=46,w=124,h=30,y=B-h,d=12,dy=7;o+=chim(x+6,y-6,26,'#CDBB94');
+    o+=sideF(x+w,y,h,d,dy,'#D8C7A0','mStone')+face(x,y,w,h,'#D8C7A0','mStone')+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mRock)" opacity=".8"/>`;
+    for(const wx of [x+10,x+30,x+w-42,x+w-22])o+=win(wx,y+8,10,12,{frame:'#F2EAD8'});o+=door(x+w/2-6,B-20,12,20,'#7A4E2E',{frame:'#F2EAD8'});
+    o+=sgRoof(x-8,y+2,w+16,18,d,dy,'#A34A32','mTin',4)+posts(x-4,x+w+4,y+3,B-3,6,'#8A6A48',2.6)+`<rect x="${x-8}" y="${B-3}" width="${w+16}" height="3" fill="#BFAF8E"/>`;
+    o+=`<g transform="translate(${x+w/2} ${y-6})"><path d="${symStar(0,0,5.2,2.2,5)}" fill="#C9CED2" stroke="#7C8288" stroke-width=".5"/></g>`;
+    if(n>=3)o+=face(x+w-30,y-6,34,h+6,'#D8C7A0','mStone')+fgRoof(x+w-30,y-6,34,14,d,dy,'#A34A32','#D8C7A0','mTin',3)+win(x+w-19,y+6,12,14,{frame:'#F2EAD8'})+[x-14,x+w+18].map(ax=>`<g transform="translate(${ax} ${B})"><path d="M0 0 L-6 -10 M0 0 L-2 -12 M0 0 L2 -12 M0 0 L6 -10 M0 0 L-8 -6 M0 0 L8 -6" stroke="#6E8E6A" stroke-width="2" stroke-linecap="round"/></g>`).join('');
+    if(n>=1&&SEAS===0)o+=[...Array(12)].map((_,i)=>`<circle cx="${x-10+i*13}" cy="${B+3+(i%2)*2}" r="1.6" fill="#4E6FC9"/>`).join('');}
+  else if(style==='farm'){/* Oklahoma: two-storey white farmhouse, wraparound porch, storm cellar */
+    const x=70,w=72,h=52,y=B-h,d=12,dy=7;
+    o+=sideF(x+w,y,h,d,dy,'#F2EFE6','mSiding')+face(x,y,w,h,'#F2EFE6','mSiding')+fgRoof(x,y,w,28,d,dy,'#5C636B','#F2EFE6','mShingle')+chim(x+w-10,y-16,14,'#9A4A3A','mBrick');
+    o+=win(x+w/2-5,y-16,10,10)+win(x+12,y+6,10,13)+win(x+w-22,y+6,10,13)+win(x+12,y+30,10,13)+win(x+w-22,y+30,10,13)+door(x+w/2-6,B-20,12,20,'#9A3A2C');
+    o+=`<path d="M${x-14} ${y+24} H${x+w+14} L${x+w+14+d} ${y+24-dy}" stroke="#5C636B" stroke-width="4" fill="none"/>`+posts(x-12,x+w+12,y+26,B-3,6,'#FBFAF6')+`<path d="M${x-12} ${B-9} H${x+w+12}" stroke="#FBFAF6" stroke-width="1.4"/>${[...Array(14)].map((_,i)=>`<path d="M${x-10+i*7} ${B-9} V${B-3}" stroke="#FBFAF6" stroke-width=".8"/>`).join('')}<rect x="${x-14}" y="${B-3}" width="${w+28}" height="3" fill="#B9A27A"/>`;
+    o+=`<path d="M${x-30} ${B} L${x-26} ${B-7} L${x-14} ${B-7} L${x-14} ${B}Z" fill="#7C8A92"/><path d="M${x-22} ${B-7} V${B}" stroke="#5C636B"/>`;
+    if(n>=3)o+=`<path d="M${x+w+16} ${B-3} l3 -9 l3 9 M${x+w+18} ${B-10} q6 -2 10 2" stroke="#6b6b66" stroke-width="1" fill="none"/>`+flowers(x-6,B+2)+flowers(x+w+8,B+2);}
+  else if(style==='adobe'){/* California: white stucco hacienda, clay tile hip roof, arcade of arches, bougainvillea */
+    const x=48,w=122,h=32,y=B-h,d=12,dy=7;
+    o+=sideF(x+w,y,h,d,dy,'#F3EEE4')+face(x,y,w,h,'#F3EEE4');
+    const rf=`M${x-6} ${y} L${x+w+6} ${y} L${x+w+d-4} ${y-14} L${x+10} ${y-14}Z`;o+=`<path d="M${x+w+6} ${y} L${x+w+6+d} ${y-dy} L${x+w+d-4} ${y-14}Z" fill="#9A4632"/><path d="${rf}" fill="#B5523A"/><path d="${rf}" fill="url(#mTile)"/><path d="M${x-6} ${y} H${x+w+6}" stroke="#7A2E1E" stroke-width="1.6"/>`+cap(`M${x+10} ${y-14} L${x+w+d-4} ${y-14} L${x+w} ${y-8} L${x+4} ${y-8}Z`);
+    o+=chim(x+18,y-12,10,'#F3EEE4','mWall')+`<rect x="${x+17}" y="${y-24}" width="10" height="3" fill="#B5523A"/>`;
+    const na=n>=2?5:4,aw=(w-16)/na;for(let i=0;i<na;i++){const ax=x+8+i*aw;o+=`<path d="M${ax+2} ${B} V${y+14} A${aw/2-2} ${aw/2-2} 0 0 1 ${ax+aw-2} ${y+14} V${B}Z" fill="#5A4636"/><path d="M${ax+2} ${B} V${y+14} A${aw/2-2} ${aw/2-2} 0 0 1 ${ax+aw-2} ${y+14}" fill="none" stroke="#E4DCCB" stroke-width="1.4"/>`;if(i===Math.floor(na/2))o+=door(ax+aw/2-5,B-18,10,18,'#7A4E2E',{frame:'#5A4636'});else o+=win(ax+aw/2-4,y+18,8,9,{grille:1,frame:'#5A4636'})}
+    o+=`<rect x="${x-2}" y="${B-2}" width="${w+4}" height="2" fill="#C27A52"/>`;
+    o+=`<g>${[[x+2,y+6],[x+6,y+2],[x+10,y+8],[x+w-6,y+4],[x+w-10,y+10]].map(([bx,by])=>`<circle cx="${bx}" cy="${by}" r="4" fill="#C2307A"/><circle cx="${bx+2}" cy="${by-1}" r="2.6" fill="#E04E9A"/>`).join('')}<path d="M${x+4} ${B} C${x+3} ${y+20} ${x+5} ${y+12} ${x+6} ${y+4}" stroke="#4E7A3E" stroke-width="1.2" fill="none"/></g>`;
+    if(n>=3)o+=`<g transform="translate(${x+w/2} ${y-16})"><rect x="-7" y="-14" width="14" height="14" fill="#F3EEE4"/><path d="M-7 -14 Q0 -22 7 -14" fill="#F3EEE4"/><path d="M-3 -2 V-9 A3 3 0 0 1 3 -9 V-2Z" fill="#5A4636"/><circle cx="0" cy="-7" r="1.8" fill="#C9A227"/></g>`+[x-10,x+w+12].map(px=>`<path d="M${px-4} ${B} h8 l-1.4 -7 h-5.2z" fill="#C27A52"/><circle cx="${px}" cy="${B-9}" r="4" fill="#5E8C4A"/>`).join('');}
+  else if(style==='ell'){/* Ohio: gabled-ell farmhouse, green metal roof, porch with gingerbread trim */
+    const x=56,w=48,h=54,y=B-h,d=12,dy=7;
+    o+=face(x+w,y+16,58,h-16,'#F4F1EA','mSiding')+sgRoof(x+w,y+16,58,16,d,dy,'#3D6B4C','mTin',3)+sideF(x+w+58,y+16,h-16,d,dy,'#F4F1EA');
+    o+=sideF(x+w,y,h,6,4,'#F4F1EA')+face(x,y,w,h,'#F4F1EA','mSiding')+fgRoof(x,y,w,26,d*.5,dy*.5,'#3D6B4C','#F4F1EA','mTin')+chim(x+w+36,y+2,14,'#9A4A3A','mBrick');
+    o+=win(x+w/2-5,y-14,10,9)+win(x+8,y+6,9,14)+win(x+w-17,y+6,9,14)+win(x+8,y+32,9,14)+win(x+w-17,y+32,9,14)+win(x+w+40,y+22,9,11);
+    o+=`<path d="M${x+w-2} ${y+30} H${x+w+60}" stroke="#3D6B4C" stroke-width="4"/>`+posts(x+w+2,x+w+56,y+32,B-3,4,'#FBFAF6')+[...Array(4)].map((_,i)=>`<path d="M${x+w+4+i*17} ${y+33} q4 4 8 0 q4 4 8 0" stroke="#FBFAF6" stroke-width="1" fill="none"/>`).join('')+door(x+w+22,B-19,11,19,'#3D6B4C')+`<rect x="${x+w}" y="${B-3}" width="62" height="3" fill="#B9A27A"/>`;
+    if(n>=3)o+=flowers(x-6,B+2)+flowers(x+20,B+3)+`<path d="M${x+w+30} ${y+34} v8" stroke="#6b5a48"/><rect x="${x+w+24}" y="${y+42}" width="14" height="3" fill="#8A6542"/>`;}
+  else if(style==='cracker'){/* Florida: cracker house on piers, wide screened porch, silver tin roof, dogtrot */
+    const x=44,w=126,h=30,y=B-h-6,d=12,dy=7;o+=`<rect x="${x}" y="${B-6}" width="${w}" height="6" fill="#3A3226" opacity=".55"/>`+[...Array(8)].map((_,i)=>`<rect x="${x+2+i*17.4}" y="${B-6}" width="4" height="6" fill="#B8604A"/>`).join('');
+    o+=sideF(x+w,y,h,d,dy,'#F2E3A6','mSiding')+face(x,y,w,h,'#F2E3A6','mSiding');
+    if(n>=2)o+=`<rect x="${x+w/2-12}" y="${y+2}" width="24" height="${h-2}" fill="#9FC3DA"/><rect x="${x+w/2-12}" y="${y+h-10}" width="24" height="10" fill="#8FB06A"/>`;
+    o+=sgRoof(x-10,y+4,w+20,20,d,dy,'#B9BFC4','mTin',4)+posts(x-6,x+w+6,y+5,B-6,7,'#FBFAF6')+`<rect x="${x-8}" y="${y+5}" width="${w+16}" height="${B-6-y-5}" fill="#D8DEE2" opacity=".28"/><path d="M${x-8} ${B-12} H${x+w+8}" stroke="#FBFAF6" stroke-width="1.2"/><rect x="${x-8}" y="${B-7}" width="${w+16}" height="2" fill="#B9A27A"/>`;
+    for(const wx of [x+10,x+26,x+w-36,x+w-20])o+=win(wx,y+9,9,12,{shut:'#3D7A5A'});o+=door(x+(n>=2?w/2-24:w/2-6),B-24,11,18,'#3D7A5A');
+    o+=`<path d="M${x+w/2+2} ${B-6} l6 6 h-12z" fill="#B9A27A"/>`+(n>=3?`<path d="M${x+8} ${y+14} q12 10 24 0" stroke="#E9DFC6" stroke-width="1.4" fill="none"/>`:'');}
+  else if(style==='fieldstone'){/* Pennsylvania: two-storey fieldstone farmhouse, pent eave, green shutters, end chimneys */
+    const x=62,w=96,h=52,y=B-h,d=12,dy=7;
+    o+=sideF(x+w,y,h,d,dy,'#B8A98F','mStone')+face(x,y,w,h,'#B8A98F','mStone')+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mRock)"/>`+chim(x+2,y-14,18,'#A89A80')+chim(x+w-10,y-14,18,'#A89A80')+sgRoof(x,y,w,20,d,dy,'#4B4E57','mSlate');
+    for(const wx of [x+10,x+30,x+w-40,x+w-20])o+=win(wx,y+6,9,13,{shut:'#2F5D46'});
+    o+=`<path d="M${x-4} ${y+26} H${x+w+4} L${x+w+4+d} ${y+26-dy}" stroke="#4B4E57" stroke-width="3.4" fill="none"/>`;
+    for(const wx of [x+10,x+w-20])o+=win(wx,y+32,9,13,{shut:'#2F5D46'});o+=door(x+w/2-6,B-20,12,20,'#2F5D46',{fan:1})+`<path d="M${x+w/2-10} ${B-24} L${x+w/2} ${B-30} L${x+w/2+10} ${B-24}Z" fill="#F4F1EA"/><rect x="${x+w/2-10}" y="${B-3}" width="20" height="3" fill="#9A8E78"/>`;
+    if(n>=2)o+=face(x-30,y+22,30,h-22,'#B8A98F','mStone')+sgRoof(x-30,y+22,30,10,0,0,'#4B4E57','mSlate',3)+win(x-20,y+32,9,11,{shut:'#2F5D46'});
+    if(n>=3)o+=flowers(x+20,B+2)+flowers(x+w-14,B+2)+`<path d="M${x-36} ${B} H${x+w+20}" stroke="#A89A80" stroke-width="3"/>`;}
+  else if(style==='log'){/* Montana: log ranch house, river-rock chimney, green metal roof, log porch, antlers */
+    const x=52,w=114,h=34,y=B-h,d=12,dy=7;
+    o+=sideF(x+w,y,h,d,dy,'#9A6B43','mLog')+face(x,y,w,h,'#9A6B43','mLog')+[...Array(8)].map((_,i)=>`<circle cx="${x-1}" cy="${y+2+i*4.2}" r="2.1" fill="#C29A6A" stroke="#6E4A2C" stroke-width=".5"/><circle cx="${x+w+1}" cy="${y+2+i*4.2}" r="2.1" fill="#B08A5C" stroke="#6E4A2C" stroke-width=".5"/>`).join('');
+    o+=`<rect x="${x-14}" y="${y-22}" width="14" height="${h+22}" fill="#8C939A"/><rect x="${x-14}" y="${y-22}" width="14" height="${h+22}" fill="url(#mRock)"/><rect x="${x-14}" y="${y-22}" width="14" height="${h+22}" fill="url(#mStone)"/><rect x="${x-15}" y="${y-24}" width="16" height="3" fill="#6E747A"/>`;
+    o+=sgRoof(x-6,y+2,w+12,24,d,dy,'#3E6650','mTin',5);if(n>=2)o+=`<rect x="${x+w/2-12}" y="${y-16}" width="24" height="14" fill="#9A6B43"/><rect x="${x+w/2-12}" y="${y-16}" width="24" height="14" fill="url(#mLog)"/><path d="M${x+w/2-15} ${y-16} L${x+w/2} ${y-26} L${x+w/2+15} ${y-16}Z" fill="#3E6650"/>${win(x+w/2-8,y-13,16,9)}`;
+    for(const wx of [x+10,x+28,x+w-38,x+w-20])o+=win(wx,y+8,10,12,{frame:'#E9DFC6'});o+=door(x+w/2-6,B-20,12,20,'#5A3A22',{frame:'#E9DFC6'});
+    o+=posts(x-2,x+w+2,y+4,B-3,6,'#B08A5C',3)+`<rect x="${x-6}" y="${B-3}" width="${w+12}" height="3" fill="#8A6A48"/><path d="M${x+w/2-7} ${B-23} q-3 -5 -6 -6 M${x+w/2-7} ${B-23} q-1 -4 -1 -7 M${x+w/2+7} ${B-23} q3 -5 6 -6 M${x+w/2+7} ${B-23} q1 -4 1 -7 M${x+w/2-7} ${B-23} H${x+w/2+7}" stroke="#EDE3CF" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
+    if(n>=3)o+=`<g transform="translate(${x+w+22} ${B})"><rect x="-6" y="-8" width="12" height="8" fill="#8A6542"/>${[0,1,2].map(i=>`<rect x="${-6+i*4}" y="-12" width="3.4" height="4" fill="#B08A5C"/>`).join('')}</g>`;}
+  else if(style==='lodge'){/* Wyoming: timber-frame lodge, big glass gable, stone base, cedar shake roof */
+    const x=58,w=100,h=40,y=B-h,d=12,dy=7;
+    o+=sideF(x+w,y,h,d,dy,'#5E4430','mBatten')+face(x,y,w,h,'#5E4430','mBatten')+`<rect x="${x}" y="${B-10}" width="${w}" height="10" fill="#8C939A"/><rect x="${x}" y="${B-10}" width="${w}" height="10" fill="url(#mRock)"/>`;
+    o+=sgRoof(x-4,y+2,w+8,16,d,dy,'#6B5040','mShingle',4);
+    const gx=x+w/2-26;o+=`<polygon points="${gx-4},${y+2} ${gx+26},${y-30} ${gx+56},${y+2}" fill="#6B5040"/><polygon points="${gx+2},${y+2} ${gx+26},${y-24} ${gx+50},${y+2}" fill="#4F86B0"/><polygon points="${gx+2},${y+2} ${gx+26},${y-24} ${gx+50},${y+2}" fill="url(#mGlass)" opacity=".35"/><path d="M${gx+2} ${y+2} L${gx+26} ${y-24} L${gx+50} ${y+2} M${gx+26} ${y-24} V${y+2} M${gx+10} ${y-6} H${gx+42} M${gx+14} ${y+2} L${gx+26} ${y-12} L${gx+38} ${y+2}" stroke="#C9A06A" stroke-width="1.6" fill="none"/>`+cap(`M${gx-4} ${y+2} L${gx+26} ${y-30} L${gx+56} ${y+2} L${gx+50} ${y+2} L${gx+26} ${y-25} L${gx+2} ${y+2}Z`);
+    o+=`<rect x="${gx}" y="${y+2}" width="52" height="${h-12}" fill="#4F86B0"/><rect x="${gx}" y="${y+2}" width="52" height="${h-12}" fill="url(#mGlass)" opacity=".3"/>${[1,2,3].map(i=>`<path d="M${gx+i*13} ${y+2} V${B-10}" stroke="#C9A06A" stroke-width="1.6"/>`).join('')}`;
+    o+=win(x+6,y+12,10,12,{frame:'#C9A06A'})+win(x+w-16,y+12,10,12,{frame:'#C9A06A'})+`<rect x="${x-8}" y="${B-3}" width="${w+16}" height="3" fill="#8A6A48"/>`+posts(x-6,x+w+6,B-12,B-3,8,'#C9A06A',1.6)+`<path d="M${x-6} ${B-12} H${x+w+6}" stroke="#C9A06A" stroke-width="1.4"/>`;
+    if(n>=3)o+=`<g transform="translate(${x-16} ${B})"><path d="M0 0 V-14 M-4 -12 Q0 -18 4 -12" stroke="#5A4A3A" stroke-width="1.6" fill="none"/><circle cx="0" cy="-16" r="3" fill="#E9DFC6"/></g>`;}
+  else if(style==='aframe'){/* South Dakota: Black Hills A-frame cabin, steep shingle roof to the ground, big window, deck */
+    const cx=110,w=88,top=B-70,d=14,dy=8,rf='#2E4A3A';
+    o+=`<path d="M${cx} ${top} L${cx+d} ${top-dy} L${cx+w/2+d} ${B-4-dy} L${cx+w/2} ${B-4}Z" fill="${rf}"/><path d="M${cx} ${top} L${cx+d} ${top-dy} L${cx+w/2+d} ${B-4-dy} L${cx+w/2} ${B-4}Z" fill="url(#mShingle)" opacity=".6"/><path d="M${cx} ${top} L${cx+d} ${top-dy} L${cx+w/2+d} ${B-4-dy} L${cx+w/2} ${B-4}Z" fill="#000" opacity=".14"/>`+cap(`M${cx} ${top} L${cx+d} ${top-dy} L${cx+w/2+d} ${B-4-dy} L${cx+w/2+d-6} ${B-8-dy} C${cx+w/3} ${B-34} ${cx+12} ${top+20} ${cx+3} ${top+6}Z`);
+    o+=chim(cx+20,top+12,22,'#8C939A','mStone');
+    o+=`<polygon points="${cx-w/2},${B-4} ${cx},${top} ${cx+w/2},${B-4}" fill="${rf}"/><polygon points="${cx-w/2+7},${B-4} ${cx},${top+10} ${cx+w/2-7},${B-4}" fill="#7A4A2E"/><polygon points="${cx-w/2+7},${B-4} ${cx},${top+10} ${cx+w/2-7},${B-4}" fill="url(#mBoards)"/>`;
+    o+=`<polygon points="${cx-20},${B-30} ${cx},${top+20} ${cx+20},${B-30}" fill="#4F86B0"/><polygon points="${cx-20},${B-30} ${cx},${top+20} ${cx+20},${B-30}" fill="url(#mGlass)" opacity=".45"/><path d="M${cx} ${top+20} V${B-30} M${cx-12} ${B-36} H${cx+12}" stroke="#F4F1EA" stroke-width="1.2"/>`+win(cx-24,B-26,10,12,{frame:'#C0392B'})+win(cx+14,B-26,10,12,{frame:'#C0392B'})+door(cx-5,B-22,10,18,'#C0392B',{frame:'#7A4A2E'});
+    o+=`<rect x="${cx-w/2-6}" y="${B-5}" width="${w+12}" height="5" fill="#8A6A48"/>`+posts(cx-w/2-4,cx+w/2+4,B-12,B-5,9,'#6E5640',1.4)+`<path d="M${cx-w/2-4} ${B-12} H${cx+w/2+4}" stroke="#6E5640" stroke-width="1.4"/>`;
+    if(n>=2)o+=face(cx+w/2+4,B-26,30,26,'#7A4A2E','mBoards')+sgRoof(cx+w/2+4,B-26,30,10,d*.6,dy*.6,rf,'mShingle',3)+win(cx+w/2+14,B-20,9,10,{frame:'#C0392B'});
+    if(n>=3)o+=`<g transform="translate(${cx-w/2-16} ${B})"><ellipse cx="0" cy="-2" rx="9" ry="4" fill="#9A9488"/><path d="M-4 -4 l2 -6 l2 6 M0 -4 l3 -8 l2 8" stroke="#E07A3A" stroke-width="1.6" fill="none"/></g>`;}
+  else return null;
+  const prop=n>=2&&style!=='aframe'&&style!=='adobe'&&style!=='mansion'?'':'';
+  return `<!--ns--><g transform="translate(110 ${B}) scale(${k}) translate(-110 -${B})">${shadow(118,B+2,74,6)}${o}</g><!--/ns-->`+(n>=2&&!['mansion','stone','adobe','cracker'].includes(style)?tree(30,B-34,15):n>=2&&style==='cracker'?'':'')}
+/* ---- regional barns: centred on x=285, ground at y=310 ---- */
+function locBarn(style,n,C,shadow){const w=104+n*11,h=54+n*3,x=285-w/2,B=310,y=B-h,d=14,dy=8,snow=snowy(SEAS);const cap=(p)=>snow?`<path d="${p}" fill="#F7FAFC" opacity=".95"/>`:'';
+  const sideF=(col,tex)=>`<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="${col}"/>${tex?`<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="url(#${tex})"/>`:''}<path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#000" opacity=".28"/>`;
+  const face=(col,tex,yy=y,hh=h)=>`<rect x="${x}" y="${yy}" width="${w}" height="${hh}" fill="${col}"/>${tex?`<rect x="${x}" y="${yy}" width="${w}" height="${hh}" fill="url(#${tex})"/>`:''}<rect x="${x}" y="${yy}" width="${w}" height="${hh}" fill="url(#mWall)"/>`;
+  const gable=(rh,col,wall,tex,rtex)=>{const p=`M285 ${y-rh} L${285+d} ${y-rh-dy} L${x+w+6+d} ${y-dy} L${x+w+6} ${y}Z`;return `<path d="${p}" fill="${col}"/>${rtex?`<path d="${p}" fill="url(#${rtex})" opacity=".6"/>`:''}<path d="${p}" fill="#000" opacity=".12"/><polygon points="${x-6},${y} 285,${y-rh} ${x+w+6},${y}" fill="${col}"/><polygon points="${x+2},${y} 285,${y-rh+6} ${x+w-2},${y}" fill="${wall}"/>${tex?`<polygon points="${x+2},${y} 285,${y-rh+6} ${x+w-2},${y}" fill="url(#${tex})"/>`:''}`+cap(`${p} M${x-6} ${y} L285 ${y-rh} L285 ${y-rh+5} L${x-1} ${y-1}Z`)};
+  const gambrel=(rh,col,wall,tex,rtex)=>{const gx=[x-6,x+w*.16,285,x+w*.84,x+w+6],gy=[y,y-rh*.6,y-rh,y-rh*.6,y];const p=`M${gx[2]} ${gy[2]} L${gx[2]+d} ${gy[2]-dy} L${gx[3]+d} ${gy[3]-dy} L${gx[4]+d} ${gy[4]-dy} L${gx[4]} ${gy[4]} L${gx[3]} ${gy[3]}Z`;
+    return `<path d="${p}" fill="${col}"/>${rtex?`<path d="${p}" fill="url(#${rtex})" opacity=".6"/>`:''}<path d="${p}" fill="#000" opacity=".15"/><path d="M${gx.map((v,i)=>v+' '+gy[i]).join(' L')}Z" fill="${col}"/><path d="M${x+2} ${y} L${x+w*.17} ${y-rh*.55} L285 ${y-rh+6} L${x+w*.83} ${y-rh*.55} L${x+w-2} ${y}Z" fill="${wall}"/>${tex?`<path d="M${x+2} ${y} L${x+w*.17} ${y-rh*.55} L285 ${y-rh+6} L${x+w*.83} ${y-rh*.55} L${x+w-2} ${y}Z" fill="url(#${tex})"/>`:''}`+cap(`${p} M${gx[0]} ${gy[0]} L${gx[1]} ${gy[1]} L${gx[2]} ${gy[2]} L${gx[2]} ${gy[2]+5} L${gx[1]+2} ${gy[1]+4} L${gx[0]+4} ${gy[0]-1}Z`)};
+  const xdoor=(dw,dh,col,trim)=>`<rect x="${285-dw/2}" y="${B-dh}" width="${dw}" height="${dh}" fill="${col}" stroke="${trim}" stroke-width="2"/><path d="M${285-dw/2} ${B-dh} L${285+dw/2} ${B} M${285+dw/2} ${B-dh} L${285-dw/2} ${B} M285 ${B-dh} V${B}" stroke="${trim}" stroke-width="1.8"/><rect x="${285-dw/2-3}" y="${B-dh-3}" width="${dw+6}" height="3" fill="#5a4a40"/>`;
+  const stalls=(cnt,col,trim,yy)=>[...Array(cnt)].map((_,i)=>{const sx=x+8+i*((w-16)/cnt);return sx>262&&sx<300?'':`<rect x="${sx}" y="${yy}" width="9" height="8" fill="${col}" stroke="${trim}" stroke-width="1.2"/>`}).join('');
+  const cupola=(c1,c2,vane=1)=>`<rect x="279" y="${y-h*.6-14}" width="12" height="12" fill="${c1}"/><path d="M281 ${y-h*.6-12} h8 v8 h-8z" fill="none" stroke="${c2}" stroke-width="1"/><path d="M277 ${y-h*.6-14} L285 ${y-h*.6-21} L293 ${y-h*.6-14}Z" fill="${c2}"/>${vane?`<path d="M285 ${y-h*.6-21} v-6" stroke="#5a4a40" stroke-width="1"/><path d="M281 ${y-h*.6-28} l3 -2 l5 0 l2 2 l-1 1.4 l-5 0z" fill="#C9A227"/>`:''}`;
+  let o=shadow(285+d,B+3,w/2+d+12,6);
+  if(style==='black'){o+=sideF('#1E1E20','mBoards')+face('#1E1E20','mBoards')+gable(h*.6,'#2A2A2E','#1E1E20','mBoards','mShingle')+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#F4F1EA" stroke-width="2"/>`+xdoor(40,38,'#2A2A2E','#F4F1EA')+stalls(Math.min(6,n+2),'url(#mGlass)','#F4F1EA',y+12)+[...Array(4)].map((_,i)=>{const sx=x+6+i*((w-12)/4);return sx>258&&sx<304?'':`<rect x="${sx}" y="${B-20}" width="11" height="20" fill="#2A2A2E" stroke="#F4F1EA" stroke-width="1"/><path d="M${sx} ${B-10} H${sx+11}" stroke="#F4F1EA" stroke-width="1"/>`}).join('')+cupola('#F4F1EA','#2A2A2E');}
+  else if(style==='metal'){o+=sideF('#AEB4B8','mTin')+face('#B9BFC4','mTin')+gable(h*.4,'#9AA2A8','#B9BFC4','mTin','mTin')+`<path d="M${x} ${y} H${x+w} M${x} ${B-1} H${x+w}" stroke="#A33A2C" stroke-width="3"/><path d="M${x} ${y} V${B} M${x+w} ${y} V${B}" stroke="#A33A2C" stroke-width="2"/>`+`<rect x="263" y="${B-40}" width="44" height="40" fill="#8C939A"/><rect x="263" y="${B-40}" width="44" height="40" fill="url(#mTin)"/><path d="M285 ${B-40} V${B}" stroke="#5C636B" stroke-width="1.2"/><path d="M260 ${B-42} H310" stroke="#5C636B" stroke-width="2"/>`+[[x-30,0],[x+w,1]].map(([lx,r])=>r?`<path d="M${lx+d} ${y+14-dy} L${lx+d+26} ${y+24-dy} L${lx+d+26} ${B-dy} L${lx+d} ${B-dy}Z" fill="#9AA2A8"/><path d="M${lx+d} ${y+14-dy} L${lx+d+26} ${y+24-dy}" stroke="#A33A2C" stroke-width="2"/>`:`<path d="M${lx+30} ${y+14} L${lx} ${y+24} L${lx} ${B} L${lx+30} ${B}Z" fill="#9AA2A8"/><path d="M${lx+30} ${y+14} L${lx} ${y+24}" stroke="#A33A2C" stroke-width="2"/><path d="M${lx+4} ${B} V${y+26} M${lx+16} ${B} V${y+20}" stroke="#7C8288" stroke-width="1.6"/>`).join('')+`<rect x="${x+8}" y="${y+10}" width="16" height="6" fill="#5C6B78"/><rect x="${x+w-24}" y="${y+10}" width="16" height="6" fill="#5C6B78"/>`;}
+  else if(style==='red'){o+=sideF('#A23E2C','mBoards')+face('#A23E2C','mBoards')+gambrel(h*.56,'#4A3E38','#A23E2C','mBoards','mShingle')+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#F7F3EA" stroke-width="2.6"/>`+xdoor(40,38,'#7E2F22','#F7F3EA')+stalls(Math.min(6,n+2),'url(#mGlass)','#F7F3EA',y+12)+`<rect x="276" y="${y-h*.3}" width="18" height="15" fill="#3A2A24" stroke="#F7F3EA" stroke-width="1.8"/>`+(n>=3?cupola('#9AA6AD','#7C8A92'):'');}
+  else if(style==='mission'){o+=sideF('#F3EEE4')+face('#F3EEE4')+`<path d="M${x-6} ${y} L${x+w+6} ${y} L${x+w+d-4} ${y-16} L${x+10} ${y-16}Z" fill="#B5523A"/><path d="M${x-6} ${y} L${x+w+6} ${y} L${x+w+d-4} ${y-16} L${x+10} ${y-16}Z" fill="url(#mTile)"/><path d="M${x+w+6} ${y} L${x+w+6+d} ${y-dy} L${x+w+d-4} ${y-16}Z" fill="#9A4632"/>`+cap(`M${x+10} ${y-16} L${x+w+d-4} ${y-16} L${x+w} ${y-9} L${x+4} ${y-9}Z`)+[...Array(5)].map((_,i)=>{const ax=x+8+i*((w-16)/5),aw=(w-16)/5;return `<path d="M${ax+3} ${B} V${y+18} A${aw/2-3} ${aw/2-3} 0 0 1 ${ax+aw-3} ${y+18} V${B}Z" fill="${i===2?'#6B4A30':'#8A6542'}"/><path d="M${ax+3} ${B-14} H${ax+aw-3}" stroke="#5A3A22" stroke-width="1"/>`}).join('')+`<g transform="translate(285 ${y-16})"><path d="M-9 0 V-12 Q0 -20 9 -12 V0Z" fill="#F3EEE4"/><path d="M-3 -1 V-8 A3 3 0 0 1 3 -8 V-1Z" fill="#5A4636"/><circle cx="0" cy="-6" r="1.8" fill="#C9A227"/></g>`;}
+  else if(style==='gambrel'){o+=`<g><rect x="${x+w+d+2}" y="${y-h*.6-6}" width="18" height="${h+h*.6+6-dy}" fill="#C9C2B0"/><rect x="${x+w+d+2}" y="${y-h*.6-6}" width="18" height="${h+h*.6+6-dy}" fill="url(#mStone)" opacity=".5"/><path d="M${x+w+d+2} ${y-h*.6-6} Q${x+w+d+11} ${y-h*.6-18} ${x+w+d+20} ${y-h*.6-6}Z" fill="#8C939A"/><rect x="${x+w+d+15}" y="${y-h*.6-6}" width="5" height="${h+h*.6+6-dy}" fill="#000" opacity=".15"/></g>`+cap(`M${x+w+d+2} ${y-h*.6-6} Q${x+w+d+11} ${y-h*.6-18} ${x+w+d+20} ${y-h*.6-6}Z`);
+    o+=sideF('#A23E2C','mBoards')+face('#A23E2C','mBoards')+gambrel(h*.62,'#5C636B','#A23E2C','mBoards','mTin')+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#F7F3EA" stroke-width="2.4"/>`+`<rect x="263" y="${B-38}" width="44" height="38" fill="#7E2F22" stroke="#F7F3EA" stroke-width="2"/><path d="M285 ${B-38} V${B}" stroke="#F7F3EA" stroke-width="1.6"/><path d="M263 ${B-38} L285 ${B-19} L307 ${B-38} M263 ${B} L285 ${B-19} L307 ${B}" stroke="#F7F3EA" stroke-width="1.4"/>`+`<g transform="translate(285 ${y-h*.3+2}) rotate(45)"><rect x="-8" y="-8" width="16" height="16" fill="#F7F3EA"/><rect x="-6" y="-6" width="6" height="6" fill="#2E6FD8"/><rect x="0" y="0" width="6" height="6" fill="#2E6FD8"/><rect x="0" y="-6" width="6" height="6" fill="#F2C14E"/><rect x="-6" y="0" width="6" height="6" fill="#F2C14E"/></g>`+stalls(Math.min(6,n+2),'url(#mGlass)','#F7F3EA',y+12);}
+  else if(style==='shedrow'){const sy=B-36;o+=`<path d="M${x-14} ${sy} L${x+w+14} ${sy} L${x+w+14+d} ${sy-dy} L${x+w+14+d-6} ${sy-18} L${x-14+12} ${sy-18}Z" fill="#3D7A5A"/><path d="M${x-14} ${sy} L${x+w+14} ${sy} L${x+w+14+d} ${sy-dy} L${x+w+14+d-6} ${sy-18} L${x-14+12} ${sy-18}Z" fill="url(#mTin)"/>`+`<rect x="${x-10}" y="${sy}" width="${w+20}" height="36" fill="#F7F3EA"/><rect x="${x-10}" y="${sy}" width="${w+20}" height="36" fill="url(#mBoards)" opacity=".5"/><rect x="${x-10}" y="${sy}" width="${w+20}" height="6" fill="#000" opacity=".12"/>`+[...Array(7)].map((_,i)=>{const sx=x-6+i*((w+12)/7);return `<rect x="${sx}" y="${sy+10}" width="${(w+12)/7-4}" height="26" fill="#3D7A5A"/><path d="M${sx} ${sy+22} h${(w+12)/7-4}" stroke="#F7F3EA" stroke-width="1"/><rect x="${sx+2}" y="${sy+12}" width="${(w+12)/7-8}" height="8" fill="#2A2A2A" opacity=".7"/>`}).join('')+`<g transform="translate(285 ${sy-18})"><rect x="-7" y="-10" width="14" height="10" fill="#F7F3EA"/><path d="M-9 -10 L0 -16 L9 -10Z" fill="#3D7A5A"/><path d="M0 -16 v-5" stroke="#5a4a40"/><path d="M-4 -23 l3 -2 l5 0 l2 2 l-1 1.4 l-5 0z" fill="#C9A227"/></g>`+cap(`M${x-14+12} ${sy-18} L${x+w+14+d-6} ${sy-18} L${x+w+10} ${sy-8} L${x-6} ${sy-8}Z`);}
+  else if(style==='bank'){o+=sideF('#A23E2C','mBoards')+face('#A23E2C','mBoards',y,h-20)+`<rect x="${x}" y="${B-20}" width="${w}" height="20" fill="#B8A98F"/><rect x="${x}" y="${B-20}" width="${w}" height="20" fill="url(#mStone)"/><rect x="${x}" y="${B-20}" width="${w}" height="20" fill="url(#mRock)"/>`+gable(h*.62,'#4B4E57','#A23E2C','mBoards','mSlate')+`<path d="M${x-4} ${B-20} H${x+w+4}" stroke="#7A2E1E" stroke-width="3"/>`+[...Array(4)].map((_,i)=>{const sx=x+10+i*((w-20)/4);return `<rect x="${sx}" y="${B-14}" width="10" height="14" fill="#7E2F22" stroke="#F7F3EA" stroke-width="1"/>`}).join('')+`<rect x="268" y="${y+6}" width="34" height="${h-28}" fill="#7E2F22" stroke="#F7F3EA" stroke-width="1.8"/><path d="M285 ${y+6} V${B-22}" stroke="#F7F3EA" stroke-width="1.4"/>`+[x+18,x+w-18].map(cx=>`<g transform="translate(${cx} ${y+12})"><circle r="7" fill="#F7F3EA"/><circle r="5.6" fill="#2E6FD8"/><path d="${symStar(0,0,5,2,8)}" fill="#F2C14E"/><circle r="1.6" fill="#C0392B"/></g>`).join('');}
+  else if(style==='weathered'){o+=sideF('#8E8676','mBoards')+face('#9A9182','mBoards')+gambrel(h*.58,'#8E5A3A','#9A9182','mBoards','mTin')+`<path d="M${x+w*.3} ${y-h*.4} L${x+w*.45} ${y-h*.47}" stroke="#6B3A22" stroke-width="3" opacity=".6"/>`+xdoor(40,38,'#7C7466','#C9C2B0')+stalls(Math.min(5,n+2),'#3C3A36','#C9C2B0',y+12)+`<rect x="276" y="${y-h*.3}" width="18" height="14" fill="#3C3A36" stroke="#C9C2B0" stroke-width="1.4"/>`;}
+  else if(style==='logbarn'){o+=sideF('#7A5232','mLog')+face('#8A6040','mLog')+gable(h*.55,'#3E6650','#8A6040','mLog','mTin')+[...Array(Math.floor(h/4.2))].map((_,i)=>`<circle cx="${x-1}" cy="${y+2+i*4.2}" r="2" fill="#B08A5C"/>`).join('')+`<rect x="261" y="${B-40}" width="48" height="40" fill="#6B4A30"/><rect x="261" y="${B-40}" width="48" height="40" fill="url(#mBoards)"/><path d="M285 ${B-40} V${B} M261 ${B-40} L285 ${B-20} L309 ${B-40}" stroke="#C9A06A" stroke-width="1.4" fill="none"/><path d="M256 ${B-43} H314" stroke="#3a2a1e" stroke-width="3"/>`+stalls(Math.min(5,n+2),'url(#mGlass)','#C9A06A',y+12)+(n>=2?`<g transform="translate(285 ${y-h*.55+10})"><path d="M-12 0 q-4 -6 -10 -7 M-12 0 q-2 -6 -2 -10 M12 0 q4 -6 10 -7 M12 0 q2 -6 2 -10 M-12 0 H12" stroke="#EDE3CF" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`:'');}
+  else if(style==='gothic'){const rh=h*.7;const p=`M${x-4} ${y} C${x-4} ${y-rh*.9} ${x+w*.3} ${y-rh} 285 ${y-rh} C${x+w*.7} ${y-rh} ${x+w+4} ${y-rh*.9} ${x+w+4} ${y}Z`;
+    o+=`<path d="M285 ${y-rh} L${285+d} ${y-rh-dy} C${x+w*.7+d} ${y-rh-dy} ${x+w+4+d} ${y-rh*.9-dy} ${x+w+4+d} ${y-dy} L${x+w+4} ${y} C${x+w+4} ${y-rh*.9} ${x+w*.7} ${y-rh} 285 ${y-rh}Z" fill="#8C939A"/><path d="M285 ${y-rh} L${285+d} ${y-rh-dy} C${x+w*.7+d} ${y-rh-dy} ${x+w+4+d} ${y-rh*.9-dy} ${x+w+4+d} ${y-dy} L${x+w+4} ${y} C${x+w+4} ${y-rh*.9} ${x+w*.7} ${y-rh} 285 ${y-rh}Z" fill="url(#mTin)"/>`+cap(`M285 ${y-rh} L${285+d} ${y-rh-dy} C${x+w*.7+d} ${y-rh-dy} ${x+w+4+d} ${y-rh*.9-dy} ${x+w+4+d} ${y-dy} L${x+w} ${y-dy+4} C${x+w-2} ${y-rh*.7} ${x+w*.7} ${y-rh+6} 286 ${y-rh+5}Z`)+sideF('#A23E2C','mBoards')+face('#A23E2C','mBoards')+`<path d="${p}" fill="#7C8288"/><path d="M${x+2} ${y} C${x+2} ${y-rh*.82} ${x+w*.3} ${y-rh+7} 285 ${y-rh+7} C${x+w*.7} ${y-rh+7} ${x+w-2} ${y-rh*.82} ${x+w-2} ${y}Z" fill="#A23E2C"/><path d="M${x+2} ${y} C${x+2} ${y-rh*.82} ${x+w*.3} ${y-rh+7} 285 ${y-rh+7} C${x+w*.7} ${y-rh+7} ${x+w-2} ${y-rh*.82} ${x+w-2} ${y}Z" fill="url(#mBoards)"/>`+`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#F7F3EA" stroke-width="2.4"/>`+xdoor(40,38,'#7E2F22','#F7F3EA')+`<rect x="276" y="${y-rh*.55}" width="18" height="16" fill="#3A2A24" stroke="#F7F3EA" stroke-width="1.6"/>`+stalls(Math.min(6,n+2),'url(#mGlass)','#F7F3EA',y+12);}
+  else return null;
+  return '<!--ns-->'+o+'<!--/ns-->'}
+/* ---- small regional touches placed around the yard (map coords, after OFF scaling) ---- */
+function locExtras(id){let o='';const S0=SEAS;
+  const cactus=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="1" rx="9" ry="2.4" fill="rgba(25,35,15,.25)"/><ellipse cx="0" cy="-7" rx="4.4" ry="6.4" fill="#5C8A4A"/><ellipse cx="-5" cy="-13" rx="3.4" ry="4.8" fill="#6A9A56" transform="rotate(-20 -5 -13)"/><ellipse cx="4.6" cy="-15" rx="3.2" ry="4.6" fill="#62924E" transform="rotate(18 4.6 -15)"/>${S0===0?'<circle cx="-5" cy="-18" r="1.6" fill="#F2C14E"/><circle cx="5" cy="-19.6" r="1.6" fill="#E25B7A"/>':''}</g>`;
+  const sage=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="0" rx="9" ry="2.6" fill="rgba(25,35,15,.22)"/><ellipse cx="-3" cy="-4" rx="5.4" ry="4" fill="#8E9A82"/><ellipse cx="3.4" cy="-4.6" rx="5" ry="4.2" fill="#9AA68E"/><ellipse cx="0" cy="-7" rx="4" ry="3.2" fill="#A9B49C"/></g>`;
+  const rock=(x,y,s,c='#A8A296')=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="2" cy="1" rx="11" ry="3" fill="rgba(25,35,15,.25)"/><path d="M-9 0 L-7 -8 L-1 -12 L6 -9 L9 0Z" fill="${c}"/><path d="M-1 -12 L6 -9 L9 0 L2 0Z" fill="#000" opacity=".14"/><path d="M-7 -8 L-1 -12 L0 -7Z" fill="#fff" opacity=".2"/></g>`;
+  const palm=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})">${locTree('palm',0,-20,18,(a,b,c,d)=>`<ellipse cx="${a}" cy="${b-d*.7}" rx="${c}" ry="${d*.75}" fill="rgba(25,35,15,.3)"/>`)}</g>`;
+  const flowersRow=(x0,x1,y,cols)=>[...Array(Math.floor((x1-x0)/9))].map((_,i)=>`<circle cx="${x0+i*9+(i%3)*2}" cy="${y+(i%2)*3}" r="1.7" fill="${cols[i%cols.length]}"/><path d="M${x0+i*9+(i%3)*2} ${y+(i%2)*3+1.6} v2.4" stroke="#4E7A3C" stroke-width=".8"/>`).join('');
+  if(id==='texas'){o+=cactus(520,300,1.1)+cactus(1180,240,1)+cactus(30,330,.9)+cactus(608,300,.8)+`<g transform="translate(132 534)"><path d="M-9 -2 q-6 -6 -10 -14 M9 -2 q6 -6 10 -14" stroke="#EDE3CF" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M-6 -4 h12 l-2 8 h-8z" fill="#EDE3CF"/><circle cx="-2.4" cy="-1" r="1" fill="#2B2B2B"/><circle cx="2.4" cy="-1" r="1" fill="#2B2B2B"/></g>`;if(S0===0)o+=flowersRow(400,560,584,['#4E6FC9','#3E5FB9','#fff'])+flowersRow(640,900,585,['#4E6FC9','#E25B7A','#4E6FC9','#F2C14E']);}
+  if(id==='oklahoma'){o+=`<g transform="translate(400 268) scale(1.1)"><ellipse cx="0" cy="2" rx="22" ry="4" fill="rgba(25,35,15,.25)"/><path d="M-14 0 L-2 -20 L2 -20 L14 0" stroke="#3A3A3A" stroke-width="2" fill="none"/><path d="M-22 -24 L20 -30" stroke="#2B2B2B" stroke-width="4" stroke-linecap="round"/><path d="M20 -30 q8 2 5 12" stroke="#2B2B2B" stroke-width="3" fill="none"/><path d="M25 -18 V0" stroke="#555" stroke-width="1"/><circle cx="0" cy="-26" r="2.6" fill="#555"/><rect x="-26" y="-20" width="8" height="10" fill="#555"/><rect x="-6" y="-2" width="12" height="3" fill="#7A2E24"/></g>`+[[1180,230],[30,340]].map(([x,y])=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="0" rx="10" ry="3" fill="rgba(25,35,15,.2)"/>${[...Array(9)].map((_,i)=>`<path d="M${-6+i*1.5} 0 q${(i-4)*.6} -8 ${(i-4)*1.2} -14" stroke="#C9A85A" stroke-width="1.1" fill="none"/>`).join('')}</g>`).join('');}
+  if(id==='california'){o+=[[520,300],[1180,245],[24,330]].map(([x,y])=>`<g transform="translate(${x} ${y})"><ellipse cx="0" cy="1" rx="12" ry="3" fill="rgba(25,35,15,.25)"/><rect x="-1.4" y="-10" width="2.8" height="11" fill="#6B4A30"/><circle cx="0" cy="-15" r="9" fill="#5E8040"/>${[[-4,-17],[3,-12],[5,-19],[-3,-11]].map(([a,b])=>`<circle cx="${a}" cy="${b}" r="1.7" fill="#F2C14E"/>`).join('')}</g>`).join('')+palm(608,300,.9);if(S0===0||S0===3)o+=flowersRow(400,560,584,['#F28C28','#F6A23C','#F2C14E'])+flowersRow(640,860,585,['#F28C28','#9E6CC9','#F6A23C']);}
+  if(id==='florida'){o+=palm(18,404,1.1)+palm(520,300,1)+palm(1180,240,.9)+palm(612,296,.8)+`<g transform="translate(488 330)"><path d="M0 0 V-12 M0 -12 q-3 -3 -6 -2 M0 -12 l3 -1" stroke="#E9EEF2" stroke-width="1.4" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-15" rx="2.6" ry="2" fill="#F4F6F8"/><path d="M2 -15 l5 1" stroke="#E2B007" stroke-width=".8"/><path d="M-2 0 l-1 4 M2 0 l1 4" stroke="#4A4A4A" stroke-width=".7"/></g>`+[[400,584],[700,586],[960,585]].map(([x,y])=>`<g transform="translate(${x} ${y})">${[-40,-20,0,20,40].map(a=>`<path d="M0 0 l${(9*Math.sin(a*Math.PI/180)).toFixed(1)} ${(-8*Math.cos(a*Math.PI/180)).toFixed(1)}" stroke="#4E8A3E" stroke-width="2" stroke-linecap="round"/>`).join('')}</g>`).join('');}
+  if(id==='kentucky'){o+=`<path d="M380 584 H560 M640 585 H1180" stroke="#9A8E78" stroke-width="4"/><path d="M380 582 H560 M640 583 H1180" stroke="#B8A98F" stroke-width="2"/>`+`<g transform="translate(520 298)"><rect x="-8" y="-4" width="16" height="4" fill="#A8A296"/><path d="M-6 -4 L-4 -12 L2 -14 L5 -20 L7 -18 L6 -12 L6 -4Z" fill="#3A3A3A"/></g>`;}
+  if(id==='pennsylvania'){o+=`<g transform="translate(560 578) scale(.9)"><rect x="-12" y="-14" width="24" height="10" rx="2" fill="#2B2B2B"/><path d="M-12 -14 Q0 -21 12 -14" fill="#3a3a3a"/><circle cx="-7" cy="-2" r="4.4" fill="none" stroke="#2B2B2B" stroke-width="1.2"/><circle cx="7" cy="-2" r="4.4" fill="none" stroke="#2B2B2B" stroke-width="1.2"/><path d="M12 -7 L26 -7" stroke="#2B2B2B" stroke-width="1"/><path d="M26 -12 l9 0 l1 6 l-9 0z" fill="#5A3A22"/><path d="M28 -6 v6 M34 -6 v6" stroke="#5A3A22" stroke-width="1.4"/><circle cx="35" cy="-13" r="1.8" fill="#5A3A22"/></g>`+`<g transform="translate(520 300)"><rect x="-10" y="-14" width="20" height="14" fill="#B8A98F"/><rect x="-10" y="-14" width="20" height="14" fill="url(#mStone)"/><path d="M-12 -14 L0 -21 L12 -14Z" fill="#4B4E57"/><rect x="-3" y="-8" width="6" height="8" fill="#5A3A22"/></g>`;}
+  if(id==='ohio'){o+=`<g transform="translate(400 568)">${[...Array(16)].map((_,i)=>`<path d="M${i*10} 10 V-6" stroke="#6E9E4E" stroke-width="1.4"/><path d="M${i*10} -2 l-4 -3 M${i*10} -6 l4 -3 M${i*10} 2 l4 -3" stroke="#7FAE5C" stroke-width="1.2"/>${S0===1||S0===2?`<ellipse cx="${i*10+1.6}" cy="-4" rx="1.2" ry="2.6" fill="#E2C25A"/>`:''}`).join('')}</g>`;}
+  if(id==='montana'||id==='wyoming'){o+=sage(520,300,1)+sage(1180,240,1)+sage(28,340,1)+sage(612,300,.9)+sage(400,586,.8)+sage(700,586,.8)+sage(980,586,.8);
+    if(id==='wyoming')o+=`<g><path d="M108 546 V520 M156 546 V520" stroke="#5E4430" stroke-width="4"/><path d="M104 520 H160" stroke="#5E4430" stroke-width="4"/><path d="M118 516 q-4 -8 -10 -9 M118 516 q-2 -6 -1 -11 M146 516 q4 -8 10 -9 M146 516 q2 -6 1 -11 M118 516 H146" stroke="#EDE3CF" stroke-width="1.8" fill="none" stroke-linecap="round"/></g>`;
+    else o+=rock(500,560,.8,'#9AA0A6');}
+  if(id==='southdakota'){o+=rock(520,300,1.2,'#B8B2A6')+rock(1178,240,1,'#A8A296')+rock(30,336,1,'#B8B2A6')+rock(610,302,.9,'#A8A296')+`<g transform="translate(470 270) scale(.9)"><ellipse cx="0" cy="2" rx="16" ry="3" fill="rgba(25,35,15,.25)"/><ellipse cx="0" cy="-6" rx="12" ry="7" fill="#4A3424"/><ellipse cx="9" cy="-9" rx="7" ry="7.6" fill="#3A2818"/><ellipse cx="14" cy="-5" rx="4" ry="3.4" fill="#2E2014"/><path d="M-8 0 v4 M-3 0 v4 M5 0 v4 M10 0 v4" stroke="#2E2014" stroke-width="2"/><path d="M12 -15 q2 -3 4 -2" stroke="#D8CDB8" stroke-width="1" fill="none"/></g>`;}
+  return o?'<!--ns-->'+o+'<!--/ns-->':''}
+
+/* ---------- ranch location effects (each bonus or penalty is 5-10%) ---------- */
+const LOCFX={
+ texas:{tag:'Big pastures',diff:'Medium',blurb:'Cutting-horse country. Quarter Horses everywhere and plenty of room to run.',
+  ev:['barrel','rein'],breeds:['quarter','paint'],cheap:{quarter:.92,paint:.92},pasture:.92,hayS:[1,1.1,1,1],trouble:{drought:2},
+  pros:['Quarter Horses and Paints show up more and cost 8% less','Barrel Racing and Reining: +6% score, +8% prize','Pasture upgrades cost 8% less'],
+  cons:['Hay costs 10% more in summer','Droughts are more likely']},
+ kentucky:{tag:'Rich but pricey',diff:'Hard',blurb:'The Bluegrass, home of the Thoroughbred. Buyers pay well, but everything costs more.',
+  ev:['race'],breeds:['thoroughbred','saddlebred'],stud:{breed:'thoroughbred',lift:4},sale:1.06,build:1.08,npc:1.05,
+  pros:['Thoroughbreds show up more, plus a better Thoroughbred stud each week','Racing: +6% score, +8% prize','Horses you sell bring 6% more'],
+  cons:['Buildings cost 8% more','Rival horses at events are 5% tougher']},
+ oklahoma:{tag:'Easy start',diff:'Easy',blurb:'The horse show capital. Shows pay a little more and folks notice you faster.',
+  ev:[],breeds:['quarter','appaloosa'],prize:1.06,rep:1.08,trouble:{storm:2},
+  pros:['All event prizes pay 6% more','Reputation grows 8% faster','Quarter Horses and Appaloosas show up more'],
+  cons:['Storms are more likely, and they wreck fences']},
+ california:{tag:'Rich but pricey',diff:'Medium',blurb:'Horsetown USA. Mild winters and wealthy boarding clients, but hay is dear.',
+  ev:['dress'],breeds:['quarter','andalusian'],winter:.92,client:1.08,hay:1.1,trouble:{drought:2},
+  pros:['Mild winters: horses eat 8% less hay in winter','Boarding clients pay 8% more','Dressage: +6% score, +8% prize'],
+  cons:['Hay costs 10% more all year','Droughts are more likely']},
+ ohio:{tag:'Easy start',diff:'Easy',blurb:'Farm country with cheap hay and a long history of draft and harness horses.',
+  ev:['pull','drive'],breeds:['percheron','standardbred','clydesdale'],cheap:{percheron:.92,clydesdale:.92,standardbred:.92},hay:.92,harvest:1.08,injS:[1.1,1,1,1],
+  pros:['Hay costs 8% less and your hay fields make 8% more','Draft Pull and Driving: +6% score, +8% prize','Draft horses show up more and cost 8% less'],
+  cons:['Muddy springs: 10% more injuries in spring']},
+ florida:{tag:'Warm winters',diff:'Medium',blurb:'Ocala horse country. Green all year, with a winter show circuit.',
+  ev:['jump','dress'],breeds:['thoroughbred','pasofino','hanoverian'],winter:.92,illS:[1,1.1,1,1],trouble:{disease:2},
+  pros:['Warm winters: horses eat 8% less hay in winter','Show Jumping and Dressage: +6% score, +8% prize','A Winter Circuit jumping show every winter'],
+  cons:['Humid summers: 10% more sickness in summer','Disease scares are more likely']},
+ pennsylvania:{tag:'Classic shows',diff:'Medium',blurb:'Amish draft farms and old-school horse shows. Good help is easy to find.',
+  ev:['drive','dress'],breeds:['percheron','morgan','hanoverian'],wage:.94,winter:1.08,
+  pros:['Staff wages cost 6% less','Driving and Dressage: +6% score, +8% prize','Draft horses and Morgans show up more'],
+  cons:['Cold winters: horses eat 8% more hay in winter']},
+ montana:{tag:'Cheap but tough',diff:'Hard',blurb:'Big open ranch country. Land is cheap, winters are long, and shows are a long haul.',
+  ev:['endur','barrel'],breeds:['quarter','mustang'],build:.92,pasture:.92,winter:1.1,client:.95,fee:1.08,
+  pros:['Buildings cost 8% less, pastures 15% less','Endurance and Barrel Racing: +6% score, +8% prize','Rugged ranch horses show up more'],
+  cons:['Hard winters: horses eat 10% more hay in winter','Boarding clients pay 5% less','Entry fees cost 8% more (long trips)']},
+ wyoming:{tag:'Cheap but tough',diff:'Hard',blurb:'Polo and ranch-horse country under the Bighorns. Cheap land, wind and long winters.',
+  ev:['xc','endur'],breeds:['thoroughbred','quarter'],build:.92,winter:1.1,fee:1.08,
+  pros:['Buildings cost 8% less','Cross-Country and Endurance: +6% score, +8% prize','Thoroughbreds and Quarter Horses show up more'],
+  cons:['Hard winters: horses eat 10% more hay in winter','Entry fees cost 8% more (long trips)']},
+ southdakota:{tag:'Cheap but tough',diff:'Hard',blurb:'The Black Hills and the wild horse range. The cheapest land, the harshest winters.',
+  ev:['endur','xc'],breeds:['mustang','mustang'],cheap:{mustang:.9},build:.9,winter:1.1,sale:.94,fee:1.1,
+  pros:['Buildings cost 10% less','Mustangs show up a lot and cost 10% less','Endurance and Cross-Country: +6% score, +8% prize'],
+  cons:['Hard winters: horses eat 10% more hay in winter','Fewer buyers: horses sell for 6% less','Entry fees cost 10% more (long trips)']}};
+/* one yearly local event per location (added to the festival calendar) */
+const LOCFEST={
+ texas:{n:'Cutting Futurity',s:1,d:3,type:'young',judge:['barrel','rein'],fee:80,prize:[1200,600,300],rep:[5,3,1],art:'foalshow',blurb:'Texas’s big-money class for young horses. Foals and yearlings are judged on cow sense: agility, smarts and how well they trust you.'},
+ kentucky:{n:'Bluegrass Yearling Sale',s:1,d:3,type:'sale',sell:1.2,sellYoung:1,lots:{n:3,breeds:['thoroughbred','thoroughbred','saddlebred'],young:1,lift:6,price:.8},art:'foalshow',blurb:'The Bluegrass yearling auction. Young horses you sell today bring 20% more, and a few well-bred yearlings are up for bid.'},
+ oklahoma:{n:'World Championship Show',s:1,d:3,type:'show',fee:150,prize:[2000,900,400],rep:[8,4,2],art:'harvest',blurb:'An extra championship show once a year in Oklahoma City. Grown horses are judged on training, condition and show record.'},
+ california:{n:'Celebrity Trail Ride',s:1,d:3,type:'show',judge:['endur'],fee:100,prize:[800,400,200],rep:[12,7,3],art:'foalshow',blurb:'A trail ride through the hills with famous faces. Prizes are small, but a good showing does wonders for your reputation.'},
+ ohio:{n:'Draft and Harness Expo',s:1,d:3,type:'show',judge:['pull','drive'],fee:100,prize:[1400,700,300],rep:[6,3,1],art:'harvest',blurb:'Big horses, big crowds. Grown horses are judged on strength, smarts and condition.'},
+ florida:{n:'Winter Circuit Grand Prix',s:3,d:1,type:'show',judge:['jump'],fee:150,prize:[1600,800,400],rep:[7,4,2],art:'foalshow',blurb:'The headline class of the Ocala winter circuit. Grown horses are judged on jumping ability and show polish.'},
+ pennsylvania:{n:'Grand Country Horse Show',s:1,d:3,type:'show',judge:['dress','jump'],fee:150,prize:[1800,800,400],rep:[7,4,2],art:'harvest',blurb:'A grand old horse show in the classic style. Grown horses are judged on dressage, jumping and turnout.'},
+ montana:{n:'Bucking Horse Sale',s:0,d:3,type:'sale',sell:1.15,lots:{n:3,breeds:['mustang','quarter','quarter'],lift:2,price:.75},art:'foalshow',blurb:'Miles City’s famous May sale. Rugged ranch horses go cheap, and buyers pay 15% more for anything you sell today.'},
+ wyoming:{n:'Big Horn Polo Cup',s:1,d:3,type:'show',judge:['race','barrel'],fee:150,prize:[1800,800,400],rep:[7,4,2],art:'foalshow',blurb:'Polo on the Big Horn fields. Grown horses are judged on speed, agility and nerve.'},
+ southdakota:{n:'Wild Horse Roundup',s:1,d:3,type:'sale',sell:1.1,lots:{n:3,breeds:['mustang','mustang','mustang'],lift:4,price:.5,wild:1},art:'foalshow',blurb:'Adopt mustangs from the wild horse range for half price. Some carry rare coats and hidden good genes. Buyers pay 10% more today.'}};
+const LOC_DIFF_COL={Easy:'good',Medium:'warn',Hard:'bad'};
+function locFx(){return LOCFX[locId()]||{}}
+function locHome(ev){const f=locFx();return !!(f.ev&&ev&&f.ev.includes(ev.id))}
+function locEvMult(ev){return locHome(ev)?1.06:1}
+function locPrizeMult(ev){return (locHome(ev)?1.08:1)*(locFx().prize||1)}
+function locBuildMult(f){const x=locFx();return (x.build||1)*(f&&f.id==='pasture'&&x.pasture?x.pasture:1)}
+function facCost(f,lv){const c=f.lv[lv]&&f.lv[lv].c||0;const m=locBuildMult(f);return m===1?c:Math.round(c*m/10)*10}
+function locHayMult(si){const x=locFx();return (x.hay||1)*(x.hayS?x.hayS[si]:1)}
+function locHomeChip(ev){return locHome(ev)?' <span class="chip good" title="Your location gives +6% score and +8% prize money here">Home +6%</span>':''}
+/* keep the local yearly event in the festival list */
+function locFestSync(){for(const k in FESTS)if(FESTS[k].loc)delete FESTS[k];const id=locId(),f=LOCFEST[id];if(f)FESTS['lf_'+id]={...f,loc:id}}
+function judgeLocal(h,f){const young=f.type==='young';const b=young?judgeYoung(h):judgeShow(h);if(!f.judge)return b;
+  let e=0;for(const id of f.judge){const ev=EVENTS.find(x=>x.id===id);let s=0;for(const k in ev.w)s+=ev.w[k]*(young?h.pot[k]:h.tr[k]);e+=s}e/=f.judge.length;return b*.65+e*.35}
+function locSaleLots(f){const L0=f.lots,lift=Math.min(18,S.rep/8),out=[];for(let i=0;i<L0.n;i++){const br=L0.breeds[i%L0.breeds.length];
+  const h=genHorse({breed:br,ageDays:L0.young?ri(YEARLING,ADULT-2):ri(ADULT,ADULT+DPY*4),potMid:ri(50,60)+lift+(L0.lift||0),nTraits:ri(1,2),origin:f.n});
+  if(L0.wild&&R()<.35)h.shiny=1;enrichSale(h);h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*L0.price/10)*10;h.sale=1;out.push(h)}return out}
+function festSellMult(h){const k=festKey();if(k==='wintersale')return 1.2;const f=k&&FESTS[k];if(f&&f.type==='sale'&&(!f.sellYoung||(h&&isYoung(h))))return f.sell||1;return 1}
+function isSaleFest(k){return k==='wintersale'||!!(FESTS[k]&&FESTS[k].type==='sale')}
+/* ---- location picker ---- */
+function locCard(id){const L=LOCS[id],x=LOCFX[id],f=LOCFEST[id];
+  const pano=`<svg viewBox="0 -78 1200 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${(()=>{const sv=SEAS;SEAS=1;const o=locPano(id);SEAS=sv;return o})()}</svg>`;
+  return `<div class="loccard${S.loc===id?' sel':''}"><div class="locpano">${pano}</div><div class="locbody"><div class="lochead"><h3>${esc(L.n)}</h3><span class="chip ${LOC_DIFF_COL[x.diff]}">${x.diff}</span></div><div class="note">${esc(x.blurb)}</div>
+   <ul class="locpros">${x.pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><ul class="loccons">${x.cons.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
+   <div class="note"><b>Local event:</b> ${esc(f.n)} (${SEASONS[f.s]} day ${f.d})</div>
+   <button class="btn primary small" data-a="locpick" data-l="${id}">Settle in ${esc(L.n.split(',')[0])}</button></div></div>`}
+function locPickBody(m){return `<p>${m.existing?'Ranches now have a home. Where is <b>'+esc(S.ranchName)+'</b>? Your ranch, horses and money all stay the same. Only the scenery and the local perks change.':'Each place has its own scenery, weather, perks and drawbacks. No place is the best at everything.'}</p>
+  <div class="locgrid">${LOC_ORDER.map(locCard).join('')}</div>`}
+function locInfoPanel(){if(!S.loc||!LOCFX[S.loc])return '';const L=LOCS[S.loc],x=LOCFX[S.loc],f=LOCFEST[S.loc];const n=festNext('lf_'+S.loc);
+  return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Location · ${esc(L.n)} <span class="chip ${LOC_DIFF_COL[x.diff]}">${x.diff}</span></div>
+   <div class="locinfo"><ul class="locpros">${x.pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><ul class="loccons">${x.cons.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
+   <div class="note"><b>${esc(f.n)}:</b> ${SEASONS[f.s]} day ${f.d}${n!=null?(n===0?' (today!)':' (in '+n+' day'+(n>1?'s':'')+')'):''}</div></div>`}
+function locTroublePick(){const w=locFx().trouble||{};const ks=Object.keys(TROUBLE);let tot=0;for(const k of ks)tot+=w[k]||1;let r=R()*tot;for(const k of ks){r-=w[k]||1;if(r<0)return k}return ks[0]}
+
+function seasonMap(){const si=curSeason(),sv=SEAS,li=locId();SEAS=si;let m=ranchMap();SEAS=sv;const fx=seasonFx(si);if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx){if(fx==='snow')m=m.replace(/<\/svg>\s*$/,(li==='classic'?snowFlakes(77,1200,640,220):'<g transform="translate(0 -80)">'+snowFlakes(77,1200,720,250)+'</g>')+'</svg>')}return m}
 function ranchMap(){
   const lv=L,C={grass:'#A9BE85',grassD:'#869F63',grass3:'#B7CA92',dirt:'#D1B486',dirtD:'#B9996A',road:'#8F8270',water:'#7DB2D2',waterD:'#5B92B6',wood:'#7A5638',woodL:'#9C7550',white:'#F7F3EA',ink:'#2B2A26',sand:'#E6D3A6',sh:'rgba(35,45,25,.28)',stone:'#A8A296'};
-  let g='',labels='';
+  let g='',labels='';const LI=locId(),LD=LOCS[LI];
   // bigger 1200x640 layout: every facility keeps its drawing but is moved and enlarged around its label point
   const OFF={bunk:[110,152,1.08,30],clinic:[237,152,1.08,30],recovery:[327,152,1.08,30],pasture:[590,202,1.3,42],track:[855,202,1.15,42],trails:[855,230,1.2,70],
     house:[110,322,1.2,200],barn:[285,322,1.2,200],foaling:[419,322,1.2,200],ring:[532,322,1.2,200],training:[655,322,1.2,200],hayfield:[797,329,1.2,200],feedbarn:[915,322,1.2,200],tackroom:[962,346,1.2,190]};
   let CO=null;const mp=(x,y)=>CO?[CO[0]*1.2+(x-CO[0])*CO[2],CO[1]+CO[3]+(y-CO[1])*CO[2]]:[x,y];
   const shadow=(cx,cy,rx,ry=5)=>`<ellipse cx="${cx}" cy="${cy-ry*.7}" rx="${rx}" ry="${ry*.75}" fill="rgba(25,35,15,.3)" filter="url(#mSh)"/>`;
-  const tree=(x,y,r=11,c='#5E8C4A')=>`${shadow(x+r*.5,y+r*.95,r*1.05,r*.32)}<path d="M${x-2} ${y+r*1.05} L${x-1.2} ${y+r*.2} L${x+1.2} ${y+r*.2} L${x+2} ${y+r*1.05}Z" fill="#6B4A30"/><circle cx="${x+r*.38}" cy="${y+r*.18}" r="${r*.72}" fill="url(#mTree)"/><circle cx="${x-r*.42}" cy="${y+r*.12}" r="${r*.7}" fill="url(#mTree)"/><circle cx="${x}" cy="${y-r*.28}" r="${r*.82}" fill="url(#mTree)"/><circle cx="${x-r*.28}" cy="${y-r*.5}" r="${r*.34}" fill="#C9E3A0" opacity=".35"/>`;
+  const tree=(x,y,r=11,c)=>(LD.tree&&locTree(LD.tree,x,y,r,shadow))||tree0(x,y,r,c);
+  const tree0=(x,y,r=11,c='#5E8C4A')=>`${shadow(x+r*.5,y+r*.95,r*1.05,r*.32)}<path d="M${x-2} ${y+r*1.05} L${x-1.2} ${y+r*.2} L${x+1.2} ${y+r*.2} L${x+2} ${y+r*1.05}Z" fill="#6B4A30"/><circle cx="${x+r*.38}" cy="${y+r*.18}" r="${r*.72}" fill="url(#mTree)"/><circle cx="${x-r*.42}" cy="${y+r*.12}" r="${r*.7}" fill="url(#mTree)"/><circle cx="${x}" cy="${y-r*.28}" r="${r*.82}" fill="url(#mTree)"/><circle cx="${x-r*.28}" cy="${y-r*.5}" r="${r*.34}" fill="#C9E3A0" opacity=".35"/>`;
   const label=(cx,y,txt,built,lvl,max)=>{[cx,y]=mp(cx,y);const t=txt+(built&&max>1?' '+'●'.repeat(lvl)+'○'.repeat(max-lvl):'');const w=t.length*6.3+16;
     labels+=`<g pointer-events="none"><rect x="${cx-w/2}" y="${y-11}" width="${w}" height="17" rx="8.5" fill="${built?'rgba(255,253,247,.92)':'rgba(255,253,247,.6)'}" stroke="rgba(0,0,0,${built?.18:.1})"/><text x="${cx}" y="${y+1.5}" text-anchor="middle" font-size="10.5" font-weight="${built?700:500}" fill="${built?C.ink:'#6B6A62'}" font-family="system-ui,-apple-system,Segoe UI,sans-serif" ${built?'':'font-style="italic"'}>${esc(t)}</text></g>`};
   const lot=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${C.grass3}" opacity=".55" stroke="${C.woodL}" stroke-width="1.2" stroke-dasharray="4 4"/>${[[x,y],[x+w,y],[x,y+h],[x+w,y+h]].map(([a,b])=>`<rect x="${a-1.5}" y="${b-5}" width="3" height="8" fill="${C.wood}"/>`).join('')}<g transform="translate(${x+w/2-11} ${y+h/2-9})"><rect x="10" y="8" width="2" height="12" fill="${C.wood}"/><rect x="0" y="0" width="22" height="11" rx="1.5" fill="${C.white}" stroke="${C.wood}"/><text x="11" y="8.3" text-anchor="middle" font-size="6.5" font-weight="700" fill="${C.wood}" font-family="system-ui,sans-serif">LOT</text></g>`;
@@ -3598,8 +3938,8 @@ function ranchMap(){
     <polygon points="${x-5},${y} ${x+w/2},${y-rh} ${x+w+5},${y}" fill="${roof}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="${wall}"/><polygon points="${x+1},${y} ${x+w/2},${y-rh+5} ${x+w-1},${y}" fill="url(#mWall)"/><path d="M${x} ${y+.8} H${x+w}" stroke="#000" stroke-opacity=".25" stroke-width="1.6"/>
     ${wins(x,y,w,h,o.win||0)}${o.door?`<rect x="${x+w/2-6}" y="${y+h-17}" width="12" height="17" fill="#F7F3EA"/><rect x="${x+w/2-5}" y="${y+h-16}" width="10" height="16" fill="${C.wood}"/><path d="M${x+w/2-3} ${y+h-13} h6 v5 h-6z M${x+w/2-3} ${y+h-7} h6 v5 h-6z" fill="none" stroke="#000" stroke-opacity=".25" stroke-width=".7"/><circle cx="${x+w/2+3}" cy="${y+h-8}" r=".9" fill="#E8C76A"/>`:''}`};
   const pony=(x,y,col,mane,flip)=>`<g transform="translate(${x} ${y+4.6}) scale(${flip?-1:1} 1) scale(.44)">${rSprite(col,mane,'#000',{gait:'trot',pose:(Math.round(x+y)%2)*2+1})}</g>`;
-  const fence=(x,y,w,h,col=C.white)=>{/* seen from a high 3/4 angle: short posts and one rail along the back, taller posts and two rails along the front */
-    let o='';const post=(px,py,ht,wd=2.2)=>`<rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${wd}" height="${ht+1}" fill="${C.wood}"/><rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${(wd*.35).toFixed(1)}" height="${ht+1}" fill="#fff" opacity=".25"/>`;
+  const fence=(x,y,w,h,col=C.white)=>{if(LD.rail)col=LD.rail;/* seen from a high 3/4 angle: short posts and one rail along the back, taller posts and two rails along the front */
+    let o='';const post=(px,py,ht,wd=2.2)=>`<rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${wd}" height="${ht+1}" fill="${LD.post||C.wood}"/><rect x="${(px-wd/2).toFixed(1)}" y="${(py-ht).toFixed(1)}" width="${(wd*.35).toFixed(1)}" height="${ht+1}" fill="#fff" opacity=".25"/>`;
     o+=`<linearGradient id="mPl${x}_${y}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".16"/><stop offset=".35" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".08"/></linearGradient><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="url(#mPl${x}_${y})"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="none" stroke="rgba(30,40,20,.2)" stroke-width="1.2"/><ellipse cx="${x+w/2}" cy="${y+h+2}" rx="${w/2}" ry="3.5" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/>`;
     for(let i=x;i<=x+w;i+=12)o+=post(i,y,4,1.8);o+=`<path d="M${x} ${y-2.2} H${x+w}" stroke="${col}" stroke-width="1" opacity=".85"/>`;
     for(let j=y+12;j<y+h;j+=12){const t=(j-y)/h,ht=4.5+5.5*t;o+=post(x,j,ht,1.8+.5*t)+post(x+w,j,ht,1.8+.5*t)}
@@ -3623,6 +3963,7 @@ function ranchMap(){
 <linearGradient id="mSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFE3EA"/><stop offset="1" stop-color="#E8EFD9"/></linearGradient>
 <pattern id="mTuft" width="46" height="38" patternUnits="userSpaceOnUse"><path d="M6 30 l1.6 -5 M8.5 30.5 l-.4 -4.6 M10.4 30 l-1.6 -4.2 M30 12 l1.4 -4.4 M32.2 12.4 l-.4 -4 M34 12 l-1.4 -3.8" stroke="#6E8E4E" stroke-width="1" opacity=".55"/><circle cx="22" cy="24" r="1.1" fill="#F2E6A0" opacity=".7"/><circle cx="40" cy="34" r="1" fill="#F4F0EA" opacity=".7"/><circle cx="16" cy="6" r=".9" fill="#E9B7C9" opacity=".6"/></pattern></defs>
 <rect width="1200" height="640" fill="url(#mGround)"/><rect width="1200" height="640" fill="url(#mTuft)"/><rect width="1200" height="22" fill="url(#mSky)"/><linearGradient id="mHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE7E2" stop-opacity=".55"/><stop offset="1" stop-color="#DCE7E2" stop-opacity="0"/></linearGradient><rect y="22" width="1200" height="150" fill="url(#mHaze)"/>`;
+  if(LI!=='classic')g+=locDefs()+lt(locPano(LI))+`<linearGradient id="lpBlend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.grass}" stop-opacity="0"/><stop offset="1" stop-color="${C.grass}"/></linearGradient><rect x="0" y="28" width="1200" height="22" fill="url(#lpBlend)"/>`;else
   g+=`<path d="M0 26 C84 8 180 20 276 10 S 468 0 576 14 S 780 2 888 12 S 1080 0 1200 16 L1200 0 L0 0 Z" fill="#8FA97A"/><path d="M0 38 C108 24 204 36 312 26 S 504 18 624 30 S 840 20 960 30 S 1116 22 1200 32 L1200 0 L0 0 Z" fill="#9DB585" opacity=".65"/>`;
   g+=`<defs><filter id="mSoft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="6"/></filter><pattern id="mMow" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)"><rect width="10" height="20" fill="#fff" opacity=".12"/></pattern>
    <pattern id="mGravel" width="9" height="7" patternUnits="userSpaceOnUse"><rect width="9" height="7" fill="#CFC3A6"/><circle cx="2" cy="2" r=".8" fill="#A99C80"/><circle cx="6.5" cy="5" r=".9" fill="#B8AB8F"/><circle cx="5" cy="1.4" r=".6" fill="#E3D9C2"/></pattern></defs>`;
@@ -3648,7 +3989,7 @@ function ranchMap(){
   // road, gate, mailbox
   g+=`<rect x="0" y="596" width="1200" height="30" fill="${C.road}"/><path d="M0 611 H1200" stroke="#E9DFA8" stroke-width="2" stroke-dasharray="16 12"/><path d="M0 597 H1200 M0 625 H1200" stroke="#7B6F5E" stroke-width="1.2"/><text x="1190" y="636" text-anchor="end" font-size="10" fill="#5E5547" font-family="ui-monospace,monospace" letter-spacing="1">COUNTY RD 9</text>`;
   g+=`<rect x="124" y="556" width="18" height="42" fill="${C.dirt}"/><rect x="108" y="544" width="5" height="54" fill="${C.wood}"/><rect x="152" y="544" width="5" height="54" fill="${C.wood}"/><path d="M103 550 Q132 534 162 550" stroke="${C.wood}" stroke-width="5" fill="none"/><path d="M110.5 544 V526 M154.5 544 V526" stroke="#6b6b66" stroke-width="1"/><path d="M110.5 526 h13 v9 h-13z M154.5 526 h13 v9 h-13z" fill="${ranchCol()}"/>${symBadge(113.5,526.6,7.8,ranchCol(),ranchCol2())}${symBadge(157.5,526.6,7.8,ranchCol(),ranchCol2())}<rect x="111" y="551" width="42" height="13" rx="2" fill="${ranchDark()}" stroke="${C.wood}" stroke-width="1.2"/><text x="132" y="560.5" text-anchor="middle" font-size="6.4" font-weight="700" fill="${inkOn(ranchDark())}" font-family="system-ui,sans-serif">${esc((S.ranchName||'').toUpperCase().slice(0,16))}</text>`;
-  {let f='';const FY=591;for(let x=0;x<=1200;x+=14){if(x>96&&x<170)continue;f+=`<rect x="${x-1.2}" y="${FY-10}" width="2.4" height="11" fill="${C.wood}"/>`}g+=f+`<path d="M0 ${FY-3} H96 M170 ${FY-3} H1200 M0 ${FY-7.5} H96 M170 ${FY-7.5} H1200" stroke="${C.white}" stroke-width="1.5"/><path d="M0 ${FY-1} H96 M170 ${FY-1} H1200" stroke="#000" stroke-opacity=".18"/>`}
+  {let f='';const FY=591;for(let x=0;x<=1200;x+=14){if(x>96&&x<170)continue;f+=`<rect x="${x-1.2}" y="${FY-10}" width="2.4" height="11" fill="${LD.post||C.wood}"/>`}g+=f+`<path d="M0 ${FY-3} H96 M170 ${FY-3} H1200 M0 ${FY-7.5} H96 M170 ${FY-7.5} H1200" stroke="${LD.rail||C.white}" stroke-width="1.5"/><path d="M0 ${FY-1} H96 M170 ${FY-1} H1200" stroke="#000" stroke-opacity=".18"/>`}
   g+=`<rect x="172" y="580" width="2.4" height="15" fill="${C.wood}"/><rect x="166" y="573" width="14" height="8" rx="2.5" fill="#5B6E7E"/><rect x="178" y="572" width="1.4" height="5" fill="#C0392B"/>`;
 
   // ===== staff housing =====
@@ -3669,11 +4010,12 @@ function ranchMap(){
     if(porch)o+=`<rect x="${x-3}" y="${312-6}" width="${w+6}" height="6" fill="${C.woodL}"/>${[0,1,2,3].map(i=>`<rect x="${x+i*(w/3)-1}" y="${y+h*.45}" width="2" height="${h*.55-6}" fill="${C.white}"/>`).join('')}<rect x="${x-3}" y="${y+h*.42}" width="${w+6}" height="3" fill="${roof}"/>`;
     if(n>=3)o+=`<rect x="${x}" y="${312-12}" width="${w}" height="6" fill="${C.stone}"/>`+[x-10,x+w+10].map(cx=>`<circle cx="${cx}" cy="306" r="5" fill="#C96A7A"/><circle cx="${cx+4}" cy="304" r="3.5" fill="#E7B04A"/>`).join('');
     if(n>=2)o+=tree(x-22,y+8,17);
+    if(LD.house)o=locHouse(LD.house,n,C,shadow,tree);
     g+=hot('house',o);label(110,322,'House',true,n,mx('house'))}
   // ===== barn =====
   {const n=lv('barn');const w=104+n*11,h=54+n*3,x=285-w/2,y=310-h,d=14,dy=8,rh=h*.56;const red='#A23E2C';
     const gx=[x-6,x+w*.16,285,x+w*.84,x+w+6],gy=[y,y-h*.34,y-rh,y-h*.34,y];
-    const o=`${shadow(285+d,313,w/2+d+12,6)}
+    let o=`${shadow(285+d,313,w/2+d+12,6)}
     <path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${y+h-dy} L${x+w} ${y+h}Z" fill="${red}"/><path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${y+h-dy} L${x+w} ${y+h}Z" fill="url(#mBoards)"/><path d="M${x+w} ${y} L${x+w+d} ${y-dy} L${x+w+d} ${y+h-dy} L${x+w} ${y+h}Z" fill="#000" opacity=".28"/>
     <path d="M${gx[2]} ${gy[2]} L${gx[2]+d} ${gy[2]-dy} L${gx[3]+d} ${gy[3]-dy} L${gx[3]} ${gy[3]}Z" fill="#4A3E38"/><path d="M${gx[3]} ${gy[3]} L${gx[3]+d} ${gy[3]-dy} L${gx[4]+d} ${gy[4]-dy} L${gx[4]} ${gy[4]}Z" fill="#3E3430"/><path d="M${gx[2]} ${gy[2]} L${gx[2]+d} ${gy[2]-dy} L${gx[3]+d} ${gy[3]-dy} L${gx[4]+d} ${gy[4]-dy} L${gx[4]} ${gy[4]} L${gx[3]} ${gy[3]}Z" fill="url(#mShingle)" opacity=".55"/>
     <rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${red}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#mBoards)"/>
@@ -3683,6 +4025,7 @@ function ranchMap(){
     <rect x="276" y="${y-h*.3}" width="18" height="15" fill="#3A2A24" stroke="${C.white}" stroke-width="1.8"/><path d="M276 ${y-h*.3} L294 ${y-h*.3+15} M294 ${y-h*.3} L276 ${y-h*.3+15}" stroke="${C.white}" stroke-width="1.2"/><path d="M285 ${y-h*.3-2} v-4" stroke="#5a4a40" stroke-width="1.6"/>
     ${Array.from({length:Math.min(6,n+2)},(_,i)=>{const wx=x+10+i*((w-20)/Math.min(6,n+2));return wx>258&&wx<304?'':`<rect x="${wx}" y="${y+12}" width="9" height="8" fill="url(#mGlass)" stroke="${C.white}" stroke-width="1.4"/>`}).join('')}
     ${n>=3?`<rect x="${284}" y="${y-rh-12}" width="7" height="10" fill="#9AA6AD"/><path d="M${283} ${y-rh-12} l4.5 -6 l4.5 6z" fill="#7C8A92"/><path d="M${287.5} ${y-rh-18} l0 -6 l6 2 z" fill="#C9A227"/>`:''}`;
+    if(LD.barn&&LD.barn!=='red')o=locBarn(LD.barn,n,C,shadow);
     g+=hot('barn',o);label(285,322,'Barn · '+STALLS[n]+' stalls',true,n,mx('barn'))}
   // ===== foaling =====
   {const n=lv('foaling');let o;if(!n)o=lot(384,232,70,66);else{const w=[0,60,78][n];o=bld(419-w/2,268,w,42,'#DCC6A2','#5F7A5A',{win:n+1,door:1,rh:20})+(n>=2?`<rect x="${419+w/2-16}" y="284" width="12" height="16" fill="#C9B48E" stroke="rgba(0,0,0,.25)"/>`:'')+pony(395,306,'#9A4822','#B8672E')+pony(405,309,'#C89955','#231D19',1)}
@@ -3729,7 +4072,7 @@ function ranchMap(){
   // ===== ring =====
   {const n=lv('ring');let o;if(!n)o=lot(474,224,114,82);else{const cx=532,cy=272,rx=58,ry=27;/* an oval arena seen from the same high angle as the barns */
       const pt=a=>[cx+rx*Math.cos(a),cy+ry*Math.sin(a)];const f=v=>v.toFixed(1);
-      o=`<ellipse cx="${cx}" cy="${cy+3}" rx="${rx+4}" ry="${ry+2}" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#CDB383"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="${C.sand}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="url(#mPlH)"/>
+      o=`<ellipse cx="${cx}" cy="${cy+3}" rx="${rx+4}" ry="${ry+2}" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#CDB383"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="${C.sand}"/><ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="url(#mPlH)"/>${snowy(SEAS)?`<ellipse cx="${cx}" cy="${cy}" rx="${rx-3}" ry="${ry-2.5}" fill="#F3F6F9" opacity=".8"/><ellipse cx="${cx}" cy="${cy+1}" rx="${rx-15}" ry="${ry-10}" fill="none" stroke="${C.sand}" stroke-width="4" opacity=".75"/>`:""}
         <path d="M${cx-30} ${cy+4} q30 -14 60 0" stroke="#C4AC7C" stroke-width="1.2" fill="none"/><ellipse cx="${cx}" cy="${cy-6}" rx="${rx-14}" ry="${ry-12}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="2.5"/>`;
       /* kickboard along the inside of the near rail */
       o+=`<path d="M${f(pt(Math.PI*.12)[0])} ${f(pt(Math.PI*.12)[1])} A${rx-1} ${ry-1} 0 0 1 ${f(pt(Math.PI*.88)[0])} ${f(pt(Math.PI*.88)[1])}" stroke="#A88A5C" stroke-width="2.2" fill="none" opacity=".7"/>`;
@@ -3780,7 +4123,9 @@ function ranchMap(){
     const quad=`M${X+sk} ${Y} H${X+W-sk} L${X+W} ${Y+H} H${X}Z`;let o=`<ellipse cx="${X+W/2}" cy="${Y+H+2}" rx="${W/2}" ry="4" fill="rgba(25,35,15,.22)" filter="url(#mSh)"/><path d="${quad}" fill="${n?'#D6C27A':'#C8BF8E'}"/><path d="${quad}" fill="url(#mPlH)"/>`;
     if(n){o+=`<path d="M${X+sk} ${Y} H${X+sk+W*.3} L${X+W*.32} ${Y+H} H${X}Z" fill="#B9B36A"/>${[...Array(30)].map((_,i)=>{const row=Math.floor(i/6),t2=row/5,yy=Y+5+row*14,xx=X+sk*(1-t2)+3+(i*7)%(W*.3);return `<path d="M${xx.toFixed(1)} ${yy} l-1 -4 M${(xx+2).toFixed(1)} ${yy} l1 -4" stroke="#8E8A48" stroke-width=".8"/>`}).join('')}`;
       for(let i=0;i<6;i++){const t2=i/5,x0=X+sk*(1-t2)+W*.34,x1=X+W-sk*(1-t2)-4;o+=`<path d="M${x0.toFixed(1)} ${Y+8+i*12} C${(x0+(x1-x0)*.3).toFixed(1)} ${Y+5+i*12} ${(x0+(x1-x0)*.7).toFixed(1)} ${Y+11+i*12} ${x1.toFixed(1)} ${Y+7+i*12}" stroke="#B99A3E" stroke-width="${(2.2+t2*1.4).toFixed(1)}" fill="none" opacity=".75" stroke-linecap="round"/>`}}
+    if(snowy(SEAS))o+=`<path d="${quad}" fill="#F3F6F9" opacity=".86"/>`+[...Array(6)].map((_,i)=>`<path d="M${X+sk+6} ${Y+10+i*12} H${X+W-sk-6}" stroke="#DCE3EA" stroke-width="2" opacity=".7"/>`).join('');
     for(let i=0;i<n+1;i++){const bx=744+i*32,by=300;o+=`<ellipse cx="${bx+2}" cy="${by+7}" rx="12" ry="2.8" fill="rgba(25,35,15,.3)"/><rect x="${bx-10}" y="${by-9}" width="16" height="16" rx="2" fill="#C9A23E"/><ellipse cx="${bx+6}" cy="${by-1}" rx="5.5" ry="8" fill="#D9B651" stroke="#8A6A12" stroke-width=".7"/><path d="M${bx+6} ${by-1} m-3 0 a3 4.5 0 1 1 3 4.5 a2 3 0 1 1 -2 -3" stroke="#9C7A22" stroke-width=".6" fill="none"/>${[-6,-2,2].map(dx=>`<path d="M${bx+dx} ${by-9} v16" stroke="#B48E30" stroke-width=".6"/>`).join('')}`}
+    if(snowy(SEAS))for(let i=0;i<n+1;i++){const bx=744+i*32,by=300;o+=`<path d="M${bx-10} ${by-8} Q${bx-2} ${by-13} ${bx+6} ${by-9} Q${bx+11} ${by-6} ${bx+10} ${by-2} Q${bx+3} ${by-6} ${bx-10} ${by-6}Z" fill="#F7FAFC"/>`}
     if(n>=2)o+=`<g transform="translate(${X+14} ${Y+34})"><ellipse cx="18" cy="9" rx="22" ry="3" fill="rgba(25,35,15,.25)"/>${[[0,0],[12,0],[24,0],[6,-7],[18,-7],[12,-14]].map(([x,y])=>`<rect x="${x}" y="${y}" width="12" height="7" fill="#D9BE62" stroke="#9C7A22" stroke-width=".6"/><path d="M${x+4} ${y} v7 M${x+8} ${y} v7" stroke="#9C7A22" stroke-width=".4"/>`).join('')}</g>`;
     if(n>=3)o+=`<g transform="translate(838 268)"><ellipse cx="10" cy="10" rx="16" ry="2.4" fill="rgba(25,35,15,.3)"/><rect x="2" y="-1" width="16" height="7" rx="1.5" fill="#B23A2B"/><path d="M8 -1 V-8 H16 V-1" fill="none" stroke="#2B2A26" stroke-width="1.4"/><rect x="9" y="-7" width="6" height="5" fill="#BFD7EA" opacity=".8"/><path d="M5 -1 V-6" stroke="#444" stroke-width="1.2"/><circle cx="15" cy="6.5" r="5" fill="#2B2A26"/><circle cx="15" cy="6.5" r="2" fill="#B23A2B"/><circle cx="3" cy="7.5" r="3" fill="#2B2A26"/><circle cx="3" cy="7.5" r="1.2" fill="#B23A2B"/></g>`;
     if(lv('bees'))for(let i=0;i<lv('bees');i++)o+=`<g transform="translate(${X+W-sk-14-i*11} ${Y+10})"><rect x="0" y="0" width="8" height="9" fill="#F0E2B6" stroke="#8A6A12" stroke-width=".6"/><path d="M0 3 h8 M0 6 h8" stroke="#C9A23E" stroke-width=".6"/><rect x="-1" y="-2" width="10" height="2.5" fill="#FFFFFF" stroke="#999" stroke-width=".4"/><circle cx="${10+i}" cy="-3" r=".7" fill="#2B2A26"/><circle cx="${12-i}" cy="-6" r=".7" fill="#2B2A26"/></g>`;
@@ -3820,7 +4165,8 @@ function ranchMap(){
        <path d="M${tx+TL*.5-24} ${B-8} q12 -10 24 0 M${tx+TL*.5+4} ${B-8} q12 -10 24 0" fill="#9AA4AD"/>${wheel(tx+TL*.5-12,5.6)}${wheel(tx+TL*.5+16,5.6)}
        <path d="M${tx+TL-30} ${B-36} q6 -6 12 0" stroke="#7A3D1C" stroke-width="3" fill="none" stroke-linecap="round"/></g>`}
     o=`<g transform="translate(${200-56*.62} ${577-346*.62}) scale(.62)">${o}</g>`;g+=hot('trailer',o);label(408,566,'Trailer',n>0,n,mx('trailer'))}
-  return `<svg viewBox="0 0 1200 640" role="img" aria-label="Illustrated map of your ranch. Click a spot to jump to its card.">${g}${labels}</svg>`;
+  if(LI!=='classic')g+=locExtras(LI);
+  return `<svg viewBox="0 ${LI==='classic'?'0 1200 640':'-80 1200 720'}" role="img" aria-label="Illustrated map of your ranch. Click a spot to jump to its card.">${g}${labels}</svg>`;
 }
 function renderFacilities(){
   const si=dateParts(S.day).sIdx;
@@ -3998,7 +4344,7 @@ function renderOffice(){
   const tiers=[[10,'State Championships open'],[25,'Regionals open'],[40,'County fairs stop adding reputation, and sponsors start calling'],[60,'Nationals open and more skilled job applicants'],[80,'Bigger sponsors'],[100,'Weekly invitations to invitation-only events'],[120,'International shows open'],[150,'Two invitations a week and the full reputation bonus to sales and stud demand'],[160,'The Olympics open (every 4th summer)']];
   const next=tiers.find(t=>S.rep<t[0]);const prev=[...tiers].reverse().find(t=>S.rep>=t[0]);const base=prev?prev[0]:0;
   const avgH=S.horses.length?Math.round(S.horses.reduce((a,h)=>a+h.happy,0)/S.horses.length):0;
-  return `${profilePanel()}<div class="section-head"><h2>Ranch Office</h2><span class="sub">The books, supplies and records for ${esc(S.ranchName)}.</span></div>
+  return `${profilePanel()}<div class="section-head"><h2>Ranch Office</h2><span class="sub">The books, supplies and records for ${esc(S.ranchName)}.</span></div>${locInfoPanel()}
   <div class="kpis">
    <div class="kpi"><span class="k">Bank</span><span class="v">${money(S.money)}</span><span class="s">Day ${S.day}</span></div>
    <div class="kpi"><span class="k">Daily running cost</span><span class="v ${net<0?'bad':'good'}">${net>=0?'+':''}${money(net)}</span><span class="s">Livestock ${money(inc)} − wages ${money(wg)} − upkeep ${money(upk)} − hay ~${money(hayCost)}</span></div>
@@ -4238,6 +4584,7 @@ function renderModal(){
   }else if(m.type==='tutintro'){title='Spring at Hank’s Place';body=`<div class="tuthead">${hankSVG(72)}<p><b>Hank:</b> “Welcome, ${esc(S.player.name.split(' ')[0])}! I’m Hank. I’ve been raising horses on this land for forty years. Spend the spring with me and I’ll show you how it’s done. After that, you’ll be ready for a ranch of your own.”</p></div><p class="note">The tutorial lasts four game days (one spring). Hank gives you a short checklist each day. When it’s over, he’ll let you pick one of his horses to keep.</p><div class="actions"><button class="btn primary" data-a="close">Let’s get to work</button><button class="btn" data-a="tutskip">Skip the tutorial</button></div>`;
   }else if(m.type==='gift'){title='Hank’s parting gift';body=giftBody();
   }else if(m.type==='path'){title='Your own ranch';body=pathBody();
+  }else if(m.type==='locpick'){title='Where is your ranch?';body=locPickBody(m);
   }else if(m.type==='foreclose'){title='Foreclosure';body=forecloseBody();
   }else if(m.type==='gameover'){title='Game over';body=gameoverBody();
   }else if(m.type==='whatsnew'){title='New in Bloodline Ranch';body=whatsNewBody();
@@ -4256,7 +4603,7 @@ function renderModal(){
     ${kept?`<p class="note good" style="margin-top:8px">${esc(S.ranchName)} is safe in slot ${kept}.</p>`:`<p class="note" style="margin-top:8px">If you don’t keep a copy, this ranch can’t be loaded again.</p>`}
     <div class="actions" style="margin-top:12px"><button class="btn primary" data-a="newgameyes">Start a new ranch</button><button class="btn" data-a="close">Keep playing this ranch</button></div>`;
   }
-  ov.innerHTML=`${nav?nav.side:''}<div class="modal" role="dialog" aria-modal="true" aria-label="${title}"><div class="mhead">${nav?nav.head:''}<h2>${title}</h2>${nav?nav.pos:''}${m.lock?'':'<button class="xbtn" data-a="close" aria-label="Close">×</button>'}</div><div class="mbody">${body}</div></div>`;
+  ov.innerHTML=`${nav?nav.side:''}<div class="modal${m.type==='locpick'?' locmodal':''}" role="dialog" aria-modal="true" aria-label="${title}"><div class="mhead">${nav?nav.head:''}<h2>${title}</h2>${nav?nav.pos:''}${m.lock?'':'<button class="xbtn" data-a="close" aria-label="Close">×</button>'}</div><div class="mbody">${body}</div></div>`;
   ov.hidden=false;
 }
 
@@ -4741,23 +5088,31 @@ function eventScene(W,rs){const ev=W.ev,ev0=W.ev0,T=W.T;let s=sceneDefs();const 
 let SEAS=1;
 function curSeason(){try{return S&&S.day?dateParts(S.day).sIdx:1}catch(e){return 1}}
 const SEAS_KEEP=new Set(['#2f5d46','#2f6b3e','#4e7a3a','#3e6f6a','#2e6fd8','#2e5d8c']);
-function seasonize(svg,si){if(si===1||!svg)return svg;if(svg.includes('<!--ns-->'))return svg.split(/(<!--ns-->[\s\S]*?<!--\/ns-->)/).map(p=>p.startsWith('<!--ns-->')?p:seasonize(p,si)).join('');const cache={};
+function seasonize(svg,si,fx){if(fx===undefined)fx=seasonFx(si);if(!fx||!svg)return svg;if(svg.includes('<!--ns-->'))return svg.split(/(<!--ns-->[\s\S]*?<!--\/ns-->)/).map(p=>p.startsWith('<!--ns-->')?p:seasonize(p,si,fx)).join('');const cache={};
   const hsl=(r,g,b)=>{r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,sat=0;const l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;sat=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return [h,sat,l]};
   const hex=(h,sat,l)=>{sat=Math.max(0,Math.min(1,sat));l=Math.max(0,Math.min(1,l));const k=n=>(n+h/30)%12,a=sat*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('')};
   return svg.replace(/#([0-9a-fA-F]{6})\b/g,(m0,x)=>{const lx='#'+x.toLowerCase();if(cache[lx])return cache[lx];let out=m0;
     if(!SEAS_KEEP.has(lx)){const r=parseInt(x.slice(0,2),16),g=parseInt(x.slice(2,4),16),b=parseInt(x.slice(4,6),16);const [h,sat,l]=hsl(r,g,b);
       if(h>=58&&h<=172&&sat>.1&&l>.08&&l<.92){
-        if(si===0)out=hex(h<100?h+10:h-4,Math.min(.75,sat*1.25),Math.min(.85,l*1.07));
-        else if(si===2){if(l>.52)out=hex(40+(r+g)%9,Math.min(.5,Math.max(sat,.34)),l*.97);else{const tg=[34,40,26,46,30,20][(r+g*3+b*7)%6];out=hex(tg,Math.max(sat,.42)*1.05,l*.98)}}
+        if(fx==='spring'||fx==='lateSpring')out=hex(h<100?h+10:h-4,Math.min(.75,sat*(fx==='lateSpring'?1.15:1.25)),Math.min(.85,l*1.07));
+        else if(fx==='lush')out=hex(h+4,Math.min(.8,sat*1.2),l*.97);
+        else if(fx==='light')out=hex(h-6,sat*.95,Math.min(.88,l*1.02));
+        else if(fx==='muted')out=hex(h-12,sat*.72,Math.min(.88,l*1.03));
+        else if(fx==='dryish')out=hex(h-10,sat*.86,Math.min(.88,l*1.03));
+        else if(fx==='dry')out=hex(h>90?h-14:Math.max(46,h-22),sat*.7,Math.min(.88,l*1.05));
+        else if(fx==='gold')out=l>.36?hex(42+(r+g)%7,Math.min(.55,Math.max(sat,.36)),Math.min(.86,l*1.08)):hex(h-18,sat*.8,l);
+        else if(fx==='tan')out=l>.36?hex(38+(r+g)%6,Math.min(.38,Math.max(sat*.7,.24)),Math.min(.86,l*1.06)):hex(h-24,sat*.6,l*1.02);
+        else if(fx==='frost')out=hex(h>90?h-30:Math.max(40,h-26),sat*.38,Math.min(.9,l*1.1));
+        else if(fx==='fall'){if(l>.52)out=hex(40+(r+g)%9,Math.min(.5,Math.max(sat,.34)),l*.97);else{const tg=[34,40,26,46,30,20][(r+g*3+b*7)%6];out=hex(tg,Math.max(sat,.42)*1.05,l*.98)}}
         else out=hex(212,.12,.8+l*.17)}
-      else if(si===3&&h>=185&&h<=230&&sat>.2&&l>.62)out=hex(h,sat*.4,Math.min(.92,l*1.03))}
+      else if(fx==='snow'&&h>=185&&h<=230&&sat>.2&&l>.62)out=hex(h,sat*.4,Math.min(.92,l*1.03))}
     cache[lx]=out;return out})}
 function snowFlakes(seed,w=1000,hgt=120,n=80){const t=srng(seed);let o='<g class="snow" fill="#fff">';for(let i=0;i<n;i++)o+=`<circle cx="${(t()*w).toFixed(1)}" cy="${(t()*hgt).toFixed(1)}" r="${(.6+t()*1.3).toFixed(1)}" opacity="${(.5+t()*.45).toFixed(2)}"/>`;return o+'</g>'}
 function bareTree(x,y,r,t){const tk='#5A4636';let o=`<path d="M${x} ${y+r*.25} L${x} ${y-r*.6}" stroke="${tk}" stroke-width="${(r*.16).toFixed(1)}" stroke-linecap="round"/>`;
   const br=[[-.55,-1.05,-.3],[.5,-1.1,-.35],[-.2,-1.35,-.6],[.25,-1.3,-.55],[-.7,-.6,-.15],[.7,-.65,-.2]];
   o+=br.map(([dx,dy,sy])=>`<path d="M${x} ${(y+sy*r).toFixed(1)} Q${(x+dx*r*.4).toFixed(1)} ${(y+(sy+dy)/2*r).toFixed(1)} ${(x+dx*r).toFixed(1)} ${(y+dy*r).toFixed(1)}" stroke="${tk}" stroke-width="${(r*.06+.4).toFixed(1)}" fill="none" stroke-linecap="round"/><path d="M${(x+dx*r*.7).toFixed(1)} ${(y+(dy-.05)*r).toFixed(1)} l${(dx*r*.25).toFixed(1)} ${(-r*.18).toFixed(1)}" stroke="${tk}" stroke-width="${(r*.035+.3).toFixed(1)}" stroke-linecap="round"/>`).join('');
   return o+br.slice(0,4).map(([dx,dy])=>`<ellipse cx="${(x+dx*r*.85).toFixed(1)}" cy="${(y+dy*r*.95).toFixed(1)}" rx="${(r*.12).toFixed(1)}" ry="${(r*.04+.3).toFixed(1)}" fill="#fff" opacity=".9"/>`).join('')}
-function wTree(x,y,r,seed){if(SEAS===3)return bareTree(x,y,r,seed);const t=srng(seed);const c=['#5A8A43','#4E7C3B','#679A4D'][Math.floor(t()*3)],d=hexMix(c,'#1d2a14',.35),l=hexMix(c,'#e8f2c0',.3);let o=`<rect x="${(x-r*.09).toFixed(1)}" y="${(y-r*.3).toFixed(1)}" width="${(r*.18).toFixed(1)}" height="${(r*.55).toFixed(1)}" fill="#5C4330"/>`;
+function wTree(x,y,r,seed){if(SEAS===3&&snowy(3))return bareTree(x,y,r,seed);const t=srng(seed);const c=['#5A8A43','#4E7C3B','#679A4D'][Math.floor(t()*3)],d=hexMix(c,'#1d2a14',.35),l=hexMix(c,'#e8f2c0',.3);let o=`<rect x="${(x-r*.09).toFixed(1)}" y="${(y-r*.3).toFixed(1)}" width="${(r*.18).toFixed(1)}" height="${(r*.55).toFixed(1)}" fill="#5C4330"/>`;
   const B=[[0,-.65,.62],[-.45,-.35,.5],[.45,-.38,.52],[-.2,-.95,.45],[.25,-.9,.42]];o+=B.map(([dx,dy,k])=>`<circle cx="${(x+dx*r).toFixed(1)}" cy="${(y+dy*r).toFixed(1)}" r="${(k*r*(.9+t()*.2)).toFixed(1)}" fill="${d}"/>`).join('');
   o+=B.map(([dx,dy,k])=>`<circle cx="${(x+dx*r-r*.06).toFixed(1)}" cy="${(y+dy*r-r*.08).toFixed(1)}" r="${(k*r*.82).toFixed(1)}" fill="${c}"/>`).join('');
   return o+`<circle cx="${(x-r*.25).toFixed(1)}" cy="${(y-r*1.05).toFixed(1)}" r="${(r*.22).toFixed(1)}" fill="${l}" opacity=".55"/>`}
@@ -4770,7 +5125,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
   if(scene.includes('url(#wSky)')){const cl=(x,y,sc,op)=>`<g transform="translate(${x} ${y}) scale(${sc})" opacity="${op}"><ellipse cx="0" cy="0" rx="26" ry="9" fill="#fff"/><ellipse cx="-14" cy="3" rx="14" ry="7" fill="#fff"/><ellipse cx="16" cy="2" rx="16" ry="8" fill="#fff"/><ellipse cx="4" cy="-6" rx="14" ry="8" fill="#fff"/><ellipse cx="2" cy="5" rx="30" ry="4" fill="#DCE6EE" opacity=".7"/></g>`;
     const amb=`<g class="wclouds">${cl(120,28,1.1,.9)}${cl(420,18,.8,.75)}${cl(690,34,1.3,.85)}</g><g class="wclouds slow">${cl(260,44,.6,.5)}${cl(560,50,.5,.45)}</g><g class="wbirds">${[[300,40],[316,34],[330,42]].map(([x,y])=>`<path d="M${x} ${y} q4 -4 8 0 q4 -4 8 0" stroke="#3a3a3a" stroke-width="1.2" fill="none"/>`).join('')}</g>`;
     const k=scene.indexOf('fill="url(#wSky)"/>');if(k>0)scene=scene.slice(0,k+'fill="url(#wSky)"/>'.length)+amb+scene.slice(k+'fill="url(#wSky)"/>'.length)}
-  if(si!==1&&ev0.id!=='desert'){scene=seasonize(scene,si);if(si===3)scene+=snowFlakes(m.wid,800,300,90)}
+  if(seasonFx(si)&&ev0.id!=='desert'){scene=seasonize(scene,si);if(snowy(si))scene+=snowFlakes(m.wid,800,300,90)}
   scene+=`<g id="wDustL"></g><g id="wConf"></g>`;
   ov.innerHTML=`<div class="modal watch" role="dialog" aria-modal="true" aria-label="Watching the event"><div class="mhead"><h2>${esc(W.T.n)} ${esc(ev0.n)}</h2><span class="navpos" id="wStatus">● Live</span></div><div class="mbody">
    <div class="wstage"><svg viewBox="0 0 800 300" id="wSvg">${scene}</svg></div><div class="wcomm" id="wComm">${esc(W.me.name)} is in the field. Here we go…</div>
@@ -5121,7 +5476,7 @@ function tabBanner(t){if(t==='tack'||t==='facilities')return '';const si=(t==='h
     <g transform="translate(940 92)"><circle r="18" fill="none" stroke="#8A5A32" stroke-width="3" opacity=".55"/><g transform="translate(6 -4)"><ellipse cx="0" cy="8" rx="13" ry="4" fill="#3E2A1C"/><path d="M-12 -10 h24 v18 a12 4 0 0 1 -24 0z" fill="#E9E1CF"/><ellipse cx="0" cy="-10" rx="12" ry="4" fill="#F7F0DC"/><ellipse cx="0" cy="-10" rx="9" ry="2.8" fill="#5A3A22"/><path d="M12 -6 c7 0 7 10 0 10" stroke="#E9E1CF" stroke-width="2.2" fill="none"/><path d="M-4 -16 c-2 -3 2 -5 0 -8 M3 -16 c-2 -3 2 -5 0 -8" stroke="#fff" stroke-width="1" fill="none" opacity=".55"/></g></g>
     <g transform="translate(40 60)"><circle cx="0" cy="-8" r="22" fill="url(#${p}g)"/><rect x="-7" y="0" width="14" height="30" rx="2" fill="#E9DDBF"/><path d="M-9 30 h18" stroke="#8A6A2A" stroke-width="3"/><path d="M0 -2 C-4 -8 -2 -14 0 -16 C2 -14 4 -8 0 -2Z" fill="#F2C14E"/><path d="M0 -4 C-2 -8 -1 -11 0 -12 C1 -11 2 -8 0 -4Z" fill="#fff" opacity=".8"/></g>`}
   if(o&&o.includes(`fill="url(#${p}s)"`)&&!['office','ranch','stable','hof','journal'].includes(t)){const cl=(x,y,sc,op)=>`<g transform="translate(${x} ${y}) scale(${sc})" opacity="${op}"><ellipse cx="0" cy="0" rx="22" ry="7" fill="#fff"/><ellipse cx="-12" cy="2" rx="12" ry="6" fill="#fff"/><ellipse cx="13" cy="1" rx="13" ry="6.5" fill="#fff"/><ellipse cx="3" cy="-5" rx="11" ry="6" fill="#fff"/></g>`;const amb=`<!--ns--><g class="bnclouds">${cl(90+rs()*80,16+rs()*8,.9,.85)}${cl(400+rs()*100,10+rs()*8,.7,.7)}${cl(760+rs()*120,18+rs()*8,1.1,.8)}</g><g class="bnbirds">${[[300,30],[314,25],[326,32]].map(([x,y])=>`<path d="M${x} ${y} q3 -3 6 0 q3 -3 6 0" stroke="#3a3a3a" stroke-width="1" fill="none"/>`).join('')}</g><!--/ns-->`;const k2=o.indexOf(`fill="url(#${p}s)"/>`);if(k2>0)o=o.slice(0,k2+`fill="url(#${p}s)"/>`.length)+amb+o.slice(k2+`fill="url(#${p}s)"/>`.length)}
-  svgN=keep;SEAS=sv0;if(si!==1){defs=seasonize(defs,si);o=seasonize(o,si);if(si===3&&!['stable','office','ranch','hof','journal'].includes(t))o+=snowFlakes(t.length*31)}const html=o?`<div class="tabban" aria-hidden="true"><svg viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid meet"><defs>${defs}</defs>${o}</svg></div>`:'';BANNER_CACHE[ck]=html;return html}
+  svgN=keep;SEAS=sv0;if(seasonFx(si)){defs=seasonize(defs,si);o=seasonize(o,si);if(snowy(si)&&!['stable','office','ranch','hof','journal'].includes(t))o+=snowFlakes(t.length*31)}const html=o?`<div class="tabban" aria-hidden="true"><svg viewBox="0 0 1000 120" preserveAspectRatio="xMidYMid meet"><defs>${defs}</defs>${o}</svg></div>`:'';BANNER_CACHE[ck]=html;return html}
 
 
 function render(){
@@ -5170,7 +5525,7 @@ const ACT={
   rndrname:()=>{const el=document.getElementById('pName');if(el)UI.pdraft.name=el.value;UI.pdraft.ranch=randRanch()},
   pcdone:()=>{const m=UI.modal||{};const el=document.getElementById('pName');const d=UI.pdraft;d.name=((el&&el.value)||d.name||'').trim()||'Sam Rivers';const re=document.getElementById('rNameC');d.ranch=((re&&re.value)||d.ranch||'').trim()||(d.name.split(' ').pop()+' Ranch');const setR=()=>{if(S.phase==='tutorial'){UI.rname=d.ranch;S.player.ranchWant=d.ranch}else S.ranchName=d.ranch};
     if(m.mode==='edit'){S.player.look={...d.look};S.player.name=d.name;setR();UI.modal=null;return}
-    S.player=newPlayer(d);setR();if(m.mode==='existing'){S.needChar=0;UI.modal=null;log('good','Meet '+S.player.name+', owner of '+S.ranchName+'.');return}
+    S.player=newPlayer(d);setR();if(m.mode==='existing'){S.needChar=0;UI.modal=S.loc?null:{type:'locpick',lock:1,existing:1};log('good','Meet '+S.player.name+', owner of '+S.ranchName+'.');return}
     UI.modal={type:'tutintro',lock:1}},
   editlook:()=>{UI.pdraft={name:S.player.name,ranch:S.phase==='tutorial'?(UI.rname||S.player.ranchWant||''):S.ranchName,bg:S.player.bg,look:{top:0,neck:0,neckC:0,eye:0,extra:0,...S.player.look}};UI.modal={type:'creator',mode:'edit'}},
   tocreator:()=>{UI.pdraft=defaultDraft();UI.modal={type:'creator',lock:1,mode:'existing'}},
@@ -5180,7 +5535,8 @@ const ACT={
   rcolor2:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol2(d.col)},
   rsym:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchSym(d.s)},
   rcolor:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol(d.col)},
-  pathpick:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;buildRanch(d.p,UI.gift);UI.gift=null;UI.tab='stable';UI.modal={type:'welcome'}},
+  locpick:d=>{const id=d.l;if(!LOCFX[id])return;const m=UI.modal||{};S.loc=id;locFestSync();if(typeof EAC_CLEAR==='function')EAC_CLEAR();if(!m.existing&&S.day<=2)refreshMarket();log('good','Your ranch is in '+LOCS[id].n+'. '+LOCFX[id].pros[0]+'.');UI.modal=m.next?{type:m.next}:null;save()},
+  pathpick:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;buildRanch(d.p,UI.gift);UI.gift=null;UI.tab='stable';UI.modal={type:'locpick',lock:1,next:'welcome'}},
   loanpay:d=>{const l=S.bank.loans.find(x=>x.id==d.id);if(!l)return;const amt=d.v==='due'?l.due:d.v==='all'?Math.ceil(l.bal):+d.v;const paid=payLoan(l,amt,d.v==='all'?'Paid off: '+l.name:d.v==='due'?'Payment: '+l.name:'Extra payment: '+l.name);toast(paid?'Paid '+money(paid)+'.':'Not enough money.')},
   autopay:()=>{S.bank.autopay=S.bank.autopay?0:1},
   borrow:(d,b)=>{const off=loanOffer();const amt=+d.v;if(!off||amt>off.max)return;if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again: borrow '+money(amt)+' at '+(off.rate*100).toFixed(1)+'%';return 'skip'}addLoan('Ranch loan #'+S.bank.nextLoanId,amt,off.rate,16,4);pxp('biz',2);toast('The bank deposited '+money(amt)+'.')},
@@ -5296,10 +5652,10 @@ const ACT={
   takesponsor:()=>{const b=SPONSORS.find(x=>x.id===S.sponsorOffer);if(!b)return;S.sponsor={id:b.id,since:S.day,weeks:4,strikes:0};S.sponsorOffer=null;S.weekStarts=0;log('good','Signed a sponsorship with '+b.n+' ('+money(b.pay)+' a week).');toast('Sponsorship signed!')},
   nosponsor:()=>{S.sponsorOffer=null;toast('Offer declined.')},
   dropsponsor:(d,b)=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to end';return 'skip'}const sp=SPONSORS.find(x=>x.id===S.sponsor.id);S.sponsor=null;log('info','Ended the sponsorship with '+(sp?sp.n:'your sponsor')+'.');toast('Sponsorship ended.')},
-  facup:d=>{const f=FACI[d.f];if(!f)return;const lv=L(f.id),nx=f.lv[lv+1];if(!nx)return;if(S.money<nx.c)return toast('Not enough money.');
-    S.money-=nx.c;pxp('ranch',4);pxp('biz',2);S.fac[f.id]=lv+1;if(f.id==='barn')S.stalls=Math.max(S.stalls,STALLS[lv+1]);
+  facup:d=>{const f=FACI[d.f];if(!f)return;const lv=L(f.id),nx=f.lv[lv+1];if(!nx)return;const nc=facCost(f,lv+1);if(S.money<nc)return toast('Not enough money.');
+    S.money-=nc;pxp('ranch',4);pxp('biz',2);S.fac[f.id]=lv+1;if(f.id==='barn')S.stalls=Math.max(S.stalls,STALLS[lv+1]);
     if(f.id==='feedbarn')S.hayPrice=Math.max(3,Math.round(S.hayPrice*[1,.85,.75][lv+1]/[1,.85,.75][lv]));
-    log('good',(lv?'Upgraded the '+f.n+' to ':'Built: ')+nx.n+' for '+money(nx.c)+'.');toast(nx.n+(f.g==='stock'?' added!':' is ready!'));
+    log('good',(lv?'Upgraded the '+f.n+' to ':'Built: ')+nx.n+' for '+money(nc)+'.');toast(nx.n+(f.g==='stock'?' added!':' is ready!'));
     if(facLevels()>=15)unlock('builder');if(L('house')>=3)unlock('lodge');if(['chickens','goats','sheep','cattle','bees'].every(x=>L(x)))unlock('stockman')},
   facjump:d=>{const el=document.getElementById('fac-'+d.f);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1400)}return 'skip'},
   wskip:()=>{skipWatch();return 'skip'},
