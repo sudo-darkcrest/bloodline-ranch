@@ -1300,8 +1300,10 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='78';
+const BUILD='79';
 const CHANGELOG=[
+ {b:'79',d:'Nov 2, 2026',t:'Move your ranch',c:[
+  'You can now move your ranch to another location from the Office tab. It costs 20% of your cash (at least $1,500), your horses, buildings and reputation come with you, and you can move once a year.']},
  {b:'78',d:'Nov 2, 2026',t:'New mountains for Montana and Wyoming',c:[
   'Redrew the Montana and Wyoming mountains. Snow caps now sit on the peaks instead of floating. The Rockies have jagged peaks of different heights in two ranges with sunlit and shaded sides, and the Bighorns are broad, rounded and snow-topped.',
   'Montana’s foothills now have a thick pine forest that stays green all year and gets snow on its branches in winter.']},
@@ -3967,13 +3969,16 @@ function locCard(id){const L=LOCS[id],x=LOCFX[id],f=LOCFEST[id];
   return `<div class="loccard${S.loc===id?' sel':''}"><div class="locpano">${pano}</div><div class="locbody"><div class="lochead"><h3>${esc(L.n)}</h3><span class="chip ${LOC_DIFF_COL[x.diff]}">${x.diff}</span></div><div class="note">${esc(x.blurb)}</div>
    <ul class="locpros">${x.pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><ul class="loccons">${x.cons.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>
    <div class="note"><b>Local event:</b> ${esc(f.n)} (${SEASONS[f.s]} day ${f.d})</div>
-   <button class="btn primary small" data-a="locpick" data-l="${id}">Settle in ${esc(L.n.split(',')[0])}</button></div></div>`}
-function locPickBody(m){return `<p>${m.existing?'Ranches now have a home. Where is <b>'+esc(S.ranchName)+'</b>? Your ranch, horses and money all stay the same. Only the scenery and the local perks change.':'Each place has its own scenery, weather, perks and drawbacks. No place is the best at everything.'}</p>
+   <button class="btn primary small" data-a="locpick" data-l="${id}">${UI.modal&&UI.modal.move?'Move to':'Settle in'} ${esc(L.n.split(',')[0])}</button></div></div>`}
+function locPickBody(m){if(m.move)return `<p>Pick where to move <b>${esc(S.ranchName)}</b>. The move costs <b>${money(moveFee())}</b>. Your horses, buildings and reputation come with you. After moving you have to wait a year before moving again.</p><div class="locgrid">${LOC_ORDER.filter(id=>id!==S.loc).map(locCard).join('')}</div>`;return `<p>${m.existing?'Ranches now have a home. Where is <b>'+esc(S.ranchName)+'</b>? Your ranch, horses and money all stay the same. Only the scenery and the local perks change.':'Each place has its own scenery, weather, perks and drawbacks. No place is the best at everything.'}</p>
   <div class="locgrid">${LOC_ORDER.map(locCard).join('')}</div>`}
+function moveFee(){return Math.max(1500,Math.round(Math.max(0,S.money)*.2/50)*50)}
+function moveWait(){return S.lastMove!=null?Math.max(0,S.lastMove+DPY-S.day):0}
 function locInfoPanel(){if(!S.loc||!LOCFX[S.loc])return '';const L=LOCS[S.loc],x=LOCFX[S.loc],f=LOCFEST[S.loc];const n=festNext('lf_'+S.loc);
   return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Location · ${esc(L.n)} <span class="chip ${LOC_DIFF_COL[x.diff]}">${x.diff}</span></div>
    <div class="locinfo"><ul class="locpros">${x.pros.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><ul class="loccons">${x.cons.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>
-   <div class="note"><b>${esc(f.n)}:</b> ${SEASONS[f.s]} day ${f.d}${n!=null?(n===0?' (today!)':' (in '+n+' day'+(n>1?'s':'')+')'):''}</div></div>`}
+   <div class="note"><b>${esc(f.n)}:</b> ${SEASONS[f.s]} day ${f.d}${n!=null?(n===0?' (today!)':' (in '+n+' day'+(n>1?'s':'')+')'):''}</div>
+   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px"><button class="btn small" data-a="moveopen" ${moveWait()?'disabled':''}>Move ranch · ${money(moveFee())}</button><span class="note">${moveWait()?'You can move again in '+moveWait()+' day'+(moveWait()>1?'s':'')+'.':'Moving costs 20% of your cash (at least $1,500). Horses, buildings and reputation come with you. You can move once a year.'}</span></div></div>`}
 function locTroublePick(){const w=locFx().trouble||{};const ks=Object.keys(TROUBLE);let tot=0;for(const k of ks)tot+=w[k]||1;let r=R()*tot;for(const k of ks){r-=w[k]||1;if(r<0)return k}return ks[0]}
 
 function seasonMap(){const si=curSeason(),sv=SEAS,li=locId();SEAS=si;let m=ranchMap();SEAS=sv;const fx=seasonFx(si);if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx){if(fx==='snow')m=m.replace(/<\/svg>\s*$/,(li==='classic'?snowFlakes(77,1200,640,220):'<g transform="translate(0 -80)">'+snowFlakes(77,1200,720,250)+'</g>')+'</svg>')}return m}
@@ -4646,7 +4651,7 @@ function renderModal(){
   }else if(m.type==='tutintro'){title='Spring at Hank’s Place';body=`<div class="tuthead">${hankSVG(72)}<p><b>Hank:</b> “Welcome, ${esc(S.player.name.split(' ')[0])}! I’m Hank. I’ve been raising horses on this land for forty years. Spend the spring with me and I’ll show you how it’s done. After that, you’ll be ready for a ranch of your own.”</p></div><p class="note">The tutorial lasts four game days (one spring). Hank gives you a short checklist each day. When it’s over, he’ll let you pick one of his horses to keep.</p><div class="actions"><button class="btn primary" data-a="close">Let’s get to work</button><button class="btn" data-a="tutskip">Skip the tutorial</button></div>`;
   }else if(m.type==='gift'){title='Hank’s parting gift';body=giftBody();
   }else if(m.type==='path'){title='Your own ranch';body=pathBody();
-  }else if(m.type==='locpick'){title='Where is your ranch?';body=locPickBody(m);
+  }else if(m.type==='locpick'){title=m.move?'Move your ranch':'Where is your ranch?';body=locPickBody(m);
   }else if(m.type==='foreclose'){title='Foreclosure';body=forecloseBody();
   }else if(m.type==='gameover'){title='Game over';body=gameoverBody();
   }else if(m.type==='whatsnew'){title='New in Bloodline Ranch';body=whatsNewBody();
@@ -5597,7 +5602,8 @@ const ACT={
   rcolor2:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol2(d.col)},
   rsym:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchSym(d.s)},
   rcolor:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;setRanchCol(d.col)},
-  locpick:d=>{const id=d.l;if(!LOCFX[id])return;const m=UI.modal||{};S.loc=id;locFestSync();if(typeof EAC_CLEAR==='function')EAC_CLEAR();if(!m.existing&&S.day<=2)refreshMarket();log('good','Your ranch is in '+LOCS[id].n+'. '+LOCFX[id].pros[0]+'.');UI.modal=m.next?{type:m.next}:null;save()},
+  moveopen:()=>{if(moveWait())return toast('You can move again in '+moveWait()+' days.');UI.modal={type:'locpick',move:1}},
+  locpick:d=>{const id=d.l;if(!LOCFX[id])return;const m=UI.modal||{};if(m.move){const fee=moveFee();if(id===S.loc)return;if(S.money<fee)return toast('You need '+money(fee)+' to move.');S.money-=fee;S.lastMove=S.day;const from=LOCS[S.loc].n;S.loc=id;locFestSync();if(typeof EAC_CLEAR==='function')EAC_CLEAR();log('good','Moved '+S.ranchName+' from '+from+' to '+LOCS[id].n+' for '+money(fee)+'.');toast('Welcome to '+LOCS[id].n+'!');UI.modal=null;save();return}S.loc=id;locFestSync();if(typeof EAC_CLEAR==='function')EAC_CLEAR();if(!m.existing&&S.day<=2)refreshMarket();log('good','Your ranch is in '+LOCS[id].n+'. '+LOCFX[id].pros[0]+'.');UI.modal=m.next?{type:m.next}:null;save()},
   pathpick:d=>{const el=document.getElementById('rName');if(el)UI.rname=el.value;buildRanch(d.p,UI.gift);UI.gift=null;UI.tab='stable';UI.modal={type:'locpick',lock:1,next:'welcome'}},
   loanpay:d=>{const l=S.bank.loans.find(x=>x.id==d.id);if(!l)return;const amt=d.v==='due'?l.due:d.v==='all'?Math.ceil(l.bal):+d.v;const paid=payLoan(l,amt,d.v==='all'?'Paid off: '+l.name:d.v==='due'?'Payment: '+l.name:'Extra payment: '+l.name);toast(paid?'Paid '+money(paid)+'.':'Not enough money.')},
   autopay:()=>{S.bank.autopay=S.bank.autopay?0:1},
