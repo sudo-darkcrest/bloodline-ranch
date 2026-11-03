@@ -1561,8 +1561,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='97';
+const BUILD='98';
 const CHANGELOG=[
+ {b:'98',d:'Nov 3, 2026',t:'Jalisco map tidy-up',c:[
+  'Jalisco: the two agave plants that poked through the fence by the county road now grow on open grass below the fence.',
+  'The tree that stood on the drive down to the show grounds (Covered Arena, Breeding Lab, Guest Lodge and Museum) has moved to the side of the road, on every ranch map.',
+ ]},
  {b:'97',d:'Nov 3, 2026',t:'Alberta roof and a real Recovery Area',c:[
   'Alberta: the farmhouse now has a proper hipped roof (a prairie foursquare). The odd slanted left end and the stick on the right are gone, and snow sits on the roof and dormer in winter.',
   'Recovery Area: the pieces are spread out over the lot and look like the real thing. The Hot Walker is a round dirt track with a motor post, four arms and two horses walking the circle (plus a water trough, a cooler-blanket rail and a hay bale). The Cold-Water Spa adds an open-front spa barn with a horse standing in the steel tank, and a wash rack with crossties and a hose. The Therapy Center adds a THERAPY building with flower beds at the back.',
@@ -4746,7 +4750,7 @@ function locExtras(id){let o='';const S0=SEAS;
     if(S0===0||S0===1)o+=flowersRow(400,560,584,['#F08CB4','#F6B4CC','#F08CB4','#fff'])+flowersRow(640,900,585,['#F08CB4','#F2C14E','#F6B4CC']);}
   if(id==='jalisco'){const agave=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="1" cy="1" rx="11" ry="2.6" fill="rgba(25,35,15,.25)"/>${[-78,-56,-34,-12,12,34,56,78].map((a,i)=>{const r=a*Math.PI/180,L=i%2?11:13,tx=Math.sin(r)*L,ty=-Math.cos(r)*L*.9-1;return `<path d="M${(-1.6*Math.cos(r)).toFixed(1)} ${(-1.6*Math.sin(r)).toFixed(1)} L${tx.toFixed(1)} ${ty.toFixed(1)} L${(1.6*Math.cos(r)).toFixed(1)} ${(1.6*Math.sin(r)).toFixed(1)}Z" fill="${i%2?'#7FAEB4':'#6E9EA8'}"/>`}).join('')}<path d="M-1.4 0 L0 -12 L1.4 0Z" fill="#8CBAC0"/></g>`;
     const nopal=(x,y,s)=>`<g transform="translate(${x} ${y}) scale(${s})"><ellipse cx="0" cy="1" rx="9" ry="2.4" fill="rgba(25,35,15,.25)"/><ellipse cx="0" cy="-6" rx="4.4" ry="6" fill="#6E9A4A"/><ellipse cx="-5" cy="-13" rx="3.6" ry="5" fill="#7AA654" transform="rotate(-25 -5 -13)"/><ellipse cx="4.6" cy="-14" rx="3.4" ry="4.8" fill="#669246" transform="rotate(22 4.6 -14)"/>${S0===0||S0===1?'<circle cx="-6" cy="-18" r="1.4" fill="#C2307A"/><circle cx="6.4" cy="-18.6" r="1.4" fill="#D9534F"/><circle cx="0" cy="-12.4" r="1.2" fill="#C2307A"/>':''}</g>`;
-    o+=agave(520,300,1.1)+agave(1180,240,1)+agave(30,332,.95)+nopal(608,300,.9)+agave(400,586,.7)+agave(980,586,.75);
+    o+=agave(520,300,1.1)+agave(1180,240,1)+agave(30,332,.95)+nopal(608,300,.9)+agave(392,672,.7)+agave(1004,674,.75);
     o+=`<g transform="translate(470 272) scale(.9)"><ellipse cx="0" cy="2" rx="14" ry="3" fill="rgba(25,35,15,.25)"/><circle cx="0" cy="-7" r="8" fill="none" stroke="#6B4A30" stroke-width="2"/><circle cx="0" cy="-7" r="1.6" fill="#6B4A30"/>${[0,45,90,135].map(a=>`<path d="M${(-8*Math.cos(a*Math.PI/180)).toFixed(1)} ${(-7-8*Math.sin(a*Math.PI/180)).toFixed(1)} L${(8*Math.cos(a*Math.PI/180)).toFixed(1)} ${(-7+8*Math.sin(a*Math.PI/180)).toFixed(1)}" stroke="#6B4A30" stroke-width="1"/>`).join('')}</g>`;}
   return o?'<!--ns-->'+o+'<!--/ns-->':''}
 
@@ -5193,7 +5197,7 @@ function ranchMap(){
     /* front fence along the road, open at the drive */
     {let f='';for(let x=0;x<=1200;x+=14){if(x>600&&x<660)continue;f+=`<rect x="${x-1.2}" y="644" width="2.4" height="11" fill="${LD.post||C.wood}"/>`}sg+=f+`<path d="M0 648 H604 M656 648 H1200 M0 652.5 H604 M656 652.5 H1200" stroke="${LD.rail||C.white}" stroke-width="1.5"/>`}
     const tree2=(x,y,r)=>tree(x,y,r);
-    sg+=tree2(424,700,16)+tree2(612,690,12)+tree2(866,700,15)+tree2(1186,706,14)+tree2(18,700,13);
+    sg+=tree2(424,700,16)+tree2(578,688,12)+tree2(866,700,15)+tree2(1186,706,14)+tree2(18,700,13);
     /* ---- covered arena: a long steel building, open sides so you can see the sand ring and a rider inside ---- */
     {const n=lv('arena');let o;const x0=34,L=296,hw=36,d=28,dy=16,rh=26,yE=B-hw,ridgeY=yE-dy/2-rh;
       if(!n)o=lot(x0,B-hw-dy-6,L+d,hw+dy+8);
