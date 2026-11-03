@@ -686,7 +686,7 @@ const ITEMS={
   browband:{n:'Braided Browband',s:'flair',r:'rare',p:360,e:{comp:2,bond:1}},
   showhalter:{n:'Silver Show Halter',s:'flair',r:'epic',p:1150,e:{comp:4,ev:{dress:4}}},
   laurels:{n:'Crown of Laurels',s:'flair',r:'legendary',p:4200,e:{comp:6,rep:1,happy:3}},
-  /* build 95: mythical gear. Never sold in shops or found in crates: one is awarded each time your horse sets a new world record */
+  /* build 86: mythical gear. Never sold in shops or found in crates: one is awarded each time your horse sets a new world record */
   cometsaddle:{n:'Comet-Tail Saddle',s:'saddle',r:'mythical',p:12000,e:{comp:15,train:12,energy:3},myth:1},
   thunderbridle:{n:'Thunderbird Bridle',s:'bridle',r:'mythical',p:11000,e:{train:26,comp:6,bond:3},myth:1},
   windboots:{n:'Windrunner Boots',s:'boots',r:'mythical',p:11000,e:{inj:.25,comp:6,energy:6},myth:1},
@@ -1015,7 +1015,7 @@ function festEnter(k,id){const F=festState();if(!F||F.k!==k||F.done)return toast
 function festBooth(){const F=festState();if(!F||F.k!=='harvest'||F.booth)return;const n=['chickens','goats','sheep','cattle','bees'].reduce((a,x)=>a+L(x),0);const amt=r10((80+n*120)*festMult());S.money+=amt;F.booth=amt;pxp('biz',3);log('good','Your Harvest Fair booth sold out. '+money(amt)+(n?' from your livestock goods.':' from lemonade and pie. More livestock would sell more.'));toast('Booth earned '+money(amt)+'.');save()}
 function festBuyLot(i){const F=festState();if(!F||!isSaleFest(F.k))return;const fn=FESTS[F.k].n;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(S.money<h.price)return toast('Not enough money.');
   S.money-=h.price;h.acted=0;h.lastCare=S.day;h.stallClean=100;delete h.sale;S.horses.push(h);F.lots.splice(i,1);F.bought++;if(F.k==='wintersale')unlock('wintersale');story(h,'Bought at the '+fn+' for '+money(h.price)+'.');log('info','Bought '+h.name+' at the '+fn+' for '+money(h.price)+'.');toast(h.name+' is home on your ranch.');pxp('biz',3);checkAch();save()}
-/* ---- festival banners (build 95): every special event gets its own busy little scene in the 1000x80 strip ---- */
+/* ---- festival banners (build 86): every special event gets its own busy little scene in the 1000x80 strip ---- */
 function festKit(id){const f1=v=>(+v).toFixed(1),G=68,K={f1,G,id};
   K.sky=(a,b)=>`<defs>${bSky(id+'s',a,b)}</defs><rect width="1000" height="80" fill="url(#${id}s)"/>`;
   K.hills=(y,amp,col,seed,step=130)=>{const t=srng(seed);let d=`M0 ${y}`;for(let x=0;x<=1000;x+=step)d+=` Q${f1(x+step/2)} ${f1(y-amp*(.4+t()*.6))} ${f1(x+step)} ${f1(y-amp*t()*.3)}`;return `<path d="${d} V80 H0Z" fill="${col}"/>`};
@@ -1561,96 +1561,36 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='98';
+const BUILD='87';
 const CHANGELOG=[
- {b:'98',d:'Nov 3, 2026',t:'Jalisco map tidy-up',c:[
-  'Jalisco: the two agave plants that poked through the fence by the county road now grow on open grass below the fence.',
-  'The tree that stood on the drive down to the show grounds (Covered Arena, Breeding Lab, Guest Lodge and Museum) has moved to the side of the road, on every ranch map.',
+ {b:'87',d:'Nov 3, 2026',t:'Fixes and polish',c:[
+  'Live events: the crowds at Barrel Racing, the Pony Cup and Reining watch the run, and the announcer’s booth no longer overlaps the stands. The Dressage and Driving planters sit outside the arena boards.',
+  'Live events: Show Jumping jumps are spaced so none crowd each other. Every Cross-Country fence stands across the trail with the red flag on the rider’s right, there is a proper start box with a START sign and clock, and trees and rocks no longer overlap.',
+  'Live events: on the Endurance Ride the river winds down from the forest and the trail crosses it on a wooden bridge. The vet tents sit beside the trail with their own vet and crew, and FINISH is on the finish arch.',
+  'Live events: the little plane no longer tows a banner (the TV bar shows the show’s name), and on Cross-Country it flies behind the manor house. The Quarter-Mile near rail stands in front of the starting gate, and the Draft Pull teamster walks behind the load facing the horse.',
+  'Auto Compete: if the event it would pick would sour your horse, it tries every other event that fits your rule. If they would all sour it, it picks the one that hurts least, and it counts today’s show properly. In Auto Compete All, a horse skipped for souring has an “Enter anyway” button.',
+  'Ranch maps: the house, barn and foaling barn have room at every level, so the barn no longer runs into its neighbours. Windows are spaced evenly, and every cupola and weathervane sits on its roof ridge.',
+  'Ranch maps: Montana’s far mountains no longer have twins, its house roof stops at the chimney and its rock is off the road. Texas lean-tos are slimmer. Ohio’s silo and porch swing moved, Ocala’s door sits between the porch posts, and the Lancaster and Staff Housing trees no longer cut through buildings.',
+  'Ranch maps: South Dakota has a real Gothic-arch barn, the cabin’s side room no longer touches the barn, and the South Dakota and Ohio side buildings have proper walls and roofs. Alberta’s farmhouse has a proper hipped roof.',
+  'Facilities: the tree inside the Tack Room plot now grows beside it, and the Tack Room and the tack shop have proper TACK signs. The Vet Clinic, Foaling Barn and Feed Barn windows are spaced around the door, and the Breeding Center has a cupola instead of an odd sign.',
+  'Facilities: the Recovery Barn is now the Recovery Area. It is spread over its lot: a hot walker with horses walking the circle, a spa barn with a horse standing in the cold-water tank, a wash rack, and a Therapy building at the top level.',
+  'Facilities: the water treadmill lies flat with a horse walking in it, the Riding Ring lights stand outside the rail, and the Race Track grandstand faces the track. The Trail Course flags stand beside the trail and its logs and jumps stand upright. The hay tractor works inside the field and tows its baler, and the goats and sheep spread out in their pens.',
+  'Facilities: before you build the Trails, they show as a marked lot, and clicking or tapping anywhere inside the loop opens them. The odd line over the Covered Arena and the stray blue square on the Breeding Lab are gone.',
+  'Jalisco: the agave plants no longer poke through the road fence. On every map, the tree on the drive down to the Show Grounds moved to the side of the road.',
  ]},
- {b:'97',d:'Nov 3, 2026',t:'Alberta roof and a real Recovery Area',c:[
-  'Alberta: the farmhouse now has a proper hipped roof (a prairie foursquare). The odd slanted left end and the stick on the right are gone, and snow sits on the roof and dormer in winter.',
-  'Recovery Area: the pieces are spread out over the lot and look like the real thing. The Hot Walker is a round dirt track with a motor post, four arms and two horses walking the circle (plus a water trough, a cooler-blanket rail and a hay bale). The Cold-Water Spa adds an open-front spa barn with a horse standing in the steel tank, and a wash rack with crossties and a hose. The Therapy Center adds a THERAPY building with flower beds at the back.',
- ]},
- {b:'96',d:'Nov 3, 2026',t:'New festival banners and easier trails',c:[
-  'Every special event has its own banner now, full of things going on. The Celebrity Trail Ride has a red carpet, a marquee, photographers with flashes, fans, a camera crew and the stars riding out under a big HORSETOWN USA sign on the hill.',
-  'There are new banners for the Spring Foal Show, the Harvest Fair (with a Ferris wheel and pie judging), the Cutting Futurity, the Bluegrass Yearling Sale (with an auctioneer and a SOLD! sign), the World Championship Show, the Draft and Harness Expo, the Winter Circuit Grand Prix, the Grand Country Horse Show, the Bucking Horse Sale (with a bronc in mid-buck), the Big Horn Polo Cup, the Wild Horse Roundup, the Stampede Rodeo (with chuckwagons) and the Charreada (with mariachis, escaramuza riders and papel picado).',
-  'Facilities map: before you build the Trails, they now show as a marked lot with a LOT sign. Clicking or tapping anywhere inside the loop opens them, built or not.',
- ]},
- {b:'95',d:'Nov 3, 2026',t:'Mythical tack, real deserts and two new ranch homes',c:[
-  'Mythical tack: five one-of-a-kind items (the Comet-Tail Saddle, Thunderbird Bridle, Windrunner Boots, Northern Lights Blanket and World-Beater’s Laurels). You cannot buy them or find them in crates. The only way to get one is to set a new world record, and the results window shows the prize. They are never sold by Sell Extras.',
-  'Desert Ride now happens in real desert and dry country. Each ranch rides its local shows somewhere dry nearby: California rides near Indio and the Mojave, Texas at the Monahans sandhills, Wyoming in the Red Desert, South Dakota in the Badlands. Ranches with no desert travel: Florida’s state championship is in El Paso, Texas, and Kentucky, Ohio and Pennsylvania ride the Little Sahara dunes in Oklahoma. Bigger shows go to Arizona, Nevada, Utah, Dubai or AlUla.',
-  'The live Desert Ride looks like where it is held: saguaro desert, low desert with palms, the Mojave with Joshua trees, Chihuahuan yucca country, sand dunes, Arabian dunes with an oasis, red-rock mesas, striped badlands, sagebrush hills or the red Outback.',
-  'Two new places to put your ranch: Cochrane, Alberta in Canada (the Rocky Mountain foothills: a Quonset barn, a prairie farmhouse, grain elevator and canola fields, cold winters, cheap hay, Show Jumping and Barrel Racing bonuses, and a summer Stampede Rodeo) and Tequila, Jalisco in Mexico (blue agave hills under the Tequila volcano: an ochre hacienda and stone stable, cheap help, warm winters, Reining and Dressage bonuses, Aztecas, and a fall Charreada).',
-  'Canadian and Mexican ranches have their own show ladder: Provincial or State Championships, Western Canada or Western Mexico Regionals, and the Canadian or Mexican National Championship.',
- ]},
- {b:'94',d:'Nov 3, 2026',t:'Olympic entries and world records',c:[
-  'Olympics: each ranch sends one horse to each Olympic event. Once a horse has ridden in, say, the Olympic Show Jumping, that event shows “Your ranch’s entry” and no other horse from your ranch can enter it that Olympics. Any horse can go again at the next Olympics, and Auto Compete knows the rule too.',
-  'World Records: the Hall of Fame has a record board for every event, showing the record, who holds it, where and when it was set, and your ranch’s own best beside it. Records use the same time, score or distance you see in the live event.',
-  'Break a record and the results window says so: a gold banner for a new world record, and a note for a new ranch record. Setting a world record also earns the new World Record achievement and goes in the horse’s life story.',
- ]},
- {b:'93',d:'Nov 3, 2026',t:'Dressage stands and judges',c:[
-  'Dressage and the Driving Class: the two small corner tents are gone. Two covered grandstands full of spectators now sit centred behind the far end of the arena, with sponsor boards and flags on their roofs.',
-  'Between them, the judges have a proper box at C: a green roof with a JUDGES sign, a wide window, and three judges at a table with their score sheets, a bell and water, plus a flower box and steps.',
- ]},
- {b:'92',d:'Nov 3, 2026',t:'Round seven of your fix list',c:[
-  'Show Jumping: your horse is drawn head-on when it canters toward you, from behind when it canters away, and turned three-quarters on the diagonals, with the rider in the saddle. The legs canter, tuck up over the fences and land.',
-  'Auto Compete: if the event it would pick would sour your horse, it checks every other event that meets your rule and enters one that won’t. If every choice would sour the horse, it now picks the one that hurts least, and it counts today’s show properly when it checks for “too many shows”. In the Auto Compete All results, a horse that was skipped because it would sour has an “Enter anyway” button.',
-  'Draft Horse Pull: the teamster walks behind the load facing the horse, with the reins in both hands.',
-  'Quarter-Mile Race: the near rail now stands in front of the starting gate instead of the gate poking over it.',
-  'Cross-Country: the little plane flies behind the manor house.',
-  'Tack: the Tack Room on your map has a proper TACK sign over the door, and the tack shop in town hangs its TACK sign from the porch on two chains.',
-  'South Dakota: the cabin’s side room is a little narrower, so the house and barn no longer touch.',
- ]},
- {b:'91',d:'Nov 3, 2026',t:'Build from the map',c:[
-  'Click any building or empty lot on the ranch map to build or upgrade it right there. A small window shows what you have now, what the next level adds, the price, the new upkeep, and how much money you’ll have left.',
-  'The window stays open after you build, so you can keep upgrading the same building. “Show in the list” still takes you to its card below the map.',
-  'The building under your pointer lights up a little. With a keyboard, Tab to a building and press Enter.',
- ]},
- {b:'90',d:'Nov 3, 2026',t:'Ranch maps, round five of your fix list',c:[
-  'Every location: the house, barn and foaling barn have room to breathe at every level. The barn grows a little less wide, so it no longer runs into the house or the foaling barn.',
-  'Staff Housing and the Foaling Barn now match each location: limestone in Texas, red brick in Kentucky, stucco and tile in California, logs in Montana, and so on.',
-  'Barn windows are spaced evenly on both sides of the big door, and every cupola and weathervane sits on the roof ridge instead of floating above it (Oklahoma’s too).',
-  'Montana: the far mountains no longer have a twin standing right behind them. The ranch house roof stops at its stone chimney, the yard tree stands behind the house, the barn roof has an even trim with no odd crease, and the rock is off the road.',
-  'Texas: slimmer lean-tos on the metal barn. Ohio: the silo stands on the far side of the barn, and the porch swing hangs beside the front door instead of across it. Ocala: the door and windows sit between the porch posts, with rocking chairs on the porch. Lancaster: the yard tree no longer cuts through the house.',
-  'Norco: a new backdrop with the San Gabriel Mountains and Mount Baldy, chaparral hills, an orange grove, eucalyptus and palms, and a tile-roofed barn with horses in the paddock.',
-  'The tree beside the Staff Housing no longer touches the cottages.',
- ]},
- {b:'89',d:'Nov 3, 2026',t:'Live events, round four of your fix list',c:[
-  'Endurance Ride: the old cartoon mountains are gone. Shows in your state now ride through your own ranch’s country, like the Kentucky hills, the Texas mesas or the Florida oaks. Bigger shows ride through the host’s country: the Rockies, the desert Southwest, the Alps, the green fields of Europe, or Mount Fuji for Tokyo.',
-  'The trees beside the trail match the country too: pines in the mountains, mesquite in Texas, palms and oaks in Florida, saguaro in the desert and cherry trees in Japan.',
-  'Vet checks are real pop-up canopies, sized to the horses and riders, with the check’s number on the valance and a table of vet gear underneath.',
-  'The little plane still flies over, but it no longer tows a banner.',
-  'Driving Class: the cart is drawn head-on when it drives toward you and from behind when it drives away, with the horse trotting, the harness, the shafts and the driver holding the reins.',
- ]},
- {b:'88',d:'Nov 3, 2026',t:'Show grounds, round three of your fix list',c:[
-  'Bigger ranch map: a new Show Grounds strip runs along the far side of County Rd 9, with its own entrance arch, a drive, a gravel lane and a parking lot.',
-  'The four prestige buildings moved to the Show Grounds and are drawn full size. Where they used to sit there is now a picnic meadow.',
-  'Covered Arena: a long riding hall with open sides, so you can see the sand floor, a rider and a jump inside. It has a ribbed metal roof with a skylight and a name board along the front. The odd line above it is gone.',
-  'Breeding Lab: a clean flat-roof building with one band of windows, a glass front door and a DNA sign. The stray blue square is gone.',
-  'Guest Lodge: a log lodge with a green tin roof, dormers, a stone chimney and a long porch. Ranch Museum: a stone hall with columns, a dome, banners in your ranch colors and a horse statue out front.',
-  'South Dakota backdrop: more detail, with the Black Hills, granite spires, pine ridges, a creek with willows, and a bison herd grazing in the meadow.',
- ]},
- {b:'87',d:'Nov 3, 2026',t:'Facilities, round two of your fix list',c:[
-  'South Dakota barn: a real Gothic-arch barn with short walls, a rainbow roof whose metal ribs follow the curve, and a hay hood over the loft door.',
-  'Ranch House: the side buildings on the South Dakota cabin and the Ohio farmhouse have proper side walls and gable ends, so their roofs no longer hang in the air. The Ohio porch trim stops at the porch.',
-  'The tree that stood inside the Tack Room plot now grows beside it.',
-  'Vet Clinic, Foaling Barn and Feed Barn: windows are spaced on either side of the door and moved down the wall. The Breeding Center gets a cupola instead of the odd sign.',
-  'The Recovery Barn is now the Recovery Area, since there is no barn until the top upgrade.',
-  'Training Area: the water treadmill lies on the ground with a horse walking in it. Riding Ring: the lights stand outside the rail.',
-  'Race Track: the grandstand faces the track with its crowd rising row by row, and the starting gate sits across the track.',
-  'Trail Course: the flags stand beside the trail, and the logs and jump stand upright across the path.',
-  'Hay Fields: the tractor works inside the field and tows its baler. There are side fences, a farm gate, plowed furrows on the empty field and a hay wagon.',
-  'Livestock: hens, goats, sheep and cattle are drawn from the side, front and back, and the goats and sheep spread out across their pens.',
- ]},
- {b:'86',d:'Nov 3, 2026',t:'Live events, round one of your fix list',c:[
-  'Every live event has a TV-style bar along the bottom with the level, the show’s name, the class, where it’s held and a LIVE tag. The big signs are gone.',
-  'Endurance Ride, Desert Ride and Cross-Country have a small yellow plane towing a banner with the show’s name.',
-  'Quarter-Mile Race: a real starting gate. Horses start inside padded stalls, the front doors swing open, and each stall has its number in the standard saddle-cloth color.',
-  'Barrel Racing and Pony Cup: the people beside the arena turn to watch the run, and the announcer’s booth is built into the stands instead of overlapping the crowd. The Reining spectators watch the arena too.',
-  'Dressage and Driving: the flower planters line up along the arena boards, outside the arena.',
-  'Endurance Ride: the river winds down from the forest and the trail crosses it on a wooden bridge. The vet tents sit beside the trail, each vet check has its own vet and crew member, and FINISH is on the finish arch’s banner.',
-  'Show Jumping: the course is laid out again so no two jumps crowd each other.',
-  'Cross-Country: every fence stands across the trail, with the red flag on the rider’s right and white on the left. There’s a proper start box with a START sign and clock, and trees and rocks no longer overlap.',
+ {b:'86',d:'Nov 3, 2026',t:'The big update: new homes, world records and more',c:[
+  'Two new places to put your ranch. Cochrane, Alberta, in Canada has the Rocky Mountain foothills, a Quonset barn, a prairie farmhouse, canola fields, cheap hay, cold winters and a summer Stampede Rodeo. Tequila, Jalisco, in Mexico has blue agave hills under a volcano, an ochre hacienda and stone stable, cheap help, warm winters, Aztecas and a fall Charreada. Both have their own show ladder up to the Canadian or Mexican National Championship.',
+  'World Records: the Hall of Fame has a record board for every event, with your ranch’s best beside it. Break a record and the results window shows a gold banner. It also earns the World Record achievement and goes in the horse’s life story.',
+  'Mythical tack: five one-of-a-kind items (the Comet-Tail Saddle, Thunderbird Bridle, Windrunner Boots, Northern Lights Blanket and World-Beater’s Laurels). You can only win one by setting a new world record.',
+  'Olympics: each ranch sends one horse to each Olympic event. Any horse can go again at the next Olympics, and Auto Compete knows the rule.',
+  'Desert Ride: now held in real desert and dry country. California rides near Indio and in the Mojave, Texas at the Monahans sandhills, Wyoming in the Red Desert and South Dakota in the Badlands. Ranches with no desert travel: Florida’s state championship is in El Paso, Texas. The live ride looks like the place: saguaros, Joshua trees, dunes, red rock, badlands, sagebrush or the Outback.',
+  'Build from the map: click any building or empty lot on the ranch map to build or upgrade it right there. You can see the price, what you get, and the money you’ll have left.',
+  'Show Grounds: a new strip across County Rd 9 with its own entrance, drive and parking lot. The Covered Arena, Breeding Lab, Guest Lodge and Ranch Museum moved there and are drawn full size.',
+  'Live events: a TV-style bar along the bottom shows the level, the show, the class and where it’s held. A small plane flies over the outdoor rides. The Quarter-Mile Race has a real starting gate with numbered stalls whose doors swing open.',
+  'Live events: the Endurance Ride goes through your own ranch’s country for shows in your state, or through the host’s country for big shows (the Rockies, the desert, the Alps, Europe, Japan, Alberta or Jalisco). The trees match the country, and the vet checks are real pop-up canopies.',
+  'Live events: in Show Jumping your horse is drawn head-on, from behind and on the diagonal. The Driving Class cart is drawn head-on and from behind. Dressage has two covered grandstands and a proper judges’ box with three judges.',
+  'Festival banners: every special event has its own busy banner. The Celebrity Trail Ride has a red carpet, photographers and a camera crew, the Bucking Horse Sale has a bronc in mid-buck, and the Charreada has mariachis.',
+  'Scenery: new backdrops for Norco (the San Gabriel Mountains, orange groves and palms) and the Black Hills (granite spires and a bison herd). Staff Housing and the Foaling Barn now match each location’s style, and livestock is drawn from the side, front and back.',
  ]},
  {b:'85',d:'Nov 2, 2026',t:'Real show names',c:[
   'Every show now has a real place name. Local shows are in your nearest town, county fairs are in your ranch’s county, State Championships carry your state’s name, and Regionals are named for your part of the country.',
@@ -2692,7 +2632,7 @@ function evEligible(ev,h){if(!ev.only||!h)return true;const bt=btOf(h);return ev
 function evOnlyText(ev){return ev.only==='draft'?'Draft and heavy breeds only':ev.only==='pony'?'Ponies and small breeds only':'Hot-blooded breeds only'}
 /* Olympics: two events a day across the four days of summer */
 function eventOpen(ti,ei){if(ti!==6)return true;if(ei>=8)return false;return Math.floor(ei/2)===dateParts(S.day).sday-1}
-/* build 94: one horse per ranch in each Olympic event, each Olympics. Returns the name of the horse that already rode, or null */
+/* build 86: one horse per ranch in each Olympic event, each Olympics. Returns the name of the horse that already rode, or null */
 function olyEntry(ei){if(!S||!S.olyIn)return null;return S.olyIn.yr===dateParts(S.day).year?((S.olyIn.ev||{})[ei]||null):null}
 function olyDayText(ei){return 'Olympic '+EVENTS[ei].n+' runs on Summer day '+(Math.floor(ei/2)+1)}
 const TIERS=[
@@ -3980,7 +3920,7 @@ function renderMarket(){
 const UPKEEP_RATE={home:.002,care:.0025,train:.0025,farm:.002,stock:.004,prestige:.0004};
 function facUpkeep(f,lv){let c=0;for(let i=1;i<=lv;i++)c+=f.lv[i].c||0;return Math.round(c*(UPKEEP_RATE[f.g]||.002))}
 function upkeep(){return FAC.reduce((a,f)=>a+facUpkeep(f,L(f.id)),0)}
-/* build 91: the popup you get by clicking a building (or an empty lot) on the ranch map */
+/* build 86: the popup you get by clicking a building (or an empty lot) on the ranch map */
 function facMapBody(f){const lv=L(f.id),cur=f.lv[lv],nx=f.lv[lv+1],max=f.lv.length-1,c=nx?facCost(f,lv+1):0,can=!!nx&&S.money>=c,verb=lv?'Upgrade':f.g==='stock'?'Buy':'Build';
   return `<div class="facpop">
    <div class="fac-head"><span class="note">${lv?'Level '+lv+' of '+max:(f.g==='stock'?'Not bought yet':'Not built yet')}</span><span class="pips" aria-label="Level ${lv} of ${max}">${f.lv.slice(1).map((x,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</span></div>
@@ -4039,7 +3979,7 @@ const OLY_HOSTS=[['Los Angeles','USA'],['Brisbane','Australia'],['Paris','France
 const INV_HOSTS=[['Wellington','Wellington, Florida'],['Saratoga','Saratoga Springs, New York'],['Bluegrass','Lexington, Kentucky'],['Del Mar','Del Mar, California'],['Scottsdale','Scottsdale, Arizona'],['Aiken','Aiken, South Carolina'],['Lake Placid','Lake Placid, New York'],['Jackson Hole','Jackson, Wyoming']];
 function locPlace(){return (typeof S!=='undefined'&&S&&LOCPLACE[S.loc])||null}
 /* the real name of a show: n = name ("Marion County Fair"), v = where it is held ("Florida"), lv = the level ("County Fair") */
-/* ---- build 95: the Desert Ride goes to real desert or dry country ----
+/* ---- build 86: the Desert Ride goes to real desert or dry country ----
    Each ranch rides its Desert Rides in the nearest real dry country: in its own state where the state has some
    (the Monahans Sandhills in Texas, the Coachella Valley and the Mojave in California, Little Sahara in Oklahoma, the Badlands, the Red Desert),
    and in the nearest dry country out of state where it has none (Florida rides in West Texas, the East rides at Little Sahara and on the High Plains).
@@ -4142,7 +4082,7 @@ function txtW(t,fs,fam,wt){let w;try{if(!TXT_CTX)TXT_CTX=document.createElement(
 function fitFS(t,maxW,fs,fam,wt,ls,min){const u=txtW(t,1,fam,wt),room=maxW-(ls||0)*t.length;return +Math.max(min||3,Math.min(fs,room/u)).toFixed(2)}
 const SIGN_F='Figtree,system-ui,sans-serif',SIGN_R='Rye,Georgia,serif';
 function XJ_POS(){return [.2,.45,.7,.86]}
-/* the endurance / cross-country trail as points, so scenery can keep off it (build 86) */
+/* the endurance / cross-country trail as points, so scenery can keep off it (build 87) */
 const TRAIL_SEGS=[[[40,262],[140,262],[150,182],[240,176]],[[240,176],[330,170],[370,252],[470,232]],[[470,232],[570,212],[570,128],[650,140]],[[650,140],[730,152],[760,196],[770,110]]];
 let TRAIL_PTS=null,TRAIL_LEN=null;
 function trailPts(){if(TRAIL_PTS)return TRAIL_PTS;const o=[];for(const [a,b,c,d] of TRAIL_SEGS)for(let i=0;i<=40;i++){const t=i/40,u=1-t;o.push([u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0],u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1]])}
@@ -4192,7 +4132,7 @@ function tvBar(W){const [lv,col]=TV_TIER[W.ti]||['SHOW','#2E6FD8'];const n=Strin
    <path d="M0 301.6 H${tabW.toFixed(1)} L${(tabW+8).toFixed(1)} 326 H0Z" fill="${col}"/><text x="${(tabW/2+2).toFixed(1)}" y="316.4" font-size="7.2" font-weight="800" letter-spacing=".8" text-anchor="middle" fill="#fff" font-family="${SIGN_F}">${esc(lv)}</text>
    <text x="${x1.toFixed(1)}" y="317" font-family="${SIGN_F}" fill="#F4F6F8"><tspan font-size="${f1.toFixed(2)}" font-weight="800" letter-spacing=".6">${esc(n)}</tspan><tspan font-size="${f2.toFixed(2)}" font-weight="500" fill="#B9C4CF" dx="8">${esc(sub)}</tspan></text>
    <rect x="742" y="306" width="50" height="15" rx="3" fill="#C0392B"/><circle cx="752" cy="313.5" r="2.5" fill="#fff"><animate attributeName="opacity" values="1;.25;1" dur="1.6s" repeatCount="indefinite"/></circle><text x="773" y="317" font-size="8" font-weight="800" letter-spacing=".8" text-anchor="middle" fill="#fff" font-family="${SIGN_F}">LIVE</text></g><!--/ns-->`}
-/* a yellow high-wing plane (nose at x=0) flying over the course. Build 89: no banner any more, the TV bar carries the show's name */
+/* a yellow high-wing plane (nose at x=0) flying over the course. Build 87: no banner any more, the TV bar carries the show's name */
 function planeBanner(W,y,x){const yp=y-7;let g='';
   /* the plane */
   g+=`<path d="M-42 ${yp-2.2} L-36 ${yp-11} L-31.5 ${yp-10.6} L-30 ${yp-3.6}Z" fill="#E0A82E" stroke="#8A6414" stroke-width=".5"/>
@@ -4204,7 +4144,7 @@ function planeBanner(W,y,x){const yp=y-7;let g='';
     <path d="M-11 ${yp+3.6} L-13.2 ${yp+8} M-7 ${yp+3} L-12.6 ${yp+8}" stroke="#3A3A3A" stroke-width=".7"/><circle cx="-13" cy="${yp+8.6}" r="1.9" fill="#222"/><circle cx="-13" cy="${yp+8.6}" r=".7" fill="#AAA"/><path d="M-40 ${yp+.6} L-41.4 ${yp+3}" stroke="#3A3A3A" stroke-width=".6"/><circle cx="-41.4" cy="${yp+3.4}" r=".9" fill="#222"/>
     <circle cx="-.8" cy="${yp-.2}" r="1.6" fill="#C0392B"/><ellipse cx=".2" cy="${yp-.2}" rx="1" ry="7.4" fill="#9AA3AA" opacity=".45"/>`;
   return `<!--ns--><g class="wplane"><g transform="translate(${x} 0)">${g}</g></g><!--/ns-->`}
-/* ---- endurance ride country (build 89): shows in your own state ride through your ranch's country; the big shows ride through the host's ---- */
+/* ---- endurance ride country (build 86): shows in your own state ride through your ranch's country; the big shows ride through the host's ---- */
 const EV_TERR_CITY={'Rapid City':'southdakota','Jackson':'wyoming','Redmond':'wyoming','Denver':'montana','Calgary':'alberta','Edmonton':'alberta','Guadalajara':'jalisco','Geneva':'alps','Basel':'alps','Mexico City':'jalisco','Las Vegas':'southwest','Riyadh':'southwest','Tokyo':'japan','Los Angeles':'california','Brisbane':'california','Sydney':'california','Atlanta':'kentucky','Raleigh':'kentucky','Amarillo':'oklahoma','Omaha':'ohio'};
 const EV_TERR_ST={Texas:'texas',Kentucky:'kentucky',Tennessee:'kentucky',Oklahoma:'oklahoma',Kansas:'oklahoma',Nebraska:'oklahoma','North Dakota':'oklahoma','South Dakota':'oklahoma',California:'california',Oregon:'wyoming',Ohio:'ohio',Indiana:'ohio',Illinois:'ohio',Michigan:'ohio',Florida:'florida',Georgia:'florida','South Carolina':'florida','North Carolina':'pennsylvania',Pennsylvania:'pennsylvania',Virginia:'pennsylvania',Maryland:'pennsylvania','New Jersey':'pennsylvania','New York':'pennsylvania',Montana:'montana',Wyoming:'wyoming',Colorado:'montana',Arizona:'southwest','New Mexico':'southwest',Nevada:'southwest',Canada:'alberta',Alberta:'alberta',Saskatchewan:'alberta','British Columbia':'alberta',Ontario:'ohio',Quebec:'pennsylvania',Switzerland:'alps',Germany:'europe',Ireland:'europe',Netherlands:'europe',England:'europe',France:'europe',Sweden:'europe',Italy:'europe',Mexico:'jalisco',Jalisco:'jalisco',Guanajuato:'jalisco',Aguascalientes:'jalisco','Michoacán':'jalisco','Querétaro':'jalisco','Nuevo León':'southwest',Sonora:'southwest',Chihuahua:'southwest',Coahuila:'southwest',Zacatecas:'southwest','Saudi Arabia':'southwest',Japan:'japan',Australia:'california'};
 function evTerrain(W){const T=TIERS[W.ti]||{},home=(typeof S!=='undefined'&&S&&S.loc&&S.loc!=='classic'&&LOCS[S.loc])?S.loc:null;
@@ -4394,7 +4334,7 @@ function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
     o+=farm(180,6,1.1,'#A23E2C','#F4F1EA')+farm(640,10,1,'#A23E2C')+farm(1000,4,.9,'#8E3A2C');
     o+=`<g transform="translate(470 22)"><rect x="-10" y="-10" width="20" height="9" rx="2" fill="#2B2B2B"/><path d="M-10 -10 Q0 -16 10 -10" fill="#3a3a3a"/><circle cx="-6" cy="0" r="3.4" fill="none" stroke="#2B2B2B" stroke-width="1"/><circle cx="6" cy="0" r="3.4" fill="none" stroke="#2B2B2B" stroke-width="1"/><path d="M10 -4 L22 -4" stroke="#2B2B2B"/><path d="M22 -8 l8 0 l1 6 l-8 0z" fill="#5A3A22"/><path d="M24 -2 v4 M29 -2 v4" stroke="#5A3A22" stroke-width="1.2"/></g>`}
   else if(id==='montana'){o+=sky('#7DAEDB','#E4ECEC')+clouds(3,-70);
-    /* build 90: the far peaks stand in the gaps between the near ones (they used to stand right behind them and looked like twins) */
+    /* build 87: the far peaks stand in the gaps between the near ones (they used to stand right behind them and looked like twins) */
     const far=[[-6,56,80],[155,66,86],[318,74,92],[500,82,98],[778,70,86],[925,62,80],[1078,76,92],[1214,58,80]];
     far.forEach(([x,h,w],i)=>o+=locMtn(x,-10,h,w,['#A7B4C8','#AFBBCD','#A2B0C5'][i%3],740+i*7,{snow:.36}));
     o+=`<linearGradient id="lpHz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4ECF0" stop-opacity="0"/><stop offset="1" stop-color="#E4ECF0" stop-opacity=".55"/></linearGradient><rect x="0" y="-40" width="${W}" height="42" fill="url(#lpHz)"/>`;
@@ -4430,7 +4370,7 @@ function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
     const HERD=[[478,33,1,0,0],[500,36,1,1,0],[522,31,.7,0,1],[540,35,1,0,1],[560,32,1,1,0],[578,36,.66,1,1],[598,33,1,0,0],[620,35,1,1,1],[640,31,.7,0,0],[664,34,1,0,1]].sort((a,b)=>a[1]-b[1]);
     for(const [x,y,k,flip,graze] of HERD){const calf=k<.8,b=calf?'#7A4E2E':'#4A3424',hump=calf?'#6A4226':'#3A2818',hd=calf?'#5A3A22':'#2E2014';
       o+=`<g transform="translate(${x} ${y}) scale(${(flip?-1:1)*.55*k} ${.55*k})"><ellipse cx="1" cy="1" rx="12" ry="2" fill="rgba(25,35,15,.2)"/><ellipse cx="0" cy="-6" rx="10" ry="6" fill="${b}"/><ellipse cx="6" cy="-8.4" rx="6.4" ry="6.6" fill="${hump}"/>${graze?`<ellipse cx="11.4" cy="-2.6" rx="3.4" ry="3" fill="${hd}"/><path d="M12 -4.6 l1.4 -1.2" stroke="#D9CBB0" stroke-width=".8"/>`:`<ellipse cx="11.4" cy="-6" rx="3.4" ry="3" fill="${hd}"/><path d="M12.4 -8.4 l1.2 -1.4" stroke="#D9CBB0" stroke-width=".8"/><path d="M10 -3.4 q1.4 2.4 3 1.4" stroke="${hd}" stroke-width="1.4" fill="none"/>`}<path d="M-7 -1 v4 M-2 -1 v4 M4 -1 v4 M8 -1 v4" stroke="${hd}" stroke-width="1.6"/><path d="M-10 -6 q-2 2 -1.4 5" stroke="${hd}" stroke-width=".9" fill="none"/></g>`}}
-  else if(id==='alberta'){/* Cochrane, Alberta (build 95): the Rockies' front ranges, spruce-dark foothills, aspen bluffs, canola and barley, a grain elevator by the rail line, round bales */
+  else if(id==='alberta'){/* Cochrane, Alberta (build 86): the Rockies' front ranges, spruce-dark foothills, aspen bluffs, canola and barley, a grain elevator by the rail line, round bales */
     const f1=v=>v.toFixed(1),S0=SEAS;o+=sky('#7DB0DE','#E8EEF0')+clouds(4,-70);
     [[30,38,70],[130,48,80],[235,42,70],[330,54,86],[440,46,76],[545,60,82],[655,47,74],[765,56,84],[875,44,72],[985,52,80],[1095,40,70],[1185,46,74]].forEach(([x,h,w],i)=>o+=locMtn(x,-12,h,w,['#9AA6B8','#A3AEC0','#949FB2'][i%3],1300+i*3,{snow:.52}));
     o+=`<linearGradient id="lpHz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8EEF0" stop-opacity="0"/><stop offset="1" stop-color="#E8EEF0" stop-opacity=".6"/></linearGradient><rect x="0" y="-46" width="${W}" height="30" fill="url(#lpHz)"/>`;
@@ -4452,7 +4392,7 @@ function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
     o+=`<path d="M0 26 H${W} M0 23.6 H${W}" stroke="#8A6E52" stroke-width=".9"/>${[...Array(41)].map((_,i)=>`<rect x="${i*30-.6}" y="22" width="1.2" height="5" fill="#6E5640"/>`).join('')}`;
     o+=[[560,24,'#6B3A22'],[590,25,'#C9B79C'],[612,24,'#2E2420']].map(([x,y,c])=>`<g transform="translate(${x} ${y}) scale(.7)"><path d="M-9 -9 Q-10 -13 -5 -13 L6 -13 Q9 -13 10 -11 L13 -6 L15 -1 L13 -1 L10 -6 L9 -9 Q8 -6 7 -6 L-8 -6Z" fill="${c}"/><path d="M-7 -6 V0 M-4 -6 V0 M5 -6 V0 M8 -6 V0" stroke="${c}" stroke-width="1.6"/></g>`).join('');
     o+=ridge(32,6,110,'#A9B886',1326)}
-  else if(id==='jalisco'){/* Tequila, Jalisco (build 95): the Tequila volcano with its rocky summit, the far sierra, hills striped with rows of blue agave on red earth, a town with a domed church, huizache trees */
+  else if(id==='jalisco'){/* Tequila, Jalisco (build 86): the Tequila volcano with its rocky summit, the far sierra, hills striped with rows of blue agave on red earth, a town with a domed church, huizache trees */
     const f1=v=>v.toFixed(1);o+=sky('#86BCE6','#F4EBD8')+sun(1060,-52)+clouds(4,-68);
     o+=ridge(-24,18,190,'#AAA9C4',1401);
     /* the volcano: a broad forested cone with a jagged plug on top */
@@ -4472,7 +4412,7 @@ function locPano(id){const r=srng(id.length*41+7);let o='';const W=1200;
     o+=ridge(22,8,120,'#9DAE66',1406);
     o+=`<path d="M0 31 C200 28 380 33 600 30 S1000 27 1200 31" stroke="#C9A27A" stroke-width="1.8" fill="none" opacity=".8"/>`;
     o+=ridge(32,6,100,'#A8B470',1408)}
-  /* ---- event-only backdrops (build 89): places a show can be held that no ranch sits in ---- */
+  /* ---- event-only backdrops (build 86): places a show can be held that no ranch sits in ---- */
   else if(id==='europe'){/* green patchwork farmland with hedgerows, a village church and a castle on the far hill */
     const f1=v=>v.toFixed(1);o+=sky('#8DB9DE','#EAF0EC')+clouds(5,-64);
     o+=ridge(-30,26,220,'#B3C6C0',101)+ridge(-18,22,170,'#A2BCA8',102)+ridge(-10,16,130,'#97B894',106);
@@ -4618,7 +4558,7 @@ function locHouse(style,n,C,shadow,tree){const k=[.72,.86,1,1.1][n],snow=snowy(S
     o+=`<rect x="${cx-w/2-6}" y="${B-5}" width="${w+12}" height="5" fill="#8A6A48"/>`+posts(cx-w/2-4,cx+w/2+4,B-12,B-5,9,'#6E5640',1.4)+`<path d="M${cx-w/2-4} ${B-12} H${cx+w/2+4}" stroke="#6E5640" stroke-width="1.4"/>`;
     if(n>=2)o+=sideF(cx+w/2+26,B-26,26,d*.6,dy*.6,'#6A3E24')+face(cx+w/2+4,B-26,22,26,'#7A4A2E','mBoards')+sgRoof(cx+w/2+4,B-26,22,10,d*.6,dy*.6,rf,'mShingle',2,'#6A3E24')+win(cx+w/2+10.5,B-20,9,10,{frame:'#C0392B'});
     if(n>=3)o+=`<g transform="translate(${cx-w/2-16} ${B})"><ellipse cx="0" cy="-2" rx="9" ry="4" fill="#9A9488"/><path d="M-4 -4 l2 -6 l2 6 M0 -4 l3 -8 l2 8" stroke="#E07A3A" stroke-width="1.6" fill="none"/></g>`;}
-  else if(style==='prairie'){/* Alberta (build 95; hipped roof in build 96): a prairie foursquare farmhouse: hipped tin roof with a centre dormer, blue-grey lap siding, a glassed-in front porch, fieldstone chimney; a maple-leaf flag at the top level */
+  else if(style==='prairie'){/* Alberta (build 86; hipped roof in build 87): a prairie foursquare farmhouse: hipped tin roof with a centre dormer, blue-grey lap siding, a glassed-in front porch, fieldstone chimney; a maple-leaf flag at the top level */
     const x=60,w=94,h=34,y=B-h,d=12,dy=7,wall='#C9D3D6',sideC='#AAB6BA',roof='#3E5A4A',trim='#FBFAF6',cx=x+w/2;
     if(n>=3)o+=`<path d="M${x-22} ${B} V${B-58}" stroke="#8C939A" stroke-width="1.4"/><circle cx="${x-22}" cy="${B-59}" r="1.2" fill="#C9A227"/><g transform="translate(${x-21.3} ${B-57})"><rect width="14" height="7" fill="#F4F4F2"/><rect width="3.5" height="7" fill="#D52B1E"/><rect x="10.5" width="3.5" height="7" fill="#D52B1E"/><path d="M7 1 l.6 1.2 l1 -.4 l-.3 1.3 l.9 .3 l-1.3 .9 l.2 .8 h-2.2 l.2 -.8 l-1.3 -.9 l.9 -.3 l-.3 -1.3 l1 .4z" fill="#D52B1E"/><path d="M7 5.1 v1.2" stroke="#D52B1E" stroke-width=".4"/></g>`;
     o+=sideF(x+w,y,h,d,dy,sideC,'mSiding')+face(x,y,w,h,wall,'mSiding');
@@ -4635,7 +4575,7 @@ function locHouse(style,n,C,shadow,tree){const k=[.72,.86,1,1.1][n],snow=snowy(S
     o+=`<rect x="${x-4}" y="${B-2}" width="${w+8}" height="2" fill="#9A9488"/>`;
     if(n>=2)o+=`<g transform="translate(${x+w+d+10} ${B})"><path d="M-7 0 L-7 -9 L7 -9 L7 0Z" fill="#8A6A48"/><path d="M-7 0 L-7 -9 L7 -9 L7 0Z" fill="url(#mBoards)"/><path d="M-9 -9 L9 -9 L7 -13 L-7 -13Z" fill="${roof}"/>${[-4,0,4].map(dx=>`<circle cx="${dx}" cy="-4" r="2" fill="#C9A06A" stroke="#8A6A48" stroke-width=".5"/>`).join('')}</g>`;
     if(n>=3)o+=flowers(x+8,B+2)+flowers(x+w-8,B+2);}
-  else if(style==='hacienda'){/* Jalisco (build 95): two-storey ochre hacienda with a red tile roof, an arcade along the ground floor, iron balconies, blue doors and bougainvillea; a bell gable at the top level */
+  else if(style==='hacienda'){/* Jalisco (build 86): two-storey ochre hacienda with a red tile roof, an arcade along the ground floor, iron balconies, blue doors and bougainvillea; a bell gable at the top level */
     const x=46,w=126,h=46,y=B-h,d=12,dy=7,wall='#E2A85E',sideC='#C98E48',base='#8A3A2C',blue='#2E5FA8',trim='#F3EEE4';
     o+=sideF(x+w,y,h,d,dy,sideC)+face(x,y,w,h,wall)+`<path d="M${x+w} ${B-5} L${x+w+d} ${B-5-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#6E2E24"/>`;
     const rf=`M${x-5} ${y} L${x+w+5} ${y} L${x+w+d-4} ${y-12} L${x+9} ${y-12}Z`;o+=`<path d="M${x+w+5} ${y} L${x+w+5+d} ${y-dy} L${x+w+d-4} ${y-12}Z" fill="#9A4632"/><path d="${rf}" fill="#B5523A"/><path d="${rf}" fill="url(#mTile)"/><path d="M${x-5} ${y} H${x+w+5}" stroke="#7A2E1E" stroke-width="1.6"/>`+cap(`M${x+9} ${y-12} L${x+w+d-4} ${y-12} L${x+w} ${y-7} L${x+4} ${y-7}Z`);
@@ -4695,7 +4635,7 @@ function locBarn(style,n,C,shadow){const w=100+n*9,h=54+n*3,x=285-w/2,B=310,y=B-
     /* hayloft door with a little hay hood under the peak */
     const hy=yA+(yw-yA)*.42;o+=`<path d="M273 ${f1(hy-4)} L285 ${f1(hy-14)} L297 ${f1(hy-4)}Z" fill="#7C8288"/><rect x="276" y="${f1(hy-4)}" width="18" height="16" fill="#3A2A24" stroke="#F7F3EA" stroke-width="1.6"/><path d="M285 ${f1(hy-4)} V${f1(hy+12)}" stroke="#F7F3EA" stroke-width="1"/><path d="M285 ${f1(hy-14)} V${f1(hy-20)}" stroke="#5a4a40" stroke-width="1"/>`;
     o+=[...Array(Math.min(4,n+2))].map((_,i,a)=>{const sx=x+8+i*((w-16-40)/Math.max(1,a.length-1||1));const xx=sx+(sx>262?44:0);return xx+9>x+w-4?'':`<rect x="${f1(xx)}" y="${f1(B-hw*.82)}" width="9" height="8" fill="url(#mGlass)" stroke="#F7F3EA" stroke-width="1.2"/>`}).join('');}
-  else if(style==='quonset'){/* Alberta (build 95): a Quonset barn: a half-round arch of corrugated steel with the barrel running back, a red sliding door in the end wall; a round steel grain bin beside it from level 2 */
+  else if(style==='quonset'){/* Alberta (build 86): a Quonset barn: a half-round arch of corrugated steel with the barrel running back, a red sliding door in the end wall; a round steel grain bin beside it from level 2 */
     const f1=v=>v.toFixed(1),kw=6,ah=Math.min(h+8,w*.56),rx=w/2,ry=ah-kw;
     const arch=(sx,sy)=>`M${f1(x+sx)} ${f1(B+sy)} V${f1(B-kw+sy)} A${f1(rx)} ${f1(ry)} 0 0 1 ${f1(x+w+sx)} ${f1(B-kw+sy)} V${f1(B+sy)}Z`;
     const arcY=f=>{const u=(f-.5)*2;return B-kw-ry*Math.sqrt(Math.max(0,1-u*u))};
@@ -4712,7 +4652,7 @@ function locBarn(style,n,C,shadow){const w=100+n*9,h=54+n*3,x=285-w/2,B=310,y=B-
     for(const s of [-1,1]){const wx=285+s*rx*.62;o+=`<rect x="${f1(wx-5)}" y="${B-30}" width="10" height="8" fill="url(#mGlass)" stroke="#F4F1EA" stroke-width="1.2"/><path d="M${f1(wx)} ${B-30} V${B-22}" stroke="#F4F1EA" stroke-width=".6"/>`}
     if(n>=1)o+=`<g transform="translate(285 ${f1(B-ah+10)})"><circle r="5" fill="#8C939A"/><circle r="3.8" fill="#5C636B"/>${[0,60,120].map(a=>`<path d="M${f1(-3.6*Math.cos(a*Math.PI/180))} ${f1(-3.6*Math.sin(a*Math.PI/180))} L${f1(3.6*Math.cos(a*Math.PI/180))} ${f1(3.6*Math.sin(a*Math.PI/180))}" stroke="#9AA2A8" stroke-width="1.2"/>`).join('')}</g>`;
     if(n>=3)o+=`<g transform="translate(${f1(285+d*.5)} ${f1(B-ah-dy*.5+1)})"><rect x="-2" y="-6" width="4" height="6" fill="#8C939A"/><ellipse cx="0" cy="-6.4" rx="5" ry="2" fill="#7C848A"/></g>`;}
-  else if(style==='cuadra'){/* Jalisco (build 95): a hacienda stable (cuadra): ochre stucco over a maroon base, red tile gable roof, a big arched gateway with blue doors, blue-shuttered stall windows; a bell gable at the top level */
+  else if(style==='cuadra'){/* Jalisco (build 86): a hacienda stable (cuadra): ochre stucco over a maroon base, red tile gable roof, a big arched gateway with blue doors, blue-shuttered stall windows; a bell gable at the top level */
     const f1=v=>v.toFixed(1),wall='#E2A85E',sideC='#C98E48',base='#8A3A2C',blue='#2E5FA8',trim='#F3EEE4',rh=h*.42;
     o+=sideF(sideC)+face(wall)+`<rect x="${x}" y="${B-8}" width="${w}" height="8" fill="${base}"/><path d="M${x+w} ${B-8} L${x+w+d} ${B-8-dy} L${x+w+d} ${B-dy} L${x+w} ${B}Z" fill="#6E2E24"/>`;
     o+=[[x+10,B-22,14,7],[x+w-24,B-20,12,6]].map(([px,py,pw,ph])=>`<path d="M${px} ${py} q${pw*.3} ${-ph*.5} ${pw*.7} ${-ph*.2} q${pw*.4} ${ph*.3} ${pw*.3} ${ph*.8} q${-pw*.4} ${ph*.4} ${-pw*.8} ${ph*.1}Z" fill="#B9A288"/><path d="M${px} ${py} q${pw*.3} ${-ph*.5} ${pw*.7} ${-ph*.2} q${pw*.4} ${ph*.3} ${pw*.3} ${ph*.8} q${-pw*.4} ${ph*.4} ${-pw*.8} ${ph*.1}Z" fill="url(#mStone)" opacity=".7"/>`).join('');
@@ -4867,7 +4807,7 @@ function gateText(cx,y,W,ink){const MIN=3.4;const one=t=>Math.min(6.4,W/gateW(t)
   const f=L.f,tl=s2=>gateW(s2)*f>W*.99?` textLength="${W}" lengthAdjust="spacingAndGlyphs"`:'';
   const ys=L.l.length===1?[y-(6.4-f)*.35]:[y-3.1,y+2.1];
   return L.l.map((s2,k)=>`<text x="${cx}" y="${ys[k].toFixed(1)}" text-anchor="middle" font-size="${f.toFixed(2)}" font-weight="700" fill="${ink}" font-family="system-ui,sans-serif"${tl(s2)}>${esc(s2)}</text>`).join('')}
-/* build 90: staff housing and the foaling barn wear the same materials as each location's house and barn */
+/* build 86: staff housing and the foaling barn wear the same materials as each location's house and barn */
 const LOC_BLD={texas:{wall:'#D8C7A0',wtex:'mStone',roof:'#A34A32',rtex:'mTin',frame:'#F2EAD8',door:'#7A4E2E'},
  kentucky:{wall:'#9C4A3A',wtex:'mBrick',roof:'#3C3F46',rtex:'mSlate',frame:'#F4F1EA',door:'#1E1E20'},
  oklahoma:{wall:'#F2EFE6',wtex:'mSiding',roof:'#5C636B',rtex:'mShingle',frame:'#FBFAF6',door:'#9A3A2C'},
@@ -4968,7 +4908,7 @@ function ranchMap(){
   // ===== clinic & recovery =====
   {const n=lv('clinic');let o;if(!n)o=lot(200,76,74,58);else{const w=[0,48,60,76][n];o=bld(237-w/2,100,w,32,'#F4F4EF','#7C8A92',{win:[0,2,2,4][n],door:1,rh:14,winSide:1,winY:.34})+`<rect x="${237-w/2+3}" y="86" width="12" height="12" rx="2" fill="#fff" stroke="#C0392B"/><path d="M${237-w/2+9} 89 v6 M${237-w/2+6} 92 h6" stroke="#C0392B" stroke-width="2.4"/>`+(n>=3?`<rect x="${237+w/2-14}" y="122" width="12" height="9" fill="#C0392B" opacity=".85"/>`:'')}
     g+=hot('clinic',o);label(237,152,'Clinic',n>0,n,mx('clinic'))}
-  {const n=lv('recovery');let o;if(!n)o=lot(286,76,82,58);else{/* build 96: the pieces spread over the lot: a hot walker out front, the cold-water spa barn behind it, a wash rack, and the therapy building at the back */
+  {const n=lv('recovery');let o;if(!n)o=lot(286,76,82,58);else{/* build 87: the pieces spread over the lot: a hot walker out front, the cold-water spa barn behind it, a wash rack, and the therapy building at the back */
       const f1=v=>v.toFixed(1),mini=(x,y,col,mane,s,flip,gait)=>`<g transform="translate(${f1(x)} ${f1(y)}) scale(${flip?-s:s} ${s})">${rSprite(col,mane,'#000',{gait:gait||'walk',pose:(Math.round(x)%4)})}</g>`;o='';
       /* level 3: the therapy building at the back of the lot */
       if(n>=3)o+=bld(288,80,40,16,'#F4F1EA','#4F7A8A',{win:2,door:1,rh:9,winSide:1,winY:.3})+`<rect x="300" y="82.6" width="16" height="5.4" rx="1" fill="#2E8A84"/><text x="308" y="86.8" text-anchor="middle" font-size="3.6" font-weight="800" fill="#FBFAF6" font-family="${SIGN_F}">THERAPY</text>`+[[292,97],[324,97]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="3.4" ry="1.8" fill="#5E8C4A"/><circle cx="${x-1}" cy="${y-1}" r=".9" fill="#E25B7A"/><circle cx="${x+1.2}" cy="${y-.8}" r=".8" fill="#F2C14E"/>`).join('');
@@ -5130,7 +5070,7 @@ function ranchMap(){
       return `<path d="M${f(F[0])} ${f(F[1]+1)} L${f(N[0])} ${f(N[1]+1)}" stroke="rgba(25,35,15,.25)" stroke-width="2.4"/>${[F,N].map(P=>`<rect x="${f(P[0]-1)}" y="${f(P[1]-h-2)}" width="2" height="${h+2}" fill="#F4F0E6"/><rect x="${f(P[0]-1.3)}" y="${f(P[1]-h-2.6)}" width="2.6" height="1.2" fill="#C0392B"/>`).join('')}${rail(1,'#F4F0E6')}<path d="M${f(F[0])} ${f(F[1]-h)} L${f(N[0])} ${f(N[1]-h)}" stroke="#C0392B" stroke-width="2" stroke-dasharray="3 3"/>${rail(.5,'#C0392B')}`};
     /* course flags stand just off the trail, on its outer edge */
     const marker=(k,u,col)=>{const [A,B,x,y]=across(k,u,W/2+7),cxL=765,cyL=226,P=Math.hypot(A[0]-cxL,(A[1]-cyL)*2)>Math.hypot(B[0]-cxL,(B[1]-cyL)*2)?A:B;return `<ellipse cx="${f(P[0])}" cy="${f(P[1]+1)}" rx="4" ry="1.3" fill="rgba(25,35,15,.3)"/><path d="M${f(P[0])} ${f(P[1]-16)} v16" stroke="#7A5434" stroke-width="1.4"/><path d="M${f(P[0])} ${f(P[1]-16)} l6 2 l-6 2z" fill="${col}"/>`};
-    /* build 95: an invisible hit area over the whole loop, so the trails are easy to click or tap, built or not */
+    /* build 87: an invisible hit area over the whole loop, so the trails are easy to click or tap, built or not */
     const hit=`<path d="${TP}" fill="#000" fill-opacity="0" stroke="#000" stroke-opacity="0" stroke-width="20" stroke-linejoin="round"/>`;
     const o=n?hit+`<path d="${TP}" stroke="rgba(25,35,15,.18)" stroke-width="${W+3}" fill="none" stroke-linejoin="round" transform="translate(0 2)"/><path d="${TP}" stroke="${C.dirt}" stroke-width="${W}" fill="none" stroke-linejoin="round" opacity=".75"/><path d="${TP}" stroke="${C.dirtD}" stroke-width="${n*1.4+1}" fill="none" stroke-dasharray="7 5" stroke-linejoin="round"/>
       ${marker(1,.2,'#E25B7A')}${marker(2,.6,'#2E6FD8')}${marker(3,.9,'#F2C14E')}${marker(4,.55,'#2D8A4E')}
@@ -5187,7 +5127,7 @@ function ranchMap(){
        <path d="M${tx+TL*.5-24} ${B-8} q12 -10 24 0 M${tx+TL*.5+4} ${B-8} q12 -10 24 0" fill="#9AA4AD"/>${wheel(tx+TL*.5-12,5.6)}${wheel(tx+TL*.5+16,5.6)}
        <path d="M${tx+TL-30} ${B-36} q6 -6 12 0" stroke="#7A3D1C" stroke-width="3" fill="none" stroke-linecap="round"/></g>`}
     o=`<g transform="translate(${200-56*.62} ${577-346*.62}) scale(.62)">${o}</g>`;g+=hot('trailer',o);label(408,566,'Trailer',n>0,n,mx('trailer'))}
-  // ===== show grounds across County Rd 9: covered arena, breeding lab, guest lodge, museum (build 88) =====
+  // ===== show grounds across County Rd 9: covered arena, breeding lab, guest lodge, museum (build 86) =====
   if(LI!=='classic'){const f1=v=>(+v).toFixed(1),B=782,poly=(pts,fill,ex='')=>`<path d="M${pts.map(p=>f1(p[0])+' '+f1(p[1])).join(' L')}Z" fill="${fill}"${ex}/>`;
     let sg=`<rect x="0" y="626" width="1200" height="214" fill="${C.grass}"/><rect x="0" y="626" width="1200" height="9" fill="${C.dirt}" opacity=".55"/>`+[...Array(70)].map((_,i)=>{const x=(i*173)%1200,y=660+(i*61)%170;return `<path d="M${x} ${y} l-1.2 -3 M${x+2} ${y} l.8 -3.4" stroke="${C.grassD}" stroke-width=".9" opacity=".6"/>`}).join('');
     /* gravel lane along the front of the buildings, and the drive in from the road */
@@ -5702,7 +5642,7 @@ function renderModal(){
 let WATCH=null,watchN=0;
 const RUNNER_COLS=[['#7A3D1C','#1E1A18'],['#9A4822','#B8672E'],['#211D1B','#141211'],['#BEBEB8','#8C8C87'],['#C89955','#231D19'],['#D7AC57','#F2E6C3'],['#3C322B','#201B18'],['#E3D4B3','#C6B18B'],['#6E3418','#18120E']];
 const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480','#F1C40F','#1F3A68','#7B2335','#5DADE2','#F4F1EA','#26262B','#7FBF3F','#FF6F61','#00A6D6','#B5651D','#E84393','#6C5CE7','#FFD866','#0B6E4F','#A3195B','#9AA5B1'];
-/* ---------- build 94: world records, and your ranch's own best in every event ----------
+/* ---------- build 86: world records, and your ranch's own best in every event ----------
    Records use the same measure the live event shows (a time, a score or a distance). Specialty classes use their parent's measure.
    Dressage, Driving and Reining scores top out (86% and 78 points), so their starting records sit a little below the top. */
 const WR_MID={drive:'dress',pony:'barrel',desert:'endur'};
@@ -6305,7 +6245,7 @@ function eventScene(W,rs){const ev=W.ev,ev0=W.ev0,T=W.T;let s=sceneDefs();const 
       <g transform="translate(400 46)"><rect x="-38" y="0" width="76" height="22" fill="#7A5434"/><path d="M-44 0 L0 -12 L44 0Z" fill="#5A3A22"/><rect x="-30" y="6" width="60" height="10" fill="#3a2a1e"/>${[-18,0,18].map(x=>`<circle cx="${x}" cy="11" r="3.2" fill="#E2B48C"/><path d="M${x-5} 8.5 h10" stroke="#6B4423" stroke-width="1.6"/>`).join('')}<rect x="-32" y="-26" width="64" height="12" rx="2" fill="#F4E7C4"/><text x="0" y="-17" font-size="7.5" text-anchor="middle" fill="#6B2E1E" font-family="Rye,Georgia,serif">REINING</text></g>
       ${[[60,96],[86,100],[706,96],[734,98]].map(([x,y],i)=>bPerson(x,y,['#C0392B','#36506F','#2D8A4E','#D35480'][i],{s:.85,hatC:['#6B4A2E','#E9DFC6'][i%2],view:'side',flip:i>1?1:0})).join('')}
       <g transform="translate(4 150) scale(.68)">${evTruck({col:ranchCol(),c2:ranchCol2(),sym:ranchSym()})}<g transform="translate(50 0)">${evTrailer({c1:ranchCol(),c2:ranchCol2(),name:S.ranchName||"",sym:ranchSym(),heads:2,hitched:1})}</g></g><g transform="translate(650 152) scale(.68) translate(210 0) scale(-1 1)">${evTruck({col:"#2E5D8C"})}<g transform="translate(50 0)">${evTrailer({body:"#D9D2C3",c1:"#6B4A2E",c2:"#C9A227",hitched:1})}</g></g>`}
-    else{/* build 93: two covered grandstands either side of a proper judges' box at C, all centred behind the far end of the arena */
+    else{/* build 86: two covered grandstands either side of a proper judges' box at C, all centred behind the far end of the arena */
       const f1=v=>v.toFixed(1);
       const stand=(x0,x1,col,txt)=>{const w=x1-x0,cx=(x0+x1)/2;let o=`<ellipse cx="${cx}" cy="75.4" rx="${w/2+8}" ry="3" fill="#000" opacity=".13"/>`;
         o+=`<rect x="${x0}" y="24" width="${w}" height="50" fill="#E3DCCB"/><rect x="${x0}" y="24" width="${w}" height="12" fill="#000" opacity=".1"/>`;
@@ -6732,7 +6672,7 @@ function mPerson(...a){return '<!--ns-->'+mPerson_raw(...a)+'<!--/ns-->'}
 /* a standing person, front view, feet at y=0, top of head about -35.5 (a hat adds 3.5). Detailed: boots, jeans, belt, shirt with collar and buttons, sleeves and hands, face, ears and hair.
    o: s scale, skin, pants, boot, hair, f (woman), hat (0 = none), hatC, cap, vest, arm (custom arm paths), flip */
 const PF_SKIN=['#F2D3B8','#E2B48C','#C68E62','#9A6640','#6E4628'],PF_HAIR=['#2B1E14','#5A3A22','#8E5A2B','#C9A15A','#1a1a1a','#6E4A2E'];
-/* people seen from the side (facing +x; flip for -x) or from behind, so crowds can watch the action (build 86) */
+/* people seen from the side (facing +x; flip for -x) or from behind, so crowds can watch the action (build 87) */
 function personAlt(view,shirt,o,sk,skD,pn,pnD,bt,hc,f,shD,shL){let g='';
   if(view==='side'){g=`<ellipse cx=".6" cy="0" rx="5.6" ry="1.6" fill="rgba(0,0,0,.18)"/>`;
     g+=`<path d="M-2.6 -15.4 L.4 -15.4 L.2 -2.6 L-2.2 -2.6Z" fill="${pnD}"/><path d="M-1.4 -15.4 L2.3 -15.4 L2.7 -2.6 L.1 -2.6Z" fill="${pn}"/>`;
