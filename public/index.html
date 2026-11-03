@@ -1300,11 +1300,13 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='74';
+const BUILD='75';
 const CHANGELOG=[
+ {b:'75',d:'Nov 2, 2026',t:'Bigger location perks',c:[
+  'Location perks are now stronger, mostly 10 to 15%, so where you settle matters more. Home events now give +10% score and +15% prize money. The drawbacks stay the same.']},
  {b:'74',d:'Nov 2, 2026',t:'Ranch locations',c:[
   'Pick where your ranch is: Texas, Kentucky, Oklahoma, California, Ohio, Florida, Pennsylvania, Montana, Wyoming or South Dakota. Existing ranches choose the next time they play.',
-  'Each place has small perks and drawbacks (5 to 10%): home events with a score and prize bonus, cheaper or pricier hay, land and buildings, winter feed, local breeds in the market, and more. See them any time on the Office tab.',
+  'Each place has its own perks and drawbacks: home events with a score and prize bonus, cheaper or pricier hay, land and buildings, winter feed, local breeds in the market, and more. See them any time on the Office tab.',
   'Every location has its own yearly local event, such as the Cutting Futurity, Bucking Horse Sale, Wild Horse Roundup or Winter Circuit Grand Prix.',
   'New ranch map art for every region: a different ranch house, barn, fences, trees and scenery, with seasons that match the local weather. Snow only falls where it really snows.',
   'Winter snow now also covers the hay fields and the riding ring.']},
@@ -3830,44 +3832,44 @@ function locExtras(id){let o='';const S0=SEAS;
 /* ---------- ranch location effects (each bonus or penalty is 5-10%) ---------- */
 const LOCFX={
  texas:{tag:'Big pastures',diff:'Medium',blurb:'Cutting-horse country. Quarter Horses everywhere and plenty of room to run.',
-  ev:['barrel','rein'],breeds:['quarter','paint'],cheap:{quarter:.92,paint:.92},pasture:.92,hayS:[1,1.1,1,1],trouble:{drought:2},
-  pros:['Quarter Horses and Paints show up more and cost 8% less','Barrel Racing and Reining: +6% score, +8% prize','Pasture upgrades cost 8% less'],
+  ev:['barrel','rein'],breeds:['quarter','paint'],cheap:{quarter:.88,paint:.88},pasture:.88,hayS:[1,1.1,1,1],trouble:{drought:2},
+  pros:['Quarter Horses and Paints show up more and cost 12% less','Barrel Racing and Reining: +10% score, +15% prize','Pasture upgrades cost 12% less'],
   cons:['Hay costs 10% more in summer','Droughts are more likely']},
  kentucky:{tag:'Rich but pricey',diff:'Hard',blurb:'The Bluegrass, home of the Thoroughbred. Buyers pay well, but everything costs more.',
-  ev:['race'],breeds:['thoroughbred','saddlebred'],stud:{breed:'thoroughbred',lift:4},sale:1.06,build:1.08,npc:1.05,
-  pros:['Thoroughbreds show up more, plus a better Thoroughbred stud each week','Racing: +6% score, +8% prize','Horses you sell bring 6% more'],
+  ev:['race'],breeds:['thoroughbred','saddlebred'],stud:{breed:'thoroughbred',lift:6},sale:1.12,build:1.08,npc:1.05,
+  pros:['Thoroughbreds show up more, plus a better Thoroughbred stud each week','Racing: +10% score, +15% prize','Horses you sell bring 12% more'],
   cons:['Buildings cost 8% more','Rival horses at events are 5% tougher']},
  oklahoma:{tag:'Easy start',diff:'Easy',blurb:'The horse show capital. Shows pay a little more and folks notice you faster.',
-  ev:[],breeds:['quarter','appaloosa'],prize:1.06,rep:1.08,trouble:{storm:2},
-  pros:['All event prizes pay 6% more','Reputation grows 8% faster','Quarter Horses and Appaloosas show up more'],
+  ev:[],breeds:['quarter','appaloosa'],prize:1.12,rep:1.15,trouble:{storm:2},
+  pros:['All event prizes pay 12% more','Reputation grows 15% faster','Quarter Horses and Appaloosas show up more'],
   cons:['Storms are more likely, and they wreck fences']},
  california:{tag:'Rich but pricey',diff:'Medium',blurb:'Horsetown USA. Mild winters and wealthy boarding clients, but hay is dear.',
-  ev:['dress'],breeds:['quarter','andalusian'],winter:.92,client:1.08,hay:1.1,trouble:{drought:2},
-  pros:['Mild winters: horses eat 8% less hay in winter','Boarding clients pay 8% more','Dressage: +6% score, +8% prize'],
+  ev:['dress'],breeds:['quarter','andalusian'],winter:.88,client:1.15,hay:1.1,trouble:{drought:2},
+  pros:['Mild winters: horses eat 12% less hay in winter','Boarding clients pay 15% more','Dressage: +10% score, +15% prize'],
   cons:['Hay costs 10% more all year','Droughts are more likely']},
  ohio:{tag:'Easy start',diff:'Easy',blurb:'Farm country with cheap hay and a long history of draft and harness horses.',
-  ev:['pull','drive'],breeds:['percheron','standardbred','clydesdale'],cheap:{percheron:.92,clydesdale:.92,standardbred:.92},hay:.92,harvest:1.08,injS:[1.1,1,1,1],
-  pros:['Hay costs 8% less and your hay fields make 8% more','Draft Pull and Driving: +6% score, +8% prize','Draft horses show up more and cost 8% less'],
+  ev:['pull','drive'],breeds:['percheron','standardbred','clydesdale'],cheap:{percheron:.88,clydesdale:.88,standardbred:.88},hay:.88,harvest:1.15,injS:[1.1,1,1,1],
+  pros:['Hay costs 12% less and your hay fields make 15% more','Draft Pull and Driving: +10% score, +15% prize','Draft horses show up more and cost 12% less'],
   cons:['Muddy springs: 10% more injuries in spring']},
  florida:{tag:'Warm winters',diff:'Medium',blurb:'Ocala horse country. Green all year, with a winter show circuit.',
-  ev:['jump','dress'],breeds:['thoroughbred','pasofino','hanoverian'],winter:.92,illS:[1,1.1,1,1],trouble:{disease:2},
-  pros:['Warm winters: horses eat 8% less hay in winter','Show Jumping and Dressage: +6% score, +8% prize','A Winter Circuit jumping show every winter'],
+  ev:['jump','dress'],breeds:['thoroughbred','pasofino','hanoverian'],winter:.88,illS:[1,1.1,1,1],trouble:{disease:2},
+  pros:['Warm winters: horses eat 12% less hay in winter','Show Jumping and Dressage: +10% score, +15% prize','A Winter Circuit jumping show every winter'],
   cons:['Humid summers: 10% more sickness in summer','Disease scares are more likely']},
  pennsylvania:{tag:'Classic shows',diff:'Medium',blurb:'Amish draft farms and old-school horse shows. Good help is easy to find.',
-  ev:['drive','dress'],breeds:['percheron','morgan','hanoverian'],wage:.94,winter:1.08,
-  pros:['Staff wages cost 6% less','Driving and Dressage: +6% score, +8% prize','Draft horses and Morgans show up more'],
+  ev:['drive','dress'],breeds:['percheron','morgan','hanoverian'],wage:.88,winter:1.08,
+  pros:['Staff wages cost 12% less','Driving and Dressage: +10% score, +15% prize','Draft horses and Morgans show up more'],
   cons:['Cold winters: horses eat 8% more hay in winter']},
  montana:{tag:'Cheap but tough',diff:'Hard',blurb:'Big open ranch country. Land is cheap, winters are long, and shows are a long haul.',
-  ev:['endur','barrel'],breeds:['quarter','mustang'],build:.92,pasture:.92,winter:1.1,client:.95,fee:1.08,
-  pros:['Buildings cost 8% less, pastures 15% less','Endurance and Barrel Racing: +6% score, +8% prize','Rugged ranch horses show up more'],
+  ev:['endur','barrel'],breeds:['quarter','mustang'],build:.88,pasture:.966,winter:1.1,client:.95,fee:1.08,
+  pros:['Buildings cost 12% less, pastures 15% less','Endurance and Barrel Racing: +10% score, +15% prize','Rugged ranch horses show up more'],
   cons:['Hard winters: horses eat 10% more hay in winter','Boarding clients pay 5% less','Entry fees cost 8% more (long trips)']},
  wyoming:{tag:'Cheap but tough',diff:'Hard',blurb:'Polo and ranch-horse country under the Bighorns. Cheap land, wind and long winters.',
-  ev:['xc','endur'],breeds:['thoroughbred','quarter'],build:.92,winter:1.1,fee:1.08,
-  pros:['Buildings cost 8% less','Cross-Country and Endurance: +6% score, +8% prize','Thoroughbreds and Quarter Horses show up more'],
+  ev:['xc','endur'],breeds:['thoroughbred','quarter'],build:.88,winter:1.1,fee:1.08,
+  pros:['Buildings cost 12% less','Cross-Country and Endurance: +10% score, +15% prize','Thoroughbreds and Quarter Horses show up more'],
   cons:['Hard winters: horses eat 10% more hay in winter','Entry fees cost 8% more (long trips)']},
  southdakota:{tag:'Cheap but tough',diff:'Hard',blurb:'The Black Hills and the wild horse range. The cheapest land, the harshest winters.',
-  ev:['endur','xc'],breeds:['mustang','mustang'],cheap:{mustang:.9},build:.9,winter:1.1,sale:.94,fee:1.1,
-  pros:['Buildings cost 10% less','Mustangs show up a lot and cost 10% less','Endurance and Cross-Country: +6% score, +8% prize'],
+  ev:['endur','xc'],breeds:['mustang','mustang'],cheap:{mustang:.85},build:.85,winter:1.1,sale:.94,fee:1.1,
+  pros:['Buildings cost 15% less','Mustangs show up a lot and cost 15% less','Endurance and Cross-Country: +10% score, +15% prize'],
   cons:['Hard winters: horses eat 10% more hay in winter','Fewer buyers: horses sell for 6% less','Entry fees cost 10% more (long trips)']}};
 /* one yearly local event per location (added to the festival calendar) */
 const LOCFEST={
@@ -3884,12 +3886,12 @@ const LOCFEST={
 const LOC_DIFF_COL={Easy:'good',Medium:'warn',Hard:'bad'};
 function locFx(){return LOCFX[locId()]||{}}
 function locHome(ev){const f=locFx();return !!(f.ev&&ev&&f.ev.includes(ev.id))}
-function locEvMult(ev){return locHome(ev)?1.06:1}
-function locPrizeMult(ev){return (locHome(ev)?1.08:1)*(locFx().prize||1)}
+function locEvMult(ev){return locHome(ev)?1.1:1}
+function locPrizeMult(ev){return (locHome(ev)?1.15:1)*(locFx().prize||1)}
 function locBuildMult(f){const x=locFx();return (x.build||1)*(f&&f.id==='pasture'&&x.pasture?x.pasture:1)}
 function facCost(f,lv){const c=f.lv[lv]&&f.lv[lv].c||0;const m=locBuildMult(f);return m===1?c:Math.round(c*m/10)*10}
 function locHayMult(si){const x=locFx();return (x.hay||1)*(x.hayS?x.hayS[si]:1)}
-function locHomeChip(ev){return locHome(ev)?' <span class="chip good" title="Your location gives +6% score and +8% prize money here">Home +6%</span>':''}
+function locHomeChip(ev){return locHome(ev)?' <span class="chip good" title="Your location gives +10% score and +15% prize money here">Home +10%</span>':''}
 /* keep the local yearly event in the festival list */
 function locFestSync(){for(const k in FESTS)if(FESTS[k].loc)delete FESTS[k];const id=locId(),f=LOCFEST[id];if(f)FESTS['lf_'+id]={...f,loc:id}}
 function judgeLocal(h,f){const young=f.type==='young';const b=young?judgeYoung(h):judgeShow(h);if(!f.judge)return b;
