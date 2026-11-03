@@ -341,6 +341,7 @@ label.btn{display:inline-block;cursor:pointer}
 .ribcount svg{vertical-align:middle}
 .mapwrap{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:10px;overflow-x:auto;margin-bottom:18px}
 .mapwrap svg{display:block;width:100%;min-width:680px;height:auto}
+.wrboard{background:linear-gradient(#24463A,#1B3529);border-radius:12px;padding:12px 14px 8px;box-shadow:var(--shadow);color:#F4EFD8;border:3px solid #6B4423}.wrhead{text-align:center;font-family:Rye,Georgia,serif;letter-spacing:2px;color:#F2C14E;font-size:19px;margin:2px 0 8px}.wrt{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}.wrt th{text-align:left;color:#BFD2BA;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.8px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.2)}.wrt td{padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.09);vertical-align:top}.wrt td.ev{font-weight:700}.wrt td.ev span,.wrt td.who span,.wrt td.yb span{display:block;font-size:11.5px;font-weight:400;color:#B6C7B1}.wrt td.v{font-size:16px;color:#FFE08A;white-space:nowrap}.wrt td.yb .mono{font-size:13.5px;color:#F4EFD8}.wrt tr.mine td{background:rgba(242,193,78,.17)}.wrt tr.mine td.ev::before{content:'★ ';color:#F2C14E}.wrboard .tablewrap{overflow-x:auto}.wrnew{margin-top:12px;padding:9px 12px;border-radius:10px;background:#24463A;color:#FFE08A;font-weight:800;border:2px solid #C9A227}.wrnew.ranch{background:transparent;color:var(--good);border-color:var(--good);font-weight:700}
 .mapwrap .hot{cursor:pointer}.mapwrap .hot:hover>g,.mapwrap .hot:focus-visible>g{filter:brightness(1.08) saturate(1.06)}.mapwrap .hot:focus-visible{outline:none}.facpop{display:flex;flex-direction:column;gap:10px;min-width:min(420px,80vw)}.facpop .fac-head{gap:10px}
 .mapwrap .hot:hover .lbl{text-decoration:underline}
 .facgroup{margin-top:20px}
@@ -953,7 +954,7 @@ const GUIDE=[
   '<b>Auto compete</b> enters the highest open level that meets your auto rule (set it under the Auto compete buttons: a minimum chance to win and a minimum chance to place top 3; the default is 80% to win), and skips horses that would finish sour. The odds shown are real: they come from simulating the field.',
   'After 30 Local wins, 20 County wins or 16 State wins a horse <b>graduates</b> that level: it can still enter but prizes are halved. Move up.',
   'The <b>season circuit</b> gives points for every placing (more at higher levels). The top horse when a season ends is Season Champion: cash, +5 reputation and a title.',
-  '<b>Olympics:</b> two events each day of summer in Olympic years. A horse qualifies with a top-3 finish at any World Cup event. Olympic gold is the top of the game.',
+  '<b>Olympics:</b> two events each day of summer in Olympic years. A horse qualifies with a top-3 finish at any World Cup event. Each ranch sends one horse to each Olympic event, so choose your rider carefully; any horse can go again at the next Olympics. Olympic gold is the top of the game.',
   'Boarded client horses can compete too. The owner pays half the entry fee and takes 40% of the prize.']],
  ['Festivals and trouble',[
   'Three festivals a year: the <b>Spring Foal Show</b> (spring day 2, enter a foal or yearling), the <b>Harvest Fair</b> (fall day 2, Best in Show for grown horses plus a booth that sells your livestock goods) and the <b>Winter Horse Sale</b> (winter day 3, three horses about 30% off and 20% more for anything you sell).',
@@ -1113,7 +1114,7 @@ function propValue(){return FAC.reduce((a,f)=>a+f.lv.slice(1,L(f.id)+1).reduce((
 function propTax(){return Math.round(Math.max(0,propValue()-BAL.taxFree)*BAL.taxRate/10)*10}
 function maxClients(){return Math.floor(S.stalls/BAL.clientPer)}
 function autoPick(h){let best=null,top=null,sour=null;
-  EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti)||!evEligible(ev,h)||!eventOpen(ti,ei)||(ti===6&&!h.wcQual))return;if((ti>=T_NAT||troubleActive('disease'))&&!vetClear(h))return;if(S.money<myFee(h,t,ev))return;
+  EVENTS.forEach((ev,ei)=>TIERS.forEach((t,ti)=>{if(t.invite||S.rep<t.req||!tierOpen(ti)||!evEligible(ev,h)||!eventOpen(ti,ei)||(ti===6&&(!h.wcQual||olyEntry(ei))))return;if((ti>=T_NAT||troubleActive('disease'))&&!vetClear(h))return;if(S.money<myFee(h,t,ev))return;
     const od=odds(h,ev,t);if(!top||od.win>top.win||(od.win===top.win&&ti>top.ti))top={ei,ti,win:od.win};
     if(od.win>=autoWin()&&od.top3>=autoTop3()){const sr=sourRisk(h,ei),c={ei,ti,win:od.win,net:od.avg-myFee(h,t,ev),sr};const better=(a,b)=>!b||a.ti>b.ti||(a.ti===b.ti&&a.net>b.net);if(!sr.length){if(better(c,best))best=c}else if(!sour||sr.pen<sour.sr.pen||(sr.pen===sour.sr.pen&&better(c,sour)))sour=c}}));
   return {best,sour,top}}
@@ -1334,8 +1335,13 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='93';
+const BUILD='94';
 const CHANGELOG=[
+ {b:'94',d:'Nov 3, 2026',t:'Olympic entries and world records',c:[
+  'Olympics: each ranch sends one horse to each Olympic event. Once a horse has ridden in, say, the Olympic Show Jumping, that event shows “Your ranch’s entry” and no other horse from your ranch can enter it that Olympics. Any horse can go again at the next Olympics, and Auto Compete knows the rule too.',
+  'World Records: the Hall of Fame has a record board for every event, showing the record, who holds it, where and when it was set, and your ranch’s own best beside it. Records use the same time, score or distance you see in the live event.',
+  'Break a record and the results window says so: a gold banner for a new world record, and a note for a new ranch record. Setting a world record also earns the new World Record achievement and goes in the horse’s life story.',
+ ]},
  {b:'93',d:'Nov 3, 2026',t:'Dressage stands and judges',c:[
   'Dressage and the Driving Class: the two small corner tents are gone. Two covered grandstands full of spectators now sit centred behind the far end of the arena, with sponsor boards and flags on their roofs.',
   'Between them, the judges have a proper box at C: a green roof with a JUDGES sign, a wide window, and three judges at a table with their score sheets, a bell and water, plus a flower box and steps.',
@@ -2093,6 +2099,7 @@ const ACH=[
   {id:'groom',n:'Good Hands',d:'Groom a horse.'},
   {id:'debtfree',n:'Debt Free',d:'Pay off a bank loan.'},
   {id:'firstwin',n:'Blue Ribbon',d:'Win any event.'},
+  {id:'worldrec',n:'World Record',d:'Set a world record in any event.'},
   {id:'state',n:'State Champion',d:'Win a State Championship.'},
   {id:'regional',n:'Regional Champion',d:'Win a Regional event.'},
   {id:'national',n:'National Champion',d:'Win a National event.'},
@@ -2439,6 +2446,8 @@ function evEligible(ev,h){if(!ev.only||!h)return true;const bt=btOf(h);return ev
 function evOnlyText(ev){return ev.only==='draft'?'Draft and heavy breeds only':ev.only==='pony'?'Ponies and small breeds only':'Hot-blooded breeds only'}
 /* Olympics: two events a day across the four days of summer */
 function eventOpen(ti,ei){if(ti!==6)return true;if(ei>=8)return false;return Math.floor(ei/2)===dateParts(S.day).sday-1}
+/* build 94: one horse per ranch in each Olympic event, each Olympics. Returns the name of the horse that already rode, or null */
+function olyEntry(ei){if(!S||!S.olyIn)return null;return S.olyIn.yr===dateParts(S.day).year?((S.olyIn.ev||{})[ei]||null):null}
 function olyDayText(ei){return 'Olympic '+EVENTS[ei].n+' runs on Summer day '+(Math.floor(ei/2)+1)}
 const TIERS=[
   {n:'Local Show',base:18,spread:6,prize:[200,100,50],rep:[1,1,0],repCap:20,req:0,when:'Every day'},
@@ -2447,7 +2456,7 @@ const TIERS=[
   {n:'Regional',base:47,spread:8,prize:[1800,900,400],rep:[7,4,2],repCap:130,req:25,win:[{s:[1,3],d:[1,4]}],when:'All of Summer and Winter'},
   {n:'National',base:66,spread:7,prize:[6000,3000,1200],rep:[16,10,5],req:60,win:[{s:[2],d:[1,4]}],when:'Once a year, all of Fall'},
   {n:'International',base:76,spread:6,prize:[12000,6000,2500],rep:[22,13,6],req:120,win:[{s:[1],d:[3,4]}],when:'Once a year, last 2 days of Summer'},
-  {n:'Olympics',base:86,spread:5,prize:[40000,20000,8000],rep:[40,25,12],req:160,win:[{s:[1],d:[1,4],every:4}],when:'Every 4th year, two events each day of Summer. Horses qualify with a World Cup podium.'},
+  {n:'Olympics',base:86,spread:5,prize:[40000,20000,8000],rep:[40,25,12],req:160,win:[{s:[1],d:[1,4],every:4}],when:'Every 4th year, two events each day of Summer. One horse per ranch in each event. Horses qualify with a World Cup podium.'},
   {n:'Invitational',base:78,spread:6,prize:[15000,7000,3000],rep:[24,14,7],req:100,invite:true,when:'By invitation'},
   {n:'Ranch Show',base:30,spread:7,prize:[700,350,170],rep:[3,2,1],repCap:120,req:0,invite:true,ranch:true,when:'When another ranch invites you'},
   {n:'World Cup',base:81,spread:5,prize:[22000,11000,4500],rep:[30,18,9],req:140,win:[{s:[3],d:[1,4]}],when:'Every year, all of Winter. A top-3 finish qualifies that horse for the Olympics.'},
@@ -2486,15 +2495,17 @@ function compete(h,ei,ti){
   const rinv=t.ranch?(S.ranchInv||[]).find(v=>v.ei===ei&&v.until>=S.day):null;if(t.ranch){if(!rinv)return toast('That ranch show invitation has expired.');t.base=rinv.base;t.prize=rinv.prize}else if(t.invite&&!inviteFor(ei))return toast('You need an invitation for this event.');
   if(!tierOpen(ti))return toast(t.n+' events aren’t running right now. '+openText(ti)+'.');
   if(!evEligible(ev,h))return toast(ev.n+': '+evOnlyText(ev)+'.');if(!eventOpen(ti,ei))return toast(ei>=8?'The Olympics don’t run specialty classes.':olyDayText(ei)+'.');if(ti===6&&!h.wcQual)return toast(h.name+' hasn’t qualified for the Olympics. A top-3 finish at a World Cup event earns the spot.');
+  if(ti===6&&olyEntry(ei))return toast('One horse per ranch in each Olympic event. '+olyEntry(ei)+' already rode in the Olympic '+ev.n+' for your ranch. You can enter again at the next Olympics.');
   if((ti>=T_NAT||troubleActive('disease'))&&!t.ranch&&!vetClear(h))return toast((troubleActive('disease')?'With the disease scare, every show':t.n+' events')+' need a clean bill of health: a vet checkup in the last 8 days.');
   const fee=myFee(h,t,ev),ownerFee=entryFee(t,ev)-fee;if(S.money<fee)return toast('Not enough money for the entry fee.');const pl=evPlace(ti,ei,S.day,{who:rinv&&rinv.who});
   if(R()<refuseChance(h))return sulk(h,'load into the trailer for the '+pl.n+' (no entry fee charged)');
   S.money-=fee;const shown={money:S.money,rep:S.rep};
+  if(ti===6){const yr=dateParts(S.day).year;if(!S.olyIn||S.olyIn.yr!==yr)S.olyIn={yr,ev:{}};S.olyIn.ev[ei]=h.name}
   const field=[{name:h.name,farm:S.ranchName,score:rollScore(h,ev),me:1}];
   for(let j=0;j<7;j++)field.push({name:randName(),farm:pick(FARMS),score:npc(t)});
   const rv=ensureRival();let rvIn=null,rvH=null;if(!t.ranch&&R()<rivalChance(ti)){rvH=rivalPick(ev,ti);if(rvH){rvIn=field[1];rvIn.name=rvH.name;rvIn.farm=rv.farm;rvIn.rival=1;rvIn.rid=rvH.id;rvIn.score=rivalRoll(rvH,ev,R,ti,baseScore(h,ev)*compMult(h,ev))}}
   field.sort((a,b)=>b.score-a.score);
-  const place=field.findIndex(f=>f.me)+1;
+  const place=field.findIndex(f=>f.me)+1;const wrOut=checkRecords(ev,field,pl,h,ti);
   let rivalRes=null;if(rvIn){const rp=field.indexOf(rvIn)+1,won=place<rp,counts=!h.client;let bonus=0;rvH.starts++;if(rp===1)rvH.wins++;if(counts){rv.met++;if(won){rv.w++;rv.streak=(rv.streak||0)+1;rv.best=Math.max(rv.best||0,rv.streak);bonus=r10(Math.max(50,prizesFor(ev,t)[0]*.1));S.money+=bonus;h.earnings+=bonus;gainRep(1);unlock('rival1');if(rv.streak>=5)unlock('rival5')}else{rv.l++;rv.streak=0}rv.last.push(won?1:0);if(rv.last.length>8)rv.last.shift();if(won&&!h.beatRival){h.beatRival=1;story(h,'Beat rival '+rv.owner+'’s '+rvIn.name+' for the first time.')}}rivalRes={won,counts,bonus,name:rvIn.name,place:rp,rec:rv.w+'–'+rv.l,line:counts?rivalLine(won):'This was a boarded horse, so it doesn’t count toward your rivalry.'};if(counts)log(won?'good':'warn','Rival: '+h.name+' '+(won?'beat':'lost to')+' '+rv.owner+'’s '+rvIn.name+' at the '+pl.n+' '+ev.n+'.'+(bonus?' Bonus '+money(bonus)+' and +1 reputation.':'')+' Record '+rv.w+'–'+rv.l+'.')}
   h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts++;pxp('show',2);tutMark('show');const moodTxt=workDone(h,'ev:'+ei);S.weekStarts=(S.weekStarts||0)+1;if(t.ranch)S.ranchInv=S.ranchInv.filter(v=>v!==rinv);else if(t.invite)S.invites=S.invites.filter(v=>v.ei!==ei);
   let prize=0,rep=0;
@@ -2515,7 +2526,7 @@ function compete(h,ei,ti){
   const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
   log(place===1?'good':place<=3?'info':'warn',h.name+' placed '+ord[place-1]+' in the '+pl.n+' '+ev.n+(prize?' and won '+money(prize):'')+'.'+moodTxt);
   if(ownerFee&&h.client)h.client.feesPaid=(h.client.feesPaid||0)+ownerFee;
-  const res={type:'result',h:h.id,ev:ei,t:ti,pn:pl.n,pv:pl.v,cut,ownerFee:h.client?ownerFee:0,fee,rival:rivalRes,owner:h.client?h.client.owner:'',field:field.map(f=>({...f,score:Math.round(f.score*10)/10})),place,prize,rep,hurt,drop:drop&&drop.id,awards:awardMsg,gift};
+  const res={type:'result',h:h.id,ev:ei,t:ti,pn:pl.n,pv:pl.v,cut,ownerFee:h.client?ownerFee:0,fee,rival:rivalRes,owner:h.client?h.client.owner:'',field:field.map(f=>({...f,score:Math.round(f.score*10)/10})),place,prize,rep,hurt,drop:drop&&drop.id,awards:awardMsg,gift,wr:wrOut};
   UI.modal=PREF.watch===0?res:{type:'watch',wid:++watchN,res,shown,lock:1};if(PREF.watch===0)resultSound(res);
   checkAch();
 }
@@ -3707,7 +3718,7 @@ function renderCompete(){
     const ip=evPlace(INV,v.ei);return `<div class="invite"><div><span class="invtag">By invitation only</span><h3>${esc(ip.n)} · ${esc(ev.n)}</h3><div class="note">Held in ${esc(ip.v)}. Only the best ranches are asked. Invitation good through day ${v.until}. One entry.</div></div><button class="tierbtn" data-a="compete" data-e="${v.ei}" data-t="${INV}" ${!ok||!vetClear(h)||S.money<myFee(h,t,ev)?'disabled':''}><span class="t">Enter</span><span class="s">Entry ${money(myFee(h,t,ev))}${h&&h.client?' (owner pays half)':''}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${o}</button></div>`}).join('')}</div>`:(S.rep>=100?'<p class="note" style="margin:-6px 0 14px">No invitations this week. New ones arrive with the weekly market.</p>':'')}
   <div class="events">${EVENTS.map((ev,ei)=>`<div class="event"><div><div class="evart">${eventArt(ev.id)}</div><h3>${ev.n}${locHomeChip(ev)}${ev.only?' <span class="chip rare">Specialty</span>':''}</h3><div class="w">${ev.b}</div><div class="w mono">${Object.entries(ev.w).map(([k,v])=>STATS.find(s=>s.k===k).s+' '+Math.round(v*100)+'%').join(' · ')}</div></div>
    <div class="tiers">${TIERS.map((t,ti)=>{if(t.invite)return '';const locked=S.rep<t.req,closed=!tierOpen(ti);if(locked||closed)return '';let o='';if(ok&&!locked&&!closed){const od=odds(h,ev,t);const fe=myFee(h,t,ev),net=od.avg-fe;o=`<span class="o ${od.win>.3?'good':od.top3>.3?'warn':'bad'}">Win ${pct(od.win)} · Top 3 ${pct(od.top3)}</span><span class="s ${net>=0?'good':'bad'}">Avg payout ${h&&h.client?'to you ':''}${money(od.avg)} (${net>=0?'+':''}${money(net)} after fee)</span>`}
-     const nv=(ti>=T_NAT||troubleActive('disease'))&&h&&!vetClear(h),grad=!classOk(h,ti),cn=classNote(h,ti),inel=h&&!evEligible(ev,h),oly=!eventOpen(ti,ei),wcq=ti===6&&h&&!h.wcQual;if(oly&&ei>=8)return '';return `<button class="tierbtn ${closed||oly?'closed':''}" data-a="compete" data-e="${ei}" data-t="${ti}" ${!ok||locked||closed||nv||inel||oly||wcq||S.money<myFee(h,t,ev)?'disabled':''} title="${esc(t.n)} level"><span class="t">${esc(evPlaceName(ti,ei))}</span><span class="s">Entry ${money(myFee(h,t,ev))}${h&&h.client?' (owner pays half)':''}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${locked?`<span class="o note">Needs ${t.req} reputation</span>`:closed?`<span class="o note">${openText(ti)}</span>`:oly?`<span class="o note">${olyDayText(ei)}</span>`:wcq?`<span class="o note bad">Needs a World Cup top-3 to qualify</span>`:inel?`<span class="o note bad">${evOnlyText(ev)}</span>`:nv?`<span class="o note bad">Needs a vet checkup (last 8 days)</span>`:o+(cn?`<span class="o note ${grad?'bad':'warn'}">${cn}</span>`:'')}</button>`}).join('')}</div></div>`).join('')}</div>`;
+     const nv=(ti>=T_NAT||troubleActive('disease'))&&h&&!vetClear(h),grad=!classOk(h,ti),cn=classNote(h,ti),inel=h&&!evEligible(ev,h),oly=!eventOpen(ti,ei),wcq=ti===6&&h&&!h.wcQual,od6=ti===6&&!oly?olyEntry(ei):null;if(oly&&ei>=8)return '';return `<button class="tierbtn ${closed||oly?'closed':''}" data-a="compete" data-e="${ei}" data-t="${ti}" ${!ok||locked||closed||nv||inel||oly||wcq||od6||S.money<myFee(h,t,ev)?'disabled':''} title="${esc(t.n)} level"><span class="t">${esc(evPlaceName(ti,ei))}</span><span class="s">Entry ${money(myFee(h,t,ev))}${h&&h.client?' (owner pays half)':''}</span><span class="s">Purse ${prizesFor(ev,t).map(money).join(' / ')}</span>${locked?`<span class="o note">Needs ${t.req} reputation</span>`:closed?`<span class="o note">${openText(ti)}</span>`:oly?`<span class="o note">${olyDayText(ei)}</span>`:od6?`<span class="o note good">Your ranch’s entry: ${esc(od6)}. One horse per ranch.</span>`:wcq?`<span class="o note bad">Needs a World Cup top-3 to qualify</span>`:inel?`<span class="o note bad">${evOnlyText(ev)}</span>`:nv?`<span class="o note bad">Needs a vet checkup (last 8 days)</span>`:o+(cn?`<span class="o note ${grad?'bad':'warn'}">${cn}</span>`:'')}</button>`}).join('')}</div></div>`).join('')}</div>`;
 }
 
 function renderMarket(){
@@ -5003,6 +5014,7 @@ function renderHof(){
    <div class="kpi"><span class="k">Remembered</span><span class="v">${passed.length}</span><span class="s">horses in memory · ${sold.length} sold</span></div>
   </div>
   ${trophyRoom()}
+  ${worldRecordsPanel()}
   <div class="section-head" style="margin-top:24px"><h2>Inductees</h2><span class="sub">Invitational and National champions, ten-time winners, $50,000 earners, foundation sires and dams (6+ foals) and exceptional homebreds.</span></div>
   ${inducted.length?`<div class="hofgrid">${inducted.map(hofCard).join('')}</div>`:'<div class="empty">No inductees yet. Win a National or Invitational, earn $50,000, rack up 10 wins, or raise a foundation sire or dam to see them here.</div>'}
   <div class="section-head" style="margin-top:24px"><h2>In Memoriam</h2><span class="sub">Horses that lived out their days on the ranch.</span></div>
@@ -5148,6 +5160,7 @@ function renderModal(){
     const ev=EVENTS[m.ev],t=TIERS[m.t];const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
     title=(m.pn||t.n)+' · '+ev.n;
     body=`${m.pv||m.pn?`<p class="note" style="margin:-4px 0 10px">${esc(t.n)} level${m.pv?' · held in '+esc(m.pv):''}</p>`:''}<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+(m.cut?' ('+money(m.cut)+' goes to '+esc(m.owner)+', the owner’s '+Math.round(CLIENT_CUT*100)+'% share)':'')+(m.ownerFee?' · '+esc(m.owner)+' paid half the entry fee ('+money(m.ownerFee)+')':'')+(m.fee!=null?'<br>Your entry fee −'+money(m.fee)+' · <b>You net '+((m.prize-(m.cut||0)-m.fee)<0?'−'+money(-(m.prize-(m.cut||0)-m.fee)):money(m.prize-(m.cut||0)-m.fee))+'</b>':'')+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(t=>t.charAt(0).toUpperCase()+t.slice(1))(ribbonText(m.place,m.t))+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.rival?'<br><span class="'+(m.rival.won?'good':'bad')+'"><b>Rival:</b> '+(m.rival.won?'You beat':'You lost to')+' '+esc(S.rival.owner)+'’s '+esc(m.rival.name)+' ('+ord[m.rival.place-1]+').'+(m.rival.counts===false?'':' Record '+m.rival.rec+'.')+(m.rival.bonus?' <b>Bonus '+money(m.rival.bonus)+' and +1 reputation.</b>':'')+'</span> <span class="note">'+esc(m.rival.line)+'</span>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
+    ${m.wr&&m.wr.world!=null?`<div class="wrnew">★ New world record: ${wrFmt(ev.id,m.wr.world)}. The best ${esc(ev.n)} ever. See it in the Hall of Fame.</div>`:m.wr&&m.wr.ranch!=null?`<div class="wrnew ranch">New ranch record: ${wrFmt(ev.id,m.wr.ranch)}, your ranch’s best ${esc(ev.n)} yet.</div>`:''}
     <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':f.rival?'rivalrow':''}"><td>${ord[i]}</td><td>${esc(f.name)}${f.rival?' <span class="chip rivalchip">Rival</span>':''}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">Auto compete next horse</button>':''}</div>`;
   }else if(m.type==='buygear'){const buy=m.plan.filter(r=>!r.none),miss=m.plan.filter(r=>r.none);const tot=buy.reduce((a,r)=>a+r.p,0);title='Buy missing gear';
@@ -5211,6 +5224,30 @@ function renderModal(){
 let WATCH=null,watchN=0;
 const RUNNER_COLS=[['#7A3D1C','#1E1A18'],['#9A4822','#B8672E'],['#211D1B','#141211'],['#BEBEB8','#8C8C87'],['#C89955','#231D19'],['#D7AC57','#F2E6C3'],['#3C322B','#201B18'],['#E3D4B3','#C6B18B'],['#6E3418','#18120E']];
 const SILKS=['#C0392B','#2E6FD8','#5D6D7E','#2D8A4E','#8E44AD','#E67E22','#16A085','#D35480','#F1C40F','#1F3A68','#7B2335','#5DADE2','#F4F1EA','#26262B','#7FBF3F','#FF6F61','#00A6D6','#B5651D','#E84393','#6C5CE7','#FFD866','#0B6E4F','#A3195B','#9AA5B1'];
+/* ---------- build 94: world records, and your ranch's own best in every event ----------
+   Records use the same measure the live event shows (a time, a score or a distance). Specialty classes use their parent's measure.
+   Dressage, Driving and Reining scores top out (86% and 78 points), so their starting records sit a little below the top. */
+const WR_MID={drive:'dress',pony:'barrel',desert:'endur'};
+const WR_SEED={race:['Copper Comet','Red Mesa',97],barrel:['Little Firecracker','Cedar Hollow',97],endur:['Long Road Home','Silver Sage',96],dress:['Moonlight Sonata','Big Sky',90],
+  pull:['Iron Mountain','Two Forks',97],jump:['Cloud Dancer','High Plains',97],xc:['Wild Thistle','Bitterroot',96],rein:['Spin Cycle','Coyote Run',90],
+  drive:['Duke of Dunmore','Lone Pine',89],pony:['Peanut Brittle','Dry Creek',96],desert:['Sand Whisper','Silver Sage',96]};
+function wrM(evid){return WR_MID[evid]||evid}
+function wrInit(){if(!S)return;if(!S.wr){S.wr={};for(const ev of EVENTS){const sd=WR_SEED[ev.id];if(!sd)continue;S.wr[ev.id]={v:evMetric(wrM(ev.id),sd[2]).v,horse:sd[0],farm:sd[1],mine:0,day:0,where:''}}}if(!S.rr)S.rr={}}
+function wrFmt(evid,v){return evMetric(wrM(evid),50).f(v)}
+function wrBetter(evid,a,b){return evMetric(wrM(evid),50).low?a<b-1e-6:a>b+1e-6}
+function checkRecords(ev,field,pl,h,ti){wrInit();const mid=wrM(ev.id),out={};
+  const top=field[0],tv=evMetric(mid,top.score).v,cur=S.wr[ev.id];
+  if(!cur||wrBetter(ev.id,tv,cur.v)){S.wr[ev.id]={v:tv,horse:top.name,farm:top.farm,mine:top.me?1:0,day:S.day,where:pl.n,ti};
+    if(top.me){out.world=tv;unlock('worldrec');story(h,'Set the '+ev.n+' world record ('+wrFmt(ev.id,tv)+') at the '+pl.n+'.');log('good','★ WORLD RECORD! '+h.name+' set a new '+ev.n+' world record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
+    else log('info','New world record: '+top.name+' of '+top.farm+' set the '+ev.n+' record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
+  const me=field.find(f=>f.me);if(me&&!h.client){const mv=evMetric(mid,me.score).v,rr=S.rr[ev.id];if(!rr||wrBetter(ev.id,mv,rr.v)){S.rr[ev.id]={v:mv,horse:h.name,hid:h.id,day:S.day,where:pl.n,ti};if(rr&&!out.world)out.ranch=mv}}
+  return out}
+function worldRecordsPanel(){wrInit();const yr=d=>d?'Year '+dateParts(d).year:'a long-standing record';
+  const rows=EVENTS.map(ev=>{const w=S.wr[ev.id];if(!w)return '';const rr=S.rr[ev.id],low=evMetric(wrM(ev.id),50).low;
+    return `<tr class="${w.mine?'mine':''}"><td class="ev">${esc(ev.n)}<span>${low?'fastest':'highest'}${ev.id==='pull'?' distance':''}</span></td><td class="v mono">${wrFmt(ev.id,w.v)}</td><td class="who"><b>${esc(w.horse)}</b><span>${esc(w.farm)}${w.where?' · '+esc(w.where):''} · ${yr(w.day)}</span></td><td class="yb">${rr?`<span class="mono">${wrFmt(ev.id,rr.v)}</span><span>${esc(rr.horse)}${rr.where?' · '+esc(rr.where):''}</span>`:'<span>No entries yet</span>'}</td></tr>`}).join('');
+  const mine=EVENTS.filter(ev=>S.wr[ev.id]&&S.wr[ev.id].mine).length;
+  return `<div class="section-head" style="margin-top:24px"><h2>World Records</h2><span class="sub">The best ever in every event. Any horse at any show can break one. ${mine?`<b>${esc(S.ranchName)} holds ${mine} of them.</b>`:'Your ranch’s best is shown beside each record.'}</span></div>
+  <div class="wrboard"><div class="wrhead">★ WORLD RECORDS ★</div><div class="tablewrap"><table class="wrt"><tr><th>Event</th><th>Record</th><th>Held by</th><th>Your ranch’s best</th></tr>${rows}</table></div></div>`}
 function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='race')return {v:24.5-s*.08,f:v=>v.toFixed(2)+'s',low:1};
   if(evid==='jump')return {v:84-s*.36,f:v=>v.toFixed(2)+'s',low:1};
