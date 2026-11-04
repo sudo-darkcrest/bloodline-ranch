@@ -961,7 +961,7 @@ const GUIDE=[
   'After 30 Local wins, 20 County wins or 16 State wins a horse <b>graduates</b> that level: it can still enter but prizes are halved. Move up.',
   'The <b>season circuit</b> gives points for every placing (more at higher levels). The top horse when a season ends is Season Champion: cash, +5 reputation and a title.',
   '<b>Olympics:</b> two events each day of summer in Olympic years. A horse qualifies with a top-3 finish at any World Cup event. Each ranch sends one horse to each Olympic event, so choose your rider carefully; any horse can go again at the next Olympics. Olympic gold is the top of the game.',
-  '<b>World records:</b> the Hall of Fame keeps the best time, score or distance ever in every event. Records count at State Championships and bigger shows. The first time your ranch sets the record in an event, you win a piece of mythical gear. There are five pieces; once you own them all, a first record pays a $10,000 bonus instead.',
+  '<b>World records:</b> the Hall of Fame keeps the best time, score or distance ever in every event. Records count at every official show, from Local Shows up. Ranch Shows don’t count, because they aren’t officially timed or judged. The first time your ranch sets the record in an event, you win a piece of mythical gear. There are five pieces; once you own them all, a first record pays a $10,000 bonus instead.',
   'Boarded client horses can compete too. The owner pays half the entry fee and takes 40% of the prize.']],
  ['Festivals and trouble',[
   'Three festivals a year: the <b>Spring Foal Show</b> (spring day 2, enter a foal or yearling), the <b>Harvest Fair</b> (fall day 2, Best in Show for grown horses plus a booth that sells your livestock goods) and the <b>Winter Horse Sale</b> (winter day 3, three horses about 30% off and 20% more for anything you sell).',
@@ -1562,8 +1562,11 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='88';
+const BUILD='89';
 const CHANGELOG=[
+ {b:'89',d:'Nov 3, 2026',t:'World records at every level',c:[
+  'A world record is a world record: records count again at every official show, from Local Shows up to the Olympics. Ranch Shows don’t count, because they aren’t officially timed or judged. If your horse beats a record there, the log tells you.',
+  'Mythical gear still comes only from your ranch’s first record in each event (five pieces in all), with a $10,000 bonus after that.']},
  {b:'88',d:'Nov 3, 2026',t:'Balance for a longer game',c:[
   'World records now count only at State Championships and bigger shows. Mythical gear comes from your ranch’s first record in each event, so there are five pieces to win in all. Once you own all five, a first record pays a $10,000 bonus instead.',
   'Sale festivals: a horse you buy at a festival doesn’t get that day’s sale bonus if you sell it again. The South Dakota mustang adoption is now 35% off (was 50%).',
@@ -2294,7 +2297,7 @@ const ACH=[
   {id:'groom',n:'Good Hands',d:'Groom a horse.'},
   {id:'debtfree',n:'Debt Free',d:'Pay off a bank loan.'},
   {id:'firstwin',n:'Blue Ribbon',d:'Win any event.'},
-  {id:'worldrec',n:'World Record',d:'Set a world record in any event (State Championships and up).'},
+  {id:'worldrec',n:'World Record',d:'Set a world record in any event at an official show.'},
   {id:'state',n:'State Champion',d:'Win a State Championship.'},
   {id:'regional',n:'Regional Champion',d:'Win a Regional event.'},
   {id:'national',n:'National Champion',d:'Win a National event.'},
@@ -5665,10 +5668,11 @@ function wrM(evid){return WR_MID[evid]||evid}
 function wrInit(){if(!S)return;if(!S.wr){S.wr={};for(const ev of EVENTS){const sd=WR_SEED[ev.id];if(!sd)continue;S.wr[ev.id]={v:evMetric(wrM(ev.id),sd[2]).v,horse:sd[0],farm:sd[1],mine:0,day:0,where:''}}}if(!S.rr)S.rr={}}
 function wrFmt(evid,v){return evMetric(wrM(evid),50).f(v)}
 function wrBetter(evid,a,b){return evMetric(wrM(evid),50).low?a<b-1e-6:a>b+1e-6}
-/* build 88: world records only count at State Championships and up (not Local, County or Ranch Shows),
-   and only your FIRST world record in each event earns mythical gear (one you don't own yet; once you own all five, a $10,000 record bonus instead) */
-const WR_MIN_TIER=2,WR_BONUS=10000;
-function wrCounts(ti){const t=TIERS[ti];return ti>=WR_MIN_TIER&&!(t&&t.ranch)}
+/* build 89: a world record is a world record at any official show, Local Show up, because every official show is properly timed and judged.
+   Ranch Shows (private shows at another ranch) aren't officially timed or judged, so they don't count.
+   Only your FIRST world record in each event earns mythical gear (one you don't own yet; once you own all five, a $10,000 record bonus instead) */
+const WR_BONUS=10000;
+function wrCounts(ti){const t=TIERS[ti];return !!t&&!t.ranch}
 function checkRecords(ev,field,pl,h,ti){wrInit();const mid=wrM(ev.id),out={};
   if(!S.wrFirst){S.wrFirst={};for(const k in S.wr)if(S.wr[k].mine)S.wrFirst[k]=1}
   const top=field[0],tv=evMetric(mid,top.score).v,cur=S.wr[ev.id];
@@ -5677,13 +5681,14 @@ function checkRecords(ev,field,pl,h,ti){wrInit();const mid=wrM(ev.id),out={};
         if(pool.length){const id=pick(pool);S.inv.push({uid:S.nextItem++,id,on:null});out.myth=id;log('good','✦ Mythical gear: '+h.name+'’s first '+ev.n+' world record earned the '+ITEMS[id].n+' ('+itemEffects(ITEMS[id])+'). It’s in your tack room.')}
         else{S.money+=WR_BONUS;out.bonus=WR_BONUS;log('good','✦ Record bonus: '+h.name+'’s first '+ev.n+' world record earned '+money(WR_BONUS)+'. You already own every piece of mythical gear.')}}story(h,'Set the '+ev.n+' world record ('+wrFmt(ev.id,tv)+') at the '+pl.n+'.');log('good','★ WORLD RECORD! '+h.name+' set a new '+ev.n+' world record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
     else log('info','New world record: '+top.name+' of '+top.farm+' set the '+ev.n+' record of '+wrFmt(ev.id,tv)+' at the '+pl.n+'.')}
+  else if(!wrCounts(ti)&&top.me&&(!cur||wrBetter(ev.id,tv,cur.v))){out.unofficial=tv;log('info',h.name+'’s '+wrFmt(ev.id,tv)+' would beat the '+ev.n+' world record, but Ranch Shows aren’t officially timed or judged, so it doesn’t count. Try it at an official show.')}
   const me=field.find(f=>f.me);if(me&&!h.client){const mv=evMetric(mid,me.score).v,rr=S.rr[ev.id];if(!rr||wrBetter(ev.id,mv,rr.v)){S.rr[ev.id]={v:mv,horse:h.name,hid:h.id,day:S.day,where:pl.n,ti};if(rr&&!out.world)out.ranch=mv}}
   return out}
 function worldRecordsPanel(){wrInit();const yr=d=>d?'Year '+dateParts(d).year:'a long-standing record';
   const rows=EVENTS.map(ev=>{const w=S.wr[ev.id];if(!w)return '';const rr=S.rr[ev.id],low=evMetric(wrM(ev.id),50).low;
     return `<tr class="${w.mine?'mine':''}"><td class="ev">${esc(ev.n)}<span>${low?'fastest':'highest'}${ev.id==='pull'?' distance':''}</span></td><td class="v mono">${wrFmt(ev.id,w.v)}</td><td class="who"><b>${esc(w.horse)}</b><span>${esc(w.farm)}${w.where?' · '+esc(w.where):''} · ${yr(w.day)}</span></td><td class="yb">${rr?`<span class="mono">${wrFmt(ev.id,rr.v)}</span><span>${esc(rr.horse)}${rr.where?' · '+esc(rr.where):''}</span>`:'<span>No entries yet</span>'}</td></tr>`}).join('');
   const mine=EVENTS.filter(ev=>S.wr[ev.id]&&S.wr[ev.id].mine).length;
-  return `<div class="section-head" style="margin-top:24px"><h2>World Records</h2><span class="sub">The best ever in every event. Records count at State Championships and bigger shows. Your ranch’s first record in each event wins a piece of mythical gear. ${mine?`<b>${esc(S.ranchName)} holds ${mine} of them.</b>`:'Your ranch’s best is shown beside each record.'}</span></div>
+  return `<div class="section-head" style="margin-top:24px"><h2>World Records</h2><span class="sub">The best ever in every event. Records count at every official show (not Ranch Shows). Your ranch’s first record in each event wins a piece of mythical gear. ${mine?`<b>${esc(S.ranchName)} holds ${mine} of them.</b>`:'Your ranch’s best is shown beside each record.'}</span></div>
   <div class="wrboard"><div class="wrhead">★ WORLD RECORDS ★</div><div class="tablewrap"><table class="wrt"><tr><th>Event</th><th>Record</th><th>Held by</th><th>Your ranch’s best</th></tr>${rows}</table></div></div>`}
 function evMetric(evid,score){const s=Math.max(5,score);
   if(evid==='race')return {v:24.5-s*.08,f:v=>v.toFixed(2)+'s',low:1};
