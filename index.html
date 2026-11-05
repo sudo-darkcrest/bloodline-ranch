@@ -448,7 +448,7 @@ const UNITS = {
   art:  { name:'Artillery Bn',          sub:'MCV-H/155 self-propelled guns' },
   ad:   { name:'Air Defense Bn',        sub:'MCV-M/A point defense' },
   avn:  { name:'Aviation Group',        sub:'Helicopters + UAS Squadron' },
-  avsec:{ name:'Aviation Security Co',  sub:'Air assault QRF' },
+  avsec:{ name:'Aviation Security Co',  sub:'MCV-UL · Air assault QRF' },
   trans:{ name:'Transportation Group',  sub:'Cargo, fuel & armored transport' },
   sup:  { name:'Brigade Support',       sub:'Enablers' },
 };
@@ -1832,7 +1832,7 @@ const PAL = {
 const INK = '#05080a', MID = '#0f171a', RED = '#ff4a3a', FIRE = '#ffb347';
 
 // ---------------------------------------------------------------- detail helpers
-const V = { d0:'#010203', d2:'#0b1316', d3:'#111c20', d4:'#1a282d', d5:'#25373e', z1:'#33130f', z2:'#5c1712', lt:'#ffe7a3', rl:'#ff4a3a', wm:'#ffcf7a' };
+const V = { d0:'#010203', d2:'#0b1316', d3:'#111c20', d4:'#1a282d', d5:'#25373e', z1:'#33130f', z2:'#5c1712', lt:'#ffe7a3', rl:'#ff4a3a', wm:'#ffcf7a', cm:'#1b281e', cn:'#29261b' };
 const VK = Object.keys(V);
 const RIMVARS = VK.map(k => `--${k}:var(--acc)`).join(';');
 const n2 = v => +(+v).toFixed(2);
@@ -1844,7 +1844,7 @@ const CS = w => `fill="none" stroke="currentColor" stroke-width="${w}" stroke-li
 
 function wheel(cx, cy, r, o = {}) {
   let s = `<circle cx="${cx}" cy="${cy}" r="${r}" ${F('d0')}/>`;
-  s += `<circle cx="${cx}" cy="${cy}" r="${n2(r * .86)}" ${S('d2', n2(r * .16))} stroke-dasharray="${n2(r * .22)} ${n2(r * .16)}"/>`;
+  s += o.tread ? `<circle cx="${cx}" cy="${cy}" r="${n2(r * .9)}" ${S('d2', n2(r * .2))} stroke-dasharray="${n2(r * .3)} ${n2(r * .2)}"/><circle cx="${cx}" cy="${cy}" r="${r}" ${S('d3', n2(r * .08))} stroke-dasharray="${n2(r * .3)} ${n2(r * .2)}"/>` : `<circle cx="${cx}" cy="${cy}" r="${n2(r * .86)}" ${S('d2', n2(r * .16))} stroke-dasharray="${n2(r * .22)} ${n2(r * .16)}"/>`;
   s += `<circle cx="${cx}" cy="${cy}" r="${n2(r * .6)}" ${F('d3')}/>`;
   s += `<circle cx="${cx}" cy="${cy}" r="${n2(r * .42)}" ${F('d2')}/>`;
   const n = o.lugs || 6;
@@ -1854,7 +1854,9 @@ function wheel(cx, cy, r, o = {}) {
   return s;
 }
 function roadWheel(cx, cy, r) {
-  return `<circle cx="${cx}" cy="${cy}" r="${r}" ${F('d3')}/><circle cx="${cx}" cy="${cy}" r="${n2(r * .72)}" ${F('d2')}/><circle cx="${cx}" cy="${cy}" r="${n2(r * .26)}" ${F('d5')}/><path d="M${n2(cx - r * .7)} ${n2(cy - r * .7)} A${r} ${r} 0 0 1 ${n2(cx + r * .7)} ${n2(cy - r * .7)}" ${AS(n2(r * .1), .35)}/>`;
+  let s = `<circle cx="${cx}" cy="${cy}" r="${r}" ${F('d3')}/><circle cx="${cx}" cy="${cy}" r="${n2(r * .76)}" ${F('d2')}/>`;
+  for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2 + .3; s += `<circle cx="${n2(cx + Math.cos(a) * r * .48)}" cy="${n2(cy + Math.sin(a) * r * .48)}" r="${n2(r * .1)}" ${F('d0')}/>`; }
+  return s + `<circle cx="${cx}" cy="${cy}" r="${n2(r * .24)}" ${F('d5')}/><path d="M${n2(cx - r * .7)} ${n2(cy - r * .7)} A${r} ${r} 0 0 1 ${n2(cx + r * .7)} ${n2(cy - r * .7)}" ${AS(n2(r * .1), .35)}/>`;
 }
 function runGear(x0, x1, h, n, r) {
   const rr = h / 2;
@@ -1930,74 +1932,133 @@ function sandbags() {
 }
 function glass(d, op = .42) { return `<path d="${d}" ${A(op)}/>`; }
 
-// ---------------------------------------------------------------- shared hull: MCV-M 8x8
 const M8W = [-21.4, -12.5, 9.4, 18.3];
-const H_M8 = `<path d="M-30.6 -8.6 L-30.6 -18.2 L-29.4 -20.2 L16.4 -20.2 L28.6 -13.8 L31.2 -11.8 L29.8 -8 L24 -6.2 L-25.4 -6.2 Z"/>
-<g ${F('d2')}><rect x="-29.8" y="-19.1" width="9.2" height="9.9"/><rect x="-20.2" y="-19.1" width="11.6" height="9.9"/><rect x="-8.2" y="-19.1" width="12.2" height="9.9"/><rect x="4.4" y="-19.1" width="11.4" height="9.9"/><path d="M16.2 -19.1 L16.5 -19.1 L27.6 -13.3 L27.6 -9.2 L16.2 -9.2 Z"/></g>
-<g ${F('d4')}><rect x="-29.8" y="-19.1" width="45.8" height=".5"/><path d="M16.5 -19.1 L27.6 -13.3 L27.6 -12.7 L16.5 -18.5 Z"/></g>
+// ---------------------------------------------------------------- MCV family, drawn after the ECB reference sheets
+// Tracked chassis with a faceted wedge nose, bolted applique panels, side skirts, LED light bars on the glacis,
+// digital camouflage blocks, stowage and whip antennas. MCV-UL is the 8x8 wheeled member.
+function camo(seed, boxes) {
+  const r = lcg(seed); let s = '';
+  for (const [x0, x1, y0, y1, n] of boxes) for (let i = 0; i < n; i++) {
+    const w = n2(1.6 + r() * 3.6), h = n2(1 + r() * 2), x = n2(x0 + r() * Math.max(0, x1 - x0 - w)), y = n2(y0 + r() * Math.max(0, y1 - y0 - h));
+    s += `<rect x="${x}" y="${y}" width="${w}" height="${h}" ${F(r() < .5 ? 'cm' : 'cn', .75)}/>`;
+  }
+  return s;
+}
+function tracks(x0, x1, h, n, r) {
+  const rr = h / 2; const loop = (a, b, c) => `M${x0 + rr} ${-a} L${x1 - rr} ${-a} A${c} ${c} 0 0 0 ${x1 - rr} ${-b} L${x0 + rr} ${-b} A${c} ${c} 0 0 0 ${x0 + rr} ${-a} Z`;
+  let s = `<path d="${loop(0, h, rr)}" ${F('d0')}/><path d="${loop(.35, h - .35, rr - .35)}" ${S('d3', .55)} stroke-dasharray=".7 .5"/><path d="${loop(1.2, h - 1.2, rr - 1.2)}"/>`;
+  const sx = x1 - rr, ix = x0 + rr;
+  s += `<circle cx="${sx}" cy="${-rr}" r="${n2(rr * .78)}" ${F('d3')}/><circle cx="${sx}" cy="${-rr}" r="${n2(rr * .78)}" ${S('d0', .55)} stroke-dasharray=".55 .45"/><circle cx="${sx}" cy="${-rr}" r="${n2(rr * .32)}" ${F('d5')}/>`;
+  s += `<circle cx="${ix}" cy="${-rr}" r="${n2(rr * .68)}" ${F('d3')}/><circle cx="${ix}" cy="${-rr}" r="${n2(rr * .45)}" ${F('d2')}/><circle cx="${ix}" cy="${-rr}" r="${n2(rr * .2)}" ${F('d5')}/>`;
+  const a = x0 + 2 * rr + r * .3, b = x1 - 2 * rr - r * .3;
+  for (let i = 0; i < n; i++) s += roadWheel(n2(a + (b - a) * i / Math.max(1, n - 1)), n2(-r - .45), r);
+  return s;
+}
+function hullT(p) {
+  const { rx, dx, nx, ny, dy, sy, sb, sfx, seed } = p; let s = '';
+  s += `<path d="M${rx} ${n2(sy + .2)} L${n2(rx - .6)} ${n2(dy + 2.2)} L${n2(rx + 1.8)} ${dy} L${dx} ${dy} L${n2(nx - 2.4)} ${n2(ny - 2.4)} L${nx} ${ny} L${n2(nx - 1.6)} ${n2(ny + 3)} L${n2(nx - 4.4)} ${n2(ny + 5.6)} L${n2(sfx - 2.8)} ${sb} L${n2(rx + .2)} ${sb} Z"/>`;
+  const k = Math.round((dx - rx) / 9.5), pw = (dx - .6 - (rx + .8)) / k;
+  s += `<g ${F('d2')}>${Array.from({ length:k }, (_, i) => `<rect x="${n2(rx + .8 + i * pw)}" y="${n2(dy + .8)}" width="${n2(pw - .45)}" height="${n2(sy - dy - 1.4)}"/>`).join('')}<path d="M${n2(dx + .4)} ${n2(dy + 1.4)} L${n2(nx - 4.6)} ${n2(sy - .6)} L${n2(dx + .4)} ${n2(sy - .6)} Z"/></g>`;
+  s += `<path d="M${n2(rx + .8)} ${n2(dy + 1.05)} H${n2(dx - .6)}" ${S('d4', .5)}/>`;
+  s += `<path d="M${dx} ${dy} L${n2(nx - 2.4)} ${n2(ny - 2.4)} L${n2(nx - 3.4)} ${n2(ny - 1.5)} L${n2(dx - .3)} ${n2(dy + 1)} Z" ${F('d3')}/>`;
+  s += `<path d="M${n2(rx + .2)} ${sb} L${n2(sfx - 2.8)} ${sb} L${sfx} ${n2(sb - 3)} L${sfx} ${sy} L${n2(rx + .2)} ${sy} Z" ${F('d2')}/>`;
+  const sk = Math.round((sfx - rx) / 9), sw = (sfx - rx) / sk;
+  s += `<path d="${Array.from({ length:sk - 1 }, (_, i) => `M${n2(rx + sw * (i + 1))} ${n2(sy + .2)} V${n2(sb - .2)}`).join(' ')}" ${S('d0', .35)}/>`;
+  s += `<path d="M${n2(rx + .2)} ${n2(sy + .25)} H${sfx}" ${S('d4', .4)}/><path d="M${n2(rx + .2)} ${n2(sb - .25)} H${n2(sfx - 3)}" ${S('d0', .5)}/>`;
+  s += camo(seed, [[rx + 1, dx - 1, dy + 1, sy - .8, 7], [rx + 1, sfx - 4, sy + .5, sb - .6, 6]]);
+  s += `<path d="M${n2(rx + 1.2)} ${n2(dy + 1.9)} H${n2(dx - 1)} M${n2(rx + 1.2)} ${n2(sy - 1.1)} H${n2(dx - 1)} M${n2(rx + 1)} ${n2(sy + 1.1)} H${n2(sfx - 1)} M${n2(rx + 1)} ${n2(sb - 1.1)} H${n2(sfx - 4)}" ${S('d5', .34)} stroke-dasharray=".01 1.8" stroke-linecap="round"/>`;
+  const ang = Math.atan2(ny - 2.4 - dy, nx - 2.4 - dx) * 180 / Math.PI, lx = dx + .8 * (nx - 2.4 - dx), ly = dy + .8 * (ny - 2.4 - dy);
+  s += `<g transform="translate(${n2(lx)} ${n2(ly + .6)}) rotate(${n2(ang)})"><circle r="1.9" ${F('lt', .18)}/><rect x="-1.5" y="-.36" width="3" height=".72" rx=".3" ${F('lt', .95)}/><rect x="-1.4" y=".6" width="2.8" height=".4" ${F('d5')}/></g>`;
+  s += `<circle cx="${n2(nx - 2.8)}" cy="${n2(ny + 2.3)}" r=".8" ${S('d5', .4)}/><rect x="${n2(nx - 2.2)}" y="${n2(ny + .5)}" width="1.2" height=".55" ${F('lt', .8)}/>`;
+  s += `<path d="M${n2(rx + .4)} ${n2(dy + 2.6)} V${n2(sy - .4)}" ${S('d4', .3)}/><rect x="${n2(rx - .8)}" y="${n2(dy + 3.2)}" width=".6" height="1.5" ${F('rl', .85)}/>`;
+  s += `<rect x="${n2(rx + 1)}" y="${n2(dy - 2.2)}" width="6" height="2.2" ${F('d2')}/><path d="M${n2(rx + 1.2)} ${n2(dy - 1.2)} H${n2(rx + 6.8)}" ${S('d4', .25)}/>`;
+  s += `<g ${F('d3')}><rect x="${n2(rx + 9)}" y="${n2(dy - .9)}" width="5" height=".9"/><rect x="${n2(rx + 17)}" y="${n2(dy - .9)}" width="4.4" height=".9"/></g><rect x="${n2(dx - 3.6)}" y="${n2(dy - 1.6)}" width="2.6" height="1.6" ${F('d2')}/><rect x="${n2(dx - 1.3)}" y="${n2(dy - 1.3)}" width=".5" height=".8" ${A(.7)}/>`;
+  s += `<rect x="${n2(rx + 3)}" y="${n2(dy - 19)}" width=".28" height="17"/><rect x="${n2(rx + 5.4)}" y="${n2(dy - 14)}" width=".28" height="12"/><circle cx="${n2(rx + 3.14)}" cy="${n2(dy - 19)}" r=".42"/>`;
+  s += `<path d="M${n2(rx + 1.8)} ${dy} L${dx} ${dy} L${n2(nx - 2.4)} ${n2(ny - 2.4)} L${nx} ${ny}" ${AS(.45, .5)}/>`;
+  return s;
+}
+const HM = { rx:-31.6, dx:13.6, nx:33.2, ny:-12.2, dy:-21.2, sy:-13.8, sb:-7, sfx:28.2, seed:5 };
+const HH = { rx:-34.6, dx:14.6, nx:35.2, ny:-13, dy:-22.8, sy:-14.6, sb:-7.6, sfx:30.4, seed:9 };
+// small remote weapon station: x,y = base left / deck height
+function rws(x, y, flip) { return `<rect x="${x}" y="${n2(y - 1.8)}" width="4.6" height="1.8"/><rect x="${n2(x + .8)}" y="${n2(y - 3.3)}" width="2.4" height="1.6" ${F('d2')}/><rect x="${n2(x + 2.8)}" y="${n2(y - 3)}" width=".5" height=".9" ${A(.8)}/><rect x="${n2(x + 4.4)}" y="${n2(y - 1.4)}" width="5.4" height=".5"/>`; }
+// turret for the medium chassis (deck y=-21.2)
+const MT_BODY = `<path d="M-7.2 -21 L-6.4 -22.6 L14.6 -22.6 L15.6 -21 Z" ${F('d2')}/><path d="M-6.6 -22.4 L-5.4 -27.6 L8.4 -28.2 L15.2 -25 L15.8 -22.4 Z"/><path d="M-4.8 -26.8 L8 -27.3 L14.2 -24.6 L14.6 -23.2 L-5.2 -23.2 Z" ${F('d3')}/>${camo(21, [[-4.4, 12, -26.6, -23.4, 4]])}<path d="M-4.4 -24 H13.6" ${S('d5', .32)} stroke-dasharray=".01 1.6" stroke-linecap="round"/><path d="M-5.4 -27.6 L8.4 -28.2 L15.2 -25" ${AS(.4, .55)}/>`;
+const SENSOR = (x, y) => `<rect x="${n2(x + 3)}" y="${n2(y + 0)}" width="1.2" height="2.8" ${F('d2')}/><path d="M${x} ${n2(y - 3.8)} L${n2(x + 7.2)} ${n2(y - 3.8)} L${n2(x + 7.8)} ${y} L${x} ${y} Z"/><rect x="${n2(x + .6)}" y="${n2(y - 3.2)}" width="6" height="2.6" ${F('d3')}/><rect x="${n2(x + 7)}" y="${n2(y - 3.2)}" width=".8" height="1.1" ${A(.85)}/><rect x="${n2(x + 7.2)}" y="${n2(y - 1.6)}" width=".6" height=".9" ${A(.85)}/><path d="M${x} ${n2(y - 3.8)} H${n2(x + 7.2)}" ${AS(.35, .6)}/>`;
+const UL = `<path d="M-30.6 -8.6 L-30.6 -18.2 L-29.4 -20.2 L13.4 -20.2 L28.6 -13.8 L31.2 -11.8 L29.8 -8 L24 -6.2 L-25.4 -6.2 Z"/>
+<g ${F('d2')}><rect x="-29.8" y="-19.1" width="9.2" height="9.9"/><rect x="-20.2" y="-19.1" width="11.6" height="9.9"/><rect x="-8.2" y="-19.1" width="12.2" height="9.9"/><rect x="4.4" y="-19.1" width="8.4" height="9.9"/><path d="M13.2 -19.1 L13.5 -19.1 L27.6 -13.3 L27.6 -9.2 L13.2 -9.2 Z"/></g>
+<path d="M13.4 -20.2 L28.6 -13.8 L27.6 -13 L13.1 -19.2 Z" ${F('d3')}/><rect x="-29.8" y="-19.1" width="42.6" height=".5" ${F('d4')}/>${camo(13, [[-29, 12, -18.6, -10.2, 12]])}
 <rect x="-29.8" y="-9.6" width="57.4" height=".5" ${F('d0')}/>
-<g ${F('d3')}><rect x="-28.6" y="-17.2" width="3" height="1.6" rx=".3"/><rect x="-17.6" y="-17.4" width="6" height="3.2" rx=".3"/><rect x="6.4" y="-17.4" width="7.4" height="3.2" rx=".3"/></g>
+<path d="M-29.2 -17.9 H12 M-29.2 -10.6 H26" ${S('d5', .34)} stroke-dasharray=".01 1.8" stroke-linecap="round"/>
 <rect x="-6.4" y="-18" width="5.6" height="7.6" ${S('d0', .35)}/><rect x="-4.6" y="-16.8" width="2" height="1" ${A(.5)}/>
 <path d="M-30.6 -17.4 V-9.2" ${S('d4', .35)}/><rect x="-31" y="-16.8" width=".6" height="1.5" ${F('rl', .85)}/>
-<rect x="27.4" y="-12.9" width="1.3" height=".9" ${F('lt', .9)}/><rect x="25.6" y="-11.6" width="1.4" height=".6" ${F('d4')}/>
-<g ${A(.55)}><path d="M18.4 -18.9 L20.6 -17.7 L20.4 -17.2 L18.2 -18.4 Z"/><path d="M21.2 -17.4 L23.4 -16.2 L23.2 -15.7 L21 -16.9 Z"/></g>
-<g ${F('d3')}><rect x="-24.4" y="-21" width="5.4" height=".9"/><rect x="-15.4" y="-21" width="4.6" height=".9"/></g><rect x="-29.6" y="-22" width="4.6" height="1.9" ${F('d2')}/><path d="M-29.4 -21.2 H-25.2" ${S('d4', .25)}/>
+<g transform="translate(25 -15.4) rotate(22.7)"><circle r="1.9" ${F('lt', .18)}/><rect x="-1.5" y="-.36" width="3" height=".72" rx=".3" ${F('lt', .95)}/></g><circle cx="29.6" cy="-9.8" r=".8" ${S('d5', .4)}/><rect x="28.8" y="-11.6" width="1.2" height=".5" ${F('lt', .8)}/>
+<g ${F('d3')}><rect x="-24.4" y="-21" width="5.4" height=".9"/><rect x="-15.4" y="-21" width="4.6" height=".9"/></g><rect x="-29.6" y="-22" width="4.6" height="1.9" ${F('d2')}/>
 <rect x="-27.6" y="-38.2" width=".28" height="18"/><rect x="-25.6" y="-33.6" width=".28" height="13.4"/><circle cx="-27.46" cy="-38.2" r=".42"/>
-<path d="M-29.4 -20.2 L16.4 -20.2 L28.6 -13.8 L31.2 -11.8" ${AS(.45, .5)}/>
-${M8W.map(x => `<path d="M${n2(x - 5.4)} -6 A5.4 5.4 0 0 1 ${n2(x + 5.4)} -6 Z" ${F('d0')}/>`).join('')}
-${M8W.map(x => wheel(x, -4.3, 4.3)).join('')}`;
+<path d="M-29.4 -20.2 L13.4 -20.2 L28.6 -13.8 L31.2 -11.8" ${AS(.45, .5)}/>
+${M8W.map(x => `<path d="M${n2(x - 5.6)} -6 L${n2(x - 4.4)} -9.4 L${n2(x + 4.4)} -9.4 L${n2(x + 5.6)} -6 Z" ${F('d0')}/>`).join('')}
+${M8W.map(x => wheel(x, -4.6, 4.6, { lugs:8, tread:1 })).join('')}`;
 
-// ---------------------------------------------------------------- vehicles
 const VEH = `
-<g id="h-m8">${H_M8}</g>
-<g id="s-ifv"><use href="#h-m8"/>
-<path d="M-7.2 -20 L-6.4 -21.8 L13.2 -21.8 L14.2 -20 Z" ${F('d2')}/>
-<path d="M-6.2 -21.6 L-5.2 -26.6 L7.4 -27 L13.4 -24.4 L14.4 -21.6 Z"/>
-<path d="M-4.6 -25.8 L7 -26.2 L12.4 -24 L12.8 -22.4 L-5 -22.4 Z" ${F('d3')}/>
-<path d="M-5.2 -26.6 L7.4 -27 L13.4 -24.4" ${AS(.4, .55)}/>
-<rect x="13.4" y="-24.9" width="2.4" height="3" ${F('d2')}/><rect x="15.6" y="-24.3" width="5.2" height="1.9"/><rect x="20.6" y="-23.85" width="10" height="1.05"/><rect x="30.4" y="-24.3" width="2.8" height="1.95" ${F('d3')}/><rect x="31.3" y="-24.3" width=".35" height="1.95" ${F('d0')}/><rect x="15" y="-22.2" width="3.6" height=".6"/>
-<path d="M15.6 -24.3 H30.4" ${AS(.25, .4)}/>
-<rect x="-1" y="-28.8" width="1.1" height="2.2" ${F('d2')}/><path d="M-3.4 -31.2 L2 -31.2 L2.4 -28.6 L-3.4 -28.6 Z"/><rect x="1.3" y="-30.6" width=".9" height="1.3" ${A(.85)}/>
-<rect x="8.2" y="-28.6" width="3.6" height="1.8"/><rect x="11.1" y="-28.2" width=".7" height="1" ${A(.8)}/>
-<path d="M-7.6 -29.6 L.8 -29.8 L.8 -27.2 L-7.6 -27 Z" ${F('d2')}/><rect x="-.1" y="-29.6" width=".9" height="2.2" ${A(.35)}/><path d="M-7.4 -29.6 H.6" ${AS(.3, .45)}/>
-<g ${F('d3')}><rect x="9.4" y="-27.4" width="2" height=".7" transform="rotate(-30 9.4 -27.4)"/><rect x="9.8" y="-26.4" width="2" height=".7" transform="rotate(-30 9.8 -26.4)"/></g>
+<g id="h-mm">${tracks(-30, 29, 10.4, 6, 3.5)}${hullT(HM)}</g>
+<g id="h-mh">${tracks(-33, 31, 11, 7, 3.3)}${hullT(HH)}</g>
+<g id="h-ul">${UL}</g>
+<g id="s-ifv"><use href="#h-mm"/>${MT_BODY}
+<rect x="15.4" y="-26" width="2.6" height="3.2" ${F('d2')}/><rect x="17.8" y="-25.5" width="4.6" height="1.9"/><rect x="22.2" y="-25.1" width="13.2" height="1.1"/><rect x="35" y="-25.55" width="3" height="2" ${F('d3')}/><rect x="36.2" y="-25.55" width=".4" height="2" ${F('d0')}/><rect x="16.4" y="-23.4" width="3.2" height=".6"/><path d="M17.8 -25.5 H35" ${AS(.25, .4)}/>
+${SENSOR(-2.4, -30.6)}<rect x="9.4" y="-30" width="4" height="2"/><rect x="12.9" y="-29.6" width=".7" height="1" ${A(.8)}/>
+<path d="M-8.4 -30.6 L.4 -30.8 L.4 -28 L-8.4 -27.8 Z" ${F('d2')}/><rect x="-.2" y="-30.6" width=".8" height="2.6" ${A(.35)}/><path d="M-8.2 -30.6 H.2" ${AS(.3, .45)}/>
+<g ${F('d3')}><rect x="10.6" y="-28.4" width="2" height=".7" transform="rotate(-30 10.6 -28.4)"/><rect x="11" y="-27.4" width="2" height=".7" transform="rotate(-30 11 -27.4)"/></g>
+${rws(-17, -21.2)}
 </g>
-<g id="s-ad"><use href="#h-m8"/>
-<path d="M-7.2 -20 L-6.4 -21.8 L13.2 -21.8 L14.2 -20 Z" ${F('d2')}/>
-<path d="M-6.2 -21.6 L-5.4 -26.2 L7 -26.6 L12.8 -24.2 L13.8 -21.6 Z"/>
-<path d="M-4.6 -25.4 L6.6 -25.8 L11.8 -23.8 L12.2 -22.4 L-5 -22.4 Z" ${F('d3')}/>
-<rect x="13" y="-24.6" width="2.2" height="2.6" ${F('d2')}/><rect x="15" y="-24.1" width="4" height="1.7"/><rect x="18.8" y="-23.7" width="7" height="1"/><rect x="25.6" y="-24" width="1.8" height="1.6" ${F('d3')}/>
-<g transform="rotate(-16 -2.6 -27.6)"><rect x="-3.8" y="-28.4" width="2.4" height="2.6"/><rect x="-9.6" y="-33.4" width="13.4" height="5.2" rx=".6" ${F('d2')}/><rect x="-9.6" y="-33.4" width="13.4" height=".55" ${A(.45)}/><path d="M-8.4 -30.8 H2.6" ${S('d0', .3)}/><rect x="3" y="-33" width="1" height="4.4" ${F('d3')}/><circle cx="3.5" cy="-31.9" r=".6" ${A(.7)}/><circle cx="3.5" cy="-29.7" r=".6" ${A(.7)}/></g>
-<rect x="-5.8" y="-34" width=".9" height="8"/><path d="M-9.2 -38.8 L-2.2 -37.6 L-2.4 -33.6 L-9.4 -34.8 Z" ${F('d2')}/><path d="M-8.8 -38.2 L-2.6 -37.1" ${AS(.3, .55)}/><g ${S('d4', .2)}><path d="M-8.6 -36.8 L-2.8 -35.8 M-8.7 -35.6 L-2.9 -34.6"/></g>
-<circle cx="9.6" cy="-28" r="1.6"/><circle cx="10.4" cy="-28" r=".65" ${A(.85)}/><rect x="8.8" y="-26.6" width="1.6" height="1"/>
+<g id="s-ad"><use href="#h-mm"/>
+<path d="M-7.2 -21 L-6.4 -22.6 L14.6 -22.6 L15.6 -21 Z" ${F('d2')}/><path d="M-6.6 -22.4 L-5.6 -26.8 L8 -27.2 L14.4 -24.6 L15 -22.4 Z"/><path d="M-4.8 -26 L7.6 -26.4 L13.6 -24.2 L13.8 -23.2 L-5.2 -23.2 Z" ${F('d3')}/>${camo(23, [[-4.4, 12, -25.8, -23.4, 3]])}
+<rect x="14.6" y="-25.6" width="2.2" height="2.8" ${F('d2')}/><rect x="16.6" y="-25.1" width="4.2" height="1.7"/><rect x="20.6" y="-24.7" width="7.4" height="1"/><rect x="27.6" y="-25" width="2" height="1.6" ${F('d3')}/>
+<g transform="rotate(-14 -1 -28)"><rect x="-3.4" y="-28.6" width="3" height="2.4"/><rect x="-10.6" y="-34.6" width="15.4" height="5.8" rx=".6" ${F('d2')}/>${camo(29, [[-10, 4, -34, -29.4, 3]])}<rect x="-10.6" y="-34.6" width="15.4" height=".55" ${A(.45)}/><path d="M-9.6 -31.7 H4" ${S('d0', .3)}/><rect x="4.4" y="-34.2" width="1.1" height="5" ${F('d3')}/><circle cx="4.95" cy="-33.1" r=".62" ${A(.75)}/><circle cx="4.95" cy="-30.4" r=".62" ${A(.75)}/></g>
+<rect x="-6.4" y="-36.4" width=".9" height="9"/><path d="M-10.2 -41.4 L-2.6 -40.2 L-2.8 -36 L-10.4 -37.2 Z" ${F('d2')}/><path d="M-9.8 -40.8 L-3 -39.7" ${AS(.3, .55)}/><path d="M-9.9 -39.4 L-3 -38.3 M-10 -38.2 L-3.1 -37.1" ${S('d4', .2)}/>
+<circle cx="10" cy="-28.6" r="1.6"/><circle cx="10.8" cy="-28.6" r=".65" ${A(.85)}/><rect x="9.2" y="-27.2" width="1.6" height="1"/>
+${rws(-17, -21.2)}
 </g>
-<g id="s-sp">
-${runGear(-30.4, 27, 9.4, 6, 2.9)}
-<path d="M-31.2 -9.2 L25.6 -9.2 L28.4 -12.6 L-30.8 -13 Z" ${F('d2')}/><path d="M-21 -12.9 V-9.3 M-11 -12.9 V-9.3 M-1 -12.9 V-9.3 M9 -12.9 V-9.3 M19 -12.9 V-9.3" ${S('d0', .35)}/><path d="M-30.8 -12.9 H27.8" ${S('d4', .4)}/>
-<path d="M-31.4 -12.8 L-30.8 -17 L17.4 -17 L29 -12.6 L28.4 -12.2 Z"/><path d="M17.4 -17 L29 -12.6" ${AS(.4, .5)}/><rect x="26.4" y="-14.2" width="1.2" height=".8" ${F('lt', .85)}/>
-<path d="M-26 -16.8 L-26 -28.6 L-23.6 -30.4 L5.6 -30.4 L13.2 -26.4 L14 -16.8 Z"/>
-<path d="M-24.8 -28 L-22.8 -29.4 L5.2 -29.4 L12.2 -26 L12.6 -18 L-24.8 -18 Z" ${F('d3')}/>
-<path d="M-23.6 -30.4 L5.6 -30.4 L13.2 -26.4" ${AS(.45, .55)}/>
-<g ${F('d2')}><rect x="-23.6" y="-21.8" width="10" height="3.2"/><rect x="-12.4" y="-21.8" width="8" height="3.2"/><rect x="-29.2" y="-28.4" width="3.4" height="9.8"/></g>
-<path d="M-23.2 -20.2 H-14 M-12 -20.2 H-4.8" ${S('d4', .25)}/><path d="M-29 -26 H-26 M-29 -23 H-26 M-29 -20 H-26" ${S('d4', .25)}/>
-<rect x="-3" y="-27.8" width="6.6" height="7.2" ${S('d0', .35)}/><rect x="-.2" y="-24.4" width="1" height=".6" ${F('d5')}/>
-<path d="M-24 -26 H-6" ${S('d4', .3)} stroke-dasharray="1.2 .6"/>
-<path d="M-14.6 -30.2 L-14 -32.6 L-8.6 -32.6 L-8 -30.2 Z"/><rect x="-12.4" y="-34.2" width=".7" height="1.8"/><rect x="-13.2" y="-34.8" width="10" height=".7"/><rect x="-14" y="-35.2" width="2.6" height="1.6"/>
-<rect x="-24.8" y="-44" width=".28" height="13.8"/><rect x="-22.6" y="-40" width=".28" height="9.8"/><circle cx="-24.66" cy="-44" r=".4"/>
-<g transform="rotate(-22 13.6 -23.6)"><rect x="12.4" y="-25.8" width="4.4" height="4.6" ${F('d2')}/><rect x="16.6" y="-24.5" width="36" height="1.75"/><rect x="16.6" y="-26.1" width="9" height=".9" ${F('d3')}/><rect x="28" y="-25.1" width="6.4" height="2.9" rx="1.2"/><rect x="51.6" y="-25.2" width="4.8" height="3.1" ${F('d3')}/><rect x="53.2" y="-25.2" width=".5" height="3.1" ${F('d0')}/><rect x="54.8" y="-25.2" width=".5" height="3.1" ${F('d0')}/><path d="M16.6 -24.5 H51.6" ${AS(.3, .45)}/><path d="M28.4 -25.1 H34" ${AS(.3, .45)}/></g>
+<g id="s-mf"><use href="#h-mm"/>
+<path d="M-9 -21 L-8.2 -22.8 L13 -22.8 L14 -21 Z" ${F('d2')}/><path d="M-8.4 -22.6 L-7.4 -27.4 L9.4 -27.8 L13.8 -25 L14 -22.6 Z"/><path d="M-6.8 -26.6 L9 -27 L12.8 -24.8 L13 -23.4 L-7.2 -23.4 Z" ${F('d3')}/>${camo(31, [[-6.6, 11, -26.4, -23.6, 4]])}<path d="M-7.4 -27.4 L9.4 -27.8 L13.8 -25" ${AS(.4, .55)}/>
+<g transform="rotate(-52 6 -27)"><rect x="5" y="-29.4" width="17" height="2.5"/><rect x="5" y="-26.6" width="16" height="2.5" ${F('d2')}/><rect x="21.4" y="-29.9" width="2.6" height="3.5" ${F('d3')}/><rect x="20.4" y="-27.1" width="2.6" height="3.5" ${F('d3')}/><path d="M5 -29.4 H21.4" ${AS(.3, .5)}/></g>
+<rect x="3.4" y="-29" width="5" height="3.8" ${F('d2')}/><rect x="-4.6" y="-30.4" width="3.6" height="2.4"/><rect x="-1.6" y="-30" width=".6" height="1" ${A(.8)}/>
+${rws(-17, -21.2)}
 </g>
-<g id="s-dozer">
-${runGear(-25, 18.6, 8.4, 5, 2.6)}
-<path d="M-25.6 -8.2 L18 -8.2 L19.6 -11.6 L-25.2 -11.8 Z" ${F('d2')}/><path d="M-16 -11.7 V-8.3 M-6 -11.7 V-8.3 M4 -11.7 V-8.3 M13 -11.7 V-8.3" ${S('d0', .35)}/>
-<path d="M-25.8 -11.6 L-25.2 -16 L13 -16 L20 -12 L19.6 -11.4 Z"/><path d="M-25.2 -16 L13 -16 L20 -12" ${AS(.4, .5)}/>
-<path d="M-23 -16.8 H-12" ${S('d4', .8)} stroke-dasharray=".5 .5"/><rect x="-18" y="-21.4" width="1.3" height="5.4" ${F('d2')}/><rect x="-18.2" y="-22" width="1.7" height=".8" ${F('d3')}/>
-<path d="M-8.6 -15.8 L-7.8 -24 L5.2 -24 L9.4 -19.4 L10 -15.8 Z"/><path d="M-7.2 -23 L4.6 -23 L8.2 -19.4 L8.4 -16.6 L-7.4 -16.6 Z" ${F('d3')}/>
-${glass('M-6 -22.2 L4.2 -22.2 L7 -19.6 L-6 -19.6 Z', .38)}<path d="M-2.6 -22.2 V-19.6 M1 -22.2 V-19.6" ${S('d0', .5)}/>
-<rect x="-3.6" y="-26.2" width="4.8" height="2.2"/><rect x="1" y="-25.6" width="7.4" height=".7"/><rect x="-2.8" y="-27.6" width="2.2" height="1.4" ${F('d2')}/><rect x="-1.2" y="-27.3" width=".6" height=".8" ${A(.8)}/>
-<path d="M11.6 -9 L22.4 -6.6 L22.4 -4.6 L11.6 -7 Z" ${F('d2')}/><path d="M10.4 -14.8 L22.6 -15.4 L22.6 -14.2 L10.4 -13.8 Z" ${F('d3')}/><rect x="10" y="-15.6" width="2.4" height="2.4" rx=".6" ${F('d2')}/>
-<path d="M21.2 .4 L22 -18.8 Q27.4 -17.2 29 -11.4 Q29.6 -5.4 28.2 .4 Z"/>
-<path d="M22.8 -16 Q26.2 -14.6 27.6 -10.6 M22.8 -10.8 Q26 -9.6 27.4 -6 M22.6 -5.6 Q25.6 -4.4 27 -1.6" ${S('d3', .45)}/>
-<path d="M22 -18.8 Q27.4 -17.2 29 -11.4" ${AS(.5, .55)}/><path d="M21.2 .4 L28.2 .4 L28.4 -.9 L21.3 -.9 Z" ${F('d4')}/>
+<g id="s-mc"><use href="#h-mm"/>
+<rect x="-2" y="-23.4" width="9" height="2.2" ${F('d2')}/><path d="M-1.4 -23.4 L-.8 -26 L6 -26 L7.6 -23.4 Z"/><rect x="7.4" y="-25.2" width="7" height=".7"/>${SENSOR(.4, -26)}
+<rect x="-14.4" y="-30" width="1.6" height="8.8" ${F('d2')}/><rect x="-14.1" y="-40" width="1" height="10.2"/><rect x="-13.9" y="-44" width=".6" height="4"/><path d="M-17.4 -48 L-9.6 -48 L-9.2 -44.2 L-17.4 -44.2 Z"/><rect x="-16.8" y="-47.4" width="6.6" height="2.6" ${F('d3')}/><rect x="-10" y="-47.2" width=".8" height="1.1" ${A(.85)}/><path d="M-17.4 -48 H-9.6" ${AS(.35, .6)}/>
+<rect x="-6.2" y="-38" width="1" height="16.8"/><path d="M-8.8 -43 L-2.6 -43 L-2.6 -38 L-8.8 -38 Z" ${F('d2')}/><path d="M-8.4 -41.4 H-3 M-8.4 -39.6 H-3" ${S('d4', .25)}/><circle cx="-5.7" cy="-43.6" r=".5" fill="#ff4a3a"/>
+<rect x="-22" y="-24" width="6" height="2.8" ${F('d2')}/><path d="M-21.4 -23.1 H-16.6 M-21.4 -22.2 H-16.6" ${S('d0', .3)}/><rect x="10" y="-34" width=".28" height="12.8"/>
+</g>
+<g id="s-sp"><use href="#h-mh"/>
+<path d="M-24 -22.6 L-23 -24.4 L13.6 -24.4 L14.6 -22.6 Z" ${F('d2')}/>
+<path d="M-25.6 -24.2 L-25.8 -33.6 L-22.8 -35.6 L4.6 -35.6 L13.4 -31 L14.6 -24.2 Z"/><path d="M-24.4 -33 L-22.2 -34.6 L4.2 -34.6 L12.4 -30.6 L13.2 -25.2 L-24.4 -25.2 Z" ${F('d3')}/>${camo(41, [[-23.6, 11, -34, -25.8, 7]])}
+<g ${F('d2')}><rect x="-22.6" y="-28.6" width="9" height="3"/><rect x="-12" y="-28.6" width="7" height="3"/><rect x="-29.6" y="-33.4" width="4.2" height="9.6"/></g><path d="M-29.4 -30.6 H-25.6 M-29.4 -27.8 H-25.6" ${S('d4', .25)}/>
+<rect x="-2.6" y="-33" width="7" height="7.4" ${S('d0', .35)}/><path d="M-24 -32.2 H11.4 M-24 -26 H12.8" ${S('d5', .32)} stroke-dasharray=".01 1.7" stroke-linecap="round"/><path d="M-22.8 -35.6 L4.6 -35.6 L13.4 -31" ${AS(.45, .55)}/>
+${rws(-12.6, -35.6)}<rect x="-24.2" y="-50" width=".28" height="14.4"/><rect x="-21.8" y="-46" width=".28" height="10.4"/><circle cx="-24.06" cy="-50" r=".42"/>
+<g transform="rotate(-16 14 -29.6)"><rect x="12.6" y="-32.2" width="4.4" height="5.2" ${F('d2')}/><rect x="16.8" y="-30.5" width="40" height="2"/><rect x="16.8" y="-32.4" width="10" height="1" ${F('d3')}/><rect x="30" y="-31.2" width="7.6" height="3.4" rx="1.4"/><rect x="56" y="-31.6" width="5.4" height="3.8" ${F('d3')}/><rect x="57.6" y="-31.6" width=".55" height="3.8" ${F('d0')}/><rect x="59.4" y="-31.6" width=".55" height="3.8" ${F('d0')}/><path d="M16.8 -30.5 H56 M30.4 -31.2 H37.2" ${AS(.3, .45)}/></g>
+</g>
+<g id="s-dozer"><use href="#h-mh"/>
+${rws(-6, -22.8)}<rect x="-26" y="-25.4" width="10" height="2.6" ${F('d2')}/><path d="M-25.4 -24.1 H-16.6" ${S('d4', .25)}/>
+<path d="M22 -12.6 L37.4 -8 L37.4 -5.6 L22 -10.4 Z" ${F('d2')}/><path d="M20 -19.4 L37.6 -18.8 L37.6 -17.4 L20 -18 Z" ${F('d3')}/><rect x="18.8" y="-20.6" width="2.6" height="2.6" rx=".6" ${F('d2')}/>
+<path d="M36.2 .4 L37 -21.8 Q43.4 -20 45.2 -13.4 Q45.8 -6.2 44.2 .4 Z"/>${camo(47, [[37.6, 43, -19, -2, 4]])}
+<path d="M37.8 -18.6 Q41.8 -17 43.6 -12.4 M37.8 -12.4 Q41.6 -11 43.4 -6.8 M37.6 -6.4 Q41 -5.2 42.8 -2" ${S('d3', .45)}/><path d="M37 -21.8 Q43.4 -20 45.2 -13.4" ${AS(.5, .55)}/><path d="M36.2 .4 L44.2 .4 L44.4 -1 L36.3 -1 Z" ${F('d4')}/>
+</g>
+<g id="s-hr"><use href="#h-mh"/>
+<rect x="-8" y="-26.4" width="10" height="3.6" ${F('d2')}/><path d="M-6 -26.4 L-5.4 -30 L2 -30 L3.4 -26.4 Z"/><rect x="-4.4" y="-29.4" width="4.6" height="2.4" ${A(.32)}/><circle cx="0" cy="-30.6" r=".55" ${F('wm', .95)}/><circle cx="0" cy="-30.6" r="1.4" ${F('wm', .25)}/>
+<path d="M-2 -28 L28 -46 L29.4 -44 L-.4 -26 Z"/><path d="M-.6 -27.4 L27.6 -44.6" ${AS(.35, .5)}/><path d="M26 -45 L33.2 -49.4 L34.2 -48 L27.4 -43.6 Z" ${F('d2')}/><path d="M2 -25 L14 -37 L15.4 -35.6 L3.4 -24 Z" ${F('d3')}/>
+<path d="M33.7 -48.6 V-31" fill="none" stroke="currentColor" stroke-width=".3"/><rect x="32.6" y="-31.2" width="2.2" height="2.2"/><path d="M33.7 -29 Q35.2 -27.4 33.7 -26.4 Q32.6 -26 32.4 -27" fill="none" stroke="currentColor" stroke-width=".45"/>
+<circle cx="-26" cy="-25" r="1.7" ${F('d3')}/><circle cx="-26" cy="-25" r=".6" ${F('d5')}/><path d="M-34 -10 L-38.4 -1.4 L-36.2 -.4 L-32.6 -6.6 Z"/>
+</g>
+<g id="s-hw"><use href="#h-mh"/>
+<path d="M-12.6 -22.6 L-11.6 -24.4 L14.6 -24.4 L15.6 -22.6 Z" ${F('d2')}/><path d="M-12 -24.2 L-11 -29.4 L9 -29.8 L15 -26.6 L15.6 -24.2 Z"/><path d="M-10.2 -28.6 L8.6 -29 L14 -26.2 L14.4 -25 L-10.6 -25 Z" ${F('d3')}/>${camo(51, [[-10, 12, -28.4, -25.4, 4]])}<path d="M-11 -29.4 L9 -29.8 L15 -26.6" ${AS(.4, .55)}/>
+<rect x="15.2" y="-27.6" width="2.2" height="2.6" ${F('d2')}/><rect x="17.2" y="-27.1" width="10" height="1"/><rect x="27" y="-27.4" width="2" height="1.6" ${F('d3')}/>
+<g transform="rotate(-8 -4 -31)"><rect x="-12.4" y="-39.8" width="16.6" height="3" ${F('d3')}/><rect x="-13" y="-36.6" width="17.4" height="5.6" rx=".6" ${F('d2')}/>${camo(53, [[-12.4, 3, -36, -31.6, 3]])}<rect x="-13" y="-36.6" width="17.4" height=".55" ${A(.45)}/><path d="M-12 -33.8 H4" ${S('d0', .3)}/><rect x="4.2" y="-36.2" width="1.1" height="4.8" ${F('d3')}/><circle cx="4.75" cy="-35" r=".62" ${A(.75)}/><circle cx="4.75" cy="-32.6" r=".62" ${A(.75)}/><rect x="-1.4" y="-31.4" width="2.6" height="2.4"/></g>
+${SENSOR(7, -29.8)}${rws(-26, -22.8)}
+</g>
+<g id="s-ul"><use href="#h-ul"/>
+<path d="M-4.6 -20 L-4 -21.4 L9.6 -21.4 L10.4 -20 Z" ${F('d2')}/><path d="M-4 -21.2 L-3.2 -25.2 L6.4 -25.6 L10.6 -23.4 L11 -21.2 Z"/><path d="M-2.6 -24.4 L6 -24.8 L9.8 -23 L10 -22 L-3 -22 Z" ${F('d3')}/><path d="M-3.2 -25.2 L6.4 -25.6 L10.6 -23.4" ${AS(.4, .55)}/>
+<rect x="10.6" y="-24.2" width="2" height="2.4" ${F('d2')}/><rect x="12.4" y="-23.6" width="13" height=".95"/><rect x="25" y="-23.9" width="2.2" height="1.5" ${F('d3')}/>
+${SENSOR(-1.2, -27.4)}<path d="M-5.4 -27.4 L.6 -27.6 L.6 -25.4 L-5.4 -25.2 Z" ${F('d2')}/>
 </g>
 <g id="s-truck">
 <rect x="-21.6" y="-7.6" width="43.4" height="1.6" ${F('d0')}/>
@@ -2434,25 +2495,25 @@ function bg(v, k) {
 const SC = {
   // ===== starter
   clear_hold: [['bg','ruins'],['g',122,60,36],['u','kneel',18,72,1.75],['u','soldier',44,72,1.65],['tr',60,53,108,55],['tr',38,55,124,57],['u','burst',112,55,.45],['horde',104,154,72,4,1.6]],
-  fire_mission: [['bg','field'],['g',138,62,30,'fire'],['u','burst',138,64,.85],['u','burst',152,67,.5],['smoke',140,60,.8],['arc',102,20,138,62,10],['u','sp',36,70,1.45],['g',103,20,14,'fire'],['u','burst',103,20,.5],['smoke',106,16,.45]],
+  fire_mission: [['bg','field'],['g',138,62,30,'fire'],['u','burst',138,64,.85],['u','burst',152,67,.5],['smoke',140,60,.8],['arc',102,20,138,62,10],['u','sp',34,70,1.15],['g',103,20,14,'fire'],['u','burst',103,20,.5],['smoke',106,16,.45]],
   uas_recon: [['stars',5],['bg','city'],['beam',82,22,90,52,20],['u','uav',82,16,1.1],['u','reticle',96,58,1.25],['horde',86,110,72,3,1.3]],
-  convoy: [['bg','desert'],['g',140,30,30,'sun'],['u','ifv',28,73,1.0],['u','truck',82,73,1.12],['u','tanker',136,73,1.12],['smoke',4,70,.5]],
+  convoy: [['bg','desert'],['g',140,30,30,'sun'],['u','ifv',24,73,.92],['u','truck',82,73,1.12],['u','tanker',136,73,1.12],['smoke',4,70,.5]],
   aid_station: [['bg','field'],['g',84,48,34],['u','tent',86,72,2.2],['u','redx',86,51,1.7],['u','soldier',34,72,1.45],['rect',112,63,24,2.6],['u','kneel',146,72,1.35,{f:1}]],
   evac: [['bg','city'],['u','bus',108,73,1.4],['crowd',14,64,72,5,1.3],['u','soldier',152,72,1.3,{f:1}]],
   checkpoint: [['bg','city'],['u','gate',40,72,2.1],['crowd',98,136,72,4,1.25],['u','tower',152,72,1.3],['beam',157,48,168,80,18]],
   dig_in: [['bg','ruins'],['u','sandbag',52,72,1.7],['u','kneel',42,59,1.4],['u','kneel',62,59,1.4],['u','wire',118,72,1.25],['horde',140,156,72,2,1.5]],
   samples: [['bg','ruins'],['g',82,56,30],['u','zombie',110,72,1.7,{r:-84}],['u','kneel',74,72,1.75],['u','vial',94,56,1.3,{c:'light'}],['g',94,51,10],['u','bio',138,26,1.5,{o:.55}]],
   // ===== combat
-  mech_sweep: [['bg','ruins'],['g',140,60,26,'fire'],['u','ifv',50,72,1.4],['tr',91,41,140,58],['u','burst',140,58,.5],['horde',124,156,72,3,1.45],['smoke',10,66,.7]],
-  hw_platoon: [['bg','ruins'],['u','ifv',50,72,1.3],['g',88,42,10,'fire'],['tr',88,42,148,60],['tr',88,43,138,62],['horde',118,156,72,4,1.4]],
+  mech_sweep: [['bg','ruins'],['g',140,60,26,'fire'],['u','ifv',48,72,1.35],['tr',100,38,140,58],['u','burst',140,58,.5],['horde',124,156,72,3,1.45],['smoke',10,66,.7]],
+  hw_platoon: [['bg','ruins'],['u','hw',46,72,1.15],['g',53,32,9,'fire'],['tr',53,32,148,60],['tr',53,34,138,62],['horde',118,156,72,4,1.4]],
   snipers: [['bg','city'],['rect',0,44,58,28],['u','prone',26,44,1.65],['u','reticle',118,50,1.6],['u','zombie',118,72,1.7],['horde',144,158,72,2,1.25]],
-  combined_arms: [['bg','ruins'],['u','apache',108,26,.95],['tr',120,28,140,62],['g',138,64,26,'fire'],['u','burst',140,64,.7],['u','sp',34,72,1.05],['u','ifv',96,73,1.0]],
-  linebacker: [['bg','field'],['u','ad',46,72,1.5],['g',82,39,9,'fire'],['tr',82,39,150,56],['tr',82,40,144,60],['u','burst',146,58,.45],['horde',118,156,72,3,1.45]],
-  qrf: [['bg','city'],['u','ifv',124,73,1.15],['u','soldier',22,72,1.5],['u','soldier',44,72,1.5],['u','soldier',66,72,1.5],['line',2,58,14,58,.7,'var(--acc)'],['line',0,63,10,63,.7,'var(--acc)']],
-  obstacles: [['bg','ruins'],['u','dozer',40,72,1.4],['u','barrier',92,72,1.5],['u','wire',124,72,1.35],['horde',146,158,72,2,1.4]],
-  breach: [['bg','ruins'],['u','dozer',50,72,1.55],['u','car',108,72,1.4,{r:-14}],['u','car',134,68,1.3,{r:172}],['smoke',118,64,.7]],
+  combined_arms: [['bg','ruins'],['u','apache',108,26,.95],['tr',120,28,140,62],['g',138,64,26,'fire'],['u','burst',140,64,.7],['u','sp',30,72,.9],['u','ifv',108,73,.88]],
+  linebacker: [['bg','field'],['u','ad',44,72,1.45],['g',87,36,9,'fire'],['tr',87,36,150,56],['tr',87,37,144,60],['u','burst',146,58,.45],['horde',118,156,72,3,1.45]],
+  qrf: [['bg','city'],['u','ul',124,73,1.1],['u','soldier',22,72,1.5],['u','soldier',44,72,1.5],['u','soldier',66,72,1.5],['line',2,58,14,58,.7,'var(--acc)'],['line',0,63,10,63,.7,'var(--acc)']],
+  obstacles: [['bg','ruins'],['u','dozer',36,72,1.05],['u','barrier',100,72,1.4],['u','wire',128,72,1.2],['horde',146,158,72,2,1.4]],
+  breach: [['bg','ruins'],['u','dozer',40,72,1.25],['u','car',108,72,1.4,{r:-14}],['u','car',134,68,1.3,{r:172}],['smoke',118,64,.7]],
   // ===== fires
-  mortars: [['bg','hills'],['u','mortar',44,71,2],['u','kneel',70,71,1.45,{f:1}],['u','kneel',20,71,1.45],['g',62,43,8,'fire'],['arc',62,43,138,62,24],['u','burst',138,62,.5],['u','burst',152,65,.38]],
+  mortars: [['bg','hills'],['u','mf',46,71,1.2],['u','kneel',98,71,1.3,{f:1}],['g',66,22,9,'fire'],['arc',66,22,138,62,14],['u','burst',138,62,.5],['u','burst',152,65,.38]],
   thermobaric: [['bg','ruins'],['g',96,48,60,'fire'],['g',96,52,30,'fire'],['u','burst',96,52,1.8],['smoke',100,40,1.3],['u','ru2',0,72,.8,{o:.95}],['rect',0,72,160,14]],
   firebreak: [['bg','city'],['g',80,64,60,'fire'],['u','flame',24,72,1.8],['u','flame',50,72,2.3],['u','flame',78,72,1.9],['u','flame',104,72,2.4],['u','flame',130,72,1.8],['u','flame',152,72,2.1],['smoke',60,50,1.2],['smoke',112,48,1.1]],
   fpf: [['bg','ruins'],['g',118,64,44,'fire'],['u','burst',104,66,.65],['u','burst',124,64,.75],['u','burst',146,66,.6],['u','sandbag',40,72,1.6],['u','kneel',30,59,1.4],['u','kneel',52,59,1.4]],
@@ -2479,17 +2540,17 @@ const SC = {
   forage: [['bg','ruins'],['u','truck',122,73,1.4],['u','soldier',26,72,1.45],['u','crate',40,57,1.1],['u','soldier',60,72,1.45],['u','crate',74,57,1.1],['u','drum',90,72,1.5]],
   requisition: [['bg','farcity'],['u','crate',34,72,2.5],['u','crate',60,72,2.5],['u','crate',47,52,2.5],['u','star',47,42,.75,{c:'acc'}],['u','truck',126,73,1.35]],
   fuel_point: [['bg','desert'],['g',140,28,26,'sun'],['u','tanker',44,73,1.4],['u','ifv',128,72,1.15,{f:1}],['line',75,64,100,62,1,'#05080a'],['u','drum',90,72,1.4],['u','drum',98,72,1.4]],
-  maint: [['bg','room'],['g',90,42,40,'fire'],['u','hawk',92,68,1.45],['u','gear',26,28,1.2],['u','wrench',140,26,1.1],['u','kneel',52,72,1.3],['u','soldier',132,72,1.3,{f:1}]],
+  maint: [['bg','field'],['g',92,46,34,'fire'],['u','hr',44,72,1.0],['u','ifv',126,72,.8,{r:-5}],['smoke',132,56,.55],['u','kneel',96,72,1.15],['u','wrench',150,22,.9],['u','gear',18,20,.9]],
   cache: [['bg','sea'],['g',26,56,28,'sun'],['u','ship',110,66,1.35],['u','crate',22,72,1.8],['u','crate',40,72,1.8],['u','crate',31,57.6,1.8]],
   // ===== civil
   safe_zone: [['bg','farcity'],['g',80,58,42],['u','wall',46,72,1.7],['u','wall',114,72,1.7],['u','tower',12,72,1.4],['u','tower',148,72,1.4],['u','shield',80,38,1.6]],
   martial_law: [['stars',4],['bg','city'],['u','tower',34,72,1.4],['u','tower',126,72,1.4],['beam',41,45,50,60,14],['beam',133,45,130,60,14],['u','soldier',68,72,1.55],['u','soldier',92,72,1.55,{f:1}]],
   psa: [['bg','city'],['u','mast',80,72,1.55],['waves',80,4,4],['crowd',12,60,72,4,1.25],['crowd',100,148,72,4,1.25]],
-  partner: [['bg','farcity'],['g',80,50,24],['u','soldier',68,72,1.9],['u','soldier',94,72,1.9,{f:1}],['u','ifv',22,73,.8,{o:.75}],['u','pickup',140,73,1.1,{o:.8,f:1}]],
+  partner: [['bg','farcity'],['g',80,50,24],['u','soldier',68,72,1.9],['u','soldier',94,72,1.9,{f:1}],['u','ul',22,73,.8,{o:.75}],['u','pickup',140,73,1.1,{o:.8,f:1}]],
   borders: [['bg','field'],['horde',14,60,72,4,1.15,1],['u','fence',36,72,1.45],['u','fence',94,72,1.45],['u','tower',142,72,1.45]],
   refugee_camp: [['bg','field'],['g',80,56,42],['u','tent',26,72,1.3],['u','tent',66,72,1.55],['u','tent',110,72,1.3],['u','tent',146,72,1.2],['crowd',44,128,72,4,1.15]],
   // ===== command
-  rally: [['bg','field'],['rays',80,56],['u','ifv',80,72,1.35],['u','cheer',80,47,1.4],['u','cheer',22,72,1.5],['u','cheer',138,72,1.5,{f:1}]],
+  rally: [['bg','field'],['rays',80,56],['u','ifv',80,72,1.35],['u','cheer',58,44,1.3],['u','cheer',22,72,1.5],['u','cheer',138,72,1.5,{f:1}]],
   intent: [['bg','room'],['u','map',88,34,1.9],['u','officer',26,72,1.7],['u','soldier',148,72,1.4,{f:1}]],
   reinforce: [['bg','field'],['u','plane',100,32,1.6],['u','soldier',14,72,1.35],['u','soldier',32,72,1.35],['u','soldier',50,72,1.35],['u','soldier',68,72,1.35],['u','soldier',86,72,1.35]],
   overwatch: [['stars',6],['g',134,18,18,'moon'],['bg','hills'],['rect',0,56,76,16],['u','prone',30,56,1.55],['u','kneel',62,56,1.4],['horde',118,154,72,3,1.1]],
@@ -2504,25 +2565,25 @@ const SC = {
   restore_gov: [['bg','city'],['rays',80,44],['u','lab',80,72,1.35],['u','flag',80,37,.8],['crowd',8,52,72,4,1.25],['crowd',110,154,72,4,1.25]],
   reopen_trade: [['bg','sea'],['g',28,52,28,'sun'],['u','ship',112,66,1.3],['u','truck',36,73,1.1],['u','crate',66,72,1.4],['u','crate',80,72,1.4]],
   census: [['bg','field'],['u','tent',132,72,1.5],['u','officer',54,72,1.6],['rect',58,52,6,4.6,'#e8e2d0'],['crowd',72,108,72,4,1.25],['crowd',6,40,72,3,1.2]],
-  reclaim: [['bg','ruins'],['u','flag',8,72,1.2],['u','ifv',58,72,1.2],['u','soldier',96,72,1.45],['tr',108,60,140,62],['horde',130,156,72,2,1.4]],
+  reclaim: [['bg','ruins'],['u','flag',8,72,1.2],['u','ifv',50,72,1.1],['u','soldier',104,72,1.45],['tr',116,55,140,62],['horde',130,156,72,2,1.4]],
   cure: [['bg','city'],['rays',80,52],['g',80,44,56],['u','vial',80,60,3.4,{c:'light'}],['crowd',4,60,72,5,1.25],['crowd',100,156,72,5,1.25]],
   hoarding: [['bg','room'],['u','crate',58,72,2.3],['u','crate',82,72,2.3],['u','flask',70,54,1.2,{c:'acc'}],['u','officer',22,72,1.6],['u','soldier',136,72,1.55,{f:1}]],
   holdout: [['bg','desert'],['u','flag',22,72,1.3],['u','officer',74,72,2],['u','soldier',48,72,1.45,{c:'#0a0d0e'}],['u','pickup',130,73,1.45]],
   distrust: [['bg','city'],['crowd',10,122,72,8,1.3],['u','syringe',122,34,1.6],['u','soldier',148,72,1.35,{f:1}]],
   waking: [['bg','ruins'],['rays',96,44],['g',96,48,46],['u','zombie',18,72,1.35,{o:.55}],['u','zombie',36,72,1.3,{o:.7}],['crowd',56,154,72,7,1.3]],
-  reunion: [['bg','field'],['g',90,40,40,'sun'],['u','soldier',74,72,1.75],['u','civ',94,72,1.6,{f:1}],['u','civ',108,72,1.05,{f:1}],['u','ifv',26,73,.85,{o:.8}]],
+  reunion: [['bg','field'],['g',90,40,40,'sun'],['u','soldier',74,72,1.75],['u','civ',94,72,1.6,{f:1}],['u','civ',108,72,1.05,{f:1}],['u','ul',26,73,.85,{o:.8}]],
   relapse: [['bg','ruins'],['g',100,56,52,'red'],['horde',70,158,72,7,1.4],['u','soldier',20,72,1.45],['u','kneel',42,72,1.45]],
   rotation: [['bg','field'],['u','plane',92,44,1.7],['u','soldier',16,72,1.35],['u','soldier',32,72,1.35],['u','soldier',48,72,1.35],['u','soldier',134,72,1.35,{f:1}],['u','soldier',150,72,1.35,{f:1}]],
   tribunal: [['bg','room'],['rect',30,56,100,4],['u','officer',50,56,1.45],['u','officer',80,56,1.45],['u','officer',110,56,1.45,{f:1}],['u','shield',142,40,1.1]],
   // ===== field works
-  w_barrier: [['bg','field'],['u','dozer',34,72,1.15],['u','wall',96,72,1.15],['u','wire',140,72,.9],['u','soldier',70,72,1.2,{f:1}],['horde',150,158,72,2,1.25]],
-  w_firebase: [['bg','hills'],['g',134,40,10,'fire'],['u','sp',88,70,1.2],['u','sandbag',30,72,1.7],['u','kneel',24,59,1.25],['u','tower',150,72,1.15],['arc',130,36,160,60,10]],
+  w_barrier: [['bg','field'],['u','dozer',32,72,.9],['u','wall',106,72,1.05],['u','wire',150,72,.75],['horde',156,160,72,1,1.2]],
+  w_firebase: [['bg','hills'],['g',105,28,9,'fire'],['u','sp',46,70,1.0],['u','sandbag',124,72,1.5],['u','kneel',118,59,1.2,{f:1}],['u','tower',152,72,1.05],['arc',106,28,162,52,10]],
   w_hospital: [['bg','field'],['g',96,52,40],['u','tent',64,72,1.6],['u','tent',118,72,1.6],['u','redx',92,48,1.5],['u','hawk',38,24,.7],['u','soldier',150,72,1.3,{f:1}],['u','civ',92,72,1.3]],
   w_depot: [['bg','farcity'],['u','crate',20,72,2],['u','crate',40,72,2],['u','crate',30,56,2],['u','drum',58,72,1.6],['u','drum',65,72,1.6],['u','tanker',106,73,1.1],['u','tent',146,72,1]],
   ato: [['bg','hills'],['g',80,30,30],['u','apache',40,38,.72],['u','hawk',118,32,.72],['u','chinook',82,56,.52,{o:.72}]],
-  eng: [['bg','field'],['u','dozer',48,72,1.25],['u','sandbag',110,72,1.4],['u','soldier',134,72,1.3,{f:1}]],
+  eng: [['bg','field'],['u','dozer',40,72,1.05],['u','sandbag',118,72,1.35],['u','soldier',146,72,1.3,{f:1}]],
   // ===== crises
-  warno: [['stars',1],['bg','farcity'],['g',132,64,44,'red'],['u','mast',36,72,1.3],['waves',36,15,3],['u','officer',66,72,1.6],['u','ifv',116,73,1.0]],
+  warno: [['stars',1],['bg','farcity'],['g',132,64,44,'red'],['u','mast',36,72,1.3],['waves',36,15,3],['u','officer',66,72,1.6],['u','mc',118,72,.95]],
   refugees: [['bg','city'],['u','gate',36,72,2],['crowd',72,156,72,8,1.25],['u','soldier',8,72,1.35]],
   bitten: [['stars',4],['g',124,20,16,'moon'],['bg','ruins'],['g',70,56,14,'red'],['u','kneel',70,72,2.1],['u','zombie',132,72,1.3,{o:.55}],['u','zombie',150,72,1.2,{o:.45}]],
   warlord: [['bg','desert'],['u','pickup',122,73,1.7],['u','officer',58,72,1.8],['u','soldier',30,72,1.4],['u','soldier',86,72,1.4,{f:1}]],
@@ -2531,7 +2592,7 @@ const SC = {
   nuke: [['bg','farcity'],['g',100,40,70,'fire'],['u','mush',100,70,1.45,{c:'#ffb347',o:.95}],['g',100,34,32,'fire'],['u','soldier',22,72,1.5],['u','soldier',42,72,1.5]],
   horde: [['bg','ruins'],['g',80,58,64,'red'],['horde',10,156,66,12,1.0],['horde',2,158,72,10,1.5]],
   helo_down: [['bg','ruins'],['g',72,62,42,'fire'],['u','hawk',74,66,1.45,{r:16}],['u','flame',66,64,1.5],['smoke',76,56,1.3],['horde',124,156,72,3,1.4]],
-  press: [['bg','city'],['g',58,52,18,'moon'],['u','civ',58,72,1.7],['rect',61,49,6,4.4],['u','soldier',100,72,1.6,{f:1}],['u','ifv',140,73,.8]],
+  press: [['bg','city'],['g',58,52,18,'moon'],['u','civ',58,72,1.7],['rect',61,49,6,4.4],['u','soldier',100,72,1.6,{f:1}],['u','ul',140,73,.8]],
   water: [['bg','field'],['u','tanker',54,73,1.45],['u','bio',124,34,1.8],['u','drum',112,72,1.6],['u','drum',122,72,1.6]],
   ship: [['stars',7],['bg','sea'],['g',86,56,34],['u','ship',86,66,1.7]],
   allied: [['bg','ruins'],['g',122,60,40,'fire'],['u','ifv',124,72,1.1,{f:1}],['u','flame',124,56,1.4],['u','soldier',28,72,1.4,{f:1}],['u','soldier',50,72,1.4,{f:1}],['u','soldier',72,72,1.4,{f:1}]],
