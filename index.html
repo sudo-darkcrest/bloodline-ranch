@@ -828,7 +828,7 @@ card({ id:'maint', name:'Maintenance Surge', type:'LOGISTICS', cost:1, res:{ sup
 card({ id:'cache', name:'Pre-Positioned Stocks', type:'LOGISTICS', cost:1, rarity:'rare', exhaust:true, unit:'Maritime prepositioning', text:s => `Open the prepositioned stocks. +30 Supply, +30 Ammo, +30 Fuel, +10 Med. Removed after use.`,
   play:s => { add(s,'supply',30); add(s,'ammo',30); add(s,'fuel',30); add(s,'med',10); return 'Pre-positioned stocks opened.'; } });
 // --- civil
-card({ id:'safe_zone', name:'Establish Safe Zone', type:'CIVIL', cost:2, res:{ supply:15 }, rarity:'uncommon', unit:'Engineers + Military Police', req:s => (T(s).sz < 3 && !T(s).fallen) || 'Region cannot hold another safe zone',
+card({ id:'safe_zone', name:'Establish Safe Zone', type:'CIVIL', cost:2, res:{ supply:15 }, rarity:'uncommon', unit:'Engineers + Military Police', req:s => T(s).sz < 3 || 'This region already has 3 safe zones',
   text:s => `A permanent fortified zone (${T(s).sz}/3 here). Slows local spread for the rest of the game, raises Order, and saves about <b>${M(Math.max(0,T(s).h-T(s).safe)*clamp(.02*scale(s.b.loc)*(s.cmd==='civ'?1.3:1),0,.5)*TD(s).pop)}</b>.`,
   play:s => { T(s).sz++; T(s).order = Math.min(100, T(s).order + 10); const m = save(s,.02); add(s,'trust',2); return `Safe zone established. ${M(m)} civilians inside the wire.`; } });
 card({ id:'martial_law', name:'Martial Law', type:'CIVIL', cost:1, unit:'Military Police', req:s => s.b.en.mp || 'Military Police offline',
