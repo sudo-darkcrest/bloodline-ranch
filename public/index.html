@@ -782,8 +782,8 @@ const FAC=[
 const FACI=Object.fromEntries(FAC.map(f=>[f.id,f]));
 function L(id){return (S&&S.fac&&S.fac[id])||0}
 function stockHay(){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+f.hay[L(f.id)],0)}
-function stockIncome(sIdx){return FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+((f.seasonal&&sIdx>1)?0:f.inc[L(f.id)]*(specOf('stock')===f.id?1.25:1)),0)}
-function hayMult(){return [1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85*(locFx().harvest||1)}
+function stockIncome(sIdx){return (landOwned('range')?1.15:1)*FAC.filter(f=>f.g==='stock').reduce((a,f)=>a+((f.seasonal&&sIdx>1)?0:f.inc[L(f.id)]*(specOf('stock')===f.id?1.25:1)),0)}
+function hayMult(){return (landOwned('creek')?1.5:1)*[1,2,3,3][L('hayfield')]*(L('bees')?1.2:1)*.85*(locFx().harvest||1)}
 function houseMult(){return [1,1.05,1.1,1.2][L('house')]}
 const OWNER_VET=.7;function vetShare(h,c){return h&&h.client?Math.round(c*(1-OWNER_VET)):c}
 function vetCost(h){return vetShare(h,vetFull(h))}
@@ -1279,7 +1279,7 @@ function festPanel(where){const k=festKey();const F=k?festState():null;const dp=
     return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Festivals</div><div class="calgrid">${rows}</div></div>`}
   const f=FESTS[k];if(where==='market'&&!isSaleFest(k))return '';
   let body='';
-  if(isSaleFest(k)){body=`<p class="note">${k==='wintersale'?'Sell any horse today and buyers pay <b>20% more</b> than usual. The auction lots below are about 30% under the sale-barn price. Horses you buy here don’t get today’s bonus if you sell them again.':'Sell '+(f.sellYoung?'a foal or yearling':'any horse')+' today and buyers pay <b>'+Math.round((f.sell-1)*100)+'% more</b> than usual. The lots below are about '+Math.round((1-f.lots.price)*100)+'% under the sale-barn price. Horses you buy here don’t get today’s bonus if you sell them again.'}</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="-?\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/data-m="market"/g,'data-m="fest"')).join('')}</div>`:'<p class="note">You bought every lot. The auctioneer is impressed.</p>'}`}
+  if(isSaleFest(k)){body=`<p class="note">${k==='wintersale'?'Sell any horse today and buyers pay <b>20% more</b> than usual. The lots below go up for live auction, usually well under the sale-barn price. Bid against other buyers, set a limit, or drop out. Horses you buy here don’t get today’s bonus if you sell them again.':'Sell '+(f.sellYoung?'a foal or yearling':'any horse')+' today and buyers pay <b>'+Math.round((f.sell-1)*100)+'% more</b> than usual. The lots below go up for live auction, usually well under the sale-barn price. Horses you buy here don’t get today’s bonus if you sell them again.'}</p>${F.lots.length?`<div class="grid">${F.lots.map((h,i)=>horseCard(h,'market').replace(/data-a="buy" data-i="-?\d+"/,`data-a="festbuy" data-i="${i}"`).replace(/<button class="btn small" data-a="offer"[^>]*>Make offer<\/button>/,'').replace(/data-m="market"/g,'data-m="fest"').replace(/>Buy for [^<]*<\/button>/,'>Bid · opens at '+money(aucStart(h))+'</button>')).join('')}</div>`:'<p class="note">The last lot has gone. The auctioneer is packing up.</p>'}${f91ConsignBox(k)}`}
   else{const young=k==='foalshow'||f.type==='young';const cands=S.horses.filter(h=>!h.client&&!h.injury&&(young?isYoung(h):isAdult(h)));const m=festMult();
     if(F.done){const r=F.res;const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];body=`<p><b>${esc((H(r.h)||{}).name||'Your horse')}</b> placed <b>${ord[r.place-1]}</b>${r.prize?' and won <b>'+money(r.prize)+'</b>':''}.</p>`+(k==='harvest'?(F.booth?`<p class="note">Your booth earned ${money(F.booth)}.</p>`:`<button class="btn small" data-a="festbooth">Run the ranch booth</button>`):'')}
     else body=`<p class="note">Prizes this year: <b>${f.prize.map(v=>money(r10(v*m))).join(' / ')}</b> for 1st / 2nd / 3rd, plus reputation${k==='harvest'?' and a piece of prize tack for the winner':''}. Entry ${money(f.fee)}. One entry per year.</p>
@@ -1563,8 +1563,16 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='90';
+const BUILD='91';
 const CHANGELOG=[
+ {b:'91',d:'Nov 5, 2026',t:'Big races, auctions and more land',c:[
+  'Futurities and the Triple Crown: nominate foals ($250) or yearlings ($750), or pay a late $4,000 up to age 4. Two-year-olds run three futurities (a sprint, reining and barrels). Three-year-olds run the three Triple Crown races in spring and early summer. Win all three in one year for a $50,000 bonus and the Triple Crown Winner award.',
+  'Three-Day Events: one horse does dressage, cross-country and show jumping on three days in a row, and the scores add up. The Spring Horse Trials are open to all, and the Grand Three-Day Event in the fall needs 60 reputation. Watch out for refusals, rails down and the horse inspection.',
+  'Wanted ads: from 10 reputation, buyers post ads on the Market tab for a particular horse (sex, age, trained stats, coat or type) and pay well over value, plus reputation.',
+  'Live auctions: at the Winter Horse Sale and other sale days, bid against other buyers for the lots, set a limit or drop out. You can also send your own horse through the ring with a reserve price.',
+  'Neighboring land: buy the North Meadow, Creek Bottom, Timber Ridge and Big Sky Range, each with its own perks. They unlock a Broodmare Pasture, a Second Barn (up to 12 more stalls), a Hill Trail and Home Show Grounds where you host your own show each season.',
+  'Fix: a drought now really doubles the hay price for the whole season, not just the first day.',
+  'New awards: Triple Crown Winner, Futurity Champion and Three-Day Event Champion. New Ranch Goals for all of the above.']},
  {b:'90',d:'Nov 5, 2026',t:'Life on the ranch',c:[
   'Feed, weight and hooves: every horse now has a weight (1 to 9, healthy is 4.5 to 6.5). Pick a ration in the papers: Auto (the default) keeps a healthy weight, Rich adds alfalfa, and Performance adds grain for more energy and +2% at events, with a colic risk. Thin or heavy horses score lower. Hooves grow every day, so trim them, call the farrier from the Stable tab, or hire a Farrier. Overgrown hooves slow horses down and can make them lame.',
   'Weather and footing: every day has weather that fits your region and season, with tomorrow’s forecast. Mud slows speed events (unless your horse is a Mudder), fast ground quickens races but causes more injuries, heat hurts distance horses, and storms spook skittish horses. Rain, snow and cold slow training outside unless you have a covered arena. You can see the weather at live events too.',
@@ -2617,7 +2625,7 @@ function troubleActive(k){const t=S.trouble;if(!t||!t.active)return false;const 
 function troubleTick(ev){const dp=dateParts(S.day);if(dp.sday!==1)return;
   if(S.trouble&&S.trouble.active&&(dp.year!==S.trouble.yr||dp.sIdx!==S.trouble.si)){ev.push(['info',TROUBLE[S.trouble.k].end]);S.trouble=null}
   if(dp.sIdx===0&&dp.year>=2&&(!S.trouble||S.trouble.yr<dp.year)){if(R()<.7){const k=locTroublePick(),si=ri(1,3);S.trouble={k,yr:dp.year,si,active:0};ev.push(['warn','⚠ '+TROUBLE[k].warn(SEASONS[si].toLowerCase())])}}
-  if(S.trouble&&!S.trouble.active&&dp.year===S.trouble.yr&&dp.sIdx===S.trouble.si){S.trouble.active=1;const k=S.trouble.k;if(k==='drought')S.hayPrice*=2;if(k==='storm')S.fence=Math.min(S.fence??80,20);ev.push(['bad','⚠ '+TROUBLE[k].start])}}
+  if(S.trouble&&!S.trouble.active&&dp.year===S.trouble.yr&&dp.sIdx===S.trouble.si){S.trouble.active=1;const k=S.trouble.k;if(k==='drought')S.hayPrice*=landOwned('creek')?1.5:2;if(k==='storm')S.fence=Math.min(S.fence??80,20);ev.push(['bad','⚠ '+TROUBLE[k].start])}}
 function troublePanel(){const t=S.trouble;if(!t)return '';const dp=dateParts(S.day);if(t.active)return `<div class="inbox bad" style="margin-bottom:16px"><b>${TROUBLE[t.k].n}:</b> ${esc(TROUBLE[t.k].start)}</div>`;if(dp.year===t.yr&&dp.sIdx<t.si)return `<div class="inbox warn" style="margin-bottom:16px"><b>Forecast:</b> ${esc(TROUBLE[t.k].warn(SEASONS[t.si].toLowerCase()))}</div>`;return ''}
 const SC_PTS=[10,6,4,2,2,1,1,1],SC_TW=[1,2,3,4,5,6,8,6,2,7];
 function scState(){const dp=dateParts(S.day);if(!S.sc||S.sc.yr!==dp.year||S.sc.si!==dp.sIdx)S.sc={yr:dp.year,si:dp.sIdx,pts:{},names:{}};return S.sc}
@@ -3048,7 +3056,7 @@ function bankSeason(ev){const b=S.bank;if(!b)return;b.last={...b.season,end:S.mo
   else if(b.missed===3)repossess(ev);
   else{UI.forceModal={type:'foreclose',lock:1}}}
 function repossess(ev){const built=FAC.filter(f=>L(f.id)>0&&!(f.id==='barn'&&L('barn')<=1)).sort((a,c)=>(c.lv[L(c.id)].c||0)-(a.lv[L(a.id)].c||0));let credit=0,what='';
-  if(built.length){const f=built[0],lv=L(f.id);credit=Math.round((f.lv[lv].c||0)*.5);S.fac[f.id]=lv-1;if(f.id==='barn')S.stalls=STALLS[lv-1];what='your '+f.lv[lv].n+' (back to '+f.lv[lv-1].n+')'}
+  if(built.length){const f=built[0],lv=L(f.id);credit=Math.round((f.lv[lv].c||0)*.5);S.fac[f.id]=lv-1;if(f.id==='barn'||f.id==='barn2')S.stalls=STALLS[L('barn')]+barn2Extra();what='your '+f.lv[lv].n+' (back to '+f.lv[lv-1].n+')'}
   else{const h=[...S.horses].filter(x=>!x.client).sort((a,c)=>value(c)-value(a))[0];if(h){credit=Math.round(value(h)*.6);remember(h,'sold','Taken by the bank');S.horses=S.horses.filter(x=>x!==h);freeGear(h.id);what=h.name}}
   let left=credit;for(const l of S.bank.loans){const t=Math.min(left,l.bal);l.bal-=t;l.due=Math.max(0,l.due-t);left-=t}
   ev.push(['bad','Third missed payment. The bank repossessed '+what+' and put '+money(credit)+' toward your debt. One more missed payment means foreclosure.']);loseRep(5,'The bank repossessing property is the talk of the town.',ev)}
@@ -3155,7 +3163,7 @@ function endDay(){
   // births
   for(const m of [...S.horses]){
     if(m.preg&&m.preg.due<=S.day){
-      const n=m.preg.twins?2:1;const ck=m.preg.checks||0;const hard=R()<.12*(specOf('vet')==='repro'?.6:1)*[1,.75,.5,.35][L('foaling')]*(ck>=2?.25:ck?.5:1)*(n>1?1.6:1);
+      const n=m.preg.twins?2:1;const ck=m.preg.checks||0;const hard=R()<.12*(L('broodmare')?.7:1)*(specOf('vet')==='repro'?.6:1)*[1,.75,.5,.35][L('foaling')]*(ck>=2?.25:ck?.5:1)*(n>1?1.6:1);
       if(hard){m.health=clamp(m.health-25,0,100);m.happy=clamp(m.happy-8,0,100);ev.push(['bad',m.name+' had a hard birth and needs rest.'+(ck?'':' Prenatal vet checkups lower this risk.')])}
       else if(ck){m.health=clamp(m.health+10,0,100);ev.push(['good',m.name+'’s prenatal checkups paid off: an easy, healthy birth.'])}
       ensureSireRec(m.preg.sire);for(let i=0;i<n;i++){const f=breedFoal(m.preg.sire,m);pxp('eye',f.shiny||f.breakthrough.length?14:8);f.bond=clamp(f.bond+[0,10,15][L('foaling')]+(ck?5:0),0,100);f.ribbons=[];f.awardsSeen=[];f.acted=0;S.horses.push(f);S.stats.foals++;born.push({f:f.id,m:m.id,hard:hard,twins:n>1});if(f.shiny){log('good','✦ '+f.name+' was born SHINY! A very rare foal with higher potential in every stat.')}
@@ -3173,7 +3181,7 @@ function endDay(){
   if(adults.length&&R()<.14){const h=pick(adults);if(!S.offers.some(o=>o.id===h.id)){const amt=Math.round(saleValue(h)*(1.15+R()*.4)*houseMult()/10)*10;S.offers.push({id:h.id,amt,exp:S.day+2,who:pick(FARMS)});ev.push(['info','A buyer from '+S.offers[S.offers.length-1].who+' offered '+money(amt)+' for '+h.name+'. See the Stable tab.'])}}
   if(S.horses.length&&R()<.04*(locFx().illS?locFx().illS[dateParts(S.day).sIdx]:1)*(specOf('vet')==='med'?.7:1)*[1,1,.5,.25][L('clinic')]*(dirtyStalls(25)?2:1)){const dh=S.horses.filter(x=>stallOf(x)<25&&!x.inj);const ok=S.horses.filter(x=>!x.inj);if(ok.length){const h=dh.length&&R()<.7?pick(dh):pick(ok);if(vaccinated(h)&&R()<.5)ev.push(['good',h.name+' fought off a bug going around. The vaccine from the last checkup helped.']);else if(!h.brew&&R()<.6)h.brew={id:illPick(),at:S.day+ri(1,3)};else ev.push(['warn',sicken(h)])}}
   if(R()<.03){S.hay+=10;ev.push(['good','A neighbor dropped off 10 spare bales of hay.'])}
-  S.hayPrice=Math.max(3,Math.round(([8,7,9,12][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]*locHayMult(dp.sIdx)));
+  S.hayPrice=Math.max(3,Math.round(([8,7,9,12][dp.sIdx]+ri(-1,1))*[1,.85,.75][L('feedbarn')]*locHayMult(dp.sIdx)*(troubleActive('drought')?(landOwned('creek')?1.5:2):1)));
   if(dp.sday===1&&S.day>1){scFinish(ev);scState();rivalChallenge(ev)}
   troubleTick(ev);
   {const fk=festKey();if(fk)ev.push(['good','🎪 Today is the '+FESTS[fk].n+'! '+(isSaleFest(fk)?'See the Market or Compete tab.':'Enter a horse on the Compete tab.')]);const fn=festKey(S.day+1);if(fn)ev.push(['info','Tomorrow is the '+FESTS[fn].n+'. Get a horse ready.'])}
@@ -3919,7 +3927,7 @@ function renderCompete(){
   const ok=canCompete(h);
   return `<div class="section-head"><h2>Show Grounds</h2><span class="sub">Each horse can enter one event per day. Entry fees are about 6–8% of the purse. Only Local Shows run every day. The rest follow the show calendar.</span></div>
   <div class="panel showcal"><div class="subh" style="margin-top:0">Show calendar · ${SEASONS[dateParts(S.day).sIdx]} day ${dateParts(S.day).sday}, year ${dateParts(S.day).year}</div><div class="calgrid">${TIERS.map((t,ti)=>t.invite?'':`<div class="calrow ${tierOpen(ti)?'open':''}"><b>${t.n}</b>${(()=>{const p=evPlace(ti,0,tierOpen(ti)?S.day:(nextOpen(ti)||S.day));const c=(p.v||'').split(', '),v=c.length>1&&p.n.includes(c[0])?c.slice(1).join(', '):p.v;return p.n!==t.n?`<span class="calpl">${esc(p.n)}${v?' · '+esc(v):''}</span>`:''})()}<span class="note">${t.when}</span><span class="${tierOpen(ti)?'good':'note'}">${tierOpen(ti)?'● Open now':openText(ti)}</span>${S.rep<t.req?`<span class="note">needs ${t.req} rep</span>`:''}</div>`).join('')}</div></div>
-  ${festPanel('compete')}
+  ${festPanel('compete')}${f91CompetePanels()}
   ${scPanel()}
   ${troublePanel()}
   ${f90WxPanel()}
@@ -3940,7 +3948,7 @@ function renderCompete(){
 function renderMarket(){
   const days=7-((S.day-1)%7);
   return `<div class="section-head"><h2>Sale Barn</h2><span class="sub">New stock arrives every 7 days (next in ${days} day${days>1?'s':''}). Better horses show up as your reputation grows.</span></div>
-  ${festPanel('market')}
+  ${festPanel('market')}${f91WantedPanel()}
   ${S.market.length?`<div class="grid">${S.market.map(h=>horseCard(h,'market')).join('')}</div>`:'<div class="empty">Sold out. New stock arrives in '+days+' days.</div>'}
   ${(S.soldBack||[]).filter(r=>r.until>=S.day).length?`<div class="section-head" style="margin-top:26px"><h2>Buy back</h2><span class="sub">Horses you sold recently. Their buyers will sell them back for a little more, for 7 days.</span></div><div class="panel">${S.soldBack.map((r,i)=>r.until<S.day?'':`<div class="staff"><div class="portrait" style="width:110px;aspect-ratio:200/120;flex:none">${horseSVG(r.h)}</div><div class="grow"><b>${esc(r.h.name)}</b> ${rbadge(rarityOf(r.h))}${shinyTag(r.h)}<div class="note">${breedLabel(r.h)} · ${sexLabel(r.h)} · ${r.until-S.day+1} day${r.until-S.day?'s':''} left</div></div><button class="btn small primary" data-a="buyback" data-i="${i}" ${S.money<r.price?'disabled':''}>Buy back · ${money(r.price)}</button></div>`).join('')}</div>`:''}
   <div class="section-head" style="margin-top:26px"><h2>Breed Guide</h2><span class="sub">Rarer breeds start with higher potential and sell for more. They turn up more often as your reputation grows.</span></div>
@@ -3959,7 +3967,7 @@ function facMapBody(f){const lv=L(f.id),cur=f.lv[lv],nx=f.lv[lv+1],max=f.lv.leng
    <div class="note">You have ${money(S.money)}${nx?(can?`, so you’ll have ${money(S.money-c)} left after.`:`. You need ${money(c-S.money)} more.`):'.'}</div>
    <div class="actions">${nx?`<button class="btn primary" data-a="facup" data-f="${f.id}" ${can?'':'disabled'}>${verb} · ${money(c)}</button>`:''}<button class="btn" data-a="facjump" data-f="${f.id}">Show in the list</button><button class="btn" data-a="close">Close</button></div>
   </div>`}
-function facCard(f){
+function facCard(f){if(f.land&&!landOwned(f.land))return landLockedCard(f);
   const lv=L(f.id),cur=f.lv[lv],nx=f.lv[lv+1],max=f.lv.length-1;
   return `<div class="fac ${lv>=max?'maxed':lv?'built':''}" id="fac-${f.id}">
   <div class="fac-head"><b>${f.n}</b><span class="pips" aria-label="Level ${lv} of ${max}">${f.lv.slice(1).map((x,i)=>`<i class="${i<lv?'on':''}"></i>`).join('')}</span></div>
@@ -4155,7 +4163,7 @@ function raceGate(){const X0=6,X1=98,G='#2F6B3E',GL='#4A9460',GD='#1F4A2B',f1=v=
     after:L=>beams(L)+part(L+1)+plate(L)+(L<7?backDoor(L+1):wheels(8))}}
 /* TV-style bar under every live event, and a small plane towing a banner over the outdoor rides (build 86) */
 const TV_TIER=[['LOCAL','#5E7D5A'],['COUNTY','#2D8A4E'],['STATE','#2E6FD8'],['REGIONAL','#7A4E8A'],['NATIONAL','#C0392B'],['INTERNATIONAL','#B8860B'],['OLYMPICS','#B8951E'],['INVITATIONAL','#6B3FA0'],['RANCH SHOW','#8A5A2B'],['WORLD CUP','#1F8A8A']];
-function tvBar(W){const [lv,col]=TV_TIER[W.ti]||['SHOW','#2E6FD8'];const n=String((W.pl&&W.pl.n)||'').toUpperCase(),sub=W.ev0.n+(W.pl&&W.pl.v?' · '+W.pl.v:'');
+function tvBar(W){const [lv,col]=(W.sp&&W.sp.tv)||TV_TIER[W.ti]||['SHOW','#2E6FD8'];const n=String((W.pl&&W.pl.n)||'').toUpperCase(),sub=(W.sp&&W.sp.sub||W.ev0.n)+(W.pl&&W.pl.v?' · '+W.pl.v:'');
   const tabW=Math.max(54,txtW(lv,7.2,SIGN_F,800)+.8*lv.length+18),x1=tabW+18,room=736-x1;
   let f1=10.5,f2=8.4;const w=txtW(n,f1,SIGN_F,800)+.6*n.length+8+txtW(sub,f2,SIGN_F,500),k=Math.min(1,room/w);f1*=k;f2*=k;
   return `<!--ns--><g class="wtv"><rect x="0" y="300" width="800" height="26" fill="#101820"/><rect x="0" y="300" width="800" height="1.6" fill="${col}"/>
@@ -5229,7 +5237,7 @@ function ranchMap(){
 function renderFacilities(){
   const si=dateParts(S.day).sIdx;
   return `<div class="section-head"><h2>Your Ranch</h2><span class="sub">Build and upgrade every part of the place. Click any building or empty lot on the map to build or upgrade it right there.</span></div>
-  <div class="mapwrap">${seasonMap()}</div>
+  <div class="mapwrap">${seasonMap()}</div>${f91LandPanel()}
   <div class="panel incomebar"><span>Facility levels <b>${facLevels()}</b></span><span>Livestock income <b>${money(stockIncome(si))}</b>/day${L('bees')&&si>1?' (bees rest until spring)':''}</span><span>Livestock hay <b>${stockHay()}</b> bales/day</span><span>Wages <b>${money(wages())}</b>/day</span><span>Facility upkeep <b>${money(upkeep())}</b>/day</span><span>Property tax <b>${money(propTax())}</b>/season</span><span>Stalls <b>${S.horses.length}/${S.stalls}</b></span></div>
   ${FGROUPS.map(([g,n])=>`<div class="facgroup"><div class="section-head"><h2>${n}</h2>${g==='stock'?'<span class="sub">Stock animals earn money every night, but some eat hay. If the hay runs out, they produce nothing.</span>':''}</div><div class="facgrid">${FAC.filter(f=>f.g===g).map(facCard).join('')}</div></div>`).join('')}`;
 }
@@ -5533,7 +5541,7 @@ function papers(h,mode){
     </div>
      ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}. Goals are listed under the stats.</div></div>`:''}
     <div class="pcol">     ${trainerPlan(h)}
-    </div>${f90PapersCol(h)}
+    </div>${f90PapersCol(h)}${f91PapersCol(h)}
     <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div>${h.client?`<p class="note">${esc(h.name)} belongs to ${esc(h.client.owner)}. Only the owner can rename a client’s horse.</p><div class="actions"><button class="btn" data-a="offer" data-k="client" data-id="${h.id}">Offer to buy ${esc(h.name)}</button></div>`:`<div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>`}
 </div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
 </div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Still breeds and works. +10 happiness now, +1 every night.</span>`}</div>`:''}
@@ -5598,6 +5606,7 @@ function renderModal(){
     <dl class="kv"><dt>Foal</dt><dd>${f.sex==='M'?'Colt (boy)':'Filly (girl)'} · ${esc(coat(f.genes).full)}</dd><dt>Breed</dt><dd>${esc(breedLabel(f))}</dd><dt>Parents</dt><dd>${esc(sireN)} × ${esc(mo?mo.name:'?')}</dd><dt>Best potential</dt><dd>${best}${f.breakthrough.length?' · <b>breakthrough!</b>':''}${f.shiny?' · <b>✦ SHINY</b>':''}</dd></dl>
     <div class="field" style="margin-top:12px"><label for="foalName">Name your ${kid}</label><input id="foalName" type="text" maxlength="28" value="${esc(f.name)}"></div>
     <div class="actions" style="margin-top:10px"><button class="btn" data-a="foalrnd">🎲 Another name</button>${canImprint(f)?`<button class="btn" data-a="f90imp" data-id="${f.id}">🤲 Imprint the ${kid}</button>`:''}<button class="btn primary" data-a="foalok">Welcome, little one! →</button></div>`;
+  }else if(f91Modal(m)){const r=f91Modal(m);title=r.title;body=r.body;
   }else if(m.type==='report'){
     const dp=dateParts(m.day);
     title='Morning, day '+m.day;
@@ -5606,10 +5615,10 @@ function renderModal(){
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Start the day</button></div>`;
   }else if(m.type==='result'){
     const ev=EVENTS[m.ev],t=TIERS[m.t];const ord=['1st','2nd','3rd','4th','5th','6th','7th','8th'];
-    title=(m.pn||t.n)+' · '+ev.n;
-    body=`${m.pv||m.pn?`<p class="note" style="margin:-4px 0 10px">${esc(t.n)} level${m.pv?' · held in '+esc(m.pv):''}</p>`:''}<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+(m.cut?' ('+money(m.cut)+' goes to '+esc(m.owner)+', the owner’s '+Math.round(CLIENT_CUT*100)+'% share)':'')+(m.ownerFee?' · '+esc(m.owner)+' paid half the entry fee ('+money(m.ownerFee)+')':'')+(m.fee!=null?'<br>Your entry fee −'+money(m.fee)+' · <b>You net '+((m.prize-(m.cut||0)-m.fee)<0?'−'+money(-(m.prize-(m.cut||0)-m.fee)):money(m.prize-(m.cut||0)-m.fee))+'</b>':'')+' · Reputation +'+m.rep+(m.rep===0?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):'No prize. Train up and try again.'}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3?'<br>'+(t=>t.charAt(0).toUpperCase()+t.slice(1))(ribbonText(m.place,m.t))+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.rival?'<br><span class="'+(m.rival.won?'good':'bad')+'"><b>Rival:</b> '+(m.rival.won?'You beat':'You lost to')+' '+esc(S.rival.owner)+'’s '+esc(m.rival.name)+' ('+ord[m.rival.place-1]+').'+(m.rival.counts===false?'':' Record '+m.rival.rec+'.')+(m.rival.bonus?' <b>Bonus '+money(m.rival.bonus)+' and +1 reputation.</b>':'')+'</span> <span class="note">'+esc(m.rival.line)+'</span>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
+    title=(m.pn||t.n)+(m.sp&&m.sp.noEv?'':' · '+ev.n);
+    body=`${m.pv||m.pn?`<p class="note" style="margin:-4px 0 10px">${m.lvl?esc(m.lvl):esc(t.n)+' level'}${m.pv?' · held in '+esc(m.pv):''}</p>`:''}<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">${m.place<=3&&!m.phase&&!m.sp?ribbonSVG(m.place,m.t,46):''}<span class="bigplace">${ord[m.place-1]}</span><div><b>${m.phase?esc(m.phase):m.place===1?'A win!':m.place<=3?'In the money.':'Out of the ribbons this time.'}</b><br>${m.prize?'Prize '+money(m.prize)+(m.cut?' ('+money(m.cut)+' goes to '+esc(m.owner)+', the owner’s '+Math.round(CLIENT_CUT*100)+'% share)':'')+(m.ownerFee?' · '+esc(m.owner)+' paid half the entry fee ('+money(m.ownerFee)+')':'')+(m.fee!=null?'<br>Your entry fee −'+money(m.fee)+' · <b>You net '+((m.prize-(m.cut||0)-m.fee)<0?'−'+money(-(m.prize-(m.cut||0)-m.fee)):money(m.prize-(m.cut||0)-m.fee))+'</b>':'')+' · Reputation +'+m.rep+(m.rep===0&&!m.sp?' ('+TIERS[m.t].n+' wins no longer build your name at your reputation)':''):(m.phase?esc(m.phaseNote||''):'No prize. Train up and try again.')}${m.hurt?'<br><span class="bad">Your horse got hurt during the event.</span>':''}${m.place<=3&&!m.sp?'<br>'+(t=>t.charAt(0).toUpperCase()+t.slice(1))(ribbonText(m.place,m.t))+' for the wall.':''}${m.awards?'<br><b style="color:var(--brass)">New award: '+esc(m.awards)+'</b>':''}${m.gift?'<br><b class="good">🎁 '+esc(m.gift)+'</b>':''}${m.rival?'<br><span class="'+(m.rival.won?'good':'bad')+'"><b>Rival:</b> '+(m.rival.won?'You beat':'You lost to')+' '+esc(S.rival.owner)+'’s '+esc(m.rival.name)+' ('+ord[m.rival.place-1]+').'+(m.rival.counts===false?'':' Record '+m.rival.rec+'.')+(m.rival.bonus?' <b>Bonus '+money(m.rival.bonus)+' and +1 reputation.</b>':'')+'</span> <span class="note">'+esc(m.rival.line)+'</span>':''}${m.drop?'<br>Prize gear: <b class="rc-'+ITEMS[m.drop].r+'">'+ITEMS[m.drop].n+'</b> '+rbadge(ITEMS[m.drop].r)+' (in your tack room)':''}</div></div>
     ${m.wr&&m.wr.world!=null?`<div class="wrnew">★ New world record: ${wrFmt(ev.id,m.wr.world)}. The best ${esc(ev.n)} ever. See it in the Hall of Fame.${m.wr.myth&&ITEMS[m.wr.myth]?`<div class="wrmyth">${itemIcon(ITEMS[m.wr.myth].s,'mythical',30)}<span>Mythical prize: <b>${esc(ITEMS[m.wr.myth].n)}</b><span>${esc(itemEffects(ITEMS[m.wr.myth]))}</span></span></div>`:m.wr.bonus?`<div class="wrmyth"><span>Record bonus: <b>${money(m.wr.bonus)}</b><span>Your first ${esc(ev.n)} world record. You already own all five pieces of mythical gear.</span></span></div>`:''}</div>`:m.wr&&m.wr.ranch!=null?`<div class="wrnew ranch">New ranch record: ${wrFmt(ev.id,m.wr.ranch)}, your ranch’s best ${esc(ev.n)} yet.</div>`:''}
-    <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">Score</th></tr>${m.field.map((f,i)=>`<tr class="${f.me?'me':f.rival?'rivalrow':''}"><td>${ord[i]}</td><td>${esc(f.name)}${f.rival?' <span class="chip rivalchip">Rival</span>':''}</td><td>${esc(f.farm)}</td><td class="n">${f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
+    <div class="tablewrap" style="margin-top:12px"><table class="result"><tr><th>Place</th><th>Horse</th><th>Ranch</th><th class="n">${m.standings?'Total':'Score'}</th></tr>${(m.standings||m.field).map((f,i)=>`<tr class="${f.me?'me':f.rival?'rivalrow':''}"><td>${ord[i]}</td><td>${esc(f.name)}${f.rival?' <span class="chip rivalchip">Rival</span>':''}</td><td>${esc(f.farm)}</td><td class="n">${f.out?'Out':f.score.toFixed(1)}</td></tr>`).join('')}</table></div>
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Back to the grounds</button>${S.horses.some(x=>isAdult(x)&&x.id!==m.h&&canCompete(x))?'<button class="btn" data-a="autonext">Auto compete next horse</button>':''}</div>`;
   }else if(m.type==='buygear'){const buy=m.plan.filter(r=>!r.none),miss=m.plan.filter(r=>r.none);const tot=buy.reduce((a,r)=>a+r.p,0);title='Buy missing gear';
     body=`<p>Fill <b>${buy.length}</b> empty slot${buy.length===1?'':'s'} for <b class="mono">${money(tot)}</b>${buy.some(r=>r.uid!=null)?' (some come free from your tack room)':''}. Each horse gets the best fit it can from the Tack Shop’s current stock. You have ${money(S.money)}, and ${money(gearReserve())} is kept back for about 5 days of hay and wages.</p>
@@ -5966,7 +5975,7 @@ function watchSetup(m){const ev0=EVENTS[m.res.ev],ev=ev0.only?{...ev0,id:{drive:
       feather:f.me?me.feather:0,ph:rs()*6.28,amp:.02+rs()*.03,pw:.7+rs()*.7}});
   const lanes=field.map((f,i)=>i);for(let i=lanes.length-1;i>0;i--){const j=Math.floor(rs()*(i+1));[lanes[i],lanes[j]]=[lanes[j],lanes[i]]}field.forEach((f,i)=>{f.lane=lanes[i];f.num=f.lane+1});
   const pl=m.res.pn?{n:m.res.pn,v:m.res.pv||''}:evPlace(m.res.t,m.res.ev);
-  return {ev,ev0,T,ti:m.res.t,pl,field,me:field.find(f=>f.me),rs,small:me.small}}
+  return {ev,ev0,T,ti:m.res.t,pl,field,me:field.find(f=>f.me),rs,small:me.small,sp:m.res.sp}}
 function wsprite(f,o){return rSprite(f.col[0],f.col[1],f.silk,{mk:f.mk,pat:f.pat,points:f.points,silk2:f.silk2,silkPat:f.silkPat,me:f.me,feather:f.feather,...(f.me?{cap:ranchCol2(),padC:ranchCol2(),cartC:hexMix(ranchCol(),'#000000',.2),cartTrim:ranchCol2()}:{}),...o})}
 /* show jumping, head-on (cantering toward you) and from behind (cantering away). Same units as the side sprite: ground y=0, withers about y=-30.
    Legs carry 11 data-t frames: 0-7 the canter, 8 take-off, 9 over the fence, 10 landing. */
@@ -6401,7 +6410,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
     const k=scene.indexOf('fill="url(#wSky)"/>');if(k>0)scene=scene.slice(0,k+'fill="url(#wSky)"/>'.length)+amb+f90Sky()+scene.slice(k+'fill="url(#wSky)"/>'.length)}
   if(seasonFx(si)&&ev0.id!=='desert'){scene=seasonize(scene,si);if(snowy(si))scene+=snowFlakes(m.wid,800,300,90)}scene+=f90Overlay(m.wid,ev0);
   scene+=`<g id="wDustL"></g><g id="wConf"></g>`+tvBar(W);
-  ov.innerHTML=`<div class="modal watch" role="dialog" aria-modal="true" aria-label="Watching the event"><div class="mhead"><h2>${esc(W.pl.n)} · ${esc(ev0.n)}</h2><span class="navpos" id="wStatus">● Live</span></div><div class="mbody">
+  ov.innerHTML=`<div class="modal watch" role="dialog" aria-modal="true" aria-label="Watching the event"><div class="mhead"><h2>${esc(W.pl.n)}${W.sp&&W.sp.noEv?'':' · '+esc(ev0.n)}</h2><span class="navpos" id="wStatus">● Live</span></div><div class="mbody">
    <div class="wstage"><svg viewBox="0 0 800 326" id="wSvg">${scene}</svg></div><div class="wcomm" id="wComm">${esc(W.me.name)} is in the field.${esc(f90WatchLine())} Here we go…</div>
    <div class="wbottom">${board}<div class="wctl"><button class="btn" data-a="wspeed" id="wSpd" title="Tap to change. Your choice is remembered.">Speed: ${[1,2,4].includes(PREF.speed)?PREF.speed:1}×</button><button class="btn primary" data-a="wskip">Skip to results ▶▶</button><label class="note"><input type="checkbox" data-c="wpref" ${PREF.watch===0?'checked':''}> Always skip</label></div></div></div></div>`;
   ov.hidden=false;
@@ -6518,7 +6527,7 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
 
 function ord(n){return n+(['th','st','nd','rd'][(n%100-20)%10]||['th','st','nd','rd'][n%100]||'th')}
 function finishWatch(m,W){if(!WATCH||WATCH.done)return;WATCH.done=true;hoovesStop();resultSound(m.res);W.field.forEach((f,i)=>{const v=document.getElementById('wv'+i);if(v)v.textContent=f.met.f(f.met.v);const li=document.getElementById('wb'+i);if(li)li.style.order=f.rank});
-  const p=m.res.place;const c=document.getElementById('wComm');if(c)c.textContent=p===1?'🏆 '+W.me.name+' WINS!':W.me.name+' finishes '+ord(p)+'.';
+  const p=m.res.phase?9:m.res.place;const c=document.getElementById('wComm');if(c)c.textContent=m.res.phase?W.me.name+': '+m.res.phase:p===1?'🏆 '+W.me.name+' WINS!':W.me.name+' finishes '+ord(p)+'.';
   {const cf=document.getElementById('wConf');if(cf&&p<=3){const rc=ranchCol();const cols=[rc,'#F2C14E',rc,'#fff',rc,hexMix(rc,'#ffffff',.45),'#F2C14E'];let o='';const n=p===1?70:30;for(let i=0;i<n;i++){const x=80+Math.random()*640,d=(Math.random()*1.2).toFixed(2),r=Math.floor(Math.random()*360),sz=4+Math.random()*5;o+=`<rect class="wcf" x="${x.toFixed(0)}" y="-12" width="${sz.toFixed(1)}" height="${(sz*.6).toFixed(1)}" fill="${cols[i%cols.length]}" style="animation-delay:${d}s;animation-duration:${(2.2+Math.random()*1.4).toFixed(2)}s;transform-origin:${x.toFixed(0)}px 0px;--r:${r}deg"/>`}
     o+=`<g class="wban"><rect x="230" y="108" width="340" height="64" rx="12" fill="rgba(20,20,20,.76)" stroke="${rc}" stroke-width="4"/><rect x="250" y="163" width="300" height="3" rx="1.5" fill="${ranchCol2()}"/>${ranchSym()!=='none'?symBadge(242,118,40,rc,ranchCol2())+symBadge(518,118,40,ranchCol2(),rc):''}<text x="400" y="148" text-anchor="middle" font-size="26" font-weight="800" fill="${p===1?'#F2C14E':'#fff'}" font-family="Figtree,system-ui,sans-serif" letter-spacing=".06em">${p===1?'WINNER!':p===2?'2ND PLACE':'3RD PLACE'}</text></g>`;cf.innerHTML=o}}const s=document.getElementById('wStatus');if(s)s.textContent='Final';
   setTimeout(()=>{if(UI.modal&&UI.modal.type==='watch'&&UI.modal.wid===m.wid){UI.modal=m.res;WATCH=null;render()}},1800/Math.max(1,WATCH.speed))}
@@ -7105,8 +7114,8 @@ const ACT={
   takesponsor:()=>{const b=SPONSORS.find(x=>x.id===S.sponsorOffer);if(!b)return;S.sponsor={id:b.id,since:S.day,weeks:4,strikes:0};S.sponsorOffer=null;S.weekStarts=0;log('good','Signed a sponsorship with '+b.n+' ('+money(b.pay)+' a week).');toast('Sponsorship signed!')},
   nosponsor:()=>{S.sponsorOffer=null;toast('Offer declined.')},
   dropsponsor:(d,b)=>{if(!b.classList.contains('armed')){b.classList.add('armed');b.textContent='Tap again to end';return 'skip'}const sp=SPONSORS.find(x=>x.id===S.sponsor.id);S.sponsor=null;log('info','Ended the sponsorship with '+(sp?sp.n:'your sponsor')+'.');toast('Sponsorship ended.')},
-  facup:d=>{const f=FACI[d.f];if(!f)return;const lv=L(f.id),nx=f.lv[lv+1];if(!nx)return;const nc=facCost(f,lv+1);if(S.money<nc)return toast('Not enough money.');
-    S.money-=nc;pxp('ranch',4);pxp('biz',2);S.fac[f.id]=lv+1;if(f.id==='barn')S.stalls=Math.max(S.stalls,STALLS[lv+1]);
+  facup:d=>{const f=FACI[d.f];if(!f)return;if(f.land&&!landOwned(f.land))return toast('You need the '+LAND.find(l=>l.id===f.land).n+' first. Buy it under Neighboring land.');const lv=L(f.id),nx=f.lv[lv+1];if(!nx)return;const nc=facCost(f,lv+1);if(S.money<nc)return toast('Not enough money.');
+    S.money-=nc;pxp('ranch',4);pxp('biz',2);S.fac[f.id]=lv+1;if(f.id==='barn')S.stalls=Math.max(S.stalls,STALLS[lv+1]);if(f.id==='barn'||f.id==='barn2')S.stalls=Math.max(S.stalls,STALLS[L('barn')]+barn2Extra());
     if(f.id==='feedbarn')S.hayPrice=Math.max(3,Math.round(S.hayPrice*[1,.85,.75][lv+1]/[1,.85,.75][lv]));
     log('good',(lv?'Upgraded the '+f.n+' to ':'Built: ')+nx.n+' for '+money(nc)+'.');toast(nx.n+(f.g==='stock'?' added!':' is ready!'));
     if(facLevels()>=15)unlock('builder');if(L('house')>=3)unlock('lodge');if(['chickens','goats','sheep','cattle','bees'].every(x=>L(x)))unlock('stockman')},
@@ -7220,12 +7229,12 @@ function wxEffects(w){if(w.off)return '';const o=[];const f=w.f;
 
 /* ================= combined hooks (called from the main game code) ================= */
 function f90Comp(h,ev){let m=1;if(f90On('feed')){m*=bcsComp(bcsOf(h))*hoofComp(hoofOf(h));if(rationOf(h)==='perf'&&S._noFeed!==S.day)m*=1.02}
-  m*=wxComp(h,ev);if(has(h,'skittish')&&L('goats')&&!hasS(h,'steadynerves'))m*=1.05;if(isGreen(h))m*=.92;if(h.rescue&&!h.rescue.done)m*=.95;return m}
-function f90Train(h,k){let g=wxTrain();if(f90On('feed')){const v=hoofOf(h),b=bcsOf(h);g*=v>=50?1:v>=30?.95:.9;if(b<3||b>8)g*=.9}const r=h.raise;if(r&&r.done)g*=[1,1,1.02,1.05][r.g??1];return g}
+  m*=wxComp(h,ev)*f91Comp(h,ev);if(has(h,'skittish')&&L('goats')&&!hasS(h,'steadynerves'))m*=1.05;if(isGreen(h))m*=.92;if(h.rescue&&!h.rescue.done)m*=.95;return m}
+function f90Train(h,k){let g=wxTrain()*f91Train(h,k);if(f90On('feed')){const v=hoofOf(h),b=bcsOf(h);g*=v>=50?1:v>=30?.95:.9;if(b<3||b>8)g*=.9}const r=h.raise;if(r&&r.done)g*=[1,1,1.02,1.05][r.g??1];return g}
 function f90Inj(h){let r=wxInj();if(f90On('feed')){const v=hoofOf(h),b=bcsOf(h);r*=v>=50?1:v>=30?1.15:1.3;if(b>7.5)r*=1.25;if(b<3)r*=1.15}return r}
 function f90Value(h){if(!f90On('feed'))return 1;const b=bcsOf(h);return b<3.5?.9:b>7.5?.95:1}
 function f90Fert(m){if(!f90On('feed'))return 1;const b=bcsOf(m);return b<3.5?.75:b>8?.85:1}
-function f90HayMult(h){return (f90On('feed')?(FEEDS[rationOf(h)].hay||1):1)*wxHayMult()}
+function f90HayMult(h){return (f90On('feed')?(FEEDS[rationOf(h)].hay||1):1)*wxHayMult()*f91HayMult(h)}
 function f90HappyNight(h,ctx){const o=[];const add=(v,t)=>{if(v)o.push([v,t])};
   if(h.buddy){const b=H(h.buddy);if(b){if(h.pastured===S.day&&b.pastured===S.day&&!h.solo&&!b.solo)add(3,'Out with '+b.name+', '+(h.sex==='M'?'his':'her')+' buddy')}else if(!(S.away||[]).some(a=>a.h&&a.h.id===h.buddy))add(-3,'Misses '+(h.buddyName||'a buddy'));else add(-1,'Misses '+(h.buddyName||'a buddy')+' (away)')}
   if(h.solo&&h.pastured===S.day&&!has(h,'homebody'))add(-2,'Turned out alone');
@@ -7233,6 +7242,7 @@ function f90HappyNight(h,ctx){const o=[];const add=(v,t)=>{if(v)o.push([v,t])};
   const w=wxToday();if(!w.off&&h.pastured===S.day){if(w.k==='storm')add(-4,'Out in a thunderstorm');if(w.k==='hot'&&L('pasture')<2&&!landOwned('ridge'))add(-2,'No shade in the heat')}
   if(f90On('feed')&&bcsOf(h)<3.5)add(-2,'Hungry and thin');
   if(h.rescue&&!h.rescue.done&&h.groomed===S.day)add(1,'Learning to trust people again');
+  f91HappyNight(h,add);
   return o}
 
 /* ================= #5 RAISING FOALS ================= */
@@ -7291,7 +7301,7 @@ function herdNight(ev){const out=S.horses.filter(h=>h.pastured===S.day&&!h.solo)
   for(const h of S.horses){if(!h.buddy)continue;const b=H(h.buddy);if(b){h.missT=0;continue}const away=(S.away||[]).some(a=>a.h&&a.h.id===h.buddy);if(away)continue;h.missT=(h.missT||0)+1;if(h.missT===1)ev.push(['warn',h.name+' keeps calling for '+(h.buddyName||'a missing friend')+'.']);if(h.missT>=3){story(h,'Got over losing '+(h.buddyName||'a buddy')+'.');h.buddy=null;h.missT=0}}}
 
 /* ================= night and morning (called from endDay) ================= */
-function f90Evening(ev){if(!S.staff.trainer)return;const done=[];for(const h of S.horses){if(done.length>=3)break;if(h.client||!h.raise||h.raise.done&&!isGreen(h))continue;
+function f90Evening(ev){f91Evening(ev);if(!S.staff.trainer)return;const done=[];for(const h of S.horses){if(done.length>=3)break;if(h.client||!h.raise||h.raise.done&&!isGreen(h))continue;
     if(canHalter(h)){doHalter(h,1);done.push(h.name+' (halter)')}else if(canSaddle(h)&&!h.raise.done){doSaddle(h,1);done.push(h.name+' (saddle)')}}
   if(done.length)ev.push(['info',S.staff.trainer.name+' (Trainer) worked with the youngsters: '+done.join(', ')+'. Doing it yourself also builds bond.'])}
 function f90Night(ev,fed){const feedOn=f90On('feed'),w=wxToday(),si=dateParts(S.day).sIdx;
@@ -7300,7 +7310,7 @@ function f90Night(ev,fed){const feedOn=f90On('feed'),w=wxToday(),si=dateParts(S.
   for(const h of S.horses){
     if(feedOn){const r=S._noFeed===S.day?'normal':rationOf(h),F=FEEDS[r];const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;
       let burn=worked?.6:h.pastured===S.day?.2:0;if(h.pastured===S.day)burn-=[.4,.25,.1,0][si]*(troubleActive('drought')?.4:1);
-      const st=stage(h);if(st==='Foal'||st==='Yearling')burn+=.4;else if(st==='Senior')burn+=.3;if(h.preg&&!pregLight(h))burn+=.4;if(isNursing(h))burn+=.6;
+      const st=stage(h);if(st==='Foal'||st==='Yearling')burn+=.4;else if(st==='Senior')burn+=.3;if(h.preg&&!pregLight(h))burn+=.4;if(isNursing(h))burn+=L('broodmare')?.3:.6;
       if(has(h,'hardkeeper'))burn+=.5;if(has(h,'easykeeper'))burn-=.5;if(si===3)burn+=.3*(locFx().winter||1);if(!w.off&&(w.k==='cold'||w.k==='snow'))burn+=.2;if(h.inj)burn+=.3;
       const intake=fed?F.cal:-2;h.bcs=clamp(Math.round(((h.bcs??5)+(intake-burn)*.3)*100)/100,1,9);
       if(r==='perf'&&fed){h.energy=clamp(h.energy+6,0,100);if(!h.inj&&R()<.006*(worked?1:3)*(h.bcs>7?2:1))colic.push(h)}
@@ -7321,7 +7331,7 @@ function f90Night(ev,fed){const feedOn=f90On('feed'),w=wxToday(),si=dateParts(S.
 function f90NewDay(ev){
   if(f90On('weather'))wxSet();
   for(const h of S.horses)if(h.raise&&!h.raise.done&&age(h)>=ADULT)raiseFinish(h,ev);
-  if(S.phase==='play')rescueNight(ev);}
+  if(S.phase==='play'){rescueNight(ev);f91NewDay(ev)}}
 function f90Migrate(s){if(!s.opt)s.opt={feed:1,weather:1};if(!s.stats)s.stats={wins:0,foals:0};
   for(const h of (s.horses||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=100;if(!h.raise)h.raise={done:1,g:1}}
   for(const h of (s.market||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=90;if(!h.raise)h.raise={done:1,g:1}}
@@ -7423,6 +7433,280 @@ GUIDE.splice(Math.max(0,GUIDE.findIndex(g=>g[0]==='Training')),0,
  ['Raising foals',['How you raise a foal shapes the grown horse. <b>Imprint</b> the foal on its first day, give it three <b>halter lessons</b>, <b>wean</b> it gently between 6 and 11 months, and give it four <b>saddle sessions</b> as a yearling.','At 2 years old the upbringing is graded: Raised right (trains 5% faster for life, +10 bond, may grow up Calm), Well raised (2% faster), Average, or Rough start (may turn Skittish or Stubborn). A horse that wasn’t fully started under saddle is <b>green</b> (−8% at events) until it finishes.','A Trainer on staff does halter and saddle work on idle youngsters, but doing it yourself also builds bond.']],
  ['Rescue horses',['Now and then a horse rescue asks you to nurse a neglected horse back to health. Take it in on the Boarding tab (they send $150), then groom, feed, doctor and trim it until it is healthy, happy and trusts people again.','Once it has recovered, find it a new home (an adoption fee and +5 reputation) or keep it. Some turn out to be hidden gems with far more talent than anyone guessed. Rescue horses can’t be sold, bred or shown while in rehab, and you have about a year.']]);
 /*F90-END*/
+/*F91-START*/
+/* ================= build 91: futurities & Triple Crown, Three-Day Events, wanted ads, live auctions, land ================= */
+(()=>{const st=document.createElement('style');st.textContent=`
+.spgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.spcard{border:1px solid var(--line,rgba(0,0,0,.12));border-radius:12px;padding:10px 12px;background:var(--card,rgba(255,255,255,.5))}
+.spcard.today{border-color:var(--good);box-shadow:0 0 0 2px color-mix(in srgb,var(--good) 25%,transparent)}
+.spcard h4{margin:0 0 2px;font-size:15px}.spcard .actions{margin-top:6px}
+.tdetable td,.tdetable th{padding:3px 8px}
+.wantgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-bottom:16px}
+.want{border:1px dashed color-mix(in srgb,var(--brass,#b8860b) 60%,transparent);border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--brass,#b8860b) 6%,transparent)}
+.want h4{margin:0 0 4px;font-size:15px}.want ul{margin:4px 0 6px;padding-left:18px;font-size:13px}
+.auc{display:grid;gap:10px}.auc .bidnow{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums}
+.auc .alog{max-height:170px;overflow:auto;font-size:13px;border:1px solid var(--line,rgba(0,0,0,.12));border-radius:10px;padding:6px 10px;background:color-mix(in srgb,var(--muted) 8%,transparent)}
+.auc .alog div{padding:2px 0}.auc .alog .you{font-weight:700;color:var(--accent,#2e6fd8)}
+.auc .bidders{display:flex;gap:6px;flex-wrap:wrap}
+.auc .alog div.new{animation:aucin .4s ease both}@keyframes aucin{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
+.landstrip{width:100%;height:auto;display:block;border-radius:12px;margin-bottom:10px}
+.landgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.land{border:1px solid var(--line,rgba(0,0,0,.12));border-radius:12px;padding:10px 12px}.land.own{border-color:var(--good);background:color-mix(in srgb,var(--good) 7%,transparent)}
+.land h4{margin:0 0 2px}`;document.head.appendChild(st)})();
+
+/* ================= #6 FUTURITIES AND THE TRIPLE CROWN ================= */
+const SPECIALS=[
+ {id:'futsprint',kind:'fut',n:'Juvenile Sprint Stakes',v:'Bluebonnet Downs',ei:0,s:1,d:4,base:50,spread:7,prize:[8000,4000,2000],rep:[10,6,3],fee:300},
+ {id:'futrein',kind:'fut',n:'Reining Futurity',v:'the Coliseum',ei:7,s:2,d:1,base:50,spread:7,prize:[8000,4000,2000],rep:[10,6,3],fee:300},
+ {id:'futbarrel',kind:'fut',n:'Barrel Futurity',v:'the Coliseum',ei:1,s:2,d:3,base:50,spread:7,prize:[8000,4000,2000],rep:[10,6,3],fee:300},
+ {id:'tc1',kind:'tc',leg:1,n:'Golden Spur Derby',v:'Golden Spur Park',ei:0,w:{spd:.5,sta:.3,agi:.2},s:0,d:2,base:66,spread:5,prize:[12000,6000,3000],rep:[14,8,4],fee:600},
+ {id:'tc2',kind:'tc',leg:2,n:'Silver Bit Stakes',v:'Silver Bit Downs',ei:0,w:{spd:.62,sta:.18,agi:.2},s:0,d:4,base:67,spread:5,prize:[12000,6000,3000],rep:[14,8,4],fee:600},
+ {id:'tc3',kind:'tc',leg:3,n:'Iron Horse Stakes',v:'Iron Horse Park',ei:0,w:{spd:.4,sta:.5,agi:.1},s:1,d:2,base:69,spread:5,prize:[12000,6000,3000],rep:[14,8,4],fee:600}];
+const TC_BONUS=50000;
+function spToday(){const dp=dateParts(S.day);return SPECIALS.filter(x=>x.s===dp.sIdx&&x.d===dp.sday)}
+function dayIn(s,d){for(let k=S.day;k<S.day+DPY+1;k++){const dp=dateParts(k);if(dp.sIdx===s&&dp.sday===d)return k-S.day}return null}
+function nomCost(h){const a=age(h);return a<YEARLING?250:a<ADULT?750:4000}
+function canNominate(h){return !!h&&!h.client&&!h.nom&&age(h)<ADULT+DPY*2&&!rescueLocked(h)&&S.horses.includes(h)}
+function isFutAge(h){const a=age(h);return a>=ADULT&&a<ADULT+DPY}
+function isTcAge(h){const a=age(h);return a>=ADULT+DPY&&a<ADULT+2*DPY}
+function spEligible(h,x){if(!h||!h.nom||h.client)return false;if(x.kind==='fut')return isFutAge(h);const yr=dateParts(S.day).year;if(x.leg>1&&h.tcRun&&h.tcRun.yr===yr)return true;return isTcAge(h)}
+function spEntered(h,x){return !!(h.spIn&&h.spIn[x.id]===dateParts(S.day).year)}
+function spWhyNot(h,x){if(!h)return 'Pick a horse first.';if(!h.nom)return h.name+' isn’t nominated. Nominate foals and yearlings from their papers.';if(!spEligible(h,x))return x.kind==='fut'?'Only two-year-olds can run in futurities.':'Only three-year-olds can run in the Triple Crown.';
+  if(spEntered(h,x))return h.name+' already ran in the '+x.n+' this year.';if(!canCompete(h))return whyNoCompete(h);if(x.kind==='tc'&&!vetClear(h))return 'The Triple Crown needs a vet checkup in the last 8 days.';if(S.money<x.fee)return 'You need '+money(x.fee)+' for the starting fee.';return ''}
+function spEv(x){const ev=EVENTS[x.ei];return x.w?{...ev,w:x.w}:ev}
+function spTier(x){return {n:x.n,base:x.base*(locFx().npc||1),spread:x.spread,prize:x.prize,rep:x.rep,ranch:1}}
+/* each year's crop has a favorite who runs every race of its kind */
+function spFav(x){const yr=dateParts(S.day).year;S.spFav=S.spFav||{};let f=S.spFav[x.kind];if(!f||f.yr!==yr){f=S.spFav[x.kind]={yr,name:randName(),farm:pick(FARMS)}}return {name:f.name,farm:f.farm,q:x.base*(locFx().npc||1)+(x.kind==='tc'?9:6)}}
+function spOdds(h,x){const ev=spEv(x),T=spTier(x),fav=spFav(x);const base=baseScore(h,ev)*compMult(h,ev);let st=((h.id*2654435761)^(SPECIALS.indexOf(x)*7919+S.day*104729))>>>0;const rr=()=>{st=(st+0x6D2B79F5)>>>0;let z=st;z=Math.imul(z^(z>>>15),z|1);z^=z+Math.imul(z^(z>>>7),z|61);return((z^(z>>>14))>>>0)/4294967296};
+  const gs=()=>{let u=0,v=0;while(!u)u=rr();while(!v)v=rr();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};let w=0,t3=0;const N=400;for(let i=0;i<N;i++){const me=base*(.88+rr()*.24);let b=0;for(let j=0;j<6;j++)if(Math.max(5,T.base+gs()*T.spread)>me)b++;if(fav.q+gs()*4>me)b++;if(b===0)w++;if(b<3)t3++}return {win:w/N,top3:t3/N}}
+function spPrize(x,p){return r10(x.prize[p-1]*(locFx().prize||1))}
+function spRun(h,x){const why=spWhyNot(h,x);if(why)return toast(why);
+  if(R()<refuseChance(h))return sulk(h,'load into the trailer for the '+x.n+' (no fee charged)');
+  const ev=spEv(x),yr=dateParts(S.day).year,T=spTier(x);S.money-=x.fee;const shown={money:S.money,rep:S.rep};
+  h.spIn=h.spIn||{};h.spIn[x.id]=yr;if(x.kind==='tc'&&x.leg===1)h.tcRun={yr,w:0};
+  const fav=spFav(x);const field=[{name:h.name,farm:S.ranchName,score:rollScore(h,ev),me:1},{name:fav.name+' (favorite)',farm:fav.farm,score:Math.max(5,fav.q+gauss()*4)}];for(let j=0;j<6;j++)field.push({name:randName(),farm:pick(FARMS),score:Math.max(5,T.base+gauss()*T.spread)});
+  field.sort((a,b)=>b.score-a.score);const place=field.findIndex(f=>f.me)+1;const vti=x.kind==='tc'?T_NAT:3;const wr=checkRecords(EVENTS[x.ei],field,{n:x.n,v:x.v},h,vti);
+  h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts++;h.lastComp=S.day;workDone(h,'ev:'+x.ei);S.weekStarts=(S.weekStarts||0)+1;pxp('show',3);
+  let prize=0,rep=0,bonus=0,awards='';
+  if(place<=3){prize=spPrize(x,place);S.money+=prize;h.earnings=(h.earnings||0)+prize;rep=gainRep(x.rep[place-1]*pskM('show',.06))}
+  if(x.kind==='tc'&&h.tcRun&&h.tcRun.yr===yr){if(place===1)h.tcRun.w++;else h.tcRun.w=-9}
+  if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+6,0,100);h.spWins=h.spWins||[];h.spWins.push(x.id);story(h,'Won the '+x.n+'.');
+    if(x.kind==='fut')unlock('futurity');
+    if(x.kind==='tc'&&x.leg===3&&h.tcRun&&h.tcRun.w===3){h.tc=yr;bonus=TC_BONUS;S.money+=bonus;h.earnings+=bonus;rep+=gainRep(15);story(h,'Won the Triple Crown!');log('good','★★★ '+h.name+' won the TRIPLE CROWN! A bonus of '+money(bonus)+'.');unlock('triplecrown')}}
+  else if(place>=7)h.happy=clamp(h.happy-4,0,100);
+  {const na=newAwards(h);if(na.length){awards=na.map(a=>a.n).join(', ');na.forEach(a=>{log('good',h.name+' earned an award: '+a.n+' ('+a.d+')');story(h,'Earned the '+a.n+' award.')})}}
+  let hurt=false;if(R()<injuryRisk(h,.04)){injure(h);hurt=true}
+  log(place===1?'good':place<=3?'info':'warn',h.name+' placed '+ord(place)+' in the '+x.n+(prize?' and won '+money(prize):'')+'.');
+  const lvl=x.kind==='tc'?'Triple Crown, leg '+x.leg+' of 3 · '+x.v:'Futurity for two-year-olds · '+x.v;
+  const res={type:'result',h:h.id,ev:x.ei,t:vti,pn:x.n,pv:'',lvl,sp:{tv:x.kind==='tc'?['TRIPLE CROWN','#7A1F2B']:['FUTURITY','#2D6A8A'],noEv:x.kind==='tc',sub:x.kind==='tc'?'Triple Crown, leg '+x.leg+' of 3':''},cut:0,ownerFee:0,fee:x.fee,rival:null,owner:'',field:field.map(f=>({...f,score:Math.round(f.score*10)/10})),place,prize:prize+bonus,rep,hurt,drop:null,awards,
+    gift:bonus?'Triple Crown bonus: '+money(bonus)+'!':(x.kind==='tc'&&h.tcRun&&h.tcRun.yr===yr&&h.tcRun.w===x.leg&&x.leg<3?'Still on track for the Triple Crown: '+(3-x.leg)+' leg'+(x.leg===2?'':'s')+' to go.':''),wr};
+  UI.modal=PREF.watch===0?res:{type:'watch',wid:++watchN,res,shown,lock:1};if(PREF.watch===0)resultSound(res);checkAch()}
+function nominate(h){if(!canNominate(h))return toast('Only your own horses under 4 can be nominated.');const c=nomCost(h);if(S.money<c)return toast('You need '+money(c)+'.');S.money-=c;h.nom={d:S.day,c};story(h,'Nominated for the futurities and the Triple Crown ('+money(c)+').');log('info','Nominated '+h.name+' for the futurities and the Triple Crown for '+money(c)+'.');toast(h.name+' is nominated.')}
+
+/* ================= #7 THREE-DAY EVENT ================= */
+const TDE=[
+ {id:'tdenov',n:'Spring Horse Trials',v:'Meadowbrook Park',s:0,d0:1,base:40,spread:6,prize:[3000,1500,750],rep:[6,4,2],fee:200,req:0},
+ {id:'tdegrand',n:'Grand Three-Day Event',v:'Highfield Estate',s:2,d0:1,base:58,spread:6,prize:[15000,7500,3500],rep:[16,10,5],fee:1200,req:60,vet:1}];
+const TDE_PH=[{ei:3,n:'Dressage',v:'the dressage'},{ei:6,n:'Cross-country',v:'the cross-country'},{ei:5,n:'Show jumping',v:'the show jumping'}];
+function tdeToday(){const dp=dateParts(S.day);for(const x of TDE){const p=dp.sday-x.d0;if(dp.sIdx===x.s&&p>=0&&p<=2)return {x,p}}return null}
+function tdeCur(){const t=S.tde;if(!t||t.yr!==dateParts(S.day).year)return null;return t}
+function tdeWhyNot(h,x){if(!h)return 'Pick a horse first.';if(S.rep<x.req)return x.n+' needs '+x.req+' reputation.';if(!canCompete(h))return whyNoCompete(h);if(x.vet&&!vetClear(h))return x.n+' needs a vet checkup in the last 8 days.';if(S.money<x.fee)return 'You need '+money(x.fee)+' for the entry.';return ''}
+function tdePrize(x,p){return r10(x.prize[p-1]*(locFx().prize||1))}
+function tdePhaseScore(h,ph,quiet){const ev=EVENTS[ph.ei];let sc=rollScore(h,ev),note='';
+  if(ph.ei===6){const lv=L('hilltrail');if(lv)sc*=lv>=2?1.05:1.02;let ref=.07*(has(h,'skittish')&&!hasS(h,'steadynerves')?1.6:1)*(h.tr.smt<40?1.3:1)*(isGreen(h)?1.5:1);const w=wxToday();if(!w.off&&w.f==='muddy')ref*=1.3;
+    if(R()<.015*(has(h,'fragile')?1.5:1)){return {sc:0,out:'fell at the water complex. Horse and rider are OK, but they are eliminated',hurt:R()<.5}}
+    if(R()<ref){sc-=10;note='A refusal at the corner fence cost 10 points.'}}
+  if(ph.ei===5&&R()<.2){const r=ri(1,2);sc-=r*3;note=r+' rail'+(r>1?'s':'')+' down ('+r*3+' points).'}
+  return {sc:Math.max(1,sc),note}}
+function tdeEnter(h,x){const why=tdeWhyNot(h,x);if(why)return toast(why);if(R()<refuseChance(h))return sulk(h,'load into the trailer for the '+x.n+' (no entry charged)');S.money-=x.fee;
+  const q=()=>Math.max(8,x.base*(locFx().npc||1)+gauss()*x.spread);S.tde={id:x.id,yr:dateParts(S.day).year,h:h.id,hn:h.name,ph:0,me:[],out:'',npc:Array.from({length:7},()=>({name:randName(),farm:pick(FARMS),q:q(),sc:[],out:''}))};
+  story(h,'Entered the '+x.n+'.');return tdeRun(h,x,false)}
+function tdeStand(t){const rows=[{name:t.hn,farm:S.ranchName,me:1,tot:t.me.reduce((a,b)=>a+b,0),out:t.out},...t.npc.map(n=>({name:n.name,farm:n.farm,tot:n.sc.reduce((a,b)=>a+b,0),out:n.out}))];rows.sort((a,b)=>(a.out?1:0)-(b.out?1:0)||b.tot-a.tot);return rows}
+function tdeRun(h,x,quiet){const t=tdeCur();if(!t||t.out||t.done)return;const p=t.ph,ph=TDE_PH[p];const shown={money:S.money,rep:S.rep};
+  if(!h||h.id!==t.h)return toast('Only '+t.hn+' can ride for your ranch in this event.');
+  if(p===2&&(h.injury||h.health<50)){t.out='withdrawn at the horse inspection';t.done=1;log('warn',h.name+' didn’t pass the horse inspection before the show jumping and was withdrawn from the '+x.n+'.');if(!quiet)toast(h.name+' didn’t pass the horse inspection and was withdrawn.');return}
+  if(!canCompete(h)){t.out='couldn’t start '+ph.v;t.done=1;log('warn',h.name+' couldn’t start '+ph.v+' and is out of the '+x.n+'.');return}
+  const r=tdePhaseScore(h,ph,quiet);h.energy=clamp(h.energy-compEnergy(h),0,100);h.acted=S.day;h.starts+=p===0?1:0;h.lastComp=S.day;workDone(h,'ev:'+ph.ei);if(p===0)S.weekStarts=(S.weekStarts||0)+1;pxp('show',2);
+  const pf=[];if(r.out){t.out=r.out;t.me.push(0)}else t.me.push(Math.round(r.sc*10)/10);
+  for(const n of t.npc){if(n.out){n.sc.push(0);continue}let s=n.q*(.92+R()*.16);if(p===1){if(R()<.02){n.out='eliminated';n.sc.push(0);pf.push({name:n.name,farm:n.farm,score:5});continue}if(R()<.07)s-=10}if(p===2&&R()<.2)s-=3*ri(1,2);s=Math.max(1,Math.round(s*10)/10);n.sc.push(s);pf.push({name:n.name,farm:n.farm,score:s})}
+  pf.push({name:h.name,farm:S.ranchName,score:r.out?3:Math.round(r.sc*10)/10,me:1});pf.sort((a,b)=>b.score-a.score);
+  let hurt=false;if(r.hurt||R()<injuryRisk(h,p===1?.05:.02)){injure(h);hurt=true;if(p<2&&!t.out){t.out='withdrawn after an injury';}}
+  t.ph=p+1;const st=tdeStand(t);const place=st.findIndex(s=>s.me)+1;
+  let prize=0,rep=0,phase='',awards='';
+  if(t.out){t.done=1;phase='Out: '+t.hn+' '+t.out+'.';log('warn',h.name+' '+t.out+' at the '+x.n+'.')}
+  else if(t.ph<3){phase=ord(place)+' after '+ph.v+(r.note?'. '+r.note:'.')+' Come back tomorrow for '+TDE_PH[t.ph].v+'.';log('info',h.name+' is '+ord(place)+' after '+ph.v+' at the '+x.n+'.'+(r.note?' '+r.note:''))}
+  else{t.done=1;t.place=place;if(place<=3){prize=tdePrize(x,place);S.money+=prize;h.earnings=(h.earnings||0)+prize;rep=gainRep(x.rep[place-1]*pskM('show',.06))}
+    if(place===1){h.wins++;S.stats.wins++;h.happy=clamp(h.happy+8,0,100);h.spWins=h.spWins||[];h.spWins.push(x.id);story(h,'Won the '+x.n+'.');unlock('eventing')}
+    {const na=newAwards(h);if(na.length){awards=na.map(a=>a.n).join(', ');na.forEach(a=>{log('good',h.name+' earned an award: '+a.n+' ('+a.d+')');story(h,'Earned the '+a.n+' award.')})}}
+    log(place===1?'good':place<=3?'info':'warn',h.name+' finished '+ord(place)+' overall at the '+x.n+(prize?' and won '+money(prize):'')+'.')}
+  if(quiet)return {place,phase};
+  const res={type:'result',h:h.id,ev:ph.ei,t:x.id==='tdegrand'?T_NAT:2,pn:x.n+' · day '+(p+1),pv:'',lvl:'Three-Day Event, '+ph.n.toLowerCase()+' (day '+(p+1)+' of 3) · '+x.v,sp:{tv:['3-DAY EVENT','#3E6B2F']},
+    phase:t.ph<3||t.out?phase:'',phaseNote:t.ph<3&&!t.out?'Prize money is paid after the show jumping.':'',cut:0,ownerFee:0,fee:p===0?x.fee:null,rival:null,owner:'',field:pf,standings:st.map(s=>({name:s.name,farm:s.farm,score:Math.round(s.tot*10)/10,me:s.me,out:s.out})),place,prize,rep,hurt,drop:null,awards,gift:'',wr:null};
+  UI.modal=PREF.watch===0?res:{type:'watch',wid:++watchN,res,shown,lock:1};if(PREF.watch===0)resultSound(res);checkAch()}
+
+/* ================= #8 WANTED ADS ================= */
+const WANT_COATS=[['Grey',c=>c.grey],['Palomino',c=>/Palomino/.test(c.full)],['Buckskin',c=>/Buckskin/.test(c.full)],['Black',c=>c.born==='Black'&&!c.grey],['Chestnut',c=>c.born==='Chestnut'&&!c.grey],['Tobiano (paint)',c=>c.tob]];
+const WANT_TYPES={draft:'a draft or heavy horse',pony:'a pony or small horse',hot:'a hot-blooded horse (Arabian, Thoroughbred and the like)'};
+function wantMatch(ad,h){const r=ad.req;if(!h||h.client||rescueLocked(h)||!isAdult(h)||h.retired)return false;if(r.sex&&h.sex!==r.sex)return false;if(r.minAge&&age(h)/DPY<r.minAge)return false;if(r.maxAge&&age(h)/DPY>r.maxAge)return false;
+  for(const [k,v] of r.stats)if(h.tr[k]<v)return false;if(r.coat!=null&&!WANT_COATS[r.coat][1](coat(h.genes)))return false;if(r.type&&!evEligible({only:r.type},h))return false;if(r.award&&!awardsOf(h).some(a=>a.id!=='first'&&a.id!=='blue'))return false;return true}
+function wantLines(ad){const r=ad.req,o=[];o.push((r.sex==='F'?'A mare':r.sex==='M'?'A stallion':'A horse')+(r.minAge?', '+r.minAge+' years or older':'')+(r.maxAge?', no older than '+r.maxAge:''));
+  for(const [k,v] of r.stats)o.push(STATS.find(s=>s.k===k).n+' '+v+'+ (trained)');if(r.coat!=null)o.push('Coat: '+WANT_COATS[r.coat][0]);if(r.type)o.push('Must be '+WANT_TYPES[r.type]);if(r.award)o.push('Has won a real award (County Champion or better)');return o}
+function wantGen(){const rep=S.rep,req={stats:[]};const k=pick(STATS).k;const lvl=Math.round(clamp(32+rep*.13+R()*10,32,82));req.stats.push([k,lvl]);let n=1;
+  if(R()<.5){req.sex=R()<.5?'F':'M';n++}if(R()<.4){req.minAge=ri(3,7);n++}else if(R()<.2){req.maxAge=ri(4,6);n++}
+  if(rep>=40&&R()<.45){const k2=pick(STATS.filter(s=>s.k!==k)).k;req.stats.push([k2,Math.round(lvl*.85)]);n++}
+  if(rep>=50&&R()<.35){req.coat=ri(0,WANT_COATS.length-1);n++}else if(rep>=25&&R()<.25){req.type=pick(['draft','pony','hot']);n++}
+  if(rep>=110&&R()<.3){req.award=1;n++}
+  const pay=r10((lvl*lvl*1.25+700)*(1+.22*(n-1))*repSaleMult());const who=pick(STAFF_FN)+' '+pick(STAFF_LN);
+  return {id:(S.wantN=(S.wantN||0)+1),who,farm:pick(FARMS),req,pay,rep:1+Math.min(5,n),until:S.day+ri(10,18)}}
+function wantPay(ad,h){return Math.max(ad.pay,r10(saleValue(h)*1.2))}
+function fillWanted(id,hid){const i=(S.wanted||[]).findIndex(a=>a.id===+id);const ad=S.wanted[i],h=H(hid);if(!ad||!h)return;if(!wantMatch(ad,h))return toast(h.name+' doesn’t fit what '+ad.who+' wants.');const pay=wantPay(ad,h);S.wanted.splice(i,1);sell(h,pay,'wanted ad from '+ad.who);const rep=gainRep(ad.rep);S.stats.wanted=(S.stats.wanted||0)+1;log('good',ad.who+' was thrilled with '+h.name+'. Reputation +'+rep+'.');toast('Sold '+h.name+' to '+ad.who+' for '+money(pay)+'. Reputation +'+rep+'.');unlock('wanted')}
+
+/* ================= #13 LIVE AUCTIONS ================= */
+function aucStart(h){const fb=h.festBought,lv=h.lastVet;h.festBought=S.day;h.lastVet=S.day;const sv=saleValue(h);h.festBought=fb;h.lastVet=lv;return r10(sv*1.02)}
+function aucInc(p){return p<2000?50:p<6000?100:p<15000?250:p<40000?500:1000}
+function aucName(){return pick(STAFF_FN)+' '+pick(STAFF_LN)}
+function aucOpenBuy(i){const F=festState();if(!F||!isSaleFest(F.k))return;const h=F.lots[i];if(!h)return;if(S.horses.length>=S.stalls)return toast('Your barn is full. Upgrade the barn on the Facilities tab.');if(h._auc&&!h._auc.done){UI.modal=h._auc;return}
+  const start=aucStart(h),fair=h.price;const n=2+(avg(h.pot)>60?1:0)+(R()<.5?1:0);const bidders=Array.from({length:n},()=>({n:aucName(),max:r10(Math.max(start,fair)*(.9+R()*.45)),out:0}));
+  UI.modal=h._auc={type:'auction',mode:'buy',lid:h.id,price:start,start,inc:aucInc(start),lead:null,bidders,log:[{t:'Auctioneer: “Lot '+(i+1)+', '+h.name+'. Who’ll start me at '+money(start)+'?”'}],done:0}}
+function aucLot(m){const F=festState();return F&&F.lots.find(x=>x.id===m.lid)}
+function aucPush(m,t,you){m.log.push({t,you});if(m.log.length>40)m.log.shift()}
+function aucBid(m,steps){if(m.done)return;const target=m.lead===null?m.price:m.price+m.inc*steps;if(S.money<target){toast('You don’t have '+money(target)+'.');return false}m.price=target;m.lead='you';aucPush(m,'You bid '+money(target)+'.',1);aucNpc(m);return true}
+function aucNpc(m){for(const b of m.bidders)if(!b.out&&b.max<m.price+m.inc){b.out=1;aucPush(m,b.n+' shakes their head and drops out.')}const left=m.bidders.filter(b=>!b.out);
+  if(!left.length){aucWin(m);return}const b=left.sort((x,y)=>y.max-x.max)[R()<.6?0:Math.floor(R()*left.length)];m.price+=m.inc;m.lead=b.n;aucPush(m,b.n+' bids '+money(m.price)+'.');
+  if(m.price+m.inc>S.money)aucPush(m,'Auctioneer: “Going once…” (you can’t afford the next bid)')}
+function aucWin(m){const h=aucLot(m);m.done=1;if(!h){m.result='The lot is gone.';return}const F=festState();S.money-=m.price;h.price=m.price;delete h._auc;h.acted=0;h.lastCare=S.day;h.stallClean=100;h.festBought=S.day;delete h.sale;S.horses.push(h);F.lots=F.lots.filter(x=>x!==h);F.bought++;
+  const fn=FESTS[F.k].n;if(F.k==='wintersale')unlock('wintersale');unlock('auction');story(h,'Bought at auction at the '+fn+' for '+money(m.price)+'.');log('info','Won '+h.name+' at auction at the '+fn+' for '+money(m.price)+'.');pxp('biz',3);
+  aucPush(m,'Auctioneer: “Going once, going twice… SOLD to '+S.ranchName+' for '+money(m.price)+'!”',1);m.result='You won '+h.name+' for '+money(m.price)+(m.price<=m.start?', the opening price. A bargain!':'.');checkAch();save()}
+function aucDrop(m){if(m.done)return;const h=aucLot(m);const left=m.bidders.filter(b=>!b.out).sort((a,b)=>b.max-a.max);m.done=1;
+  if(!left.length||(m.lead===null&&left[0].max<m.price)){m.result='Nobody bid. '+(h?h.name:'The lot')+' goes back to the seller.';aucPush(m,'Auctioneer: “No bids? We’ll pass on this one.”');if(h){const F=festState();F.lots=F.lots.filter(x=>x!==h)}return}
+  let p=m.lead&&m.lead!=='you'?m.price:Math.max(m.price,m.start);const top=left[0],sec=left[1];if(sec&&sec.max>p)p=Math.min(top.max,sec.max+m.inc);if(m.lead==='you'&&top.max>=p+m.inc)p=Math.min(top.max,p+m.inc);
+  aucPush(m,'You drop out.');if(sec&&sec.max>=m.price)aucPush(m,top.n+' and '+sec.n+' trade bids…');aucPush(m,'Auctioneer: “SOLD to '+top.n+' for '+money(p)+'!”');m.result=(h?h.name:'The lot')+' sold to '+top.n+' for '+money(p)+'.';if(h){const F=festState();F.lots=F.lots.filter(x=>x!==h)}}
+function aucProxy(m,max){if(m.done)return;let guard=0;while(!m.done&&guard++<200){if(m.lead==='you'){aucNpc(m);continue}const next=m.lead===null?m.price:m.price+m.inc;if(next>max||next>S.money)break;aucBid(m,1)}if(!m.done&&m.lead!=='you'){aucPush(m,'Your limit of '+money(max)+' is reached.');aucDrop(m)}}
+/* selling your own horse at auction */
+function canConsign(h){const k=festKey();if(!k||!isSaleFest(k)||!h||h.client||rescueLocked(h)||h.festBought===S.day||h.aucTried===S.day)return false;const f=FESTS[k];return f.sellYoung?isYoung(h):true}
+function aucOpenSell(id,res){const h=H(id);if(!canConsign(h))return toast('That horse can’t go through the ring today.');const base=saleValue(h);const reserve=res?r10(base*res):0;
+  UI.modal={type:'auction',mode:'sell',hid:h.id,base,reserve,resPct:res,price:r10(base*.5),inc:aucInc(base),log:[{t:'Auctioneer: “Next in the ring, from '+S.ranchName+': '+h.name+'!”'}],done:0}}
+function aucRunSell(m){const h=H(m.hid);if(!h||m.done)return;h.aucTried=S.day;const n=3+(avg(h.pot)>65?1:0)+(R()<.4?1:0);const B=Array.from({length:n},()=>({n:aucName(),max:r10(m.base*(.85+R()*.45))}));
+  if(R()<.15){const two=[...B].sort(()=>R()-.5).slice(0,2);for(const b of two){b.max=r10(b.max*1.25);b.love=1}}
+  B.sort((a,b)=>a.max-b.max);const top=B[B.length-1],sec=B[B.length-2];let p=m.price;aucPush(m,'Auctioneer: “Opening at '+money(p)+'. Do I hear more?”');
+  for(const b of B.slice(0,-1)){if(b.max<=p){aucPush(m,b.n+' keeps their paddle down.');continue}p=Math.max(p+m.inc,r10(b.max-m.inc));aucPush(m,b.n+' bids '+money(p)+(b.love?' (they really want this one!)':'')+'.');aucPush(m,b.n+' drops out.')}
+  const hammer=sec&&sec.max>m.price?Math.min(top.max,Math.max(p,sec.max)+m.inc):Math.max(m.price,Math.min(top.max,m.price));m.price=hammer;m.done=1;
+  aucPush(m,top.n+' bids '+money(hammer)+(top.love&&sec&&sec.love?' (a bidding war!)':'')+'.');
+  if(m.reserve&&hammer<m.reserve){aucPush(m,'Auctioneer: “The reserve isn’t met. No sale.”');m.result='No sale: bidding stopped at '+money(hammer)+', under your reserve of '+money(m.reserve)+'. '+h.name+' comes home.';log('info',h.name+' didn’t meet the reserve at auction (top bid '+money(hammer)+').');return}
+  const fee=Math.round(hammer*.05);aucPush(m,'Auctioneer: “SOLD to '+top.n+' for '+money(hammer)+'!”',1);m.result=h.name+' sold for '+money(hammer)+'. After the 5% sale commission you get '+money(hammer-fee)+' (a plain sale today pays about '+money(m.base)+').';
+  sell(h,hammer-fee,'auction at the '+FESTS[festKey()].n);unlock('auction')}
+function aucBody(m){const buy=m.mode==='buy';const h=buy?aucLot(m):H(m.hid);const log=m.log.map((l,i)=>`<div class="${l.you?'you':''}${i===m.log.length-1?' new':''}">${esc(l.t)}</div>`).reverse().join('');
+  const pic=h?`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div class="portrait" style="width:180px;aspect-ratio:200/120;flex:none">${horseSVG(h)}</div><div><b>${esc(h.name)}</b> ${rbadge(rarityOf(h))}<div class="note">${sexLabel(h)} · ${ageLabel(h)} · ${breedLabel(h)} · potential ${Math.round(avg(h.pot))} avg · trained ${Math.round(avg(h.tr))} avg</div>${buy?`<div class="note">Sale-barn price would be about ${money(Math.round(value(h)*repSaleMult()*BAL.marketMarkup))}. It would resell for about ${money(saleValue(h))} after today.</div>`:`<div class="note">${m.reserve?'Your reserve: '+money(m.reserve)+'. Below that it won’t sell.':'No reserve: it sells to the top bid.'} A plain sale today pays about ${money(m.base)}.</div>`}</div></div>`:'';
+  let ctl='';if(m.done)ctl=`<p><b>${esc(m.result||'')}</b></p><div class="actions"><button class="btn primary" data-a="close">Done</button></div>`;
+  else if(buy){const next=m.lead===null?m.price:m.price+m.inc,j=m.price+m.inc*3,cap=r10(saleValue(h||{})*1.0);ctl=`<div class="bidders">${m.bidders.map(b=>`<span class="chip ${b.out?'':'warn'}">${esc(b.n)}${b.out?' · out':''}</span>`).join('')}</div>
+    <div class="actions"><button class="btn primary" data-a="f91bid" data-n="1" ${S.money<next||m.lead==='you'?'disabled':''}>Bid ${money(next)}</button><button class="btn" data-a="f91bid" data-n="3" ${S.money<j||m.lead===null||m.lead==='you'?'disabled':''}>Jump to ${money(j)}</button><button class="btn" data-a="f91proxy" data-v="${Math.min(S.money,Math.max(next,r10(m.start*1.15)))}">Bid up to ${money(Math.min(S.money,Math.max(next,r10(m.start*1.15))))}</button><button class="btn" data-a="f91drop">Drop out</button></div><p class="note">You have ${money(S.money)}. Each bid adds ${money(m.inc)}. ${m.lead==='you'?'You lead.':m.lead?esc(m.lead)+' leads.':'No bids yet.'}</p>`}
+  else ctl=`<div class="actions"><button class="btn primary" data-a="f91sellgo">Start the bidding</button><button class="btn" data-a="close">Not today</button></div><p class="note">The auction house takes 5% of the sale.</p>`;
+  return `<div class="auc">${pic}<div><span class="note">${buy?(m.done?'Final price':'Current bid'):(m.done?'Hammer':'Opening')}</span><div class="bidnow">${money(m.price)}</div></div><div class="alog" id="aucLog">${log}</div>${ctl}</div>`}
+function f91ConsignBox(k){const cands=S.horses.filter(canConsign);if(!cands.length)return '';const sel=UI.aucH&&cands.some(h=>h.id==UI.aucH)?UI.aucH:'';
+  return `<div class="subh">Sell at auction</div><p class="note" style="margin-top:0">Put one of your horses through the ring. Bidders may pay more than a plain sale, or less. Set a reserve so it won’t go too cheap. The house takes 5%.</p><div class="actions"><select data-c="f91auch" aria-label="Horse to auction"><option value="">Choose a horse…</option>${cands.map(h=>`<option value="${h.id}" ${String(sel)===String(h.id)?'selected':''}>${esc(h.name)} · ${sexLabel(h)} · plain sale ${money(saleValue(h))}</option>`).join('')}</select><select data-c="f91aucr" aria-label="Reserve"><option value="0">No reserve</option><option value=".9" ${UI.aucR==='.9'?'selected':''}>Reserve 90%</option><option value="1" ${UI.aucR==='1'||UI.aucR==null?'selected':''}>Reserve 100%</option><option value="1.15" ${UI.aucR==='1.15'?'selected':''}>Reserve 115%</option></select><button class="btn small primary" data-a="f91sell" ${sel?'':'disabled'}>Send to the ring</button></div>`}
+
+/* ================= #12 LAND ================= */
+const LAND=[
+ {id:'meadow',n:'North Meadow',acres:40,c:15000,d:'More pasture: pasture days +2 happiness, the herd eats 5% less hay from spring to fall, and bossy horses get their own paddock (far fewer kicks).',unl:'broodmare'},
+ {id:'creek',n:'Creek Bottom',acres:60,c:35000,d:'Water and rich ground: your hay fields cut 50% more, and droughts only raise hay prices by half.',unl:'barn2'},
+ {id:'ridge',n:'Timber Ridge',acres:80,c:60000,d:'Woods and hills: shade on hot days (no heat penalty overnight) and +1 happiness every summer night.',unl:'hilltrail'},
+ {id:'range',n:'Big Sky Range',acres:160,c:110000,d:'Open range for big herds: livestock earn 15% more.',unl:'showgrounds'}];
+FGROUPS.splice(FGROUPS.findIndex(g=>g[0]==='prestige'),0,['land','Your land (needs the matching parcel)']);
+UPKEEP_RATE.land=.002;
+for(const f of [
+ {id:'broodmare',g:'land',land:'meadow',n:'Broodmare Pasture',lv:[{n:'None',d:'Mares foal in the main barn.'},{n:'Broodmare Pasture',c:8000,d:'Mares in foal and foals +2 happiness every night, hard births 30% less likely, and nursing mares hold their weight better.'}]},
+ {id:'barn2',g:'land',land:'creek',n:'Second Barn',lv:[{n:'None',d:'One barn is all you have.'},{n:'Pole Barn',c:15000,d:'+4 stalls.'},{n:'Second Stable',c:30000,d:'+8 stalls in all.'},{n:'Twin Barns',c:50000,d:'+12 stalls in all.'}]},
+ {id:'hilltrail',g:'land',land:'ridge',n:'Hill Trail',lv:[{n:'None',d:'No hills to climb.'},{n:'Hill Trail',c:12000,d:'Stamina training +10%. +5% in Endurance, Cross-Country and the Desert Ride.'},{n:'Gallops and Water Complex',c:28000,d:'Stamina training +10% and Speed training +5%. +5% in Endurance and the Desert Ride, +10% in Cross-Country, and steadier Three-Day Event cross-country rides.'}]},
+ {id:'showgrounds',g:'land',land:'range',n:'Home Show Grounds',lv:[{n:'None',d:'You show at other people’s grounds.'},{n:'Home Show Grounds',c:60000,d:'Host your own show once a season from the Compete tab: entry fees of about $1,500 plus $12 per reputation point, and +3 reputation.'}]}]){FAC.push(f);FACI[f.id]=f}
+function landCost(x){return Math.round(x.c*(locFx().build||1)/100)*100}
+function barn2Extra(){return [0,4,8,12][L('barn2')]||0}
+function buyLand(id){const x=LAND.find(l=>l.id===id);if(!x||landOwned(id))return;const c=landCost(x);if(S.money<c)return toast('You need '+money(c)+' for the '+x.n+'.');S.money-=c;S.land=S.land||{};S.land[id]=S.day;pxp('biz',5);log('good','You bought the '+x.n+' ('+x.acres+' acres) for '+money(c)+'. '+x.d);toast('The '+x.n+' is yours!');unlock('landowner');if(LAND.every(l=>landOwned(l.id)))unlock('landbaron')}
+function landArt(){const own=id=>landOwned(id);const W=1000,H=150;let o=`<svg class="landstrip" viewBox="0 0 ${W} ${H}" role="img" aria-label="Neighboring land"><defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFDDF0"/><stop offset="1" stop-color="#EAF4F8"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#lsky)"/>`;
+  const grass=(x,w,c)=>`<rect x="${x}" y="70" width="${w}" height="80" fill="${c}"/>`;const fence=(x,w)=>{let f=`<path d="M${x+6} 92 H${x+w-6} M${x+6} 102 H${x+w-6}" stroke="#7A5638" stroke-width="2"/>`;for(let p=x+6;p<=x+w-6;p+=22)f+=`<rect x="${p-1.5}" y="86" width="3" height="22" fill="#6B4A30"/>`;return f};
+  const sign=(x)=>`<g transform="translate(${x} 96)"><rect x="-1.5" y="0" width="3" height="26" fill="#6B4A30"/><rect x="-26" y="-16" width="52" height="18" rx="2" fill="#F4EFE2" stroke="#9A3A2C" stroke-width="1.5"/><text x="0" y="-3.6" text-anchor="middle" font-size="9" font-weight="800" fill="#9A3A2C" font-family="system-ui,sans-serif">FOR SALE</text></g>`;
+  LAND.forEach((x,i)=>{const X=i*250,ok=own(x.id),g=ok?'#8DB45E':'#B9BFA0';o+=grass(X,250,g);
+    if(x.id==='meadow'){for(let k=0;k<18;k++){const fx=X+15+((k*53)%220),fy=112+((k*29)%30);o+=`<circle cx="${fx}" cy="${fy}" r="2.2" fill="${ok?'#FFF6C8':'#E5E2D2'}"/>`}}
+    if(x.id==='creek')o+=`<path d="M${X} 132 C${X+60} 112 ${X+120} 146 ${X+180} 120 S${X+240} 112 ${X+250} 116" stroke="${ok?'#5B92B6':'#A7B4BD'}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
+    if(x.id==='ridge'){o+=`<path d="M${X} 78 Q${X+90} 30 ${X+170} 60 T${X+250} 66 V80 H${X}Z" fill="${ok?'#6F9A4E':'#A9AF94'}"/>`;for(let k=0;k<7;k++){const tx=X+20+k*32,ty=62+(k%3)*6;o+=`<path d="M${tx} ${ty-18} L${tx-9} ${ty+4} H${tx+9}Z" fill="${ok?'#3F6B3A':'#8E9681'}"/>`}}
+    if(x.id==='range'){o+=`<path d="M${X} 72 L${X+50} 44 L${X+90} 64 L${X+140} 36 L${X+200} 62 L${X+250} 50 V72 Z" fill="${ok?'#8FA3B8':'#B5BBC0'}"/>`;for(let k=0;k<5;k++){const cx=X+40+k*42,cy=118+(k%2)*8;o+=`<ellipse cx="${cx}" cy="${cy}" rx="9" ry="5" fill="${ok?'#5A3A26':'#9A938A'}"/><circle cx="${cx+9}" cy="${cy-3}" r="3" fill="${ok?'#5A3A26':'#9A938A'}"/>`}}
+    o+=fence(X,250);if(!ok)o+=sign(X+200);o+=`<text x="${X+12}" y="24" font-size="13" font-weight="700" fill="#2B2A26" font-family="system-ui,sans-serif">${esc(x.n)}</text><text x="${X+12}" y="40" font-size="11" fill="#4B4A45" font-family="system-ui,sans-serif">${x.acres} acres${ok?' · yours':''}</text>`});
+  return o+'</svg>'}
+function f91LandPanel(){return `<div class="section-head" style="margin-top:18px"><h2>Neighboring land</h2><span class="sub">The neighbors are selling. Each parcel brings its own perks and unlocks a new building in the “Your land” group below.</span></div>${landArt()}
+  <div class="landgrid" style="margin-bottom:18px">${LAND.map(x=>{const ok=landOwned(x.id),c=landCost(x),b=FACI[x.unl];return `<div class="land ${ok?'own':''}"><h4>${esc(x.n)}</h4><div class="note">${x.acres} acres${ok?' · bought day '+S.land[x.id]:''}</div><p class="note" style="margin:6px 0">${esc(x.d)} Unlocks: <b>${esc(b.n)}</b>.</p>${ok?'<span class="good">✓ Yours</span>':`<button class="btn small primary" data-a="f91land" data-id="${x.id}" ${S.money<c?'disabled':''}>Buy · ${money(c)}</button>`}</div>`}).join('')}</div>`}
+function landLockedCard(f){const x=LAND.find(l=>l.id===f.land);return `<div class="fac" id="fac-${f.id}"><div class="fac-head"><b>${esc(f.n)}</b></div><div class="fac-cur"><span class="note">Needs the ${esc(x.n)}</span><div class="note" style="font-weight:400">${esc(f.lv[1].d)}</div></div><div class="fac-next"><div class="note">Buy the ${esc(x.n)} under Neighboring land above to build this.</div></div></div>`}
+function hostShow(){if(!L('showgrounds'))return;const dp=dateParts(S.day),k=dp.year*4+dp.sIdx;if(S.hostedSeason===k)return toast('You already hosted a show this season.');S.hostedSeason=k;const amt=r10((1500+S.rep*12)*(locFx().prize||1));S.money+=amt;const rep=gainRep(3);pxp('biz',4);pxp('show',3);log('good','You hosted a show at your Home Show Grounds. Entry fees brought in '+money(amt)+' and reputation +'+rep+'.');toast('Your show brought in '+money(amt)+'. Reputation +'+rep+'.');unlock('host')}
+
+/* ================= hooks used by build 90 code ================= */
+function f91Comp(h,ev){let m=1;const lv=L('hilltrail');if(lv&&ev){if(ev.id==='endur'||ev.id==='desert')m*=1.05;if(ev.id==='xc')m*=lv>=2?1.1:1.05}return m}
+function f91Train(h,k){let g=1;const lv=L('hilltrail');if(lv&&k==='sta')g*=1.1;if(lv>=2&&k==='spd')g*=1.05;return g}
+function f91HappyNight(h,add){if(landOwned('meadow')&&h.pastured===S.day&&!h.solo)add(2,'Room to roam on the North Meadow');if(landOwned('ridge')&&dateParts(S.day).sIdx===1)add(1,'Shade on the Timber Ridge');if(L('broodmare')&&(h.preg||stage(h)==='Foal'))add(2,'The Broodmare Pasture')}
+function f91HayMult(h){return landOwned('meadow')&&dateParts(S.day).sIdx<3?.95:1}
+function f91Evening(ev){const t=tdeCur(),T=tdeToday();if(!t||t.done||t.out||!T||T.x.id!==t.id||T.p!==t.ph)return;const h=H(t.h);if(!h)return;if(h.acted===S.day){t.out='didn’t start '+TDE_PH[t.ph].v;t.done=1;ev.push(['warn',h.name+' was busy with something else and missed '+TDE_PH[T.p].v+' at the '+T.x.n+', so '+(h.sex==='M'?'he':'she')+' is out.']);return}
+  const r=tdeRun(h,T.x,true);if(r)ev.push(['info',h.name+' rode '+TDE_PH[T.p].v+' at the '+T.x.n+' while you were busy: '+(r.phase||ord(r.place)+' overall')+'.'])}
+function f91NewDay(ev){
+  const t=tdeCur();if(t&&!t.done){const T=tdeToday();if(!T||T.x.id!==t.id||T.p>t.ph){t.out=t.out||'didn’t start '+TDE_PH[Math.min(2,t.ph)].v;t.done=1;ev.push(['warn',t.hn+' missed '+TDE_PH[Math.min(2,t.ph)].v+' and is out of the event.'])}}
+  S.wanted=(S.wanted||[]).filter(a=>a.until>=S.day);if(S.rep>=10&&((S.day-1)%7===0||!S.wantInit)){S.wantInit=1;if(S.wanted.length<3){S.wanted.push(wantGen());ev.push(['info','A new wanted ad is up on the Market tab: '+S.wanted[S.wanted.length-1].who+' is looking for a horse.'])}}
+  for(const x of SPECIALS)if(dayIn(x.s,x.d)===1){const n=S.horses.filter(h=>spEligible(h,x)&&!spEntered(h,x)).length;if(n)ev.push(['info','Tomorrow: the '+x.n+(x.kind==='tc'?' (Triple Crown leg '+x.leg+')':'')+'. You have '+n+' eligible horse'+(n>1?'s':'')+'.'+(x.kind==='tc'?' Get a vet checkup today.':'')])}
+  for(const x of TDE)if(dayIn(x.s,x.d0)===1&&S.rep>=x.req)ev.push(['info','The '+x.n+' (a Three-Day Event) starts tomorrow. See the Compete tab.'])}
+
+/* ================= UI panels ================= */
+function f91CompetePanels(){const h=H(UI.compHorse);const dp=dateParts(S.day);let o='';
+  const today=spToday(),T=tdeToday(),t=tdeCur();
+  const spCard=x=>{const isT=today.includes(x),dn=dayIn(x.s,x.d);let body='';if(isT){const el=S.horses.filter(y=>spEligible(y,x)&&!spEntered(y,x));
+      body=el.length?`<div class="actions" style="flex-direction:column;align-items:flex-start">${el.slice(0,5).map(y=>{const why=spWhyNot(y,x);let od='';if(!why){const q=spOdds(y,x);od=` <span class="note ${q.win>.3?'good':q.top3>.3?'warn':'bad'}">Win ${pct(q.win)} · Top 3 ${pct(q.top3)}</span>`}return `<div><button class="btn small primary" data-a="f91sp" data-id="${x.id}" data-h="${y.id}" ${why?'disabled':''}>Run ${esc(y.name)} · ${money(x.fee)}</button>${od}${why?' <span class="note">'+esc(why)+'</span>':''}</div>`}).join('')}</div>`:'<div class="note">None of your horses can run today. Nominate young horses ahead of time.</div>'}
+    else body=`<div class="note">${SEASONS[x.s]} day ${x.d} · in ${dn} day${dn===1?'':'s'}</div>`;
+    return `<div class="spcard ${isT?'today':''}"><h4>${esc(x.n)}</h4><div class="note">${x.kind==='tc'?'Triple Crown leg '+x.leg+' · three-year-olds · a flat race'+' ('+(x.leg===2?'shorter, all speed':x.leg===3?'longer, a test of stamina':'the classic distance')+')':'Futurity · two-year-olds · '+esc(EVENTS[x.ei].n)}</div><div class="note">Purse ${x.prize.map(p=>money(r10(p*(locFx().prize||1)))).join(' / ')}${x.kind==='tc'?' · vet check needed':''}</div>${isT?`<div class="note">The favorite: <b>${esc(spFav(x).name)}</b> of ${esc(spFav(x).farm)}.</div>`:''}${body}</div>`};
+  const noms=S.horses.filter(y=>y.nom),cand=S.horses.filter(canNominate);
+  o+=`<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Futurities and the Triple Crown</div><p class="note" style="margin-top:0">Big races and classes for young horses only. Nominate a horse as a foal (${money(250)}) or yearling (${money(750)}), or pay a late ${money(4000)} up to age 4. Two-year-olds run the futurities; three-year-olds run the Triple Crown. Win all three Triple Crown legs in one year for a <b>${money(TC_BONUS)}</b> bonus.</p>
+   <div class="spgrid">${SPECIALS.map(spCard).join('')}</div>
+   <div class="note" style="margin-top:8px"><b>Nominated:</b> ${noms.length?noms.map(y=>esc(y.name)+' ('+(isFutAge(y)?'2-year-old':isTcAge(y)?'3-year-old':age(y)<ADULT?'growing up':'too old now')+(y.tc?', Triple Crown winner':'')+')').join(', '):'none yet'}.</div>
+   ${cand.length?`<div class="actions" style="margin-top:6px">${cand.slice(0,8).map(y=>`<button class="btn small" data-a="f91nom" data-id="${y.id}" ${S.money<nomCost(y)?'disabled':''}>Nominate ${esc(y.name)} · ${money(nomCost(y))}</button>`).join('')}</div>`:''}</div>`;
+  // three-day events
+  let tb='';if(t){const x=TDE.find(z=>z.id===t.id),st=tdeStand(t),me=st.findIndex(s=>s.me)+1;const tab=`<div class="tablewrap" style="margin-top:6px"><table class="result tdetable"><tr><th>Place</th><th>Horse</th>${TDE_PH.map(p=>`<th class="n">${p.n.split(' ')[0]}</th>`).join('')}<th class="n">Total</th></tr>${st.map((s,i)=>{const sc=s.me?t.me:(t.npc.find(n=>n.name===s.name)||{sc:[]}).sc;return `<tr class="${s.me?'me':''}"><td>${s.out?'—':ord(i+1)}</td><td>${esc(s.name)}</td>${[0,1,2].map(k=>`<td class="n">${sc[k]!=null?(s.out&&!sc[k]?'Out':sc[k].toFixed(1)):''}</td>`).join('')}<td class="n">${s.out?'Out':s.tot.toFixed(1)}</td></tr>`}).join('')}</table></div>`;
+    const hh=H(t.h);const can=T&&T.x.id===t.id&&T.p===t.ph&&!t.done&&!t.out;
+    tb=`<p><b>${esc(t.hn)}</b> at the ${esc(x.n)}: ${t.out?'<b class="bad">out ('+esc(t.out)+')</b>':t.done?'<b class="good">finished '+ord(t.place||me)+'</b>':ord(me)+' after '+TDE_PH[t.ph-1].v}.</p>${can?`<div class="actions"><button class="btn primary small" data-a="f91tde" ${hh&&canCompete(hh)?'':'disabled'}>Ride ${TDE_PH[t.ph].v} today</button><span class="note">${hh&&canCompete(hh)?(t.ph===2?'First the horse inspection, then the show jumping.':'If you forget, '+esc(t.hn)+' rides it automatically tonight, as long as '+(hh.sex==='M'?'he':'she')+' does nothing else today.'):esc(hh?whyNoCompete(hh):'')}</span></div>`:''}${tab}`}
+  else if(T&&T.p===0){const x=T.x;const fieldS=Math.round(x.base*(locFx().npc||1));const cands=S.horses.filter(y=>!y.client&&isAdult(y)&&!y.retired&&!rescueLocked(y)).map(y=>({y,s:Math.round(TDE_PH.reduce((a,p)=>a+baseScore(y,EVENTS[p.ei])*compMult(y,EVENTS[p.ei]),0)/3)})).sort((a,b)=>b.s-a.s).slice(0,4);
+    tb=`<p class="note">The <b>${esc(x.n)}</b> starts today${x.req?' (needs '+x.req+' reputation)':''}. One horse rides all three days: dressage today, cross-country tomorrow, then show jumping. Entry ${money(x.fee)}${x.vet?', vet check needed':''}. Purse ${x.prize.map(p=>money(r10(p*(locFx().prize||1)))).join(' / ')}. The field scores about <b>${fieldS}</b> a phase.</p><div class="actions" style="flex-direction:column;align-items:flex-start">${cands.map(({y,s})=>{const why=tdeWhyNot(y,x);return `<div><button class="btn small primary" data-a="f91tdein" data-id="${x.id}" data-h="${y.id}" ${why?'disabled':''}>Enter ${esc(y.name)}</button> <span class="note ${s>=fieldS*1.05?'good':s>=fieldS*.92?'warn':'bad'}">scores about ${s} a phase</span>${why?' <span class="note">'+esc(why)+'</span>':''}</div>`}).join('')||'<span class="note">No grown horses to enter.</span>'}</div>`}
+  o+=`<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Three-Day Events</div>${tb||`<p class="note" style="margin-top:0">One horse does dressage, then cross-country, then show jumping on three days in a row, and the scores add up. A horse inspection before the jumping checks it is sound. ${TDE.map(x=>`<b>${esc(x.n)}</b>: ${SEASONS[x.s]} days ${x.d0} to ${x.d0+2}${x.req?', '+x.req+' reputation':''}, purse ${money(r10(x.prize[0]*(locFx().prize||1)))} to the winner (starts in ${dayIn(x.s,x.d0)} days)`).join('. ')}.</p>`}</div>`;
+  if(L('showgrounds')){const k=dp.year*4+dp.sIdx;o+=`<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Home Show Grounds</div><div class="actions"><button class="btn small primary" data-a="f91host" ${S.hostedSeason===k?'disabled':''}>${S.hostedSeason===k?'✓ Hosted this season':'Host a show · about '+money(r10((1500+S.rep*12)*(locFx().prize||1)))+' and +3 reputation'}</button><span class="note">Once a season.</span></div></div>`}
+  return o}
+function f91WantedPanel(){const ads=(S.wanted||[]).filter(a=>a.until>=S.day);if(S.rep<10)return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Wanted ads</div><p class="note" style="margin:0">Buyers start posting wanted ads once your reputation reaches 10.</p></div>`;
+  return `<div class="section-head"><h2>Wanted ads</h2><span class="sub">Buyers looking for a particular horse pay well over the going rate. A new ad goes up every week (up to three).</span></div>${ads.length?`<div class="wantgrid">${ads.map(a=>{const m=S.horses.filter(h=>wantMatch(a,h));return `<div class="want"><h4>${esc(a.who)} <span class="note">· ${esc(a.farm)}</span></h4><ul>${wantLines(a).map(l=>`<li>${esc(l)}</li>`).join('')}</ul><div class="note">Pays <b>${money(a.pay)}</b> or more (at least 120% of the horse’s value) · +${a.rep} reputation · until day ${a.until}</div>
+    ${m.length?`<div class="actions">${m.slice(0,4).map(h=>`<button class="btn small primary" data-a="f91want" data-i="${a.id}" data-id="${h.id}">Sell ${esc(h.name)} · ${money(wantPay(a,h))}</button>`).join('')}</div>`:'<div class="note">None of your horses fit yet.</div>'}</div>`}).join('')}</div>`:'<p class="note">No wanted ads right now. A new one goes up with the weekly market.</p>'}`}
+function f91PapersCol(h){let o='';if(canNominate(h)||h.nom||h.tc||(h.spWins||[]).length){o+=`<div class="pcol"><div class="subh">Futurities and the Triple Crown</div>`;
+  if(h.nom)o+=`<div class="note">Nominated (day ${h.nom.d}). ${isFutAge(h)?'Two-year-old: can run the futurities this year.':isTcAge(h)?'Three-year-old: can run the Triple Crown this year.':age(h)<ADULT?'Runs the futurities at 2 and the Triple Crown at 3.':'Too old for these races now.'}${h.tcRun&&h.tcRun.yr===dateParts(S.day).year&&h.tcRun.w>0?' Triple Crown wins this year: '+h.tcRun.w+'/3.':''}</div>`;
+  else if(canNominate(h))o+=`<div class="actions"><button class="btn small" data-a="f91nom" data-id="${h.id}" ${S.money<nomCost(h)?'disabled':''}>Nominate · ${money(nomCost(h))}</button><span class="note">${age(h)<YEARLING?'Foal price.':age(h)<ADULT?'Yearling price.':'Late nomination.'}</span></div>`;
+  if(h.tc)o+=`<div class="good"><b>★ Triple Crown winner (year ${h.tc})</b></div>`;if((h.spWins||[]).length)o+=`<div class="note">Big wins: ${h.spWins.map(id=>esc((SPECIALS.find(x=>x.id===id)||TDE.find(x=>x.id===id)||{n:id}).n)).join(', ')}</div>`;o+='</div>'}return o}
+
+/* ---------- awards, goals, guide ---------- */
+HAWARDS.splice(1,0,{id:'triplecrown',n:'Triple Crown Winner',d:'Won all three legs of the Triple Crown in one year.',t:h=>!!h.tc});
+HAWARDS.splice(HAWARDS.findIndex(a=>a.id==='national'),0,{id:'eventer',n:'Three-Day Event Champion',d:'Won a Three-Day Event.',t:h=>(h.spWins||[]).some(k=>k.startsWith('tde'))},{id:'futurity',n:'Futurity Champion',d:'Won a futurity as a two-year-old.',t:h=>(h.spWins||[]).some(k=>k.startsWith('fut'))});
+ACH.push({id:'futurity',n:'Young Gun',d:'Win a futurity with a two-year-old.'},{id:'triplecrown',n:'Triple Crown',d:'Win all three Triple Crown races with one horse in one year.'},{id:'eventing',n:'Eventer',d:'Win a Three-Day Event.'},{id:'wanted',n:'Made to Order',d:'Sell a horse through a wanted ad.'},{id:'auction',n:'Going, Going, Gone',d:'Win or sell a horse at a live auction.'},{id:'landowner',n:'Landowner',d:'Buy a parcel of neighboring land.'},{id:'landbaron',n:'Land Baron',d:'Own all four neighboring parcels.'},{id:'host',n:'Showman',d:'Host a show at your Home Show Grounds.'});
+GUIDE.splice(Math.max(0,GUIDE.findIndex(g=>g[0]==='Festivals and trouble')),0,
+ ['Futurities and the Triple Crown',['Big-money races and classes for young horses only. A horse must be <b>nominated</b> first: '+money(250)+' as a foal, '+money(750)+' as a yearling, or a late '+money(4000)+' up to age 4. Nominate from the horse’s papers or the Compete tab.','Two-year-olds run the <b>futurities</b>: the Juvenile Sprint Stakes (summer day 4), the Reining Futurity (fall day 1) and the Barrel Futurity (fall day 3).','Three-year-olds run the <b>Triple Crown</b>: the Golden Spur Derby (spring day 2), the Silver Bit Stakes (spring day 4, shorter and all speed) and the Iron Horse Stakes (summer day 2, longer and a test of stamina). Each needs a vet check. Win all three in one year for a '+money(TC_BONUS)+' bonus and the Triple Crown Winner award.']],
+ ['Three-Day Events',['One horse does dressage, then cross-country, then show jumping on three days in a row, and the scores add up. Refusals and rails down cost points, a fall eliminates you, and a horse inspection before the jumping checks the horse is sound.','The Spring Horse Trials (spring days 1 to 3) are open to everyone. The Grand Three-Day Event (fall days 1 to 3) needs 60 reputation and a vet check. If you forget to ride a phase, your horse rides it automatically that night, as long as it did nothing else that day.']],
+ ['Wanted ads and auctions',['Once your reputation reaches 10, buyers post <b>wanted ads</b> on the Market tab for a particular kind of horse: a sex, an age, trained stats, a coat color or a type. Sell a horse that fits for well over its value and a bit of reputation. A new ad goes up every week.','At the Winter Horse Sale and other sale days, the lots go up for <b>live auction</b>: bid against other buyers, jump the bidding, set a limit, or drop out. You might get a bargain, or start a bidding war. You can also send your own horse through the ring, with a reserve price so it won’t go too cheap. The house takes 5%.']],
+ ['Neighboring land',['The neighbors sell four parcels, each pricier than the last: the North Meadow (more pasture, separate paddocks), Creek Bottom (more hay, softer droughts), Timber Ridge (shade and hills) and Big Sky Range (bigger livestock income).','Each parcel unlocks a building in the “Your land” group: a Broodmare Pasture, a Second Barn with up to 12 more stalls, a Hill Trail, and Home Show Grounds where you host your own show once a season.']]);
+
+/* ---------- actions ---------- */
+Object.assign(ACT,{
+  f91sp:d=>{const x=SPECIALS.find(s=>s.id===d.id);const h=H(d.h||UI.compHorse);if(x)spRun(h,x)},
+  f91nom:d=>{const h=H(d.id);if(h)nominate(h)},
+  f91tdein:d=>{const x=TDE.find(s=>s.id===d.id);const h=H(d.h||UI.compHorse);if(x)tdeEnter(h,x)},
+  f91tde:()=>{const t=tdeCur(),T=tdeToday();if(!t||!T)return;tdeRun(H(t.h),T.x,false)},
+  f91want:d=>fillWanted(d.i,d.id),
+  festbuy:d=>aucOpenBuy(+d.i),
+  f91bid:d=>{const m=UI.modal;if(m&&m.type==='auction')aucBid(m,+d.n||1)},
+  f91proxy:d=>{const m=UI.modal;if(m&&m.type==='auction')aucProxy(m,+d.v)},
+  f91drop:d=>{const m=UI.modal;if(!m||m.type!=='auction')return;if(m.lead==='you')aucNpc(m);else aucDrop(m)},
+  f91sell:()=>{if(UI.aucH)aucOpenSell(UI.aucH,+(UI.aucR==null?1:UI.aucR))},
+  f91sellgo:()=>{const m=UI.modal;if(m&&m.type==='auction'&&m.mode==='sell')aucRunSell(m)},
+  f91land:d=>buyLand(d.id),
+  f91host:()=>hostShow(),
+});
+document.addEventListener('change',e=>{const c=e.target.dataset&&e.target.dataset.c;if(c==='f91auch'){UI.aucH=e.target.value;render()}else if(c==='f91aucr'){UI.aucR=e.target.value;render()}});
+function f91Modal(m){if(m.type==='auction'){const h=m.mode==='buy'?aucLot(m):H(m.hid);return {title:(m.mode==='buy'?'Live auction':'Selling at auction')+(h?' · '+h.name:''),body:aucBody(m)}}return null}
+/*F91-END*/
 const TAB_ORDER=['stable','breeding','compete','market','tack','boarding','facilities','bank','staff','office','hof','journal'];
 (()=>{let sx=0,sy=0,st=0,ok=false;
   document.addEventListener('touchstart',e=>{ok=!!(UI.screen==='game'&&!UI.modal&&e.touches.length===1&&e.target.closest('#main')&&!e.target.closest('input,select,textarea,.tablewrap,.slider,[data-noswipe]'));if(!ok)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
