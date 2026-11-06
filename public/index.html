@@ -1392,6 +1392,7 @@ function happyNight(h,ctx){const o=[];const add=(v,t,tag)=>{if(v)o.push([v,t,tag
   if(stallOf(h)<25)add(-3,'Filthy stall');else if(stallOf(h)<50)add(-1,'Dirty stall');
   if(h.retired&&h.retired.voluntary)add(1,'Enjoying retirement');
   add(Math.min(COMFORT_CAP,(sIdx<2?1:0)+[0,0,2,3][L('pasture')]+[0,0,0,1,1,2][L('barn')]+(L('goats')>=2?1:0)+gearSum(h,'happy')),'Comfort: season, barn, pastures, gear');
+  for(const x of f90HappyNight(h,ctx))add(x[0],x[1]);
   if(h.happy>85)add(-Math.round((h.happy-85)*.2*10)/10,'Hard to stay this happy');
   return o}
 function happyForecast(h){const o=happyNight(h,{sIdx:dateParts(S.day).sIdx,fed:S.hay>=1,crowded:S.horses.length>S.stalls});const d=o.reduce((a,x)=>a+x[0],0);return {d,o}}
@@ -1562,8 +1563,16 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='89';
+const BUILD='90';
 const CHANGELOG=[
+ {b:'90',d:'Nov 5, 2026',t:'Life on the ranch',c:[
+  'Feed, weight and hooves: every horse now has a weight (1 to 9, healthy is 4.5 to 6.5). Pick a ration in the papers: Auto (the default) keeps a healthy weight, Rich adds alfalfa, and Performance adds grain for more energy and +2% at events, with a colic risk. Thin or heavy horses score lower. Hooves grow every day, so trim them, call the farrier from the Stable tab, or hire a Farrier. Overgrown hooves slow horses down and can make them lame.',
+  'Weather and footing: every day has weather that fits your region and season, with tomorrow’s forecast. Mud slows speed events (unless your horse is a Mudder), fast ground quickens races but causes more injuries, heat hurts distance horses, and storms spook skittish horses. Rain, snow and cold slow training outside unless you have a covered arena. You can see the weather at live events too.',
+  'Ranch rules: switch feed and weather on or off any time on the Office tab or in Settings.',
+  'Herd life: horses turned out together become pasture buddies and are happier together (and miss each other when apart). The new Herd Boss trait kicks pasture mates; turn those horses out alone from their papers. Goats calm Skittish horses.',
+  'Raising foals: imprint a newborn, give it halter lessons, wean it gently and start it under saddle as a yearling. At 2 years old its upbringing is graded, from Raised right (trains 5% faster for life) to Rough start. Your Trainer helps with idle youngsters.',
+  'Rescue horses: horse rescues sometimes ask you to nurse a neglected horse back to health (see the Boarding tab). Once it recovers, find it a new home for an adoption fee and reputation, or keep it. Some turn out to be hidden gems.',
+  'New natural skills: Herd Boss and Mudder. New Ranch Goals: Best Friends, Raised Right, Open Door, Second Chance and Safe Haven.']},
  {b:'89',d:'Nov 3, 2026',t:'World records at every level',c:[
   'A world record is a world record: records count again at every official show, from Local Shows up to the Olympics. Ranch Shows don’t count, because they aren’t officially timed or judged. If your horse beats a record there, the log tells you.',
   'Mythical gear still comes only from your ranch’s first record in each event (five pieces in all), with a $10,000 bonus after that.']},
@@ -2019,6 +2028,7 @@ function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l]
   <div class="setrow"><div><b>Watch events</b><div class="note">Play the race or show before the results.</div></div>${seg('watch',[[1,'Watch'],[0,'Skip']])}</div>
   <div class="setrow"><div><b>Event speed</b><div class="note">How fast events play when you watch.</div></div>${seg('speed',[[1,'1×'],[2,'2×'],[4,'4×']])}</div>
   <div class="setrow"><div><b>Saving</b><div class="note">${S?saveStatus():(()=>{try{localStorage.setItem(KEY+'-t','1');localStorage.removeItem(KEY+'-t');return '<span class="good">✓ This browser can save games.</span>'}catch(e){return '<span class="bad">⚠ This browser is blocking saves.</span> Use save files instead.'}})()}</div></div></div>
+  ${S&&S.phase==='play'?f90RulesRows():''}
   <div class="setrow"><div><b>Erase everything</b><div class="note">Deletes your autosave and all 3 slots in this browser. Save files and codes you kept are safe.</div></div><button class="btn small" data-a="wipeall">Erase all saves</button></div>`}
 /* ---------- start screen ---------- */
 let TITLE_ANIM=null;
@@ -2155,7 +2165,7 @@ function genHorse({sex,ageDays,potMid=45,potSpread=9,trFrac=[.3,.6],nTraits,orig
   const n=nTraits??(R()<.25?0:R()<.7?1:2);
   let guard=0;while(h.traits.length<n&&guard++<30)addTrait(h.traits,randTrait());
   if(has(h,'longlived'))h.life+=6*DPY;
-  if(R()<SHINY_P)makeShiny(h);
+  if(R()<SHINY_P)makeShiny(h);f90GenRaise(h);
   register(h);return h;
 }
 // ---- Inbreeding: Wright's coefficient from the registry ----
@@ -2197,7 +2207,7 @@ function breedFoal(sire,dam){
   h.life=ri(24,30)*DPY+(has(h,'longlived')?6*DPY:0)+Math.round(8*starBlood(h))*DPY-ib.lifeYrs*DPY;if(ib.bad)h.health=Math.round(100-ib.f*80);
   const r=R();h.name=r<.3?sire.name.split(' ')[0]+' '+pick(N2):r<.6?dam.name.split(' ')[0]+' '+pick(N2):randName();
   {const n=(sire.shiny?1:0)+(dam.shiny?1:0);if(R()<[1/200,1/40,1/12][n])makeShiny(h)}
-  register(h);return h;
+  f90NewFoal(h);register(h);return h;
 }
 
 function value(h){
@@ -2207,10 +2217,10 @@ function value(h){
   v*=RARITY[rarityOf(h)].m;if(h.shiny)v*=1.6;
   const st=stage(h);v*=st==='Foal'?.55:st==='Yearling'?.75:st==='Senior'?.45:1;
   if(h.injury)v*=[.95,.85,.7,.55][h.inj?SEV.indexOf(COND[h.inj.id].sev):1];if(h.retired)v*=h.retired.voluntary?.85:.6;if(h.preg)v+=350;
-  if(h.happy!=null)v*=happyValueMult(h);
+  if(h.happy!=null)v*=happyValueMult(h);v*=f90Value(h);
   return Math.max(100,Math.round(v/10)*10);
 }
-function hayNeed(h){let n=stage(h)==='Foal'?.5:1;if(has(h,'easykeeper'))n*=.7;if(has(h,'hardkeeper'))n*=1.4;const s=dateParts(S.day).sIdx;n*=s===3?1.3*(locFx().winter||1):s===1?.75:1;if(h.pastured===S.day&&s<2)n*=.5;return n}
+function hayNeed(h){let n=stage(h)==='Foal'?.5:1;if(has(h,'easykeeper'))n*=.7;if(has(h,'hardkeeper'))n*=1.4;const s=dateParts(S.day).sIdx;n*=s===3?1.3*(locFx().winter||1):s===1?.75:1;if(h.pastured===S.day&&s<2)n*=.5;return n*f90HayMult(h)}
 function horseHay(){return S.horses.reduce((a,h)=>a+hayNeed(h),0)}
 function herdHay(){return Math.round((horseHay()+stockHay())*[1,.9,.8][L('feedbarn')]*10)/10}
 function H(id){return S.horses.find(h=>h.id===+id)}
@@ -2289,7 +2299,7 @@ function migrate(s){if(s&&s.fence==null)s.fence=85;for(const h of (s.horses||[])
   for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[]),...(s.away||[]).map(a=>a.h),...(s.memorial||[]).map(m=>m.full)])fix(h);for(const r of (s.boardReq||[]))fix(r.h)}if(s.lastRepGain==null)s.lastRepGain=s.day||1;if(s.rep>300)s.rep=300;if(!s.staffDepth1){s.staffDepth1=1;for(const x of STAFF){const p=s.staff&&s.staff[x.id];if(p&&typeof p==='object'){if(!p.spec&&SPECS[x.id])p.spec=pick(Object.keys(SPECS[x.id]));if(!p.bg){p.bg=pick(BACKGROUNDS);p.yrs=ri(2,5)+p.skill*3}}}if(s.applicants)for(const k in s.applicants)for(const a of s.applicants[k])if(!a.spec&&SPECS[k]){a.spec=pick(Object.keys(SPECS[k]));a.bg=pick(BACKGROUNDS);a.yrs=ri(2,5)+a.skill*3}}if(s.autoVet==null)s.autoVet=1;if(!s.away)s.away=[];if(!s.boardReq)s.boardReq=[];if(s.boardNext==null)s.boardNext=(s.day||1)+1;if(!s.coiFix&&s.registry){s.coiFix=1;const sv=S;S=s;try{for(const h of (s.horses||[]))if(h.coi==null&&h.sire!=null&&h.dam!=null)h.coi=Math.round(coiOf(h.sire,h.dam)*10000)/10000}catch(e){}S=sv}for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[])]){if(h&&!h.blood)h.blood={...bloodOf(h)}}for(const h of (s.horses||[])){const r=(s.registry||{})[h.id];if(r&&!r.blood)r.blood={...h.blood}}if(s.weekStarts==null)s.weekStarts=0;if(!s.invites)s.invites=[];if(!s.memorial)s.memorial=[];for(const h of (s.horses||[]))if(h.injury&&!h.inj)h.inj={id:'pulled',days:h.injury,total:h.injury,risk:0,retire:0,treated:[],since:s.day||1};if(!s.hayFix1){s.hayFix1=1;if((s.day||1)>1){s.hay=(s.hay||0)+150;(s.log=s.log||[]).unshift({d:s.day,k:'good',t:'Hay refund: a bug was emptying your hay loft every night. It is fixed, and 150 bales have been added back.'})}}{const old=s.staff||{};const ns={};for(const x of STAFF){const v=old[x.id];ns[x.id]=v&&typeof v==='object'?v:v?{name:pick(STAFF_FN)+' '+pick(STAFF_LN),skill:2,xp:0,happy:65,hired:s.day||1,trait:'Quiet'}:null}s.staff=ns}
   if(!s.applicants)refreshApplicants(s);if(s.applicants&&!s.applicants.groom2)s.applicants.groom2=[genPerson(s,'groom2'),genPerson(s,'groom2'),genPerson(s,'groom2')];if(s.stallClean!=null){for(const h of (s.horses||[]))if(h.stallClean==null)h.stallClean=s.stallClean;delete s.stallClean}if(s.stockCare==null)s.stockCare=100;if(!s.choresToday){s.choresToday=[];s.choreDay=0}
   if(!s.fac){s.fac={};const u=s.upgrades||{};if(u.roundpen)s.fac.training=1;if(u.hotwalker)s.fac.recovery=1;if(u.paddock)s.fac.pasture=2;if(u.meadow)s.fac.hayfield=1;if(u.arena)s.fac.ring=1;let b=0;for(let i=0;i<STALLS.length;i++)if(STALLS[i]<=(s.stalls||6))b=i;s.fac.barn=b}
-  for(const h of (s.horses||[])){if(!h.ribbons)h.ribbons=[];if(!h.awardsSeen)h.awardsSeen=[]}if(!s.studReq)s.studReq=[];for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[])]){if(!h.breed){h.breed='grade';h.cross=false}if(!h.skills)h.skills=[];if(h.lastCare==null)h.lastCare=s.day||1}if(!s.inv)s.inv=[];if(!s.nextItem)s.nextItem=1;if(!s.shop)refreshShop(s);s.staff=Object.assign({groom:0,feed:0,trainer:0,vet:0,farrier:0},s.staff||{});if(s.feedDays==null)s.feedDays=5;if(s.autoTrain==null)s.autoTrain=1;s.upgrades=s.upgrades||{};if(s.playerActed==null)s.playerActed=0;return s}
+  for(const h of (s.horses||[])){if(!h.ribbons)h.ribbons=[];if(!h.awardsSeen)h.awardsSeen=[]}if(!s.studReq)s.studReq=[];for(const h of [...(s.horses||[]),...(s.market||[]),...(s.studs||[])]){if(!h.breed){h.breed='grade';h.cross=false}if(!h.skills)h.skills=[];if(h.lastCare==null)h.lastCare=s.day||1}if(!s.inv)s.inv=[];if(!s.nextItem)s.nextItem=1;if(!s.shop)refreshShop(s);s.staff=Object.assign({groom:0,feed:0,trainer:0,vet:0,farrier:0},s.staff||{});if(s.feedDays==null)s.feedDays=5;if(s.autoTrain==null)s.autoTrain=1;s.upgrades=s.upgrades||{};if(s.playerActed==null)s.playerActed=0;f90Migrate(s);return s}
 function log(kind,text){S.log.unshift({d:S.day,k:kind,t:text});if(S.log.length>250)S.log.length=250}
 
 /* ---------- achievements ---------- */
@@ -2364,10 +2374,10 @@ function trainGain(h,k){
   if(TRAIN_BOOST[k]&&has(h,TRAIN_BOOST[k]))g*=1.4;
   if(has(h,'clever'))g*=1.2;if(has(h,'lazy'))g*=.75;if(has(h,'stubborn'))g*=.9;
   if(stage(h)==='Yearling')g*=.5;if(L('arena'))g*=1.1;
-  if(S.staff.trainer)g*=(1.08+.04*sk('trainer'))*(specOf('trainer')===k?1.15:1);g*=1+h.bond/400;if(hasS(h,'quickstudy'))g*=1.15;g*=1+gearSum(h,'train')/100;g*=[1,1.1,1.18,1.28][L('training')]*(L('ring')>=2?1.05:1);if(k==='spd')g*=1+[0,.1,.2,.3][L('track')];if(k==='sta')g*=1+[0,.08,.15][L('trails')];
+  if(S.staff.trainer)g*=(1.08+.04*sk('trainer'))*(specOf('trainer')===k?1.15:1);g*=1+h.bond/400;if(hasS(h,'quickstudy'))g*=1.15;g*=1+gearSum(h,'train')/100;g*=[1,1.1,1.18,1.28][L('training')]*(L('ring')>=2?1.05:1);if(k==='spd')g*=1+[0,.1,.2,.3][L('track')];if(k==='sta')g*=1+[0,.08,.15][L('trails')];g*=f90Train(h,k);
   return g;
 }
-function injuryRisk(h,base){let r=base*(locFx().injS?locFx().injS[dateParts(S.day).sIdx]:1);if(fenceSafe())r*=.85;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r}
+function injuryRisk(h,base){let r=base*(locFx().injS?locFx().injS[dateParts(S.day).sIdx]:1);if(fenceSafe())r*=.85;if(has(h,'fragile'))r*=1.8;if(has(h,'ironhooves'))r*=.4;if(has(h,'hotblood'))r*=1.5;if(h.energy<35)r*=1.5;if(S.staff.farrier)r*=(.85-.05*sk('farrier'))*(specOf('farrier')==='corrective'?.92:1);r*=gearInj(h);if(hasS(h,'surefooted'))r*=.75;if(L('recovery')>=3)r*=.9;if(h.breed==='mustang')r*=.85;r*=1-.25*starBlood(h);if(h.vigor)r*=.85;r*=smtInj(h);if(h.vetSound===seasonIdx())r*=.85;return r*f90Inj(h)}
 const SEV=['minor','moderate','serious','severe'];
 const SEVN={minor:'Minor',moderate:'Moderate',serious:'Serious',severe:'Severe'};
 const COND={
@@ -2569,7 +2579,7 @@ function remember(h,kind,reason){if(h.client){if(kind==='died'){loseRep(8,'A cli
 function hofReasons(r){const o=[];if(r.awards.includes('Hall of Fame'))o.push('Hall of Fame award');else{if(r.awards.includes('Olympic Champion'))o.push('Olympic Champion');if(r.awards.includes('Invitational Champion'))o.push('Invitational Champion');if(r.awards.includes('International Champion'))o.push('International Champion');if(r.awards.includes('National Champion'))o.push('National Champion')}
   if(r.wins>=10)o.push(r.wins+' career wins');if(r.earnings>=50000)o.push(money(r.earnings)+' earned');if(r.foals>=6)o.push('Foundation '+(r.sex==='M'?'sire':'dam')+' ('+r.foals+' foals)');
   if(r.gen>0&&r.bestPot>=85)o.push('Exceptional bloodline (potential '+r.bestPot+')');return o}
-function sell(h,amt,why){if(!h.client){S.soldBack=S.soldBack||[];const c=JSON.parse(JSON.stringify(h));S.soldBack.unshift({h:c,price:Math.round(amt*1.15/10)*10,until:S.day+7});if(S.soldBack.length>10)S.soldBack.length=10}remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
+function sell(h,amt,why){if(rescueLocked(h))return toast(h.name+' is a rescue in rehab and can’t be sold.');if(!h.client){S.soldBack=S.soldBack||[];const c=JSON.parse(JSON.stringify(h));S.soldBack.unshift({h:c,price:Math.round(amt*1.15/10)*10,until:S.day+7});if(S.soldBack.length>10)S.soldBack.length=10}remember(h,'sold','Sold for '+money(amt)+(why?' ('+why+')':''));
   S.money+=amt;pxp('biz',6);freeGear(h.id);S.studReq=S.studReq.filter(r=>r.id!==h.id);S.horses=S.horses.filter(x=>x.id!==h.id);S.offers=S.offers.filter(o=>o.id!==h.id);
   log('info','Sold '+h.name+' for '+money(amt)+(why?' ('+why+')':'')+'.');toast('Sold '+h.name+' for '+money(amt)+'.');
   if(UI.modal&&UI.modal.id===h.id)UI.modal=null;
@@ -2672,7 +2682,7 @@ function compMult(h,ev){
   if(ev.id==='dress'){if(has(h,'showstopper'))m*=1.12;if(has(h,'calm'))m*=1.06;m*=[1,1,1.03,1.05][L('ring')]}
   if(ev.id==='race'||ev.id==='barrel')m*=[1,1.04,1.08,1.12][L('track')];if(ev.id==='endur'||ev.id==='xc')m*=1+[0,.05,.1][L('trails')];if(ev.id==='jump'||ev.id==='rein')m*=[1,1,1.03,1.05][L('ring')];
   m*=1+(gearSum(h,'comp')+gearEv(h,ev.id))/100;
-  m*=locEvMult(ev);
+  m*=locEvMult(ev);m*=f90Comp(h,ev);
   return m;
 }
 function baseScore(h,ev){let s=0;for(const k in ev.w)s+=ev.w[k]*h.tr[k];return s}
@@ -2686,9 +2696,9 @@ function odds(h,ev,t){const pl=[0,0,0];const N=500;
 function ranchInvPanel(h,ok){const L0=(S.ranchInv||[]).filter(v=>v.until>=S.day);if(!L0.length)return '';const elig=S.horses.filter(canCompete);
   return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Ranch show invitations</div><p class="note">Other ranches invite you to their own shows. No entry fee. Pick a horse to send.</p>${L0.map(v=>{const ev=EVENTS[v.ei];const sel=UI['rinv'+v.id]||'';return `<div class="staff"><div class="grow"><b>${esc(v.who)} Ranch ${esc(ev.n)}</b><div class="note">Purse ${v.prize.map(p=>money(r10(p*(ev.purse||1)))).join(' / ')} · field strength about ${Math.round(v.base)} · good through day ${v.until}</div></div><select data-c="rinvsel" data-v="${v.id}" aria-label="Horse to send"><option value="">Pick a horse…</option>${elig.map(x=>`<option value="${x.id}" ${String(sel)===String(x.id)?'selected':''}>${esc(x.name)} (${ev.n.split(' ')[0]} ${Math.round(baseScore(x,ev))})</option>`).join('')}</select><button class="btn small primary" data-a="rinvgo" data-v="${v.id}" ${sel?'':'disabled'}>Send</button></div>`}).join('')}</div>`}
 /* build 88: say the real reason a horse can't go to a show */
-function whyNoCompete(h){const n=h.name;if(h.retired)return n+' is retired.';if(h.preg)return n+' is in foal and can’t compete until after the birth.';if(!isAdult(h))return n+' is too young to compete. Horses show from age 2.';if(h.injury)return n+' is hurt and needs to heal first.';
+function whyNoCompete(h){const n=h.name;if(rescueLocked(h))return f90WhyNo(h);if(h.retired)return n+' is retired.';if(h.preg)return n+' is in foal and can’t compete until after the birth.';if(!isAdult(h))return n+' is too young to compete. Horses show from age 2.';if(h.injury)return n+' is hurt and needs to heal first.';
   if(h.acted===S.day)return n+' already worked today. Try again tomorrow.';if(h.energy<compEnergy(h))return n+' is too tired. They need '+compEnergy(h)+' energy (they have '+Math.round(h.energy)+').';if(h.health<50)return n+' isn’t well enough. They need 50 health (they have '+Math.round(h.health)+').';return n+' can’t compete today.'}
-function canCompete(h){return h&&!trainerHeld(h)&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
+function canCompete(h){return h&&!rescueLocked(h)&&!trainerHeld(h)&&!h.retired&&!h.preg&&isAdult(h)&&canWork(h)&&h.energy>=compEnergy(h)&&h.health>=50}
 function compete(h,ei,ti){
   const ev=EVENTS[ei],t=TIERS[ti];if(trainerHeld(h))return toast(h.name+' is reserved for the trainer. Tap the Reserved chip on the card to free them up.');
   if(!canCompete(h))return toast(h?whyNoCompete(h):'Pick a horse first.');
@@ -2733,13 +2743,13 @@ function compete(h,ei,ti){
 }
 
 /* ---------- breeding ---------- */
-function eligibleMares(){return S.horses.filter(h=>!h.client&&h.sex==='F'&&isAdult(h)&&!h.preg&&!h.injury&&h.acted!==S.day)}
-function eligibleSires(){return S.horses.filter(h=>!h.client&&h.sex==='M'&&isAdult(h)&&!h.injury&&h.acted!==S.day)}
+function eligibleMares(){return S.horses.filter(h=>!h.client&&!rescueLocked(h)&&h.sex==='F'&&isAdult(h)&&!h.preg&&!h.injury&&h.acted!==S.day)}
+function eligibleSires(){return S.horses.filter(h=>!h.client&&!rescueLocked(h)&&h.sex==='M'&&isAdult(h)&&!h.injury&&h.acted!==S.day)}
 function isRetry(s){return !!(S.studRetry&&S.studRetry.stud===s.id)}
 function studPrice(s){return isRetry(s)?Math.round(s.fee/2/10)*10:s.fee}
 function feeLabel(s){return isRetry(s)?money(studPrice(s))+' (half-price retry, normally '+money(s.fee)+')':money(s.fee)}
 function resolveSire(v){if(!v)return null;const[t,id]=v.split(':');if(t==='h')return {h:H(id),fee:0};const s=S.studs.find(x=>x.id===+id);return s?{h:s,fee:studPrice(s),stud:1,retry:isRetry(s)}:null}
-function conception(m,s){let c=.65*fertOf(m)*(1+(fertOf(s)-1)*.5)+(specOf('vet')==='repro'?.08:0);if(has(m,'fertile'))c+=.2;if(has(s,'fertile'))c+=.1;if(has(m,'shybreeder'))c-=.3;if(has(s,'shybreeder'))c-=.3;c*=.6+.4*m.health/100;c*=.8+.4*m.happy/100;if(age(m)>=20*DPY)c-=.25;c+=[0,.08,.15][L('foaling')];return clamp(c,.05,.95)}
+function conception(m,s){let c=.65*fertOf(m)*(1+(fertOf(s)-1)*.5)+(specOf('vet')==='repro'?.08:0);if(has(m,'fertile'))c+=.2;if(has(s,'fertile'))c+=.1;if(has(m,'shybreeder'))c-=.3;if(has(s,'shybreeder'))c-=.3;c*=.6+.4*m.health/100;c*=.8+.4*m.happy/100;if(age(m)>=20*DPY)c-=.25;c+=[0,.08,.15][L('foaling')];c*=f90Fert(m);return clamp(c,.05,.95)}
 function pregnancies(){return S.horses.filter(h=>h.preg).length}
 function breed(){
   const m=H(UI.breedMare),sr=resolveSire(UI.breedSire);
@@ -2845,6 +2855,7 @@ function renderBoarding(){
    <p class="note" style="flex:1 1 260px;margin:0">Horses away don’t use a stall, hay or your time, and can’t compete or breed. If your barn is full when one is due home, the center keeps it for a fee that rises every night. Pregnant, injured, retired horses and foals can’t go.</p></div>
   <div class="ctrgrid">${centers}</div>
   <div class="panel" style="margin-top:12px"><div class="subh" style="margin-top:0">Away now (${S.away.length})</div>${away||'<p class="note">None of your horses are away.</p>'}</div>
+  ${f90RescuePanel()}
   <div class="subh" style="margin-top:22px">Board other owners’ horses</div>
   <div class="panel"><p style="margin-top:0">Your boarding rate is about <b>${money(boardRate())}/day</b>. It rises with reputation (${S.rep}) and facilities (barn, training areas, ring, track, pasture, clinic, trails). You can take up to <b>${clientSlots()}</b> new request${clientSlots()===1?'':'s'} at a time${S.rep<10?'. Owners need to see 10+ reputation before they trust you':''}. New requests arrive every season.</p>
    <p class="note">Client horses live in your barn: they use a stall and hay and need grooming like your own. Meet the owner’s goals for a bonus and reputation. Neglect them and your reputation suffers. You can train, groom and even show them, but not sell or breed them.</p></div>
@@ -3073,7 +3084,7 @@ function whatsNewBody(){return `<p>Welcome back to ${esc(S.ranchName)}! A few bi
 
 /* ---------- end of day ---------- */
 function endDay(){
-  const ev=[];
+  const ev=[];f90Evening(ev);
   if(S.staff.trainer&&S.autoTrain&&S.horses.length){const p=S.staff.trainer,cap=trainerCap(p.skill),pr={high:0,normal:1,low:2};
     const cands=S.horses.filter(h=>trainerEligible(h)&&tpri(h)!=='off').sort((a,b)=>((b.tres?1:0)-(a.tres?1:0))||(pr[tpri(a)]-pr[tpri(b)]));const done=[];let tired=0,waiting=0;
     let gave=0;for(const h of cands){if(h.energy<25){h.trainerRest=S.day;tired++;continue}if(p.skill>=3&&h.energy<soreLine(h)+15&&!has(h,'workaholic')){h.trainerRest=S.day;gave++;continue}if(done.length>=cap){waiting++;continue}done.push(trainerSession(h,p))}
@@ -3120,6 +3131,7 @@ function endDay(){
     if(h.health<=0){gone.push(h);remember(h,'died','Died from neglect at '+(age(h)/DPY).toFixed(0)+' years old');ev.push(['bad',h.name+' died from neglect. Keep hay stocked and visit the vet.']);loseRep(10,'A horse dying from poor care is a serious blow.',ev)}
     else if(age(h)+1>=h.life){gone.push(h);remember(h,'died','Passed away peacefully at '+((age(h)+1)/DPY).toFixed(0)+' years old');ev.push(['info',h.name+' passed away peacefully at '+((age(h)+1)/DPY).toFixed(0)+' years old. Remembered in the Hall of Fame.'])}
   }
+  f90Night(ev,fed);
   for(const h of S.horses){if(h.inj&&COND[h.inj.id].contagious&&!h.inj.isolated){for(const o of S.horses){if(o!==h&&!o.inj&&R()<(vaccinated(o)?.075:.15)){afflict(o,'strangles');ev.push(['bad',o.name+' caught strangles from '+h.name+'. Isolate sick horses to stop the spread.'])}}}}
   {const f=dirtyStalls(25),d=dirtyStalls(50)-f;if(f){ev.push(['bad',f+' stall'+(f>1?'s are':' is')+' filthy. Those horses lost happiness and health. Muck out!']);loseRep(1,'Visitors noticed the filthy stalls.',ev)}if(d)ev.push(['warn',d+' stall'+(d>1?'s are':' is')+' getting dirty. Those horses are a little unhappy.'])}
   for(const h of S.horses)h.stallClean=clamp(stallOf(h)-stallDirt(h),0,100);
@@ -3136,7 +3148,7 @@ function endDay(){
   S.horses=S.horses.filter(h=>!gone.includes(h));
   awayNight(ev);clientNight(ev);
   S.day++;
-  const dp=dateParts(S.day);
+  const dp=dateParts(S.day);f90NewDay(ev);
   if(dp.sday===1&&S.phase==='play'){const tx=propTax();if(tx){if(S.money>=tx){S.money-=tx;ev.push(['info','Seasonal property tax on your buildings: '+money(tx)+'.'])}else{const paid=Math.max(0,Math.floor(S.money));S.money=0;ev.push(['bad','You couldn’t cover the property tax ('+money(tx)+'). You paid '+money(paid)+' and the county is grumbling.']);loseRep(2,'Unpaid taxes got noticed.',ev)}}bankSeason(ev)}
   if(dp.sday===1){if(S.rep>40&&S.day-(S.lastRepGain||0)>8){const f=Math.max(1,Math.round((S.rep-40)*.04));loseRep(f,'You haven’t been in the news for a while, so your name is fading. Place at events or host something to stay known.',ev)}autoVetRound(ev);if(specOf('feed')==='network'){gainRep(1);ev.push(['good',S.staff.feed.name+' (Ranch Manager) spread the word about your ranch. Reputation +1.'])}}
   const born=[];
@@ -3157,7 +3169,7 @@ function endDay(){
   for(const h of S.horses){const hb=!h.client&&h.origin==='Bred on your ranch';if(stage(h)==='Yearling'&&age(h)===YEARLING){ev.push(['info',h.name+' is a yearling now and can start light training.']);if(hb)pxp('eye',4)}
     if(age(h)===ADULT){ev.push(['info',h.name+' is grown up! Ready to compete and breed.']);if(hb)pxp('eye',6)}}
   // random events
-  const adults=S.horses.filter(h=>isAdult(h)&&!h.client);
+  const adults=S.horses.filter(h=>isAdult(h)&&!h.client&&!rescueLocked(h));
   if(adults.length&&R()<.14){const h=pick(adults);if(!S.offers.some(o=>o.id===h.id)){const amt=Math.round(saleValue(h)*(1.15+R()*.4)*houseMult()/10)*10;S.offers.push({id:h.id,amt,exp:S.day+2,who:pick(FARMS)});ev.push(['info','A buyer from '+S.offers[S.offers.length-1].who+' offered '+money(amt)+' for '+h.name+'. See the Stable tab.'])}}
   if(S.horses.length&&R()<.04*(locFx().illS?locFx().illS[dateParts(S.day).sIdx]:1)*(specOf('vet')==='med'?.7:1)*[1,1,.5,.25][L('clinic')]*(dirtyStalls(25)?2:1)){const dh=S.horses.filter(x=>stallOf(x)<25&&!x.inj);const ok=S.horses.filter(x=>!x.inj);if(ok.length){const h=dh.length&&R()<.7?pick(dh):pick(ok);if(vaccinated(h)&&R()<.5)ev.push(['good',h.name+' fought off a bug going around. The vaccine from the last checkup helped.']);else if(!h.brew&&R()<.6)h.brew={id:illPick(),at:S.day+ri(1,3)};else ev.push(['warn',sicken(h)])}}
   if(R()<.03){S.hay+=10;ev.push(['good','A neighbor dropped off 10 spare bales of hay.'])}
@@ -3180,7 +3192,7 @@ function endDay(){
       x.st='born';x.bd=S.day;x.sex=R()<.5?'M':'F';x.coat=coat(g).full;x.foal=h.name.split(' ')[0]+' '+pick(N2);x.pa=Math.round(clamp(avg(h.pot)*.5+40*.5+gauss()*5,15,95));h.studFoals=(h.studFoals||0)+1;ev.push(['good',x.farm+' Ranch’s mare '+x.mare+' foaled a '+x.coat.toLowerCase()+' '+(x.sex==='M'?'colt':'filly')+' by '+h.name+': '+x.foal+'.'])}
     else{x.st='miss';ev.push(['info',x.farm+' Ranch’s mare '+x.mare+' didn’t take to '+h.name+'.'])}}
   S.studReq=S.studReq.filter(r=>r.exp>=S.day&&H(r.id));
-  for(const h of S.horses){if(h.client||S.studReq.some(r=>r.id===h.id))continue;if(R()<studDemand(h)){const r={id:h.id,fee:studFee(h),exp:S.day+3,who:pick(FARMS)};if(S.rival&&S.rival.met>0&&R()<.15){r.who=S.rival.farm;r.rival=1;r.fee=Math.round(r.fee*1.5/50)*50}S.studReq.push(r);
+  for(const h of S.horses){if(h.client||rescueLocked(h)||S.studReq.some(r=>r.id===h.id))continue;if(R()<studDemand(h)){const r={id:h.id,fee:studFee(h),exp:S.day+3,who:pick(FARMS)};if(S.rival&&S.rival.met>0&&R()<.15){r.who=S.rival.farm;r.rival=1;r.fee=Math.round(r.fee*1.5/50)*50}S.studReq.push(r);
     ev.push(['good',r.who+' Ranch wants to breed their mare to '+h.name+' and will pay '+money(r.fee)+'. See the Stable tab.'])}}
   if(S.staff.feed){const nd=herdHay();if(S.hay<nd*S.feedDays){const fp=S.hayPrice*(1-mgrOf().hay-(specOf('feed')==='bargain'?.06:0)-(psk('biz')-1)*.03);const want=Math.ceil(nd*(S.feedDays+7)-S.hay),n=Math.min(want,Math.floor(S.money/fp));
     if(n>0){const c=Math.round(n*fp);S.money-=c;S.hay=Math.round((S.hay+n)*10)/10;ev.push(['info',S.staff.feed.name+' bought '+n+' bales of hay for '+money(c)+'.'])}else ev.push(['bad','Your ranch manager couldn’t afford any hay.'])}}
@@ -3731,6 +3743,7 @@ function horseCard(h,mode){
     if(canCompete(h))actions+=`<button class="btn small" data-a="gocomp" data-id="${h.id}" title="Go to the Show Grounds with ${esc(h.name)} picked">Event</button>`;
     if(stage(h)!=='Foal'&&pregOk(h)){actions+=`<span class="lbl">Train</span>`+STATS.map(s=>`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'} title="Train ${s.n}">${s.s}</button>`).join('')}
     if(canWork(h))actions+=jobSelect(h);
+    actions+=f90CardActions(h);
     if(lifeStory(h).length)actions+=`<button class="btn small storybtn" data-a="storyopen" data-id="${h.id}" title="Read ${esc(h.name)}’s life story">Story</button>`;
   }
   return `<article class="horse r-${rarityOf(h)}" data-a="open" data-id="${h.id}" ${mode==='market'?'data-m="market"':''} tabindex="0" aria-label="${esc(h.name)}">
@@ -3740,7 +3753,7 @@ function horseCard(h,mode){
     <div class="breedline">${rbadge(rarityOf(h))}${shinyTag(h)}<span>${breedLabel(h)}</span>${h.client?`<span class="chip rare">Client · ${h.client.until-S.day}d left</span>`:''}${h.retired?'<span class="chip retired">Retired</span>':''}${mode!=='market'&&gearOf(h).length?`<span class="note" style="font-weight:500">· ${gearOf(h).length} gear</span>`:''}${mode!=='market'&&S.staff.trainer&&tpri(h)!=='normal'&&stage(h)!=='Foal'?`<span class="tchip">· Trainer: ${{high:'High',low:'Low',off:'Off'}[tpri(h)]}</span>`:''}${(h.ribbons||[]).length?`<span class="note ribcount" style="font-weight:500">· ${ribbonSVG(Math.min(...h.ribbons.map(r=>r.p)),Math.max(...h.ribbons.map(r=>r.t)),11)} ${h.ribbons.length} ribbon${h.ribbons.length>1?'s':''}</span>`:''}</div>
     <div class="meta"><span class="mono">${h.reg}</span> · ${c.full}${rareCoat(c)?' ★':''}</div>
     ${mode==='market'?pedChip(h):''}
-    ${(mode!=='market'&&trainerTag(h))||moodChip(h)||h.vigor||h.coi>=.0625||h.traits.length||(h.skills||[]).length?`<div class="chips">${mode!=='market'?trainerTag(h)+moodChip(h):''}${traitChips(h)}</div>`:''}
+    ${(mode!=='market'&&trainerTag(h))||f90Chips(h,mode)||moodChip(h)||h.vigor||h.coi>=.0625||h.traits.length||(h.skills||[]).length?`<div class="chips">${mode!=='market'?trainerTag(h)+moodChip(h):''}${f90Chips(h,mode)}${traitChips(h)}</div>`:''}
     <div class="bars">${statBars(h)}</div>
     ${mode==='market'?'':`<div class="vitals">${vit('Energy',h.energy,vitColor(h.energy))}${vit('Happy',h.happy,vitColor(h.happy))}${vit('Health',h.health,vitColor(h.health))}${vit('Stall',stallOf(h),vitColor(stallOf(h)))}</div>`}
     <div class="actions">${actions}</div>
@@ -3752,6 +3765,7 @@ function hint(){
   const need=herdHay();
   if(S.hay<need)return 'You don’t have enough hay for tonight. Buy some on the <b>Office</b> tab or your horses will go hungry.';
   {const e=S.horses.find(h=>h.inj&&COND[h.inj.id].emergency&&!h.inj.handled);if(e)return '<b>'+esc(e.name)+' is colicking!</b> Open '+(e.sex==='M'?'his':'her')+' papers and call the emergency vet today.'}
+  {const x=f90Hint();if(x)return x}
   {const ih=S.horses.find(h=>h.inj&&!h.inj.treated.length);if(ih)return '<b>'+esc(ih.name)+'</b> has '+COND[ih.inj.id].n.toLowerCase()+'. Open '+(ih.sex==='M'?'his':'her')+' papers to choose a treatment, or let rest do its work.'}
   if(S.horses.some(h=>h.groomed!==S.day)||(grooms().length&&S.horses.some(h=>h.bond<40&&h.pgroomed!==S.day)))return grooms().length?'Press <b>Groom +bond</b> on horses you want a closer bond with. <b>'+esc(groomNames())+'</b> brush horses each morning, but your own grooming builds bond faster.':'Start by grooming everyone (or hire a Stable Hand on the Staff tab to do it for you). It keeps them happy, and happy horses train and compete better.';
   const ready=S.horses.filter(h=>canWork(h)&&h.energy>=25);
@@ -3767,7 +3781,7 @@ function hint(){
 function renderHeader(){
   const dp=dateParts(S.day);const wm=UI.modal&&UI.modal.type==='watch'?UI.modal.shown:null;
   $('#ranchName').textContent=S.ranchName;brandHeader();
-  $('#dateLine').textContent=`Year ${dp.year} · ${SEASONS[dp.sIdx]}, day ${dp.sday} · Day ${S.day}`;
+  $('#dateLine').textContent=`Year ${dp.year} · ${SEASONS[dp.sIdx]}, day ${dp.sday} · Day ${S.day}${f90On('weather')?' · '+wxLabel(wxToday()):''}`;
   const need=herdHay();
   $('#ledger').innerHTML=`${S.player?`<button class="youbtn" data-a="tab" data-t="office" title="${esc(S.player.name)}: your skills">${portraitSVG(S.player.look,38)}</button>`:''}
   <div class="item"><span class="k">Bank</span><span class="v">${money(wm?wm.money:S.money)}</span></div>
@@ -3786,7 +3800,7 @@ function renderStable(){
   const studs=S.studReq.map(r=>{const h=H(r.id);if(!h)return '';const ok=canWork(h)&&h.energy>=20;
     return `<div class="offer"><div class="grow"><b>${esc(r.who)} Ranch</b> wants to breed their mare to <b>${esc(h.name)}</b> ${rbadge(rarityOf(h))} and will pay <b class="mono">${money(r.fee)}</b> ${r.rival?'<span class="chip rivalchip" title="Your rival is paying 50% over the going rate.">Your rival · 1.5× fee</span>':''} <span class="note">(stud service, uses ${esc(h.name)}’s day and 20 energy, offer ends day ${r.exp})</span>${ok?'':'<div class="note bad">'+esc(h.name)+' can’t do it today. Accept tomorrow before the offer ends.</div>'}</div><button class="btn primary small" data-a="studyes" data-id="${h.id}" ${ok?'':'disabled'}>Accept</button><button class="btn small" data-a="studno" data-id="${h.id}">Decline</button></div>`}).join('');
   const spo=!S.sponsor&&S.sponsorOffer&&SPONSORS.find(x=>x.id===S.sponsorOffer);const spon=spo?`<div class="offer"><div class="grow"><b>${esc(spo.n)}</b> wants to sponsor your ranch for <b class="mono">${money(spo.pay)}</b> a week <span class="note">(4 weeks · enter at least ${spo.starts} event${spo.starts>1?'s':''} a week · two missed weeks and they drop you, −3 reputation)</span></div><button class="btn primary small" data-a="takesponsor">Accept</button><button class="btn small" data-a="nosponsor">Decline</button></div>`:'';
-  return `<div class="hint"><div class="grow"><b>Next step:</b> ${hint()}</div></div>${spon}${studs}${offers}${yourDay()}
+  return `<div class="hint"><div class="grow"><b>Next step:</b> ${hint()}</div></div>${spon}${studs}${offers}${yourDay()}${f90StablePanel()}
   <div class="section-head"><h2>The Barn</h2><span class="sub">Tonight the herd eats ${herdHay()} bales${stockHay()?' (horses '+Math.round(horseHay()*10)/10+', livestock '+stockHay()+')':''}. Click any horse to see its papers.</span>
   <div class="right"><button class="btn" data-a="groomall" ${S.horses.every(h=>h.pgroomed===S.day)?'disabled':''} title="${grooms().length?esc(groomNames())+' brush horses each morning. Grooming them yourself adds extra bond.':'Groom every horse: happiness and bond up'}">${S.horses.every(h=>h.pgroomed===S.day)?'✓ All groomed':grooms().length?'Groom all yourself (+bond)':'Groom all'}</button><button class="btn" data-a="restall">Turn out the rest</button></div></div>
   ${grooms().length?`<div class="helpline ${groomCap()<S.horses.length?'warn':''}"><span>${groomCap()<S.horses.length?'!':'✓'}</span><span>${groomNote()}</span></div>`:''}
@@ -3908,6 +3922,7 @@ function renderCompete(){
   ${festPanel('compete')}
   ${scPanel()}
   ${troublePanel()}
+  ${f90WxPanel()}
   ${rivalPanel()}
   <div class="panel" style="margin-bottom:16px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
    <div class="field" style="margin:0;flex:1;min-width:220px"><label for="selComp">Entering <span class="note" style="font-weight:400;margin-left:8px"><input type="checkbox" data-c="watchon" ${PREF.watch===0?'':'checked'} style="vertical-align:-2px"> Watch events live</span></label><select id="selComp" data-c="comp"><option value="">Choose a horse…</option>${elig.map(x=>`<option value="${x.id}" ${UI.compHorse==x.id?'selected':''} ${canCompete(x)?'':'disabled'}>${esc(x.name)}${canCompete(x)?'':' — '+(trainerHeld(x)?'reserved for trainer':status(x)[1])}</option>`).join('')}</select></div>
@@ -5383,14 +5398,14 @@ const HOWTO=`<ol>
   <p class="note">Time: 4 days per season, 16 days per year. Foals become yearlings at 1 year and adults at 2. Seniors over 18 slowly lose condition.</p>`;
 function renderOffice(){
   const need=herdHay(),si=dateParts(S.day).sIdx,daysHay=Math.floor(S.hay/Math.max(.1,need));
-  const hayCost=Math.round(need*S.hayPrice),inc=Math.round(stockIncome(si)*stockCareMult()),wg=wages(),upk=upkeep(),net=inc-wg-hayCost-upk;
+  const hayCost=Math.round(need*S.hayPrice),inc=Math.round(stockIncome(si)*stockCareMult()),wg=wages(),upk=upkeep(),fb=feedBill(),net=inc-wg-hayCost-upk-fb;
   const tiers=[[10,'State Championships open'],[25,'Regionals open'],[40,'County fairs stop adding reputation, and sponsors start calling'],[60,'Nationals open and more skilled job applicants'],[80,'Bigger sponsors'],[100,'Weekly invitations to invitation-only events'],[120,'International shows open'],[150,'Two invitations a week and the full reputation bonus to sales and stud demand'],[160,'The Olympics open (every 4th summer)']];
   const next=tiers.find(t=>S.rep<t[0]);const prev=[...tiers].reverse().find(t=>S.rep>=t[0]);const base=prev?prev[0]:0;
   const avgH=S.horses.length?Math.round(S.horses.reduce((a,h)=>a+h.happy,0)/S.horses.length):0;
   return `${profilePanel()}<div class="section-head"><h2>Ranch Office</h2><span class="sub">The books, supplies and records for ${esc(S.ranchName)}.</span></div>${locInfoPanel()}
   <div class="kpis">
    <div class="kpi"><span class="k">Bank</span><span class="v">${money(S.money)}</span><span class="s">Day ${S.day}</span></div>
-   <div class="kpi"><span class="k">Daily running cost</span><span class="v ${net<0?'bad':'good'}">${net>=0?'+':''}${money(net)}</span><span class="s">Livestock ${money(inc)} − wages ${money(wg)} − upkeep ${money(upk)} − hay ~${money(hayCost)}</span></div>
+   <div class="kpi"><span class="k">Daily running cost</span><span class="v ${net<0?'bad':'good'}">${net>=0?'+':''}${money(net)}</span><span class="s">Livestock ${money(inc)} − wages ${money(wg)} − upkeep ${money(upk)} − hay ~${money(hayCost)}${fb?' − feed '+money(fb):''}</span></div>
    <div class="kpi"><span class="k">Hay left</span><span class="v ${daysHay<3?'bad':''}">${daysHay}d</span><span class="s">${S.hay} bales at ${need}/day</span></div>
    <div class="kpi"><span class="k">Reputation</span><span class="v">${S.rep}</span><span class="s">${next?(next[0]-S.rep)+' to go: '+next[1].split(' and')[0]:'Every door is open'}</span><div class="m"><i style="width:${next?Math.min(100,(S.rep-base)/(next[0]-base)*100):100}%"></i></div></div>
    <div class="kpi"><span class="k">Herd</span><span class="v">${S.horses.length}/${S.stalls}</span><span class="s">stalls used · ${pregnancies()} in foal</span></div>
@@ -5417,7 +5432,7 @@ function renderOffice(){
   <div class="ach">${ACH.map(a=>`<div class="${S.ach[a.id]?'got':''}"><b>${S.ach[a.id]?'★ ':''}${a.n}</b><span class="note">${a.d}${S.ach[a.id]?' Earned day '+S.ach[a.id]+'.':''}</span></div>`).join('')}</div>
   <div class="section-head" style="margin-top:22px"><h2>Save &amp; Load</h2></div>
   <div class="cols">${savePanel()}</div>
-  <div class="section-head" style="margin-top:22px"><h2>Settings</h2></div>
+  <div class="section-head" style="margin-top:22px"><h2>Settings</h2></div>${f90RulesPanel()}
   <div class="cols"><div class="panel"><div class="subh" style="margin-top:0">Ranch name</div>
     <div class="actions"><input type="text" id="ranchInput" value="${esc(S.ranchName)}" maxlength="32" aria-label="Ranch name"><button class="btn" data-a="renameRanch">Save name</button></div>
     <div class="subh">Ranch colors and symbol</div>${colPicker()}
@@ -5471,7 +5486,7 @@ function papers(h,mode){
   const sireR=h.sire!=null?S.registry[h.sire]:null,damR=h.dam!=null?S.registry[h.dam]:null;
   const statRows=STATS.map(s=>`<div class="statrow"><span><b>${s.n}</b>${goalTag(h,s.k)}</span><span class="bar"><span class="pot" style="width:${h.pot[s.k]}%"></span><span class="tr" style="width:${h.tr[s.k]}%"></span>${goalMark(h,s.k)}</span><span class="mono">${h.tr[s.k].toFixed(1)}/${h.pot[s.k]}</span>${own&&stage(h)!=='Foal'&&pregOk(h)?`<button class="btn small" data-a="train" data-id="${h.id}" data-k="${s.k}" ${w&&h.tr[s.k]<h.pot[s.k]?'':'disabled'}>Train</button>`:'<span></span>'}</div>`).join('');
   const v=value(h),sv=saleValue(h);
-  const sellBtn=own&&!h.client?`<button class="btn danger" data-a="sell" data-id="${h.id}">Sell for ${money(sv)}</button>${vetClear(h)?'<span class="note good">Recent vet check: full price.</span>':'<span class="note">Buyers pay 10% less without a vet check in the last 8 days.</span>'}`:'';
+  const sellBtn=own&&!h.client&&!rescueLocked(h)?`<button class="btn danger" data-a="sell" data-id="${h.id}">Sell for ${money(sv)}</button>${vetClear(h)?'<span class="note good">Recent vet check: full price.</span>':'<span class="note">Buyers pay 10% less without a vet check in the last 8 days.</span>'}`:'';
   return `<div class="papers">
    <div><div class="portrait${h.shiny?' shiny':''}">${horseView(h,UI.hview||'side')}${shinyFx(h)}<div class="vtog" role="group" aria-label="Turn the horse around">${[['side','Side'],['front','Front'],['back','Back']].map(([k,l])=>`<button class="${(UI.hview||'side')===k?'on':''}" data-a="hview" data-v="${k}" aria-pressed="${(UI.hview||'side')===k}">${l}</button>`).join('')}</div>${own?`<span class="pill ${status(h)[0]}">${status(h)[1]}</span>`:''}</div>
     <dl class="kv"><dt>Breed</dt><dd>${rbadge(rarityOf(h))} ${shinyTag(h)} <b>${breedLabel(h)}</b><div class="mono bloodline">${bloodText(bloodOf(h))}</div><div class="note">${(BREEDS[h.breed]||BREEDS.grade).d} Breed bonus: ${bonusText(h.breed||'grade')}.${h.cross?' Crossbred, so one rarity lower.':''}${h.vigor?' <b class="good">Hybrid vigor:</b> first cross of two purebreds, +2 potential on every stat and fewer injuries.':''}</div></dd><dt>Registry</dt><dd class="mono">${h.reg}</dd><dt>Sex · age</dt><dd>${sexLabel(h)} · ${ageLabel(h)} (${stage(h)})</dd>
@@ -5487,7 +5502,7 @@ function papers(h,mode){
     ${h.coi!=null&&h.sire!=null?`<dt>Inbreeding</dt><dd><span class="mono">${pctTxt(h.coi)}</span> · ${coiLabel(h.coi)}</dd>`:''}
     ${h.breakthrough&&h.breakthrough.length?`<dt>Breakthrough</dt><dd class="good">${h.breakthrough.map(k=>STATS.find(s=>s.k===k).n).join(', ')}</dd>`:''}
     ${h.preg?`<dt>In foal to</dt><dd>${esc(h.preg.sire.name)}, due day ${h.preg.due}<div class="note">${pregLight(h)?'Early pregnancy: she can still train and work for '+Math.max(1,Math.ceil(GEST/3-pregDay(h)))+' more day'+(Math.ceil(GEST/3-pregDay(h))>1?'s':'')+' (no competing).':'Too far along to train. She goes out to pasture each day until she foals.'}</div></dd>`:''}
-    ${mode==='stud'?`<dt>Stud fee</dt><dd class="mono">${money(h.fee)}</dd>`:''}</dl>
+    ${f90PapersKV(h)}${mode==='stud'?`<dt>Stud fee</dt><dd class="mono">${money(h.fee)}</dd>`:''}</dl>
     ${own?`<div class="vitals" style="margin-top:12px">${vit('Energy',h.energy,vitColor(h.energy))}${vit('Happy',h.happy,vitColor(h.happy))}${vit('Health',h.health,vitColor(h.health))}</div><div class="vitals" style="margin-top:8px">${vit('Bond',h.bond,'var(--brass)')}${vit('Stall',stallOf(h),vitColor(stallOf(h)))}</div>
      <div class="moodbox"><div class="subh" style="margin:10px 0 4px">Mood &amp; workload</div>${!h.past&&S.horses.includes(h)?(()=>{const F=happyForecast(h);const d=Math.round(F.d*10)/10;return `<div class="note" style="margin-bottom:4px"><b>Tonight:</b> happiness <b class="${d>=0?'good':'bad'}">${d>=0?'+':''}${d}</b> <span class="note">(${F.o.filter(x=>x[0]).map(x=>esc(x[1])+' '+(x[0]>0?'+':'')+x[0]).join(' · ')})</span><br>${h.happy>=80?'<span class="good">Happy 80+: trains 8% faster and +4% at events.</span> ':h.happy<40?'<span class="bad">Unhappy: trains slower and scores lower at events.</span> ':''}Energy ${Math.round(h.energy)}: ${h.energy>=90?'fresh and at its best':h.energy<soreLine(h)?'<span class="bad">worn out</span>':'a little tired'}. Fresher horses train and compete better.</div>`})():''}${moodNotes(h).map(([c,t])=>`<div class="note ${c}">• ${esc(t)}</div>`).join('')}${recentJobs(h).length?`<div class="note mono" style="margin-top:3px">Last 6 days: ${[...new Set(recentJobs(h).map(j=>j.k))].map(k=>jobName(k)+' ×'+Math.round(recentJobs(h).filter(j=>j.k===k).reduce((a,j)=>a+j.w,0)*10)/10).join(' · ')}</div>`:''}</div>
      <p class="note" style="margin-top:6px">Last cared for: ${careAge(h)===0?'today':careAge(h)===1?'yesterday':careAge(h)+' days ago'}. Bond grows at ${Math.round(bondMult(h)*100)}% speed at this happiness. Bond speeds training by ${Math.round(h.bond/4)}%${skillChance(h)?' and gives a '+(skillChance(h)*100).toFixed(1)+'% nightly chance to learn a skill':h.skills.length>=MAXSKILLS?'. Skills are full ('+MAXSKILLS+')':'. Reach 70 bond for a chance to learn skills'}.</p>`:''}
@@ -5518,7 +5533,7 @@ function papers(h,mode){
     </div>
      ${h.client?`<div style="grid-column:1/-1"><div class="subh">Client horse</div><div class="note">Owned by ${esc(h.client.owner)} (${esc(h.client.farm)}). Leaves in ${h.client.until-S.day} day${h.client.until-S.day===1?'':'s'}. Goals are listed under the stats.</div></div>`:''}
     <div class="pcol">     ${trainerPlan(h)}
-    </div>
+    </div>${f90PapersCol(h)}
     <div class="pcol">    <div class="papers3"><div>     <div class="subh">Rename</div>${h.client?`<p class="note">${esc(h.name)} belongs to ${esc(h.client.owner)}. Only the owner can rename a client’s horse.</p><div class="actions"><button class="btn" data-a="offer" data-k="client" data-id="${h.id}">Offer to buy ${esc(h.name)}</button></div>`:`<div class="actions"><input type="text" id="renameInput" value="${esc(h.name)}" maxlength="28" aria-label="Horse name"><button class="btn" data-a="rename" data-id="${h.id}">Save</button></div>`}
 </div><div>${canSendAway(h)&&own?`<div class="subh">Training center</div><div class="actions"><button class="btn" data-a="awaytab" data-id="${h.id}">Send to a training center…</button></div>`:''}
 </div><div>${isAdult(h)&&!h.client?`<div class="subh">Career</div><div class="actions">${h.retired?(h.retired.voluntary?`<button class="btn" data-a="unretire" data-id="${h.id}">Bring out of retirement</button><span class="note">Retired by you on day ${h.retired.day}. Enjoying +1 happiness every night.</span>`:`<span class="note">Retired from events after ${esc(h.retired.why)}. This can’t be undone.</span>`):`<button class="btn" data-a="retire" data-id="${h.id}">Retire from events</button><span class="note">Still breeds and works. +10 happiness now, +1 every night.</span>`}</div>`:''}
@@ -5582,11 +5597,11 @@ function renderModal(){
     <p style="margin:10px 0 4px">${mo?`<b>${esc(mo.name)}</b> foaled overnight`:'A foal arrived overnight'}${b.hard?', after a hard labor':' with no trouble'}. Mother and baby are resting in the straw.</p>
     <dl class="kv"><dt>Foal</dt><dd>${f.sex==='M'?'Colt (boy)':'Filly (girl)'} · ${esc(coat(f.genes).full)}</dd><dt>Breed</dt><dd>${esc(breedLabel(f))}</dd><dt>Parents</dt><dd>${esc(sireN)} × ${esc(mo?mo.name:'?')}</dd><dt>Best potential</dt><dd>${best}${f.breakthrough.length?' · <b>breakthrough!</b>':''}${f.shiny?' · <b>✦ SHINY</b>':''}</dd></dl>
     <div class="field" style="margin-top:12px"><label for="foalName">Name your ${kid}</label><input id="foalName" type="text" maxlength="28" value="${esc(f.name)}"></div>
-    <div class="actions" style="margin-top:10px"><button class="btn" data-a="foalrnd">🎲 Another name</button><button class="btn primary" data-a="foalok">Welcome, little one! →</button></div>`;
+    <div class="actions" style="margin-top:10px"><button class="btn" data-a="foalrnd">🎲 Another name</button>${canImprint(f)?`<button class="btn" data-a="f90imp" data-id="${f.id}">🤲 Imprint the ${kid}</button>`:''}<button class="btn primary" data-a="foalok">Welcome, little one! →</button></div>`;
   }else if(m.type==='report'){
     const dp=dateParts(m.day);
     title='Morning, day '+m.day;
-    body=`<p class="note">Year ${dp.year}, ${SEASONS[dp.sIdx]} day ${dp.sday}. Overnight the herd ate its hay and rested up.</p>
+    body=`<p class="note">Year ${dp.year}, ${SEASONS[dp.sIdx]} day ${dp.sday}. Overnight the herd ate its hay and rested up.</p>${f90ReportWx()}
     ${m.ev.length?`<ul class="report">${m.ev.map(([k,t])=>`<li class="${k==='good'?'good':k==='bad'?'bad':k==='warn'?'warn':''}">${esc(t)}</li>`).join('')}</ul>`:'<p>A quiet night on the ranch.</p>'}
     <div class="actions" style="margin-top:16px"><button class="btn primary" data-a="close">Start the day</button></div>`;
   }else if(m.type==='result'){
@@ -6383,11 +6398,11 @@ function startWatch(m){const ov=$('#overlay');const W=watchSetup(m);const ev=W.e
   scene=scene.replace(/<g id="wr(\d+)"([^>]*)>/g,(m0,i,attrs)=>`<g id="wr${i}"${attrs}><ellipse class="wsh" cx="0" cy="3" rx="${ev.id==='dress'||ev.id==='rein'?26:ev.id==='race'?24:18}" ry="${ev.id==='dress'||ev.id==='rein'?6:4.5}" fill="rgba(20,25,15,.2)"/>`);
   if(scene.includes('url(#wSky)')){const cl=(x,y,sc,op)=>`<g transform="translate(${x} ${y}) scale(${sc})" opacity="${op}"><ellipse cx="0" cy="0" rx="26" ry="9" fill="#fff"/><ellipse cx="-14" cy="3" rx="14" ry="7" fill="#fff"/><ellipse cx="16" cy="2" rx="16" ry="8" fill="#fff"/><ellipse cx="4" cy="-6" rx="14" ry="8" fill="#fff"/><ellipse cx="2" cy="5" rx="30" ry="4" fill="#DCE6EE" opacity=".7"/></g>`;
     const amb=`<g class="wclouds">${cl(120,28,1.1,.9)}${cl(420,18,.8,.75)}${cl(690,34,1.3,.85)}</g><g class="wclouds slow">${cl(260,44,.6,.5)}${cl(560,50,.5,.45)}</g><g class="wbirds">${[[300,40],[316,34],[330,42]].map(([x,y])=>`<path d="M${x} ${y} q4 -4 8 0 q4 -4 8 0" stroke="#3a3a3a" stroke-width="1.2" fill="none"/>`).join('')}</g>`;
-    const k=scene.indexOf('fill="url(#wSky)"/>');if(k>0)scene=scene.slice(0,k+'fill="url(#wSky)"/>'.length)+amb+scene.slice(k+'fill="url(#wSky)"/>'.length)}
-  if(seasonFx(si)&&ev0.id!=='desert'){scene=seasonize(scene,si);if(snowy(si))scene+=snowFlakes(m.wid,800,300,90)}
+    const k=scene.indexOf('fill="url(#wSky)"/>');if(k>0)scene=scene.slice(0,k+'fill="url(#wSky)"/>'.length)+amb+f90Sky()+scene.slice(k+'fill="url(#wSky)"/>'.length)}
+  if(seasonFx(si)&&ev0.id!=='desert'){scene=seasonize(scene,si);if(snowy(si))scene+=snowFlakes(m.wid,800,300,90)}scene+=f90Overlay(m.wid,ev0);
   scene+=`<g id="wDustL"></g><g id="wConf"></g>`+tvBar(W);
   ov.innerHTML=`<div class="modal watch" role="dialog" aria-modal="true" aria-label="Watching the event"><div class="mhead"><h2>${esc(W.pl.n)} · ${esc(ev0.n)}</h2><span class="navpos" id="wStatus">● Live</span></div><div class="mbody">
-   <div class="wstage"><svg viewBox="0 0 800 326" id="wSvg">${scene}</svg></div><div class="wcomm" id="wComm">${esc(W.me.name)} is in the field. Here we go…</div>
+   <div class="wstage"><svg viewBox="0 0 800 326" id="wSvg">${scene}</svg></div><div class="wcomm" id="wComm">${esc(W.me.name)} is in the field.${esc(f90WatchLine())} Here we go…</div>
    <div class="wbottom">${board}<div class="wctl"><button class="btn" data-a="wspeed" id="wSpd" title="Tap to change. Your choice is remembered.">Speed: ${[1,2,4].includes(PREF.speed)?PREF.speed:1}×</button><button class="btn primary" data-a="wskip">Skip to results ▶▶</button><label class="note"><input type="checkbox" data-c="wpref" ${PREF.watch===0?'checked':''}> Always skip</label></div></div></div></div>`;
   ov.hidden=false;
   const el=id=>document.getElementById(id);
@@ -7110,6 +7125,304 @@ const ACT={
   wrap('endday',(m0,f0,sh0)=>{sfx('morning');if(S&&S.stats&&S.stats.foals>f0)setTimeout(()=>sfx('whinny'),700);if(S&&S.horses.filter(h=>h.shiny).length>sh0)setTimeout(()=>sfx('sparkle'),1400)});
   ACT.mute=()=>{PREF.mute=!PREF.mute;savePref();toast(PREF.mute?'Sound off.':'Sound on.')};})();
 /* swipe left/right on the main page (phones) to move between tabs */
+/*F90-START*/
+/* ================= build 90: feed & hooves, weather & footing, herd life, raising foals, rescue horses ================= */
+function f90On(k){return !!(S&&(!S.opt||S.opt[k]!==0))}
+function landOwned(id){return !!(S&&S.land&&S.land[id])}
+function afflictQ(h,id){const msg=afflict(h,id);if(S.log[0]&&S.log[0].t===msg)S.log.shift();return msg}
+(()=>{const st=document.createElement('style');st.textContent=`
+.f90meter{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;font-size:13px;margin:4px 0}
+.f90meter .m{height:8px;border-radius:5px;background:color-mix(in srgb,var(--muted) 22%,transparent);position:relative;overflow:hidden}
+.f90meter .m i{position:absolute;top:0;bottom:0;left:0;border-radius:5px}
+.f90meter .m .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--good) 28%,transparent);border-radius:4px}
+.f90meter .m .dot{position:absolute;top:-2px;width:4px;height:12px;border-radius:2px;background:var(--ink,#2b2a26);margin-left:-2px}
+.f90steps{display:grid;gap:6px;margin:6px 0}.f90steps>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
+.f90steps .ok{color:var(--good);font-weight:700}.f90steps .miss{color:var(--bad);font-weight:700}
+.wxbar{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.wxbar .wxbig{font-size:26px;line-height:1}.wxbar b{font-size:15px}
+.rescuecard{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.f90seg{display:flex;gap:6px;flex-wrap:wrap}`;document.head.appendChild(st)})();
+
+/* ---------- new natural skills ---------- */
+TRAITS.bossy={n:'Herd Boss',d:'Bosses the other horses around in the pasture and may kick one. Turn out alone to keep the peace.',good:0,w:3,val:-80};
+TRAITS.mudlover={n:'Mudder',d:'Loves a sloppy track: +8% on muddy footing and +4% on soft footing instead of slowing down.',good:1,w:3,val:150};
+CONFLICTS.push(['bossy','gentle']);
+{const f=STAFF.find(x=>x.id==='farrier');if(f)f.d='Trims the hooves of every horse that needs it each night (more horses with skill) and keeps them shod so horses get hurt less.'}
+{const g=FACI.goats;if(g&&g.lv[1]&&!/calm/.test(g.lv[1].d))g.lv[1].d+=' A goat in the barn calms nervous (Skittish) horses.'}
+
+/* ================= #15 FEED, WEIGHT AND HOOVES ================= */
+const FEEDS={
+ auto:{n:'Auto',d:'Picks Light, Normal or Rich each night to keep a healthy weight.'},
+ light:{n:'Light',d:'A smaller portion of hay. Slims a heavy horse.',hay:.85,cost:0,cal:0},
+ normal:{n:'Normal',d:'Good hay, all they want.',hay:1,cost:0,cal:.6},
+ rich:{n:'Rich',d:'Hay plus alfalfa. Puts weight on thin horses, foals, nursing mares and hard workers.',hay:1,cost:3,cal:1.4},
+ perf:{n:'Performance',d:'Hay, grain and supplements: +6 energy overnight and +2% at events. Grain can cause colic, mostly in idle or heavy horses.',hay:1,cost:7,cal:1.3}};
+const FEED_ORDER=['auto','light','normal','rich','perf'];
+const TRIM_COST=25;
+function bcsOf(h){return f90On('feed')?(h.bcs??5):5.5}
+function hoofOf(h){return f90On('feed')?(h.hoof??100):100}
+function rationOf(h){if(!f90On('feed'))return 'normal';const r=h.ration||'auto';if(r!=='auto'&&FEEDS[r])return r;const b=h.bcs??5;return b>6.3?'light':b<4.7?'rich':'normal'}
+function feedCost(h){const F=FEEDS[rationOf(h)];return (F.cost||0)*[1,.9,.8][L('feedbarn')]}
+function feedBill(){if(!f90On('feed'))return 0;return Math.round(S.horses.reduce((a,h)=>a+feedCost(h),0))}
+function trimCost(){return Math.round(TRIM_COST*(locFx().wage||1))}
+function bcsWord(b){return b<2.5?'Very thin':b<3.5?'Thin':b<4.5?'Lean':b<=6.5?'Healthy':b<=7.5?'Heavy':b<=8.5?'Overweight':'Obese'}
+function bcsCls(b){return b<3.5||b>7.5?'bad':b<4.5||b>6.5?'warn':'good'}
+function hoofWord(v){return v>=70?'Freshly trimmed':v>=50?'Fine':v>=30?'Needs a trim':v>=15?'Overgrown':'Cracked and sore'}
+function bcsComp(b){if(b>=4.5&&b<=6.5)return 1;if(b>=3.5&&b<=7.5)return .97;if(b>=2.5&&b<=8.5)return .92;return .85}
+function hoofComp(v){return v>=50?1:v>=30?.97:v>=15?.93:.88}
+function isNursing(m){return !!m&&m.sex==='F'&&S.horses.some(f=>f.dam===m.id&&f.raise&&!f.raise.done&&!f.raise.wean&&age(f)<YEARLING)}
+function feedBits(h){if(!f90On('feed'))return [];const o=[];const b=bcsOf(h),v=hoofOf(h);
+  if(bcsComp(b)<1)o.push(bcsWord(b)+' −'+Math.round((1-bcsComp(b))*100)+'%');if(hoofComp(v)<1)o.push('hooves −'+Math.round((1-hoofComp(v))*100)+'%');if(rationOf(h)==='perf')o.push('grain +2%');return o}
+
+/* ================= #16 WEATHER AND FOOTING ================= */
+const WX={sunny:{n:'Sunny',i:'☀️'},cloudy:{n:'Cloudy',i:'⛅'},rain:{n:'Rain',i:'🌧️'},storm:{n:'Thunderstorms',i:'⛈️'},hot:{n:'Heat wave',i:'🌡️'},cold:{n:'Bitter cold',i:'❄️'},snow:{n:'Snow',i:'🌨️'},wind:{n:'High wind',i:'🌬️'}};
+const FOOT={fast:{n:'Fast',d:'hard and dry'},good:{n:'Good',d:'just right'},soft:{n:'Soft',d:'damp'},muddy:{n:'Muddy',d:'sloppy'},frozen:{n:'Frozen',d:'hard and icy'},snow:{n:'Snowy',d:'slippery'}};
+/* chance weights per climate: [spring, summer, fall, winter] */
+const WX_CLIM={
+ temperate:[{sunny:3,cloudy:3,rain:3,storm:1,wind:1},{sunny:4,hot:3,cloudy:1,rain:1,storm:1.2},{sunny:3,cloudy:3,rain:2,wind:1,cold:1},{cold:3,snow:2.5,cloudy:2,sunny:1.5,wind:1}],
+ north:[{sunny:2.5,cloudy:3,rain:2.5,cold:1.5,snow:.7,wind:1.5},{sunny:5,hot:2,cloudy:1.5,rain:1,storm:1},{sunny:3,cloudy:2.5,rain:1.5,cold:2,wind:1.5,snow:.5},{snow:4,cold:4,cloudy:1.5,sunny:1,wind:1.5}],
+ plains:[{sunny:3,cloudy:2,rain:2,storm:2,wind:2},{sunny:3,hot:4,storm:1.5,cloudy:1,wind:1},{sunny:4,cloudy:2,rain:1.5,wind:2,cold:1},{cold:4,sunny:2,cloudy:2,wind:2,snow:.8}],
+ dry:[{sunny:5,cloudy:2,rain:1,storm:1,wind:2},{hot:6,sunny:3,storm:.6,wind:1},{sunny:5,cloudy:2,rain:1,wind:1},{cold:3,sunny:4,cloudy:2,wind:1,rain:.6}],
+ med:[{sunny:5,cloudy:2,rain:1.5,wind:1},{sunny:4,hot:5,wind:.5},{sunny:5,hot:1.5,cloudy:1.5,wind:1.5,rain:.5},{rain:3,cloudy:3,sunny:3,cold:1,storm:.6}],
+ sub:[{sunny:5,cloudy:2,rain:1.5,hot:1},{hot:4,storm:3.5,sunny:2,rain:1.5},{sunny:4,cloudy:2,rain:1.5,storm:1},{sunny:5,cloudy:2.5,rain:1,cold:.6}],
+ trop:[{hot:4,sunny:5,wind:1},{rain:4,storm:2.5,cloudy:2,sunny:1.5},{sunny:4,cloudy:2,rain:1.5},{sunny:5,cloudy:2,cold:.6}]};
+function wxClimate(){const c=(LOC()||{}).climate||'temperate';return WX_CLIM[c]?c:'temperate'}
+function wxRoll(si){const t=WX_CLIM[wxClimate()][si];let tot=0;for(const k in t)tot+=t[k];let r=R()*tot;for(const k in t){r-=t[k];if(r<=0)return k}return Object.keys(t)[0]}
+function wxFoot(k,prev,si){const fx=seasonFx(si);if(k==='snow')return 'snow';if(k==='cold')return fx==='snow'||fx==='frost'?'frozen':'good';if(k==='storm')return 'muddy';if(k==='rain')return prev==='soft'||prev==='muddy'?'muddy':'soft';
+  if(prev==='muddy'||prev==='snow')return 'soft';if(k==='hot'||(k==='sunny'&&si===1&&prev!=='soft'))return 'fast';return 'good'}
+function wxSet(){const dp=dateParts(S.day);const k=S.wxN&&S.wxN.d===S.day?S.wxN.k:wxRoll(dp.sIdx);const prev=S.wx&&S.wx.d===S.day-1?S.wx.f:'good';S.wx={d:S.day,k,f:wxFoot(k,prev,dp.sIdx)};S.wxN={d:S.day+1,k:wxRoll(dateParts(S.day+1).sIdx)};return S.wx}
+function wxToday(){if(!f90On('weather'))return {k:'sunny',f:'good',off:1};if(S.wx&&S.wx.d===S.day)return S.wx;return wxSet()}
+function wxTomorrow(){wxToday();return S.wxN||{k:'sunny'}}
+function wxLabel(w){return WX[w.k].i+' '+WX[w.k].n}
+const SPEEDY=['race','barrel','xc','jump','pony'],STAYERS=['endur','desert','xc'];
+function wxComp(h,ev){const w=wxToday();if(w.off||!ev)return 1;let m=1;const f=w.f,id=ev.id,mud=has(h,'mudlover');
+  if(f==='muddy'||f==='soft'){if(mud)m*=f==='muddy'?1.08:1.04;else if(SPEEDY.includes(id)||id==='endur')m*=f==='muddy'?.93:.97;else if(id==='pull'||id==='drive')m*=f==='muddy'?.97:1}
+  if(f==='frozen'||f==='snow'){if(SPEEDY.includes(id)||STAYERS.includes(id))m*=f==='snow'?.92:.95;else if(id==='pull'||id==='drive')m*=.96}
+  if(f==='fast'&&(id==='race'||id==='barrel'))m*=1.03;
+  if(w.k==='hot'&&STAYERS.includes(id)&&btOf(h).hot<.5)m*=.93;
+  if((w.k==='storm'||w.k==='wind')&&has(h,'skittish')&&!hasS(h,'steadynerves'))m*=.95;
+  return m}
+function wxInj(){const w=wxToday();if(w.off)return 1;return w.f==='fast'?1.2:w.f==='frozen'?1.3:w.f==='snow'?1.2:w.f==='muddy'?1.15:1}
+function wxCovered(){return L('ring')>=2||L('arena')>0}
+function wxTrain(){const w=wxToday();if(w.off)return 1;if(['rain','storm','snow','cold'].includes(w.k))return wxCovered()?1:.85;if(w.k==='hot')return L('arena')?1:.95;return 1}
+function wxHayMult(){if(!f90On('weather'))return 1;const w=wxToday();return w.k==='cold'||w.k==='snow'?1.1:1}
+function wxEffects(w){if(w.off)return '';const o=[];const f=w.f;
+  if(f==='muddy')o.push('Muddy footing: speed events and endurance score 7% lower (Mudders +8%) and slips are more likely.');
+  else if(f==='soft')o.push('Soft footing: speed events and endurance score 3% lower (Mudders +4%).');
+  else if(f==='fast')o.push('Fast footing: races and barrels run 3% quicker, but hard ground means more injuries.');
+  else if(f==='frozen')o.push('Frozen ground: speed and distance events score 5% lower and injuries are more likely.');
+  else if(f==='snow')o.push('Snow on the ground: speed and distance events score 8% lower.');
+  if(w.k==='hot')o.push('Heat: endurance, desert and cross-country horses score 7% lower unless they are hot-blooded. Horses recover 5 less energy tonight without shade.');
+  if(['rain','storm','snow','cold'].includes(w.k))o.push(wxCovered()?'Your covered arena keeps training going at full speed.':'Training outside is 15% slower today. A covered arena (Riding Ring level 2) fixes that.');
+  if(w.k==='storm')o.push('Thunderstorms spook skittish horses (−5% at events) and frighten horses left out in the pasture.');
+  if(w.k==='wind')o.push('High wind spooks skittish horses (−5% at events).');
+  if(w.k==='cold'||w.k==='snow')o.push('Cold: horses eat 10% more hay tonight.');
+  return o.length?o.join(' '):'A fine day. No weather effects.'}
+
+/* ================= combined hooks (called from the main game code) ================= */
+function f90Comp(h,ev){let m=1;if(f90On('feed')){m*=bcsComp(bcsOf(h))*hoofComp(hoofOf(h));if(rationOf(h)==='perf'&&S._noFeed!==S.day)m*=1.02}
+  m*=wxComp(h,ev);if(has(h,'skittish')&&L('goats')&&!hasS(h,'steadynerves'))m*=1.05;if(isGreen(h))m*=.92;if(h.rescue&&!h.rescue.done)m*=.95;return m}
+function f90Train(h,k){let g=wxTrain();if(f90On('feed')){const v=hoofOf(h),b=bcsOf(h);g*=v>=50?1:v>=30?.95:.9;if(b<3||b>8)g*=.9}const r=h.raise;if(r&&r.done)g*=[1,1,1.02,1.05][r.g??1];return g}
+function f90Inj(h){let r=wxInj();if(f90On('feed')){const v=hoofOf(h),b=bcsOf(h);r*=v>=50?1:v>=30?1.15:1.3;if(b>7.5)r*=1.25;if(b<3)r*=1.15}return r}
+function f90Value(h){if(!f90On('feed'))return 1;const b=bcsOf(h);return b<3.5?.9:b>7.5?.95:1}
+function f90Fert(m){if(!f90On('feed'))return 1;const b=bcsOf(m);return b<3.5?.75:b>8?.85:1}
+function f90HayMult(h){return (f90On('feed')?(FEEDS[rationOf(h)].hay||1):1)*wxHayMult()}
+function f90HappyNight(h,ctx){const o=[];const add=(v,t)=>{if(v)o.push([v,t])};
+  if(h.buddy){const b=H(h.buddy);if(b){if(h.pastured===S.day&&b.pastured===S.day&&!h.solo&&!b.solo)add(3,'Out with '+b.name+', '+(h.sex==='M'?'his':'her')+' buddy')}else if(!(S.away||[]).some(a=>a.h&&a.h.id===h.buddy))add(-3,'Misses '+(h.buddyName||'a buddy'));else add(-1,'Misses '+(h.buddyName||'a buddy')+' (away)')}
+  if(h.solo&&h.pastured===S.day&&!has(h,'homebody'))add(-2,'Turned out alone');
+  if(L('goats')&&has(h,'skittish'))add(2,'A goat keeps them calm');
+  const w=wxToday();if(!w.off&&h.pastured===S.day){if(w.k==='storm')add(-4,'Out in a thunderstorm');if(w.k==='hot'&&L('pasture')<2&&!landOwned('ridge'))add(-2,'No shade in the heat')}
+  if(f90On('feed')&&bcsOf(h)<3.5)add(-2,'Hungry and thin');
+  if(h.rescue&&!h.rescue.done&&h.groomed===S.day)add(1,'Learning to trust people again');
+  return o}
+
+/* ================= #5 RAISING FOALS ================= */
+const RAISE_G=[{n:'Rough start',c:'bad',d:'Was rushed or left alone as a youngster.'},{n:'Average start',c:'',d:'A normal upbringing.'},{n:'Well raised',c:'good',d:'Trains 2% faster for life.'},{n:'Raised right',c:'good',d:'Trains 5% faster for life.'}];
+function f90InitHorse(h){if(h.bcs==null)h.bcs=Math.round((4.6+R()*1.4)*10)/10;if(h.hoof==null)h.hoof=ri(65,100)}
+function f90NewFoal(h){h.raise={imp:0,wean:0,halter:0,saddle:0,last:-1};h.bcs=5;h.hoof=100}
+function f90GenRaise(h){f90InitHorse(h);const a=age(h);if(a<ADULT){h.raise={imp:R()<.5?1:0,wean:a>=YEARLING?1:0,halter:a>=YEARLING?3:Math.min(3,Math.floor(a/5)),saddle:a>=YEARLING?Math.min(4,Math.floor((a-YEARLING)/4)):0,last:-1,bought:1}}
+  else{const x=R();h.raise={done:1,g:x<.12?3:x<.45?2:x<.9?1:0}}}
+function raiseScore(r){return (r.imp?20:0)+(r.wean===1?20:r.wean===2?8:0)+Math.min(3,r.halter||0)*10+Math.min(4,r.saddle||0)*7.5}
+function raiseGrade(sc){return sc>=85?3:sc>=60?2:sc>=35?1:0}
+function isGreen(h){return !!(h.raise&&h.raise.done&&h.raise.green&&isAdult(h))}
+function canImprint(h){const r=h.raise;return !!(r&&!r.done&&!r.imp&&age(h)<=1&&!h.client)}
+function canHalter(h){const r=h.raise;return !!(r&&!r.done&&stage(h)==='Foal'&&age(h)>=2&&(r.halter||0)<3&&r.last!==S.day&&h.acted!==S.day&&h.energy>=10&&!h.injury)}
+function canWean(h){const r=h.raise;return !!(r&&!r.done&&!r.wean&&stage(h)==='Foal'&&age(h)>=8)}
+function canSaddle(h){const r=h.raise;if(!r||(r.saddle||0)>=4||h.injury||h.acted===S.day||h.energy<15||!pregOk(h)||r.last===S.day)return false;if(r.done)return isGreen(h);return stage(h)==='Yearling'}
+function raiseDue(h){if(canImprint(h))return 'Imprint';if(canWean(h)&&age(h)>=11)return 'Wean';if(canHalter(h))return 'Halter lesson';if(canSaddle(h))return 'Saddle session';if(canWean(h))return 'Wean';return ''}
+function doHalter(h,byTrainer){const r=h.raise;r.halter=(r.halter||0)+1;r.last=S.day;h.acted=S.day;h.energy=clamp(h.energy-10,0,100);h.tr.smt=Math.min(h.pot.smt,Math.round((h.tr.smt+.5)*10)/10);if(!byTrainer)addBond(h,3);h.lastCare=S.day}
+function doSaddle(h,byTrainer){const r=h.raise;r.saddle=(r.saddle||0)+1;r.last=S.day;h.acted=S.day;h.energy=clamp(h.energy-15,0,100);h.tr.smt=Math.min(h.pot.smt,Math.round((h.tr.smt+.4)*10)/10);h.tr.agi=Math.min(h.pot.agi,Math.round((h.tr.agi+.3)*10)/10);if(!byTrainer)addBond(h,2);h.lastCare=S.day;
+  let hurt='';if(R()<injuryRisk(h,age(h)<YEARLING+4?.03:.012)*(has(h,'skittish')?1.6:1)){hurt=' '+afflictQ(h,R()<.6?'soreback':'cut');}
+  if(r.done&&r.saddle>=4){r.green=0;story(h,'Finished being started under saddle.')}return hurt}
+function raiseFinish(h,ev){const r=h.raise;if(!r||r.done)return;const sc=raiseScore(r),g=raiseGrade(sc);r.done=1;r.g=g;r.sc=Math.round(sc);r.green=(r.saddle||0)<4?1:0;const G=RAISE_G[g];
+  let extra='';if(g===3){addBond(h,10);if(has(h,'skittish')&&R()<.35){h.traits=h.traits.filter(t=>t!=='skittish');extra=' The patient handling cured '+(h.sex==='M'?'his':'her')+' skittishness.'}else if(R()<.35&&addTrait(h.traits,'calm'))extra=' '+(h.sex==='M'?'He':'She')+' grew up Calm.';unlock('raisedright')}
+  else if(g===2)addBond(h,5);else if(g===0){h.bond=clamp(h.bond-5,0,100);if(R()<.25){const t=R()<.5?'skittish':'stubborn';if(addTrait(h.traits,t))extra=' The rough start made '+(h.sex==='M'?'him':'her')+' '+TRAITS[t].n+'.'}}
+  story(h,'Grew up: '+G.n+' (upbringing '+r.sc+'/100).');
+  ev.push([g>=2?'good':g===0?'warn':'info',h.name+'’s upbringing: '+G.n+' ('+r.sc+'/100). '+G.d+extra+(r.green?' Not fully started under saddle yet, so '+(h.sex==='M'?'he':'she')+' is green (−8% at events) until '+(4-(r.saddle||0))+' more saddle session'+(4-(r.saddle||0)===1?'':'s')+'.':'')])}
+
+/* ================= #18 RESCUE HORSES ================= */
+const RESCUE_ORGS=['County Horse Rescue','Second Chance Equine','Hope Hill Horse Haven','Prairie Wind Rescue','Silver Lining Sanctuary'];
+function rescueGoals(){const g=[['health',85,'Health 85+'],['happy',65,'Happiness 65+'],['bond',30,'Bond 30+']];if(f90On('feed')){g.push(['bcs',4.5,'A healthy weight (4.5 to 6.5)']);g.push(['hoof',60,'Hooves trimmed (60+)'])}return g}
+function rescueMet(h,g){if(g[0]==='bcs'){const b=bcsOf(h);return b>=4.5&&b<=6.5}if(g[0]==='hoof')return hoofOf(h)>=g[1];return (h[g[0]]||0)>=g[1]}
+function rescueReady(h){return !!(h.rescue&&!h.rescue.done&&rescueGoals().every(g=>rescueMet(h,g)))}
+function rescueLocked(h){return !!(h&&h.rescue&&!h.rescue.done)}
+function makeRescue(){const gem=R()<.12;const h=genHorse({ageDays:ri(ADULT,ADULT+DPY*12),potMid:gem?ri(52,58):ri(38,48),trFrac:[.15,.35],origin:'Rescued from neglect'});
+  h.health=ri(25,45);h.happy=ri(10,30);h.bond=0;h.bcs=ri(16,28)/10;h.hoof=ri(8,30);h.energy=ri(40,70);if(R()<.4)addTrait(h.traits,'skittish');h.raise={done:1,g:0};if(gem)h.gem=1;h.price=0;return h}
+function rescueNight(ev){const out=[];for(const h of S.horses){const r=h.rescue;if(!r||r.done)continue;
+    if(h.health<15){out.push(h);loseRep(5,'The rescue took '+h.name+' back after '+(h.sex==='M'?'his':'her')+' health got worse in your care.',ev);continue}
+    if(S.day>r.until&&!rescueReady(h)){out.push(h);loseRep(3,h.name+'’s year with you ran out before '+(h.sex==='M'?'he':'she')+' recovered, so '+r.org+' took '+(h.sex==='M'?'him':'her')+' back.',ev);continue}
+    if(rescueReady(h)&&!r.readyAt){r.readyAt=S.day;let gemTxt='';if(h.gem&&!r.gemShown){r.gemShown=1;const up=ri(6,12);for(const s of STATS)h.pot[s.k]=clamp(h.pot[s.k]+up,10,100);gemTxt=' And a surprise: healthy at last, '+(h.sex==='M'?'he':'she')+' shows real talent. Potential +'+up+' on every stat. A hidden gem!';story(h,'Turned out to be a hidden gem: potential +'+up+'.')}
+      ev.push(['good',h.name+' has recovered! Open '+(h.sex==='M'?'his':'her')+' papers to find '+(h.sex==='M'?'him':'her')+' a new home, or keep '+(h.sex==='M'?'him':'her')+'.'+gemTxt]);story(h,'Recovered from neglect at '+S.ranchName+'.')}}
+  for(const h of out){freeGear(h.id);S.horses=S.horses.filter(x=>x!==h)}
+  if(S.rescueReq&&S.rescueReq.until<S.day){ev.push(['info',S.rescueReq.org+' found another place for '+S.rescueReq.h.name+'.']);S.rescueReq=null}
+  if(!S.rescueReq&&S.day>6&&S.phase==='play'&&R()<.08){const org=pick(RESCUE_ORGS),h=makeRescue();S.rescueReq={h,org,until:S.day+3};ev.push(['info',org+' is looking for a ranch to nurse '+h.name+', a neglected '+breedLabel(h)+', back to health. See the Boarding tab.'])}}
+function acceptRescue(){const q=S.rescueReq;if(!q)return;if(S.horses.length>=S.stalls)return toast('You need a free stall to take in a rescue.');const h=q.h;h.rescue={org:q.org,since:S.day,until:S.day+DPY};h.acted=0;h.lastCare=S.day;h.stallClean=100;h.ribbons=[];h.awardsSeen=[];S.horses.push(h);S.rescueReq=null;
+  S.money+=150;S.stats.rescues=(S.stats.rescues||0)+1;story(h,'Taken in from '+q.org+' to be nursed back to health.');log('good','You took in '+h.name+' from '+q.org+'. They sent $150 toward feed and vet bills.');toast(h.name+' is in your care now. Groom, feed and doctor '+(h.sex==='M'?'him':'her')+' back to health.');unlock('rescue0')}
+function rehome(h){if(!rescueReady(h))return;const fee=Math.max(200,r10(value(h)*.3));const rep=gainRep(5);S.money+=fee;S.stats.rehomed=(S.stats.rehomed||0)+1;story(h,'Adopted into a loving new home.');remember(h,'sold','Rehomed through '+h.rescue.org+' (adoption fee '+money(fee)+')');
+  freeGear(h.id);S.horses=S.horses.filter(x=>x!==h);if(UI.modal&&UI.modal.id===h.id)UI.modal=null;log('good',h.name+' went to a loving new home. Adoption fee '+money(fee)+', reputation +'+rep+'.');toast(h.name+' has a new home! +'+money(fee)+', reputation +'+rep+'.');unlock('rescue1');if(S.stats.rehomed+(S.stats.keptRescue||0)>=5)unlock('rescue5')}
+function keepRescue(h){if(!rescueReady(h))return;h.rescue.done=1;h.rescue.kept=1;h.origin='Rescued from neglect';const rep=gainRep(2);S.stats.keptRescue=(S.stats.keptRescue||0)+1;story(h,'Adopted for good by '+S.ranchName+'.');log('good','You adopted '+h.name+' for good. Reputation +'+rep+'.');toast(h.name+' is yours for good.');unlock('rescue1');if((S.stats.rehomed||0)+S.stats.keptRescue>=5)unlock('rescue5')}
+
+/* ================= #17 HERD LIFE ================= */
+function herdNight(ev){const out=S.horses.filter(h=>h.pastured===S.day&&!h.solo);
+  for(let i=0;i<out.length;i++)for(let j=i+1;j<out.length;j++){const a=out[i],b=out[j];a.pals=a.pals||{};b.pals=b.pals||{};const p=Math.round(((a.pals[b.id]||0)+1+(stage(a)===stage(b)?.5:0))*10)/10;a.pals[b.id]=b.pals[a.id]=p;
+    if(p>=3&&!a.buddy&&!b.buddy&&!has(a,'bossy')&&!has(b,'bossy')&&R()<.6){a.buddy=b.id;b.buddy=a.id;a.buddyName=b.name;b.buddyName=a.name;story(a,'Became pasture buddies with '+b.name+'.');story(b,'Became pasture buddies with '+a.name+'.');ev.push(['good',a.name+' and '+b.name+' have become pasture buddies. They’re happier when they’re turned out together.']);unlock('buddies')}}
+  for(const h of S.horses)if(h.pals){const ks=Object.keys(h.pals).filter(k=>H(k));if(ks.length>6)ks.sort((x,y)=>h.pals[y]-h.pals[x]).length=6;const np={};for(const k of ks)np[k]=h.pals[k];h.pals=np}
+  const own=landOwned('meadow');
+  for(const h of out.filter(x=>has(x,'bossy'))){const mates=out.filter(x=>x!==h);if(!mates.length||R()>=(own?.04:.15))continue;const v=pick(mates);v.health=clamp(v.health-6,0,100);v.happy=clamp(v.happy-5,0,100);let msg=h.name+' (Herd Boss) kicked '+v.name+' in the pasture (health −6, happiness −5).';if(!v.inj&&R()<.25)msg+=' '+afflictQ(v,R()<.5?'cut':'bruise');ev.push(['warn',msg+' You can turn bossy horses out alone from their papers.'])}
+  for(const h of S.horses){if(!h.buddy)continue;const b=H(h.buddy);if(b){h.missT=0;continue}const away=(S.away||[]).some(a=>a.h&&a.h.id===h.buddy);if(away)continue;h.missT=(h.missT||0)+1;if(h.missT===1)ev.push(['warn',h.name+' keeps calling for '+(h.buddyName||'a missing friend')+'.']);if(h.missT>=3){story(h,'Got over losing '+(h.buddyName||'a buddy')+'.');h.buddy=null;h.missT=0}}}
+
+/* ================= night and morning (called from endDay) ================= */
+function f90Evening(ev){if(!S.staff.trainer)return;const done=[];for(const h of S.horses){if(done.length>=3)break;if(h.client||!h.raise||h.raise.done&&!isGreen(h))continue;
+    if(canHalter(h)){doHalter(h,1);done.push(h.name+' (halter)')}else if(canSaddle(h)&&!h.raise.done){doSaddle(h,1);done.push(h.name+' (saddle)')}}
+  if(done.length)ev.push(['info',S.staff.trainer.name+' (Trainer) worked with the youngsters: '+done.join(', ')+'. Doing it yourself also builds bond.'])}
+function f90Night(ev,fed){const feedOn=f90On('feed'),w=wxToday(),si=dateParts(S.day).sIdx;
+  if(feedOn){const bill=feedBill();if(bill){if(S.money>=bill){S.money-=bill}else{S._noFeed=S.day;ev.push(['bad','You couldn’t pay for alfalfa and grain tonight, so everyone got plain hay.'])}}}
+  const thin=[],sore=[],colic=[];
+  for(const h of S.horses){
+    if(feedOn){const r=S._noFeed===S.day?'normal':rationOf(h),F=FEEDS[r];const worked=h.acted===S.day&&h.pastured!==S.day&&h.rested!==S.day;
+      let burn=worked?.6:h.pastured===S.day?.2:0;if(h.pastured===S.day)burn-=[.4,.25,.1,0][si]*(troubleActive('drought')?.4:1);
+      const st=stage(h);if(st==='Foal'||st==='Yearling')burn+=.4;else if(st==='Senior')burn+=.3;if(h.preg&&!pregLight(h))burn+=.4;if(isNursing(h))burn+=.6;
+      if(has(h,'hardkeeper'))burn+=.5;if(has(h,'easykeeper'))burn-=.5;if(si===3)burn+=.3*(locFx().winter||1);if(!w.off&&(w.k==='cold'||w.k==='snow'))burn+=.2;if(h.inj)burn+=.3;
+      const intake=fed?F.cal:-2;h.bcs=clamp(Math.round(((h.bcs??5)+(intake-burn)*.3)*100)/100,1,9);
+      if(r==='perf'&&fed){h.energy=clamp(h.energy+6,0,100);if(!h.inj&&R()<.006*(worked?1:3)*(h.bcs>7?2:1))colic.push(h)}
+      if(h.bcs<3.5){h.health=clamp(h.health-2,0,100);thin.push(h.name)}
+      if(h.bcs>8&&(r==='rich'||r==='perf')&&!h.inj&&R()<.01)ev.push(['bad',afflictQ(h,'laminitis')+' Being so overweight on rich feed brought it on.']);
+      let dec=5+(worked?2:0)+(!w.off&&(w.f==='muddy'||w.f==='soft')?1.5:0);if(has(h,'ironhooves'))dec*=.6;if(has(h,'fragile'))dec*=1.3;h.hoof=clamp(Math.round(((h.hoof??100)-dec)*10)/10,0,100);
+      if(h.hoof<30){sore.push(h.name);if(!h.inj&&R()<(h.hoof<15?.1:.04))ev.push(['bad',afflictQ(h,R()<.5?'abscess':'bruise')+' '+(h.sex==='M'?'His':'Her')+' hooves are overgrown. Call the farrier.'])}}
+    if(!w.off){if(w.k==='hot'&&!(L('pasture')>=2||landOwned('ridge')))h.energy=clamp(h.energy-5,0,100);
+      if(w.k==='storm'&&h.pastured===S.day&&R()<.08){h.health=clamp(h.health-4,0,100);ev.push(['warn',h.name+' was spooked by the thunder out in the pasture and ran into the fence (health −4).'])}}}
+  for(const h of colic)ev.push(['bad',afflictQ(h,'colic')+' Grain on an idle or heavy horse can do that.']);
+  if(thin.length)ev.push(['warn',(thin.length>2?thin.length+' horses are':thin.join(' and ')+(thin.length>1?' are':' is'))+' too thin (health −2). Set Rich feed in '+(thin.length>1?'their':'the')+' papers.']);
+  if(sore.length)ev.push(['warn',(sore.length>2?sore.length+' horses have':sore.join(' and ')+(sore.length>1?' have':' has'))+' overgrown hooves. Call the farrier from the Stable tab'+(S.staff.farrier?'':' or hire one on the Staff tab')+'.']);
+  if(feedOn&&S.staff.farrier){const cap=4+2*sk('farrier');const due=S.horses.filter(h=>(h.hoof??100)<65).sort((a,b)=>a.hoof-b.hoof).slice(0,cap);for(const h of due){h.hoof=100;h.lastTrim=S.day}const left=S.horses.filter(h=>(h.hoof??100)<40).length;if(left)ev.push(['warn',S.staff.farrier.name+' (Farrier) trimmed '+due.length+' horses but '+left+' more are overdue. A more skilled farrier gets through more.'])}
+  if(!w.off&&w.k==='storm')S.fence=clamp((S.fence??80)-4,0,100);
+  herdNight(ev);
+  for(const h of S.horses)if(h.raise&&!h.raise.done&&!h.raise.wean&&age(h)+1>=YEARLING){h.raise.wean=2;h.happy=clamp(h.happy-6,0,100);const m=H(h.dam);if(m)m.happy=clamp(m.happy-4,0,100);ev.push(['warn',h.name+' was weaned late, all at once, and is upset about it. Weaning gently between 6 and 11 months goes better.'])}
+}
+function f90NewDay(ev){
+  if(f90On('weather'))wxSet();
+  for(const h of S.horses)if(h.raise&&!h.raise.done&&age(h)>=ADULT)raiseFinish(h,ev);
+  if(S.phase==='play')rescueNight(ev);}
+function f90Migrate(s){if(!s.opt)s.opt={feed:1,weather:1};if(!s.stats)s.stats={wins:0,foals:0};
+  for(const h of (s.horses||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=100;if(!h.raise)h.raise={done:1,g:1}}
+  for(const h of (s.market||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=90;if(!h.raise)h.raise={done:1,g:1}}
+  return s}
+
+/* ================= UI ================= */
+function f90Chips(h,mode){if(mode==='market'||!S.horses.includes(h))return '';let o='';
+  if(h.rescue&&!h.rescue.done)o+=rescueReady(h)?'<span class="chip good" title="Recovered. Open the papers to rehome or keep.">Rescue · recovered</span>':'<span class="chip warn" title="A rescue horse in rehab">Rescue · rehab</span>';
+  if(h.buddy&&H(h.buddy))o+=`<span class="chip good" title="Pasture buddy: happier when turned out together">♥ ${esc(H(h.buddy).name)}</span>`;
+  if(f90On('feed')){const b=bcsOf(h),v=hoofOf(h);if(b<3.5||b>7.5)o+=`<span class="chip bad" title="Body condition ${b.toFixed(1)} of 9">${bcsWord(b)}</span>`;else if(b<4.5||b>6.5)o+=`<span class="chip warn" title="Body condition ${b.toFixed(1)} of 9">${bcsWord(b)}</span>`;
+    if(v<30)o+='<span class="chip bad" title="Overgrown hooves: slower, hurts more easily, can go lame">Hooves sore</span>';else if(v<50)o+='<span class="chip warn" title="Hooves need a trim">Trim due</span>';
+    if(rationOf(h)==='perf')o+='<span class="chip" title="Performance feed: grain and supplements">Grain</span>'}
+  const d=raiseDue(h);if(d)o+=`<span class="chip warn" title="Raising: ${esc(d)} is ready">${esc(d)}</span>`;if(isGreen(h))o+='<span class="chip warn" title="Not fully started under saddle: −8% at events">Green</span>';
+  if(h.solo)o+='<span class="chip" title="Turned out alone">Solo turnout</span>';return o}
+function f90CardActions(h){let a='';if(canImprint(h))a+=`<button class="btn small" data-a="f90imp" data-id="${h.id}" title="Gently handle the newborn">Imprint</button>`;if(canHalter(h))a+=`<button class="btn small" data-a="f90halter" data-id="${h.id}" title="Halter lesson (uses the foal’s day)">Halter</button>`;
+  if(canWean(h))a+=`<button class="btn small" data-a="f90wean" data-id="${h.id}" title="Wean gently">Wean</button>`;if(canSaddle(h))a+=`<button class="btn small" data-a="f90saddle" data-id="${h.id}" title="Saddle session (uses the day)">Saddle</button>`;
+  if(rescueReady(h))a+=`<button class="btn small primary" data-a="open" data-id="${h.id}">Rehome or keep</button>`;return a}
+function f90Meter(lbl,pct,col,txt,band){return `<div class="f90meter"><span>${lbl}</span><span class="m">${band?`<span class="band" style="left:${band[0]}%;width:${band[1]-band[0]}%"></span><span class="dot" style="left:${pct}%"></span>`:`<i style="width:${pct}%;background:${col}"></i>`}</span><span class="note">${txt}</span></div>`}
+function f90PapersCol(h){let o='<div class="pcol">';
+  if(f90On('feed')){const b=bcsOf(h),v=hoofOf(h),r=h.ration||'auto';o+=`<div class="subh">Feed &amp; hooves</div>
+    ${f90Meter('Weight',(b-1)/8*100,'',`<b class="${bcsCls(b)}">${bcsWord(b)}</b> · ${b.toFixed(1)}/9`,[(4.5-1)/8*100,(6.5-1)/8*100])}
+    <div class="actions" style="margin:4px 0"><label class="note" for="ration${h.id}">Ration</label><select id="ration${h.id}" data-c="f90ration" data-id="${h.id}">${FEED_ORDER.map(k=>`<option value="${k}" ${r===k?'selected':''}>${FEEDS[k].n}${FEEDS[k].cost?' (+'+money(FEEDS[k].cost)+'/day)':''}</option>`).join('')}</select></div>
+    <div class="note">${esc(FEEDS[r].d)}${r==='auto'?' Tonight: <b>'+FEEDS[rationOf(h)].n+'</b>.':''} Healthy weight is 4.5 to 6.5. Work, growing, nursing, winter and hard keepers burn weight; idle days and spring grass put it on.</div>
+    ${f90Meter('Hooves',v,vitColor(v),`<b class="${v<30?'bad':v<50?'warn':'good'}">${hoofWord(v)}</b> · ${Math.round(v)}%`)}
+    <div class="actions" style="margin:4px 0"><button class="btn small" data-a="f90trim" data-id="${h.id}" ${v>=95||S.money<trimCost()?'disabled':''}>Trim hooves · ${money(trimCost())}</button><span class="note">${S.staff.farrier?esc(S.staff.farrier.name)+' (Farrier) trims below 65% for free.':'Below 50% the horse slows down. Below 30% it can go lame. A Farrier on staff trims for you.'}</span></div>`}
+  o+=`<div class="subh">Herd</div><div class="note">${h.buddy&&H(h.buddy)?`<b class="good">♥ Pasture buddy: ${esc(H(h.buddy).name)}.</b> Both happier when turned out together.`:h.buddy?'Misses '+esc(h.buddyName||'a buddy')+'.':(()=>{const ps=Object.entries(h.pals||{}).filter(([k])=>H(k)).sort((a,b)=>b[1]-a[1]).slice(0,2);return ps.length?'Getting to know '+ps.map(([k,p])=>esc(H(k).name)+' ('+Math.min(100,Math.round(p/3*100))+'%)').join(' and ')+' in the pasture.':'No close friends yet. Horses turned out together become buddies.'})()}${has(h,'bossy')?' <b class="warn">Herd Boss:</b> may kick pasture mates'+(landOwned('meadow')?' (rarely, thanks to the North Meadow paddocks).':'.'):''}</div>
+    <div class="actions" style="margin:4px 0"><button class="btn small" data-a="f90solo" data-id="${h.id}">${h.solo?'Turn out with the herd':'Turn out alone'}</button><span class="note">${h.solo?'Turned out alone: no kicks, no friends, a little lonely.':'Turned out with the herd.'}</span></div>`;
+  const r=h.raise;if(r&&(!r.done||isGreen(h))){const st=(ok,t,btn,miss)=>`<div><span class="${ok?'ok':miss?'miss':''}">${ok?'✓':miss?'✗':'○'}</span> ${t}${btn||''}</div>`;
+    o+=`<div class="subh">Growing up</div><div class="f90steps">
+     ${st(r.imp,'Imprinting at birth',canImprint(h)?` <button class="btn small" data-a="f90imp" data-id="${h.id}">Imprint now</button>`:'',!r.imp&&age(h)>1)}
+     ${st((r.halter||0)>=3,'Halter lessons '+(r.halter||0)+'/3',canHalter(h)?` <button class="btn small" data-a="f90halter" data-id="${h.id}">Halter lesson</button>`:'',r.done&&(r.halter||0)<3)}
+     ${st(r.wean===1,'Weaning'+(r.wean===2?' (late and abrupt)':''),canWean(h)?` <button class="btn small" data-a="f90wean" data-id="${h.id}">Wean gently</button>`:(!r.wean&&stage(h)==='Foal'?' <span class="note">from 6 months</span>':''),r.wean===2)}
+     ${st((r.saddle||0)>=4,'Started under saddle '+(r.saddle||0)+'/4',canSaddle(h)?` <button class="btn small" data-a="f90saddle" data-id="${h.id}">Saddle session</button>`:(stage(h)==='Foal'?' <span class="note">as a yearling</span>':''),false)}
+    </div><div class="note">${r.done?'Green: −8% at events until the last saddle sessions are done.':'Upbringing so far: <b>'+Math.round(raiseScore(r))+'/100</b> ('+RAISE_G[raiseGrade(raiseScore(r))].n+'). It’s graded at 2 years old. '+(S.staff.trainer?'Your Trainer does halter and saddle work on idle youngsters, but doing it yourself also builds bond.':'Each lesson uses the youngster’s day.')}</div>`}
+  if(h.rescue&&!h.rescue.done){const ready=rescueReady(h);o+=`<div class="subh">Rescue</div><div class="note">From ${esc(h.rescue.org)}. ${ready?'<b class="good">Recovered!</b>':'Nurse '+(h.sex==='M'?'him':'her')+' back to health by day '+h.rescue.until+'. Rescue horses can’t be sold, bred or shown while in rehab.'}</div><div class="f90steps">${rescueGoals().map(g=>`<div><span class="${rescueMet(h,g)?'ok':''}">${rescueMet(h,g)?'✓':'○'}</span> ${g[2]}</div>`).join('')}</div>
+    ${ready?`<div class="actions"><button class="btn primary small" data-a="f90rehome" data-id="${h.id}">Find a new home · ${money(Math.max(200,r10(value(h)*.3)))}, +5 rep</button><button class="btn small" data-a="f90keep" data-id="${h.id}">Keep ${esc(h.name)} for good</button></div>`:''}`}
+  return o+'</div>'}
+function f90PapersKV(h){let o='';const r=h.raise;if(r&&r.done&&r.sc!=null){const G=RAISE_G[r.g];o+=`<dt>Upbringing</dt><dd><b class="${G.c}">${G.n}</b> (${r.sc}/100). ${G.d}</dd>`}
+  if(f90On('feed')&&!S.horses.includes(h)){const b=bcsOf(h);o+=`<dt>Condition</dt><dd>${bcsWord(b)} (${b.toFixed(1)}/9) · hooves ${hoofWord(hoofOf(h)).toLowerCase()}</dd>`}
+  if(h.rescue&&h.rescue.kept)o+=`<dt>Rescue</dt><dd>Nursed back to health from neglect and adopted for good.</dd>`;return o}
+function f90StablePanel(){const ln=[];
+  if(f90On('weather')){const w=wxToday(),t=wxTomorrow();ln.push(`<div class="helpline ${['storm','hot','snow'].includes(w.k)||w.f==='muddy'?'warn':''}"><span>${WX[w.k].i}</span><span><b>${WX[w.k].n}</b>, ${FOOT[w.f].n.toLowerCase()} footing. Tomorrow: ${wxLabel(t)}. <span class="note">${esc(wxEffects(w))}</span></span></div>`)}
+  if(f90On('feed')&&S.horses.length){const bill=feedBill(),due=S.horses.filter(h=>hoofOf(h)<50),sore=due.filter(h=>hoofOf(h)<30),cost=due.length*trimCost();const thin=S.horses.filter(h=>bcsOf(h)<4.5).length,fat=S.horses.filter(h=>bcsOf(h)>6.5).length;
+    ln.push(`<div class="helpline ${sore.length||thin?'warn':''}"><span>${sore.length?'!':'✓'}</span><span>Feed tonight: <b>${bill?money(bill):'plain hay only'}</b>${thin?' · '+thin+' thin':''}${fat?' · '+fat+' heavy':''}. Hooves: ${due.length?`<b>${due.length}</b> need a trim${sore.length?' ('+sore.length+' sore)':''}`:'all fine'}${S.staff.farrier?' · '+esc(S.staff.farrier.name)+' (Farrier) keeps them trimmed.':''} ${due.length&&!S.staff.farrier?`<button class="btn small" data-a="f90farrier" ${S.money<cost?'disabled':''}>Call the farrier · ${money(cost)}</button>`:''}</span></div>`)}
+  const kids=S.horses.filter(h=>raiseDue(h));if(kids.length)ln.push(`<div class="helpline"><span>✓</span><span>Youngsters ready: ${kids.map(h=>`<b>${esc(h.name)}</b> (${esc(raiseDue(h).toLowerCase())})`).join(', ')}. Use the buttons on their cards.</span></div>`);
+  return ln.join('')}
+function f90WxPanel(){if(!f90On('weather'))return '';const w=wxToday(),t=wxTomorrow();return `<div class="panel" style="margin-bottom:16px"><div class="wxbar"><span class="wxbig">${WX[w.k].i}</span><div><b>Today: ${WX[w.k].n}, ${FOOT[w.f].n.toLowerCase()} footing</b> <span class="note">(${FOOT[w.f].d})</span><div class="note">Tomorrow: ${wxLabel(t)}</div></div></div><p class="note" style="margin:8px 0 0">${esc(wxEffects(w))} The odds below already include the weather.</p></div>`}
+function f90RescuePanel(){const q=S.rescueReq;const cur=S.horses.filter(h=>h.rescue&&!h.rescue.done);
+  return `<div class="subh" style="margin-top:22px">Horse rescue</div><div class="panel"><p class="note" style="margin-top:0">Rescues sometimes ask you to nurse a neglected horse back to health. They send $150 toward the bills. Once the horse is healthy, happy and trusts people again, find it a new home (an adoption fee and +5 reputation) or keep it. Now and then one turns out to be a hidden gem. You have about a year. Rescues can’t be sold, bred or shown while in rehab.</p>
+   ${q?`<div class="rescuecard"><div class="portrait" style="width:130px;aspect-ratio:200/120;flex:none">${horseSVG(q.h)}</div><div class="grow"><b>${esc(q.h.name)}</b> <span class="note">${sexLabel(q.h)} · ${ageLabel(q.h)} · ${breedLabel(q.h)}</span><div class="note">From ${esc(q.org)}. Health ${Math.round(q.h.health)}, happiness ${Math.round(q.h.happy)}${f90On('feed')?', '+bcsWord(q.h.bcs).toLowerCase()+', hooves '+hoofWord(q.h.hoof).toLowerCase():''}. Needs a home by day ${q.until}.</div></div><div class="actions"><button class="btn primary" data-a="f90rescueyes" ${S.horses.length>=S.stalls?'disabled':''}>Take ${q.h.sex==='M'?'him':'her'} in</button><button class="btn" data-a="f90rescueno">Not now</button></div></div>${S.horses.length>=S.stalls?'<p class="note bad">You need a free stall first.</p>':''}`:'<p class="note">No rescue needs you right now.</p>'}
+   ${cur.length?`<div class="subh">In your care</div>${cur.map(h=>`<div class="awayrow"><div><b>${esc(h.name)}</b> <span class="note">${rescueReady(h)?'<b class="good">recovered</b>':rescueGoals().filter(g=>rescueMet(h,g)).length+'/'+rescueGoals().length+' goals · until day '+h.rescue.until}</span></div><button class="btn small" data-a="open" data-id="${h.id}">Papers</button></div>`).join('')}`:''}
+   <p class="note">Rescued so far: ${S.stats.rescues||0} · rehomed ${S.stats.rehomed||0} · kept ${S.stats.keptRescue||0}</p></div>`}
+function f90RulesRows(){if(!S||!S.opt)return '';const seg=k=>`<div class="seg"><button class="btn small ${f90On(k)?'primary':''}" data-a="f90opt" data-k="${k}" data-v="1">On</button><button class="btn small ${f90On(k)?'':'primary'}" data-a="f90opt" data-k="${k}" data-v="0">Off</button></div>`;
+  return `<div class="setrow"><div><b>Feed, weight and hooves</b><div class="note">Horses gain and lose weight, rations cost money, and hooves need a farrier. Off: every horse stays at a healthy weight with good hooves.</div></div>${seg('feed')}</div>
+  <div class="setrow"><div><b>Weather and footing</b><div class="note">Daily weather changes the footing at shows, training outside and the pasture. Off: always a fine day.</div></div>${seg('weather')}</div>`}
+function f90RulesPanel(){return `<div class="cols" style="margin-bottom:12px"><div class="panel"><div class="subh" style="margin-top:0">Ranch rules</div><p class="note" style="margin-top:0">Switch these on or off any time. They are saved with this ranch.</p>${f90RulesRows()}</div></div>`}
+function f90Hint(){const e=S.horses.find(h=>canImprint(h));if(e)return '<b>'+esc(e.name)+'</b> was just born. Press <b>Imprint</b> on the foal’s card today. Gentle handling at birth gives a better start.';
+  const r=S.horses.find(h=>rescueReady(h)&&!h.rescue.asked);if(r)return '<b>'+esc(r.name)+'</b> has recovered! Open '+(r.sex==='M'?'his':'her')+' papers to find a new home or keep '+(r.sex==='M'?'him':'her')+'.';
+  if(f90On('feed')){const s=S.horses.filter(h=>hoofOf(h)<30);if(s.length&&!S.staff.farrier)return s.length+' horse'+(s.length>1?'s have':' has')+' sore, overgrown hooves. Press <b>Call the farrier</b> on the Stable tab before '+(s.length>1?'they go':'it goes')+' lame.';
+    const t=S.horses.find(h=>bcsOf(h)<3.5&&rationOf(h)!=='rich'&&rationOf(h)!=='perf');if(t)return '<b>'+esc(t.name)+'</b> is too thin. Open '+(t.sex==='M'?'his':'her')+' papers and set the ration to <b>Rich</b>.'}
+  return ''}
+function f90ReportWx(){if(!f90On('weather'))return '';const w=wxToday(),t=wxTomorrow();return `<p class="note" style="margin:4px 0 8px">${WX[w.k].i} <b>${WX[w.k].n}</b> today, ${FOOT[w.f].n.toLowerCase()} footing. Tomorrow: ${wxLabel(t)}. ${esc(wxEffects(w))}</p>`}
+function f90WhyNo(h){if(rescueLocked(h))return h.name+' is a rescue in rehab and can’t be shown yet.';return ''}
+
+/* weather in the live event scenes */
+function f90Sky(){const w=wxToday();if(w.off)return '';const k=w.k;if(k==='cloudy')return '<rect x="0" y="0" width="800" height="120" fill="#9AA5AE" opacity=".35"/>';if(k==='rain')return '<rect x="0" y="0" width="800" height="140" fill="#7E8A94" opacity=".5"/>';if(k==='storm')return '<rect x="0" y="0" width="800" height="150" fill="#4E5862" opacity=".62"/>';if(k==='snow'||k==='cold')return '<rect x="0" y="0" width="800" height="130" fill="#C9D3DC" opacity=".45"/>';if(k==='hot')return '<rect x="0" y="0" width="800" height="130" fill="#F6C77A" opacity=".25"/>';return ''}
+function f90Overlay(seed,ev0){const w=wxToday();if(w.off)return '';const t=srng(seed*7+11);let o='';
+  if((w.f==='muddy'||w.f==='soft')&&ev0.id!=='desert'){o+='<g opacity="'+(w.f==='muddy'?.45:.25)+'">';for(let i=0;i<14;i++)o+=`<ellipse cx="${(t()*800).toFixed(0)}" cy="${(238+t()*66).toFixed(0)}" rx="${(10+t()*26).toFixed(0)}" ry="${(2+t()*3).toFixed(1)}" fill="#5C4630"/>`;o+='</g>'}
+  if(w.k==='rain'||w.k==='storm'){o+='<g class="wrain" stroke="#DCE7F0" stroke-width="1.1" opacity=".55">';const n=w.k==='storm'?110:70;for(let i=0;i<n;i++){const x=t()*840,y=t()*326;o+=`<line x1="${x.toFixed(0)}" y1="${y.toFixed(0)}" x2="${(x-6).toFixed(0)}" y2="${(y+16).toFixed(0)}"/>`}o+='</g>';if(w.k==='storm')o+='<rect class="wflash" x="0" y="0" width="800" height="326" fill="#fff" opacity="0"/>'}
+  if(w.k==='snow'&&!snowy(curSeason()))o+=snowFlakes(seed+5,800,300,70);
+  if(w.k==='hot')o+='<rect x="0" y="0" width="800" height="326" fill="#FFB347" opacity=".08"/>';
+  return o}
+function f90WatchLine(){const w=wxToday();if(w.off)return '';const k=w.k,f=w.f;const a=k==='rain'?'Rain is coming down':k==='storm'?'Thunder rolls over the grounds':k==='hot'?'It’s a scorcher out here':k==='snow'?'Snow is falling':k==='cold'?'It’s bitterly cold':k==='wind'?'The wind is gusting':k==='cloudy'?'Gray skies today':'Sunshine today';return ' '+a+', and the footing is '+FOOT[f].n.toLowerCase()+'.'}
+(()=>{const st=document.createElement('style');st.textContent=`.wrain{animation:wrain .45s linear infinite}@keyframes wrain{from{transform:translate(0,-16px)}to{transform:translate(-6px,0)}}.wflash{animation:wflash 6s infinite}@keyframes wflash{0%,90%,100%{opacity:0}91%{opacity:.45}93%{opacity:0}94%{opacity:.3}96%{opacity:0}}@media (prefers-reduced-motion:reduce){.wrain,.wflash{animation:none}}`;document.head.appendChild(st)})();
+
+/* ---------- actions ---------- */
+Object.assign(ACT,{
+  f90opt:d=>{S.opt=S.opt||{};S.opt[d.k]=+d.v;if(d.k==='weather'&&+d.v)wxSet();toast((d.k==='feed'?'Feed, weight and hooves':'Weather and footing')+(+d.v?' are on.':' are off.'))},
+  f90trim:d=>{const h=H(d.id);if(!h)return;const c=trimCost();if(S.money<c)return toast('Not enough money for the farrier.');S.money-=c;h.hoof=100;h.lastTrim=S.day;toast(h.name+'’s hooves are trimmed ('+money(c)+').')},
+  f90farrier:()=>{const due=S.horses.filter(h=>hoofOf(h)<50);const c=due.length*trimCost();if(!due.length)return toast('No hooves need trimming.');if(S.money<c)return toast('Not enough money for the farrier.');S.money-=c;for(const h of due){h.hoof=100;h.lastTrim=S.day}log('info','The farrier trimmed '+due.length+' horse'+(due.length>1?'s':'')+' for '+money(c)+'.');toast('The farrier trimmed '+due.length+' horse'+(due.length>1?'s':'')+' ('+money(c)+').')},
+  f90solo:d=>{const h=H(d.id);if(!h)return;h.solo=h.solo?0:1;toast(h.solo?h.name+' will be turned out in a paddock alone.':h.name+' will go out with the herd again.')},
+  f90imp:d=>{const h=H(d.id);if(!h||!canImprint(h))return toast('Imprinting only works in the first day of life.');h.raise.imp=1;addBond(h,10);h.happy=clamp(h.happy+3,0,100);h.lastCare=S.day;story(h,'Imprinted at birth.');toast('You spent a quiet hour handling '+h.name+'. Bond +10 and a great start.')},
+  f90halter:d=>{const h=H(d.id);if(!h||!canHalter(h))return toast('Not ready for a halter lesson right now.');doHalter(h);toast(h.name+' learned a bit more about the halter ('+h.raise.halter+'/3). Bond up, Smarts +0.5.')},
+  f90wean:d=>{const h=H(d.id);if(!h||!canWean(h))return;const calm=!!(h.buddy&&H(h.buddy))||L('goats')>0;h.raise.wean=1;h.happy=clamp(h.happy-(calm?2:5),0,100);const m=H(h.dam);if(m)m.happy=clamp(m.happy-3,0,100);story(h,'Weaned gently.');toast(h.name+' was weaned gently'+(calm?', with a friend nearby to help':'')+'.')},
+  f90saddle:d=>{const h=H(d.id);if(!h||!canSaddle(h))return toast('Not ready for a saddle session right now.');const hurt=doSaddle(h);toast(h.name+' had a saddle session ('+h.raise.saddle+'/4).'+(hurt||''))},
+  f90rescueyes:()=>acceptRescue(),
+  f90rescueno:()=>{if(S.rescueReq){log('info','You told '+S.rescueReq.org+' you can’t take '+S.rescueReq.h.name+' right now.');S.rescueReq=null}},
+  f90rehome:d=>{const h=H(d.id);if(h)rehome(h)},
+  f90keep:d=>{const h=H(d.id);if(h)keepRescue(h)},
+});
+document.addEventListener('change',e=>{const c=e.target.dataset&&e.target.dataset.c;if(c!=='f90ration')return;const h=H(e.target.dataset.id);if(h){h.ration=e.target.value;toast(h.name+': '+FEEDS[h.ration].n+' ration.')}save();render()});
+
+/* ---------- achievements and guide ---------- */
+ACH.push({id:'buddies',n:'Best Friends',d:'Two of your horses become pasture buddies.'},{id:'raisedright',n:'Raised Right',d:'A horse you raised grows up with a perfect start.'},{id:'rescue0',n:'Open Door',d:'Take in a rescue horse.'},{id:'rescue1',n:'Second Chance',d:'Nurse a rescue horse back to health.'},{id:'rescue5',n:'Safe Haven',d:'Nurse five rescue horses back to health.'});
+GUIDE.splice(Math.max(0,GUIDE.findIndex(g=>g[0]==='Training')),0,
+ ['Feed, weight and hooves',['Every horse has a weight from 1 (very thin) to 9 (obese). 4.5 to 6.5 is healthy. Work, growing, nursing a foal, pregnancy, old age, winter and being a Hard Keeper burn weight; idle days, spring grass and being an Easy Keeper put it on.','Rations: <b>Auto</b> (the default) picks Light, Normal or Rich to keep a healthy weight. <b>Rich</b> adds alfalfa ($3 a day). <b>Performance</b> adds grain and supplements ($7 a day) for +6 energy overnight and +2% at events, but grain can cause colic, mostly in idle or heavy horses.','Thin horses lose health and score lower; heavy ones score lower, get hurt more and can founder on rich feed.','Hooves grow every day. Below 50% a horse slows down, and below 30% it can go lame. Trim them from the papers, call the farrier for everyone from the Stable tab, or hire a Farrier to do it for you.','You can switch all of this off under Ranch rules on the Office tab.']],
+ ['Weather and footing',['Every day has weather that fits your region and season, and you can see tomorrow’s forecast. Rain makes the footing soft, then muddy; dry heat makes it fast; cold and snow freeze it.','Mud and soft footing slow speed events and endurance, unless a horse is a <b>Mudder</b>. Fast footing quickens races and barrels but causes more injuries. Heat hurts horses in endurance, desert and cross-country unless they are hot-blooded, and they recover less energy without shade (Shaded Pastures or the Timber Ridge).','Rain, storms, snow and bitter cold slow training outside by 15% unless you have a covered arena (Riding Ring level 2 or the Covered Arena). Thunderstorms spook horses left out in the pasture.','The odds on the Show Grounds already include the weather. You can switch weather off under Ranch rules on the Office tab.']],
+ ['Herd life',['Horses turned out to pasture together get to know each other, and pairs that spend enough time together become <b>pasture buddies</b>: both get +3 happiness every day they go out together, and miss each other when apart.','A <b>Herd Boss</b> may kick a pasture mate. Turn bossy horses out alone from their papers (no kicks, but no friends and a little lonely), or buy the North Meadow for separate paddocks.','Goats calm nervous horses: with any goats on the ranch, Skittish horses get +2 happiness a night and lose only half their event penalty.']],
+ ['Raising foals',['How you raise a foal shapes the grown horse. <b>Imprint</b> the foal on its first day, give it three <b>halter lessons</b>, <b>wean</b> it gently between 6 and 11 months, and give it four <b>saddle sessions</b> as a yearling.','At 2 years old the upbringing is graded: Raised right (trains 5% faster for life, +10 bond, may grow up Calm), Well raised (2% faster), Average, or Rough start (may turn Skittish or Stubborn). A horse that wasn’t fully started under saddle is <b>green</b> (−8% at events) until it finishes.','A Trainer on staff does halter and saddle work on idle youngsters, but doing it yourself also builds bond.']],
+ ['Rescue horses',['Now and then a horse rescue asks you to nurse a neglected horse back to health. Take it in on the Boarding tab (they send $150), then groom, feed, doctor and trim it until it is healthy, happy and trusts people again.','Once it has recovered, find it a new home (an adoption fee and +5 reputation) or keep it. Some turn out to be hidden gems with far more talent than anyone guessed. Rescue horses can’t be sold, bred or shown while in rehab, and you have about a year.']]);
+/*F90-END*/
 const TAB_ORDER=['stable','breeding','compete','market','tack','boarding','facilities','bank','staff','office','hof','journal'];
 (()=>{let sx=0,sy=0,st=0,ok=false;
   document.addEventListener('touchstart',e=>{ok=!!(UI.screen==='game'&&!UI.modal&&e.touches.length===1&&e.target.closest('#main')&&!e.target.closest('input,select,textarea,.tablewrap,.slider,[data-noswipe]'));if(!ok)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
