@@ -716,24 +716,43 @@ function itemScore(it,h){const e=it.e,role=gearRole(h),be=EVENTS[bestEventOf(h)]
   v+=(e.happy||0)*4*(has(h,'skittish')?1.4:1)+(e.energy||0)*1.5+(e.health||0)*2+(e.bond||0)*2.5+(e.rep||0)*4*compW;
   return v+HRORDER.indexOf(it.r)*.01}
 function horsePrio(h){return (gearRole(h)==='active'?2:gearRole(h)==='young'?1.3:1)*(1+avg(h.pot)/100)}
-function autoEquip(onlyH){let n=0;const hs=(onlyH?[onlyH].filter(useTack):S.horses.filter(useTack)).sort((a,b)=>horsePrio(b)-horsePrio(a));
-  for(const h of hs)for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;
-    const c=S.inv.filter(y=>y.on==null&&ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(c){c.on=h.id;n++}}
-  return n}
+/* build 93: your own horses get first pick of Epic, Legendary and Mythical gear; boarded horses only get what is left over */
+const TOP_GEAR=['epic','legendary','mythical'];
+function topGear(id){return TOP_GEAR.includes(ITEMS[id].r)}
+function ownNeed(sl){return S.horses.filter(o=>!o.client&&useTack(o)&&!S.inv.some(y=>y.on===o.id&&ITEMS[y.id].s===sl)).length}
+function spareForClient(c,sl){/* keep enough spare top gear for your own horses' empty slots; a boarded horse may only take the extras, worst first */
+  const tops=c.filter(y=>topGear(y.id));const extra=tops.length-ownNeed(sl);if(extra<=0)return c.filter(y=>!topGear(y.id));
+  const ok=new Set(tops.sort((a,b)=>HRORDER.indexOf(a.r||ITEMS[a.id].r)-HRORDER.indexOf(b.r||ITEMS[b.id].r)).slice(0,extra));return c.filter(y=>!topGear(y.id)||ok.has(y))}
+function autoEquip(onlyH){const before=new Map(S.inv.map(y=>[y.uid,y.on]));const pr=(a,b)=>horsePrio(b)-horsePrio(a);
+  const fill=(h,allowTop,reserve)=>{for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;let c=S.inv.filter(y=>y.on==null&&ITEMS[y.id].s===sl.k);
+      if(!allowTop)c=c.filter(y=>!topGear(y.id));else if(reserve)c=spareForClient(c,sl.k);
+      const b=c.sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(b)b.on=h.id}};
+  if(onlyH){if(!useTack(onlyH))return 0;
+    if(onlyH.client)fill(onlyH,true,true);
+    else{const bumped=[];for(const sl of SLOTS){if(S.inv.some(y=>y.on===onlyH.id&&ITEMS[y.id].s===sl.k))continue;
+        const c=S.inv.filter(y=>ITEMS[y.id].s===sl.k&&(y.on==null||(topGear(y.id)&&H(y.on)&&H(y.on).client)));const b=c.sort((a,b)=>itemScore(ITEMS[b.id],onlyH)-itemScore(ITEMS[a.id],onlyH))[0];
+        if(b){if(b.on!=null)bumped.push(H(b.on));b.on=onlyH.id}}
+      for(const w of bumped)if(w)fill(w,false)}}
+  else{for(const y of S.inv){if(y.on==null||!topGear(y.id))continue;const w=H(y.on);if(w&&w.client)y.on=null}
+    const pool=S.horses.filter(useTack).sort(pr);for(const h of pool)fill(h,!h.client);for(const h of pool)if(h.client)fill(h,true)}
+  return S.inv.filter(y=>y.on!=null&&before.get(y.uid)!==y.on).length}
 function gearReserve(){return Math.round((wages()+S.horses.length*(S.hayPrice||7))*5/10)*10}
 function planGearBuys(){const hs=S.horses.filter(useTack).sort((a,b)=>horsePrio(b)-horsePrio(a));const spare=S.inv.filter(y=>y.on==null).map(y=>({...y}));const shop=S.shop.map((id,i)=>({id,i,used:false}));let budget=S.money-gearReserve();const plan=[];
   for(const h of hs)for(const sl of SLOTS){if(S.inv.some(y=>y.on===h.id&&ITEMS[y.id].s===sl.k))continue;
-    const sp=spare.filter(y=>!y.taken&&ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(sp){sp.taken=1;plan.push({h:h.id,sl:sl.k,id:sp.id,uid:sp.uid,p:0});continue}
-    const c=shop.filter(x=>!x.used&&ITEMS[x.id].s===sl.k&&ITEMS[x.id].p<=budget).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];
+    const sp=spare.filter(y=>!y.taken&&ITEMS[y.id].s===sl.k&&!(h.client&&topGear(y.id))).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(sp){sp.taken=1;plan.push({h:h.id,sl:sl.k,id:sp.id,uid:sp.uid,p:0});continue}
+    const c=shop.filter(x=>!x.used&&ITEMS[x.id].s===sl.k&&ITEMS[x.id].p<=budget&&!(h.client&&topGear(x.id))).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];
     if(c){if(ITEMS[c.id].r!=='common')c.used=true;budget-=ITEMS[c.id].p;plan.push({h:h.id,sl:sl.k,id:c.id,p:ITEMS[c.id].p})}else plan.push({h:h.id,sl:sl.k,none:1})}
+  for(const r of plan){if(!r.none)continue;const h=H(r.h);if(!h||!h.client)continue;const sp=spare.filter(y=>!y.taken&&ITEMS[y.id].s===r.sl).sort((a,b)=>itemScore(ITEMS[b.id],h)-itemScore(ITEMS[a.id],h))[0];if(sp){sp.taken=1;delete r.none;r.id=sp.id;r.uid=sp.uid;r.p=0}}
   return plan}
 function optimizeGear(onlyH){if(onlyH&&!useTack(onlyH))return 0;let moved=0;const before={};for(const x of S.inv)before[x.uid]=x.on;
   if(onlyH){for(const sl of SLOTS){const cur=S.inv.find(y=>y.on===onlyH.id&&ITEMS[y.id].s===sl.k);
-      const pool=S.inv.filter(y=>ITEMS[y.id].s===sl.k).sort((a,b)=>itemScore(ITEMS[b.id],onlyH)-itemScore(ITEMS[a.id],onlyH));const best=pool[0];
+      let pool=S.inv.filter(y=>ITEMS[y.id].s===sl.k);if(onlyH.client){pool=pool.filter(y=>!(topGear(y.id)&&y.on!=null&&H(y.on)&&!H(y.on).client));const spare=pool.filter(y=>y.on==null),ok=new Set(spareForClient(spare,sl.k));pool=pool.filter(y=>y.on!=null||ok.has(y))}
+      pool=pool.sort((a,b)=>itemScore(ITEMS[b.id],onlyH)-itemScore(ITEMS[a.id],onlyH));const best=pool[0];
       if(best&&best!==cur&&(!cur||itemScore(ITEMS[best.id],onlyH)>itemScore(ITEMS[cur.id],onlyH))){const prev=best.on;if(cur)cur.on=prev??null;best.on=onlyH.id}}}
   else{for(const sl of SLOTS){const items=S.inv.filter(y=>ITEMS[y.id].s===sl.k);if(!items.length)continue;for(const y of items)y.on=null;
-      const pairs=[];for(const h of S.horses.filter(useTack))for(const y of items)pairs.push([itemScore(ITEMS[y.id],h)*horsePrio(h),h,y]);pairs.sort((a,b)=>b[0]-a[0]);
-      const usedH=new Set();for(const [sc,h,y] of pairs){if(y.on!=null||usedH.has(h.id)||sc<=0)continue;y.on=h.id;usedH.add(h.id)}}}
+      const usedH=new Set(),hs=S.horses.filter(useTack);const round=(H2,I2)=>{const pairs=[];for(const h of H2)for(const y of I2)pairs.push([itemScore(ITEMS[y.id],h)*horsePrio(h),h,y]);pairs.sort((a,b)=>b[0]-a[0]);for(const [sc,h,y] of pairs){if(y.on!=null||usedH.has(h.id)||sc<=0)continue;y.on=h.id;usedH.add(h.id)}};
+      const tops=items.filter(y=>topGear(y.id)),rest=items.filter(y=>!topGear(y.id));
+      round(hs.filter(h=>!h.client),tops);round(hs,rest);round(hs.filter(h=>h.client),tops)}}
   for(const x of S.inv)if(before[x.uid]!==x.on)moved++;return moved}
 function itemEffects(it){const e=it.e,o=[];if(e.comp)o.push('+'+e.comp+'% at all events');if(e.ev)for(const k in e.ev)o.push('+'+e.ev[k]+'% '+EVENTS.find(x=>x.id===k).n);if(e.train)o.push('+'+e.train+'% training');if(e.inj)o.push('-'+Math.round((1-e.inj)*100)+'% injury risk');if(e.happy)o.push('+'+e.happy+' happiness a night');if(e.energy)o.push('+'+e.energy+' energy a night');if(e.health)o.push('+'+e.health+' health a night');if(e.bond)o.push('+'+e.bond+' bond a night');if(e.rep)o.push('+1 reputation on every podium');return o.join(' · ')}
 function itemIcon(slot,r,sz=30){const c=`var(--r-${r})`,k='var(--ink)';const g={
@@ -1563,8 +1582,11 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='92';
+const BUILD='93';
 const CHANGELOG=[
+ {b:'93',d:'Nov 8, 2026',t:'Fixes',c:[
+  'Stable: your own horses are listed first, and boarded horses come after under their own heading.',
+  'Gear: your own horses always get first pick of Epic, Legendary and Mythical gear when gear is handed out (Fill empty slots, Best gear for everyone and Buy missing gear). Boarded horses only get those pieces if some are left over, and Buy missing gear no longer buys Epic or better pieces for boarded horses.']},
  {b:'92',d:'Nov 5, 2026',t:'Fixes',c:[
   'Phones: swiping on the ranch map, or on anything else that scrolls sideways, no longer flips you to the next tab.',
   'Futurities and the Triple Crown: clearer wording. Foals and yearlings get a nomination, and a horse that is already 2 or 3 gets a “late entry” for $4,000, offered only while one of its races is still ahead. The papers list the races a horse can still run.',
@@ -3816,7 +3838,8 @@ function renderStable(){
   <div class="section-head"><h2>The Barn</h2><span class="sub">Tonight the herd eats ${herdHay()} bales${stockHay()?' (horses '+Math.round(horseHay()*10)/10+', livestock '+stockHay()+')':''}. Click any horse to see its papers.</span>
   <div class="right"><button class="btn" data-a="groomall" ${S.horses.every(h=>h.pgroomed===S.day)?'disabled':''} title="${grooms().length?esc(groomNames())+' brush horses each morning. Grooming them yourself adds extra bond.':'Groom every horse: happiness and bond up'}">${S.horses.every(h=>h.pgroomed===S.day)?'✓ All groomed':grooms().length?'Groom all yourself (+bond)':'Groom all'}</button><button class="btn" data-a="restall">Turn out the rest</button></div></div>
   ${grooms().length?`<div class="helpline ${groomCap()<S.horses.length?'warn':''}"><span>${groomCap()<S.horses.length?'!':'✓'}</span><span>${groomNote()}</span></div>`:''}
-  ${S.horses.length?`<div class="grid">${S.horses.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0)).map(h=>horseCard(h)).join('')}</div>`:'<div class="empty">No horses yet. Buy one at the Market.</div>'}`;
+  ${S.horses.length?(()=>{const fav=(a,b)=>(b.fav?1:0)-(a.fav?1:0);const own=S.horses.filter(h=>!h.client).sort(fav),cl=S.horses.filter(h=>h.client).sort(fav);
+    return (own.length?`<div class="grid">${own.map(h=>horseCard(h)).join('')}</div>`:'')+(cl.length?`<div class="subh" style="margin-top:${own.length?22:0}px">Boarded horses (${cl.length})</div><div class="grid">${cl.map(h=>horseCard(h)).join('')}</div>`:'')})():'<div class="empty">No horses yet. Buy one at the Market.</div>'}`;
 }
 
 function yourDay(){
@@ -5380,7 +5403,7 @@ function renderTack(){
     <p class="note">Winning events can also earn gear. A National or Invitational win always does.</p></div>
    <div class="panel"><div class="subh" style="margin-top:0">Auto gear</div>
     <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" data-a="autogear" ${S.inv.some(x=>x.on==null)&&S.horses.length?'':'disabled'}>Fill empty slots</button><button class="btn primary" data-a="bestgear" ${S.inv.length&&S.horses.length?'':'disabled'}>Best gear for everyone</button><button class="btn" data-a="buygear" ${S.horses.some(useTack)?'':'disabled'} title="Buys from the Tack Shop to fill every empty gear slot">Buy missing gear</button></div>
-    <p class="note" style="margin-top:6px"><b>Fill empty slots</b> puts spare tack-room gear on horses with open slots. <b>Best gear for everyone</b> reshuffles all gear, worn or not, so each horse gets what suits it: event gear for its best event, training gear for horses still learning, comfort and safety gear for retired horses. Top competitors get first pick.</p></div>
+    <p class="note" style="margin-top:6px"><b>Fill empty slots</b> puts spare tack-room gear on horses with open slots. <b>Best gear for everyone</b> reshuffles all gear, worn or not, so each horse gets what suits it: event gear for its best event, training gear for horses still learning, comfort and safety gear for retired horses. Top competitors get first pick, and your own horses always get first pick of Epic, Legendary and Mythical gear. Boarded horses only get those if some are left over.</p></div>
    ${sellPanel}
    <div class="panel"><div class="subh" style="margin-top:0">In the tack room (${nFree})</div>${compact&&freeHtml?'<p class="note">Lots of gear, so it’s grouped by slot. Tap a slot to open it.</p>':''}${freeHtml||'<p class="note">Nothing unworn. Buy something or open a crate.</p>'}
     <p class="note" style="margin-top:8px">Duplicates stack. Each horse wears one item per slot: saddle, bridle, boots, blanket, bedding, stall toy and flair.</p></div>
