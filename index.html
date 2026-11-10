@@ -1582,8 +1582,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='94';
+const BUILD='95';
 const CHANGELOG=[
+ {b:'95',d:'Nov 9, 2026',t:'Fixes',c:[
+  'Three-Day Events: the result now shows only while the event runs and on the morning after it ends. Before, a finished or failed event stayed on the Compete tab for the rest of the year and could even block you from entering the Grand Three-Day Event in the fall.',
+  'Three-Day Events: sending your entered horse to a training center now withdraws it right away with a message, and the result says why a horse missed a day.',
+  'Futurities: horses that have aged out (4 and older) no longer show in the Nominated list or in their papers’ nomination box.']},
  {b:'94',d:'Nov 8, 2026',t:'Art fixes',c:[
   'Endurance Ride picture: the river now flows down from the hills properly, and the vet tent sits on the ground beside the trail, with its sign on the front.',
   'Show Jumping picture and the Compete tab banner: the horse now clears the top rail instead of passing through it. The Cross-Country picture also clears its log jump.']},
@@ -2820,7 +2824,7 @@ function holdCost(c,n){return Math.round(c.cost*(1+.35*n)/10)*10}
 const STAYS=[4,8,16];
 function stayCost(c,d){return Math.round(c.cost*d*(d>=16?.85:d>=8?.93:1)/10)*10}
 function canSendAway(h){return h&&!h.client&&!h.preg&&!h.injury&&(stage(h)!=='Foal')&&!h.retired}
-function sendAway(h,cid,days){const c=CENTERS.find(x=>x.id===cid);if(!c||!canSendAway(h))return toast('That horse can’t go right now.');if(S.rep<c.rep)return toast(c.n+' only takes horses from ranches with '+c.rep+'+ reputation.');
+function sendAway(h,cid,days){const c=CENTERS.find(x=>x.id===cid);if(!c||!canSendAway(h))return toast('That horse can’t go right now.');if(S.rep<c.rep)return toast(c.n+' only takes horses from ranches with '+c.rep+'+ reputation.');tdeWithdraw(h,'went to '+c.n);
   const cost=stayCost(c,days);if(S.money<cost)return toast('Not enough money.');S.money-=cost;freeGear(h.id);
   S.offers=S.offers.filter(o=>o.id!==h.id);S.studReq=S.studReq.filter(o=>o.id!==h.id);S.horses=S.horses.filter(x=>x!==h);
   S.away.push({h,c:cid,start:S.day,until:S.day+days,days,paid:cost,gains:{},skills:[]});
@@ -7543,7 +7547,9 @@ const TDE=[
  {id:'tdegrand',n:'Grand Three-Day Event',v:'Highfield Estate',s:2,d0:1,base:58,spread:6,prize:[15000,7500,3500],rep:[16,10,5],fee:1200,req:60,vet:1}];
 const TDE_PH=[{ei:3,n:'Dressage',v:'the dressage'},{ei:6,n:'Cross-country',v:'the cross-country'},{ei:5,n:'Show jumping',v:'the show jumping'}];
 function tdeToday(){const dp=dateParts(S.day);for(const x of TDE){const p=dp.sday-x.d0;if(dp.sIdx===x.s&&p>=0&&p<=2)return {x,p}}return null}
-function tdeCur(){const t=S.tde;if(!t||t.yr!==dateParts(S.day).year)return null;return t}
+/* the event shows on the Compete tab only while it runs and on the morning after it ends */
+function tdeCur(){const t=S.tde;if(!t||t.yr!==dateParts(S.day).year)return null;if(t.d0==null){const x=TDE.find(z=>z.id===t.id);if(!x)return null;t.d0=(t.yr-1)*DPY+x.s*4+x.d0}if(S.day>t.d0+3)return null;return t}
+function tdeWithdraw(h,why){const t=tdeCur();if(!t||t.done||t.out||t.h!==h.id)return;t.out='withdrawn ('+why+')';t.done=1;log('warn',h.name+' was withdrawn from the '+(TDE.find(z=>z.id===t.id)||{n:'Three-Day Event'}).n+' because '+(h.sex==='M'?'he':'she')+' '+why+'.');toast(h.name+' was withdrawn from the Three-Day Event.')}
 function tdeWhyNot(h,x){if(!h)return 'Pick a horse first.';if(S.rep<x.req)return x.n+' needs '+x.req+' reputation.';if(!canCompete(h))return whyNoCompete(h);if(x.vet&&!vetClear(h))return x.n+' needs a vet checkup in the last 8 days.';if(S.money<x.fee)return 'You need '+money(x.fee)+' for the entry.';return ''}
 function tdePrize(x,p){return r10(x.prize[p-1]*(locFx().prize||1))}
 function tdePhaseScore(h,ph,quiet){const ev=EVENTS[ph.ei];let sc=rollScore(h,ev),note='';
@@ -7553,7 +7559,7 @@ function tdePhaseScore(h,ph,quiet){const ev=EVENTS[ph.ei];let sc=rollScore(h,ev)
   if(ph.ei===5&&R()<.2){const r=ri(1,2);sc-=r*3;note=r+' rail'+(r>1?'s':'')+' down ('+r*3+' points).'}
   return {sc:Math.max(1,sc),note}}
 function tdeEnter(h,x){const why=tdeWhyNot(h,x);if(why)return toast(why);if(R()<refuseChance(h))return sulk(h,'load into the trailer for the '+x.n+' (no entry charged)');S.money-=x.fee;
-  const q=()=>Math.max(8,x.base*(locFx().npc||1)+gauss()*x.spread);S.tde={id:x.id,yr:dateParts(S.day).year,h:h.id,hn:h.name,ph:0,me:[],out:'',npc:Array.from({length:7},()=>({name:randName(),farm:pick(FARMS),q:q(),sc:[],out:''}))};
+  const q=()=>Math.max(8,x.base*(locFx().npc||1)+gauss()*x.spread);S.tde={id:x.id,yr:dateParts(S.day).year,d0:S.day,h:h.id,hn:h.name,ph:0,me:[],out:'',npc:Array.from({length:7},()=>({name:randName(),farm:pick(FARMS),q:q(),sc:[],out:''}))};
   story(h,'Entered the '+x.n+'.');return tdeRun(h,x,false)}
 function tdeStand(t){const rows=[{name:t.hn,farm:S.ranchName,me:1,tot:t.me.reduce((a,b)=>a+b,0),out:t.out},...t.npc.map(n=>({name:n.name,farm:n.farm,tot:n.sc.reduce((a,b)=>a+b,0),out:n.out}))];rows.sort((a,b)=>(a.out?1:0)-(b.out?1:0)||b.tot-a.tot);return rows}
 function tdeRun(h,x,quiet){const t=tdeCur();if(!t||t.out||t.done)return;const p=t.ph,ph=TDE_PH[p];const shown={money:S.money,rep:S.rep};
@@ -7678,7 +7684,7 @@ function f91HayMult(h){return landOwned('meadow')&&dateParts(S.day).sIdx<3?.95:1
 function f91Evening(ev){const t=tdeCur(),T=tdeToday();if(!t||t.done||t.out||!T||T.x.id!==t.id||T.p!==t.ph)return;const h=H(t.h);if(!h)return;if(h.acted===S.day){t.out='didn’t start '+TDE_PH[t.ph].v;t.done=1;ev.push(['warn',h.name+' was busy with something else and missed '+TDE_PH[T.p].v+' at the '+T.x.n+', so '+(h.sex==='M'?'he':'she')+' is out.']);return}
   const r=tdeRun(h,T.x,true);if(r)ev.push(['info',h.name+' rode '+TDE_PH[T.p].v+' at the '+T.x.n+' while you were busy: '+(r.phase||ord(r.place)+' overall')+'.'])}
 function f91NewDay(ev){
-  const t=tdeCur();if(t&&!t.done){const T=tdeToday();if(!T||T.x.id!==t.id||T.p>t.ph){t.out=t.out||'didn’t start '+TDE_PH[Math.min(2,t.ph)].v;t.done=1;ev.push(['warn',t.hn+' missed '+TDE_PH[Math.min(2,t.ph)].v+' and is out of the event.'])}}
+  const t=tdeCur();if(t&&!t.done){const T=tdeToday();if(!T||T.x.id!==t.id||T.p>t.ph){const away=(S.away||[]).some(a=>a.h&&a.h.id===t.h),gone=!away&&!H(t.h);t.out=t.out||(away?'was away at a training center and missed ':gone?'left the ranch and missed ':'didn’t start ')+TDE_PH[Math.min(2,t.ph)].v;t.done=1;ev.push(['warn',t.hn+' '+(away?'was away at a training center and ':gone?'is no longer at the ranch and ':'')+'missed '+TDE_PH[Math.min(2,t.ph)].v+', so '+(t.hn)+' is out of the event.'])}}
   S.wanted=(S.wanted||[]).filter(a=>a.until>=S.day);if(S.rep>=10&&((S.day-1)%7===0||!S.wantInit)){S.wantInit=1;if(S.wanted.length<3){S.wanted.push(wantGen());ev.push(['info','A new wanted ad is up on the Market tab: '+S.wanted[S.wanted.length-1].who+' is looking for a horse.'])}}
   for(const x of SPECIALS)if(dayIn(x.s,x.d)===1){const n=S.horses.filter(h=>spEligible(h,x)&&!spEntered(h,x)).length;if(n)ev.push(['info','Tomorrow: the '+x.n+(x.kind==='tc'?' (Triple Crown leg '+x.leg+')':'')+'. You have '+n+' eligible horse'+(n>1?'s':'')+'.'+(x.kind==='tc'?' Get a vet checkup today.':'')])}
   for(const x of TDE)if(dayIn(x.s,x.d0)===1&&S.rep>=x.req)ev.push(['info','The '+x.n+' (a Three-Day Event) starts tomorrow. See the Compete tab.'])}
@@ -7690,7 +7696,7 @@ function f91CompetePanels(){const h=H(UI.compHorse);const dp=dateParts(S.day);le
       body=el.length?`<div class="actions" style="flex-direction:column;align-items:flex-start">${el.slice(0,5).map(y=>{const why=spWhyNot(y,x);let od='';if(!why){const q=spOdds(y,x);od=` <span class="note ${q.win>.3?'good':q.top3>.3?'warn':'bad'}">Win ${pct(q.win)} · Top 3 ${pct(q.top3)}</span>`}return `<div><button class="btn small primary" data-a="f91sp" data-id="${x.id}" data-h="${y.id}" ${why?'disabled':''}>Run ${esc(y.name)} · ${money(x.fee)}</button>${od}${why?' <span class="note">'+esc(why)+'</span>':''}</div>`}).join('')}</div>`:'<div class="note">None of your horses can run today. Nominate young horses ahead of time.</div>'}
     else body=`<div class="note">${SEASONS[x.s]} day ${x.d} · in ${dn} day${dn===1?'':'s'}</div>`;
     return `<div class="spcard ${isT?'today':''}"><h4>${esc(x.n)}</h4><div class="note">${x.kind==='tc'?'Triple Crown leg '+x.leg+' · three-year-olds · a flat race'+' ('+(x.leg===2?'shorter, all speed':x.leg===3?'longer, a test of stamina':'the classic distance')+')':'Futurity · two-year-olds · '+esc(EVENTS[x.ei].n)}</div><div class="note">Purse ${x.prize.map(p=>money(r10(p*(locFx().prize||1)))).join(' / ')}${x.kind==='tc'?' · vet check needed':''}</div>${isT?`<div class="note">The favorite: <b>${esc(spFav(x).name)}</b> of ${esc(spFav(x).farm)}.</div>`:''}${body}</div>`};
-  const noms=S.horses.filter(y=>y.nom),cand=S.horses.filter(canNominate);
+  const noms=S.horses.filter(y=>y.nom&&age(y)<ADULT+DPY*2),cand=S.horses.filter(canNominate);
   o+=`<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Futurities and the Triple Crown</div><p class="note" style="margin-top:0">Big races and classes for young horses only. Nominate a horse once and it can run them all: ${money(250)} as a foal or ${money(750)} as a yearling. A horse that is already 2 or 3 can still get in with a ${money(4000)} late entry, as long as one of its races is still ahead. Two-year-olds run the futurities; three-year-olds run the Triple Crown. Win all three Triple Crown races in one year for a <b>${money(TC_BONUS)}</b> bonus. <button class="btn small" data-a="guide">How it works</button></p>
    <div class="spgrid">${SPECIALS.map(spCard).join('')}</div>
    <div class="note" style="margin-top:8px"><b>Nominated:</b> ${noms.length?noms.map(y=>esc(y.name)+' ('+(isFutAge(y)?'2-year-old':isTcAge(y)?'3-year-old':age(y)<ADULT?'growing up':'too old now')+(y.tc?', Triple Crown winner':'')+')').join(', '):'none yet'}.</div>
@@ -7707,9 +7713,9 @@ function f91CompetePanels(){const h=H(UI.compHorse);const dp=dateParts(S.day);le
 function f91WantedPanel(){const ads=(S.wanted||[]).filter(a=>a.until>=S.day);if(S.rep<10)return `<div class="panel" style="margin-bottom:16px"><div class="subh" style="margin-top:0">Wanted ads</div><p class="note" style="margin:0">Buyers start posting wanted ads once your reputation reaches 10.</p></div>`;
   return `<div class="section-head"><h2>Wanted ads</h2><span class="sub">Buyers looking for a particular horse pay well over the going rate. A new ad goes up every week (up to three).</span></div>${ads.length?`<div class="wantgrid">${ads.map(a=>{const m=S.horses.filter(h=>wantMatch(a,h));return `<div class="want"><h4>${esc(a.who)} <span class="note">· ${esc(a.farm)}</span></h4><ul>${wantLines(a).map(l=>`<li>${esc(l)}</li>`).join('')}</ul><div class="note">Pays <b>${money(a.pay)}</b> or more (at least 120% of the horse’s value) · +${a.rep} reputation · until day ${a.until}</div>
     ${m.length?`<div class="actions">${m.slice(0,4).map(h=>`<button class="btn small primary" data-a="f91want" data-i="${a.id}" data-id="${h.id}">Sell ${esc(h.name)} · ${money(wantPay(a,h))}</button>`).join('')}</div>`:'<div class="note">None of your horses fit yet.</div>'}</div>`}).join('')}</div>`:'<p class="note">No wanted ads right now. A new one goes up with the weekly market.</p>'}`}
-function f91PapersCol(h){const a=age(h);const young=a<ADULT+DPY*2;if(!(young&&!h.client)&&!h.nom&&!h.tc&&!(h.spWins||[]).length)return '';let o=`<div class="pcol"><div class="subh">Futurities and the Triple Crown</div>`;
+function f91PapersCol(h){const a=age(h);const young=a<ADULT+DPY*2;if(!(young&&!h.client)&&!h.tc&&!(h.spWins||[]).length)return '';let o=`<div class="pcol"><div class="subh">Futurities and the Triple Crown</div>`;
   const ahead=spAheadText(h);
-  if(h.nom)o+=`<div class="note">Nominated on day ${h.nom.d}. ${a<ADULT?'Runs the futurities as a two-year-old and the Triple Crown the spring after turning 3.':ahead?'Can still run: '+esc(ahead)+'.':'No more races for '+(h.sex==='M'?'him':'her')+' this year'+(a<ADULT+DPY?'. The Triple Crown comes the spring after '+(h.sex==='M'?'he turns':'she turns')+' 3.':'.')}${h.tcRun&&h.tcRun.yr===dateParts(S.day).year&&h.tcRun.w>0?' Triple Crown wins this year: '+h.tcRun.w+' of 3.':''}</div>`;
+  if(h.nom&&young)o+=`<div class="note">Nominated on day ${h.nom.d}. ${a<ADULT?'Runs the futurities as a two-year-old and the Triple Crown the spring after turning 3.':ahead?'Can still run: '+esc(ahead)+'.':'No more races for '+(h.sex==='M'?'him':'her')+' this year'+(a<ADULT+DPY?'. The Triple Crown comes the spring after '+(h.sex==='M'?'he turns':'she turns')+' 3.':'.')}${h.tcRun&&h.tcRun.yr===dateParts(S.day).year&&h.tcRun.w>0?' Triple Crown wins this year: '+h.tcRun.w+' of 3.':''}</div>`;
   else if(canNominate(h)){const late=a>=ADULT;o+=`<div class="actions"><button class="btn small" data-a="f91nom" data-id="${h.id}" ${S.money<nomCost(h)?'disabled':''}>${late?'Late entry':'Nominate'} · ${money(nomCost(h))}</button></div><div class="note">${a<YEARLING?'Foal price, the cheapest time to nominate. One nomination covers the futurities at 2 and the Triple Crown at 3.':a<ADULT?'Yearling price. One nomination covers the futurities at 2 and the Triple Crown at 3.':(h.sex==='M'?'He':'She')+' is already '+(a<ADULT+DPY?'2':'3')+', so it costs a late entry. '+(h.sex==='M'?'He':'She')+' could still run: '+esc(ahead)+'.'}</div>`}
   else if(young&&!h.client)o+=`<div class="note">Too late to enter: no futurity or Triple Crown race is left that ${esc(h.name)} will be the right age for. Futurities are for two-year-olds, and the Triple Crown is for three-year-olds.</div>`;
   if(h.tc)o+=`<div class="good"><b>★ Triple Crown winner (year ${h.tc})</b></div>`;if((h.spWins||[]).length)o+=`<div class="note">Big wins: ${h.spWins.map(id=>esc((SPECIALS.find(x=>x.id===id)||TDE.find(x=>x.id===id)||{n:id}).n)).join(', ')}</div>`;return o+'</div>'}
