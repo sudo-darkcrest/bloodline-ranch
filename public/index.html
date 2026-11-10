@@ -1582,8 +1582,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='95';
+const BUILD='96';
 const CHANGELOG=[
+ {b:'96',d:'Nov 9, 2026',t:'The first Starfall waits for you',c:[
+  'The first Starfall Horse (after your first Olympic win, or a lucky International win) now waits at the market until you buy it. Weekly market changes and scouting no longer take it away. Later Starfalls still leave with the weekly market.',
+  'If your first Starfall left the market before this update and you never got one, the drifter comes back with the next weekly market (if you have won at the Olympics).',
+  'Scout other ranches now warns you first if a later Starfall is at the market.']},
  {b:'95',d:'Nov 9, 2026',t:'Fixes',c:[
   'Three-Day Events: the result now shows only while the event runs and on the morning after it ends. Before, a finished or failed event stayed on the Compete tab for the rest of the year and could even block you from entering the Grand Three-Day Event in the fall.',
   'Three-Day Events: sending your entered horse to a training center now withdraws it right away with a message, and the result says why a horse missed a day.',
@@ -2308,14 +2312,16 @@ function enrichSale(h){giveLineage(h);giveHistory(h)}
 function pedChip(h){const k=h.pedKnown;const pc=h.prevCareer;return `<div class="chips">${k===2?'<span class="chip good">Full pedigree</span>':k===1?'<span class="chip">Partial pedigree</span>':'<span class="chip retired">Unknown pedigree</span>'}${pc&&pc.starts?`<span class="chip rare">${pc.wins?'Proven: '+pc.wins+' win'+(pc.wins===1?'':'s')+' in '+pc.starts:'Placed '+(h.ribbons||[]).length+' time'+((h.ribbons||[]).length===1?'':'s')+' in '+pc.starts}</span>`:''}</div>`}
 function refreshMarket(){
   const lift=Math.min(18,S.rep/8);
+  const waiting=(S.market||[]).filter(h=>h.starFirst);/* the first Starfall waits at the market until you buy it */
   S.market=[];
   {const lb=locFx().breeds;for(let i=0;i<4;i++)S.market.push(genHorse({potMid:ri(36,56)+lift,breed:lb&&(i<1||(i<2&&R()<.5))?pick(lb):undefined,origin:pick(FARMS)+' Ranch'}))}
   for(let i=0;i<2;i++)S.market.push(genHorse({ageDays:ri(YEARLING,ADULT-2),potMid:ri(44,60)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({ageDays:ADULT+DPY*ri(9,13),potMid:ri(40,58)+lift,origin:pick(FARMS)+' Ranch'}));
   S.market.push(genHorse({potMid:ri(60,68)+lift,nTraits:2,origin:pick(FARMS)+' Ranch'}));
   if(!S.starUnlocked&&(S.starOffer||(S.ach&&S.ach.olympic)||S.horses.some(h=>starBlood(h)>=.5)))S.starUnlocked=1;
-  const firstStar=!!S.starOffer;if(firstStar||(S.starUnlocked&&R()<BAL.starWeekly)){S.starOffer=0;const sh=genHorse({breed:'starfall',potMid:ri(58,66)+lift,nTraits:2,origin:'A drifter from the high country'});S.market.push(sh);log('good',firstStar?'Word of your champions spread. A drifter has brought a Starfall Horse to the market!':'A drifter from the high country is back with another Starfall Horse. Check the market!')}
+  const firstStar=!!S.starOffer;if(firstStar||(S.starUnlocked&&R()<BAL.starWeekly)){S.starOffer=0;const sh=genHorse({breed:'starfall',potMid:ri(58,66)+lift,nTraits:2,origin:'A drifter from the high country'});if(firstStar&&!S.starFirstDone)sh.starFirst=1;S.market.push(sh);log('good',firstStar?'Word of your champions spread. A drifter has brought a Starfall Horse to the market! This first one will wait for you until you can afford it.':'A drifter from the high country is back with another Starfall Horse. Check the market!')}
   S.market.forEach(enrichSale);
+  for(const w of waiting)if(!S.market.some(x=>x.starFirst))S.market.push(w);
   if(S.rival&&S.rival.sales&&S.rival.sales.length){for(const h of S.rival.sales){h.fromRival=1;h.origin=S.rival.farm+' Ranch (your rival)';h.acted=0;S.market.push(h)}S.rival.sales=[]}
   S.market.forEach(h=>h.price=Math.round(value(h)*repSaleMult()*BAL.marketMarkup*(h.fromRival?1.1:1)*((locFx().cheap||{})[h.breed]||1)/10)*10);
   S.studs=[];
@@ -2573,7 +2579,7 @@ function doChore(id){
     else if(r<.8){const n=ri(10,20);S.hay+=n;msg='You helped '+who+' Ranch bring in their hay. They sent you home with '+n+' bales.'}
     else if(r<.9){gainRep(1);msg='You helped '+who+' Ranch pull a calf in the night. Word gets around: reputation +1.'}
     else{for(const h of S.horses)h.stallClean=100;if(stockLevels())S.stockCare=100;msg='You helped '+who+' Ranch, and they sent two hands back to return the favor. Your stalls and livestock are all taken care of.'}}
-  else if(id==='scout'){if(S.money<60)return toast('Scouting costs $60.');S.money-=60;refreshMarket();msg='You scouted the area. Fresh horses and studs are at the sale barn.'}
+  else if(id==='scout'){if(S.money<60)return toast('Scouting costs $60.');if(S.market.some(h=>h.breed==='starfall'&&!h.starFirst)&&S._scoutOk!==S.day){S._scoutOk=S.day;return toast('A Starfall Horse is at the market. Scouting brings in all new horses, so it will leave. Press Scout again to go anyway.')}S.money-=60;refreshMarket();msg='You scouted the area. Fresh horses and studs are at the sale barn.'}
   else return;
   S.choresToday.push(id);pxp('ranch',3);if(id==='scout')pxp('eye',2);log('info',msg);toast(msg);
 }
@@ -7366,13 +7372,19 @@ function f90NewDay(ev){
   if(f90On('weather'))wxSet();
   for(const h of S.horses)if(h.raise&&!h.raise.done&&age(h)>=ADULT)raiseFinish(h,ev);
   if(S.phase==='play'){rescueNight(ev);f91NewDay(ev)}}
-function f90Migrate(s){if(!s.opt)s.opt={feed:1,weather:1};if(!s.stats)s.stats={wins:0,foals:0};
+/* build 96: the first Starfall waits until bought. Fix up saves from before. */
+function starMigrate(s){if(s.starFirstDone)return;const isD=h=>!!h&&h.breed==='starfall'&&/drifter/i.test(h.origin||'');
+  for(const h of (s.horses||[]))if(h.starFirst)delete h.starFirst;
+  if((s.horses||[]).some(isD)||(s.memorial||[]).some(m=>isD(m.full||m))||(s.soldBack||[]).some(r=>isD(r.h||r))){s.starFirstDone=1;return}
+  const listed=(s.market||[]).filter(isD);if(listed.length){if(!listed.some(h=>h.starFirst))listed[0].starFirst=1;return}
+  if(s.starUnlocked&&s.ach&&s.ach.olympic)s.starOffer=1}
+function f90Migrate(s){starMigrate(s);if(!s.opt)s.opt={feed:1,weather:1};if(!s.stats)s.stats={wins:0,foals:0};
   for(const h of (s.horses||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=100;if(!h.raise)h.raise={done:1,g:1}}
   for(const h of (s.market||[])){if(h.bcs==null)h.bcs=5.2;if(h.hoof==null)h.hoof=90;if(!h.raise)h.raise={done:1,g:1}}
   return s}
 
 /* ================= UI ================= */
-function f90Chips(h,mode){if(mode==='market'||!S.horses.includes(h))return '';let o='';
+function f90Chips(h,mode){if(mode==='market'||!S.horses.includes(h))return h.starFirst&&!S.horses.includes(h)?'<span class="chip good" title="The drifter waits at the market until you can buy this horse">Waits for you</span>':'';let o='';
   if(h.rescue&&!h.rescue.done)o+=rescueReady(h)?'<span class="chip good" title="Recovered. Open the papers to rehome or keep.">Rescue · recovered</span>':'<span class="chip warn" title="A rescue horse in rehab">Rescue · rehab</span>';
   if(h.buddy&&H(h.buddy))o+=`<span class="chip good" title="Pasture buddy: happier when turned out together">♥ ${esc(H(h.buddy).name)}</span>`;
   if(f90On('feed')){const b=bcsOf(h),v=hoofOf(h);if(b<3.5||b>7.5)o+=`<span class="chip bad" title="Body condition ${b.toFixed(1)} of 9">${bcsWord(b)}</span>`;else if(b<4.5||b>6.5)o+=`<span class="chip warn" title="Body condition ${b.toFixed(1)} of 9">${bcsWord(b)}</span>`;
