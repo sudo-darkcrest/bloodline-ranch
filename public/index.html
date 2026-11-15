@@ -1582,8 +1582,14 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='98';
+const BUILD='99';
 const CHANGELOG=[
+ {b:'99',d:'Nov 15, 2026',t:'Neighboring land redrawn',c:[
+  'The Neighboring land picture is now one connected landscape: the creek starts on Timber Ridge and runs down through Creek Bottom, the ridge slopes into the parcels beside it, and one mountain range stretches behind all four.',
+  'Fences mark the property lines (white rail fences between parcels you own, old wire next to land still for sale), and a ranch road with a creek bridge runs along the front.',
+  'Each parcel looks different for sale (overgrown and faded, with a For Sale sign), once bought, and at every building level: Broodmare Pasture with mares and foals; Pole Barn, Second Stable and Twin Barns; Hill Trail, then Gallops and Water Complex; and Home Show Grounds with an arena, jumps, bleachers and trailers.',
+  'More detail everywhere: wildflowers, a pond, willows, cattails, a hay field with bales, a pine forest with deer, a windmill and cattle on the range. The picture changes with the seasons and your location like the ranch map.',
+  'Each parcel shows its name, acres, price or Yours, and what is built there. On phones the picture stays large and you swipe sideways to see it all.']},
  {b:'98',d:'Nov 12, 2026',t:'Longer tails for the title horses',c:[
   'The title screen horses had short, cut-off looking tails. Their tails are now long and full, stream out behind them, sway as they run, and end in soft loose strands.']},
  {b:'97',d:'Nov 12, 2026',t:'New title screen horses',c:[
@@ -7501,7 +7507,7 @@ GUIDE.splice(Math.max(0,GUIDE.findIndex(g=>g[0]==='Training')),0,
 .auc .alog div{padding:2px 0}.auc .alog .you{font-weight:700;color:var(--accent,#2e6fd8)}
 .auc .bidders{display:flex;gap:6px;flex-wrap:wrap}
 .auc .alog div.new{animation:aucin .4s ease both}@keyframes aucin{from{opacity:0;transform:translateY(4px)}to{opacity:1}}
-.landstrip{width:100%;height:auto;display:block;border-radius:12px;margin-bottom:10px}
+.landstrip{width:100%;height:auto;display:block;border-radius:12px;margin-bottom:10px}.landwrap{overflow-x:auto;border-radius:12px;margin-bottom:12px;box-shadow:var(--shadow)}.landwrap .landstrip{min-width:760px;margin:0}
 .landgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .land{border:1px solid var(--line,rgba(0,0,0,.12));border-radius:12px;padding:10px 12px}.land.own{border-color:var(--good);background:color-mix(in srgb,var(--good) 7%,transparent)}
 .land h4{margin:0 0 2px}`;document.head.appendChild(st)})();
@@ -7679,16 +7685,7 @@ for(const f of [
 function landCost(x){return Math.round(x.c*(locFx().build||1)/100)*100}
 function barn2Extra(){return [0,4,8,12][L('barn2')]||0}
 function buyLand(id){const x=LAND.find(l=>l.id===id);if(!x||landOwned(id))return;const c=landCost(x);if(S.money<c)return toast('You need '+money(c)+' for the '+x.n+'.');S.money-=c;S.land=S.land||{};S.land[id]=S.day;pxp('biz',5);log('good','You bought the '+x.n+' ('+x.acres+' acres) for '+money(c)+'. '+x.d);toast('The '+x.n+' is yours!');unlock('landowner');if(LAND.every(l=>landOwned(l.id)))unlock('landbaron')}
-function landArt(){const own=id=>landOwned(id);const W=1000,H=150;let o=`<svg class="landstrip" viewBox="0 0 ${W} ${H}" role="img" aria-label="Neighboring land"><defs><linearGradient id="lsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFDDF0"/><stop offset="1" stop-color="#EAF4F8"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#lsky)"/>`;
-  const grass=(x,w,c)=>`<rect x="${x}" y="70" width="${w}" height="80" fill="${c}"/>`;const fence=(x,w)=>{let f=`<path d="M${x+6} 92 H${x+w-6} M${x+6} 102 H${x+w-6}" stroke="#7A5638" stroke-width="2"/>`;for(let p=x+6;p<=x+w-6;p+=22)f+=`<rect x="${p-1.5}" y="86" width="3" height="22" fill="#6B4A30"/>`;return f};
-  const sign=(x)=>`<g transform="translate(${x} 96)"><rect x="-1.5" y="0" width="3" height="26" fill="#6B4A30"/><rect x="-26" y="-16" width="52" height="18" rx="2" fill="#F4EFE2" stroke="#9A3A2C" stroke-width="1.5"/><text x="0" y="-3.6" text-anchor="middle" font-size="9" font-weight="800" fill="#9A3A2C" font-family="system-ui,sans-serif">FOR SALE</text></g>`;
-  LAND.forEach((x,i)=>{const X=i*250,ok=own(x.id),g=ok?'#8DB45E':'#B9BFA0';o+=grass(X,250,g);
-    if(x.id==='meadow'){for(let k=0;k<18;k++){const fx=X+15+((k*53)%220),fy=112+((k*29)%30);o+=`<circle cx="${fx}" cy="${fy}" r="2.2" fill="${ok?'#FFF6C8':'#E5E2D2'}"/>`}}
-    if(x.id==='creek')o+=`<path d="M${X} 132 C${X+60} 112 ${X+120} 146 ${X+180} 120 S${X+240} 112 ${X+250} 116" stroke="${ok?'#5B92B6':'#A7B4BD'}" stroke-width="9" fill="none" stroke-linecap="round"/>`;
-    if(x.id==='ridge'){o+=`<path d="M${X} 78 Q${X+90} 30 ${X+170} 60 T${X+250} 66 V80 H${X}Z" fill="${ok?'#6F9A4E':'#A9AF94'}"/>`;for(let k=0;k<7;k++){const tx=X+20+k*32,ty=62+(k%3)*6;o+=`<path d="M${tx} ${ty-18} L${tx-9} ${ty+4} H${tx+9}Z" fill="${ok?'#3F6B3A':'#8E9681'}"/>`}}
-    if(x.id==='range'){o+=`<path d="M${X} 72 L${X+50} 44 L${X+90} 64 L${X+140} 36 L${X+200} 62 L${X+250} 50 V72 Z" fill="${ok?'#8FA3B8':'#B5BBC0'}"/>`;for(let k=0;k<5;k++){const cx=X+40+k*42,cy=118+(k%2)*8;o+=`<ellipse cx="${cx}" cy="${cy}" rx="9" ry="5" fill="${ok?'#5A3A26':'#9A938A'}"/><circle cx="${cx+9}" cy="${cy-3}" r="3" fill="${ok?'#5A3A26':'#9A938A'}"/>`}}
-    o+=fence(X,250);if(!ok)o+=sign(X+200);o+=`<text x="${X+12}" y="24" font-size="13" font-weight="700" fill="#2B2A26" font-family="system-ui,sans-serif">${esc(x.n)}</text><text x="${X+12}" y="40" font-size="11" fill="#4B4A45" font-family="system-ui,sans-serif">${x.acres} acres${ok?' · yours':''}</text>`});
-  return o+'</svg>'}
+function landArt(){const si=curSeason(),fx=seasonFx(si),li=locId();let m=landPano();if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx==='snow')m=m.replace(/<\/svg>\s*$/,snowFlakes(91,1200,300,110)+'</svg>');return `<div class="landwrap">${m}</div>`}
 function f91LandPanel(){return `<div class="section-head" style="margin-top:18px"><h2>Neighboring land</h2><span class="sub">The neighbors are selling. Each parcel brings its own perks and unlocks a new building in the “Your land” group below.</span></div>${landArt()}
   <div class="landgrid" style="margin-bottom:18px">${LAND.map(x=>{const ok=landOwned(x.id),c=landCost(x),b=FACI[x.unl];return `<div class="land ${ok?'own':''}"><h4>${esc(x.n)}</h4><div class="note">${x.acres} acres${ok?' · bought day '+S.land[x.id]:''}</div><p class="note" style="margin:6px 0">${esc(x.d)} Unlocks: <b>${esc(b.n)}</b>.</p>${ok?'<span class="good">✓ Yours</span>':`<button class="btn small primary" data-a="f91land" data-id="${x.id}" ${S.money<c?'disabled':''}>Buy · ${money(c)}</button>`}</div>`}).join('')}</div>`}
 function landLockedCard(f){const x=LAND.find(l=>l.id===f.land);return `<div class="fac" id="fac-${f.id}"><div class="fac-head"><b>${esc(f.n)}</b></div><div class="fac-cur"><span class="note">Needs the ${esc(x.n)}</span><div class="note" style="font-weight:400">${esc(f.lv[1].d)}</div></div><div class="fac-next"><div class="note">Buy the ${esc(x.n)} under Neighboring land above to build this.</div></div></div>`}
@@ -7883,6 +7880,234 @@ function tiHorse(col,mane,i){
   fr+='</g></g>';out+=fr}
  return out}
 /*TIR-END*/
+/*LAND-START*/
+/* Build 99: one connected panorama of the four neighboring parcels, drawn per state (for sale / bought / each building level). */
+const LP={W:1200,H:330,ROAD:314};
+function lpF(n){return (+n).toFixed(1)}
+function lpHz(x){/* ground skyline: rolling meadow, low creek bottom, timber ridge hill, flat range */
+ const b=(c,w)=>{const t=(x-c)/w;return Math.exp(-t*t)};return 168+3.5*Math.sin(x/88)+2.2*Math.sin(x/31+1)-12*b(120,85)-96*b(768,104)-30*b(656,58)-22*b(866,52)+5*b(470,90)}
+function lpBase(x){return 168+3.5*Math.sin(x/88)+2.2*Math.sin(x/31+1)}
+function lpBx(i,y){/* property line i (1..3) at height y, leaning toward the middle */const xb=i*300,xt=600+(xb-600)*.86;return xt+(xb-xt)*(y-150)/180}
+function lpDepth(y){return Math.max(.3,.32+(y-165)/150*.78)}
+function lpTuft(x,y,s,c){return `<path d="M${lpF(x-2*s)} ${lpF(y)} q${lpF(-.6*s)} ${lpF(-3*s)} ${lpF(-1.6*s)} ${lpF(-4.6*s)} M${lpF(x)} ${lpF(y)} q${lpF(.2*s)} ${lpF(-3.6*s)} ${lpF(.3*s)} ${lpF(-5.6*s)} M${lpF(x+2*s)} ${lpF(y)} q${lpF(.6*s)} ${lpF(-2.8*s)} ${lpF(1.8*s)} ${lpF(-4.2*s)}" stroke="${c}" stroke-width="${lpF(.7*s)}" fill="none" stroke-linecap="round"/>`}
+function lpSh(x,y,rx,ry){return `<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(rx)}" ry="${lpF(ry)}" fill="#24301A" opacity=".22"/>`}
+function lpPine(x,y,h,i){const C=['#2f5d46','#2f6b3e','#4e7a3a'],a=C[i%3],b=C[(i+1)%3],w=h*.36;
+ return `${lpSh(x+w*.35,y+1,w*.8,h*.07)}<rect x="${lpF(x-h*.035)}" y="${lpF(y-h*.16)}" width="${lpF(h*.07)}" height="${lpF(h*.17)}" fill="#5A4130"/>
+ <path d="M${lpF(x)} ${lpF(y-h)} L${lpF(x-w*.62)} ${lpF(y-h*.52)} L${lpF(x-w*.34)} ${lpF(y-h*.54)} L${lpF(x-w*.84)} ${lpF(y-h*.24)} L${lpF(x-w*.46)} ${lpF(y-h*.26)} L${lpF(x-w)} ${lpF(y-h*.12)} L${lpF(x+w)} ${lpF(y-h*.12)} L${lpF(x+w*.46)} ${lpF(y-h*.26)} L${lpF(x+w*.84)} ${lpF(y-h*.24)} L${lpF(x+w*.34)} ${lpF(y-h*.54)} L${lpF(x+w*.62)} ${lpF(y-h*.52)}Z" fill="${a}"/>
+ <path d="M${lpF(x)} ${lpF(y-h)} L${lpF(x+w*.62)} ${lpF(y-h*.52)} L${lpF(x+w*.34)} ${lpF(y-h*.54)} L${lpF(x+w*.84)} ${lpF(y-h*.24)} L${lpF(x+w*.46)} ${lpF(y-h*.26)} L${lpF(x+w)} ${lpF(y-h*.12)} L${lpF(x+w*.2)} ${lpF(y-h*.12)}Z" fill="#1F3F30" opacity=".35"/>
+ <path d="M${lpF(x)} ${lpF(y-h)} L${lpF(x-w*.3)} ${lpF(y-h*.74)}" stroke="${b}" stroke-width="${lpF(h*.04)}" opacity=".6"/>`}
+function lpTree(x,y,r,c){/* round leafy tree (turns gold in fall) */c=c||'#7FA654';const d=hexMix(c,'#000000',.25),l=hexMix(c,'#ffffff',.3);
+ return `${lpSh(x+r*.4,y+1,r*1.05,r*.28)}<path d="M${lpF(x-r*.12)} ${lpF(y)} L${lpF(x-r*.07)} ${lpF(y-r*.9)} L${lpF(x+r*.07)} ${lpF(y-r*.9)} L${lpF(x+r*.12)} ${lpF(y)}Z" fill="#5E4532"/>
+ <circle cx="${lpF(x-r*.45)}" cy="${lpF(y-r*1.05)}" r="${lpF(r*.62)}" fill="${d}"/><circle cx="${lpF(x+r*.45)}" cy="${lpF(y-r*1.0)}" r="${lpF(r*.6)}" fill="${d}"/><circle cx="${lpF(x)}" cy="${lpF(y-r*1.35)}" r="${lpF(r*.75)}" fill="${c}"/><circle cx="${lpF(x-r*.3)}" cy="${lpF(y-r*1.0)}" r="${lpF(r*.5)}" fill="${c}"/><circle cx="${lpF(x+r*.32)}" cy="${lpF(y-r*1.12)}" r="${lpF(r*.5)}" fill="${c}"/><circle cx="${lpF(x-r*.22)}" cy="${lpF(y-r*1.6)}" r="${lpF(r*.32)}" fill="${l}" opacity=".7"/>`}
+function lpWillow(x,y,r){const c='#8DB05A',d='#6E9446';let o=`${lpSh(x+r*.3,y+1,r*1.1,r*.25)}<path d="M${lpF(x)} ${lpF(y)} Q${lpF(x-r*.1)} ${lpF(y-r*.6)} ${lpF(x+r*.05)} ${lpF(y-r*1.2)}" stroke="#5E4532" stroke-width="${lpF(r*.18)}" fill="none"/><ellipse cx="${lpF(x)}" cy="${lpF(y-r*1.25)}" rx="${lpF(r*1.05)}" ry="${lpF(r*.6)}" fill="${d}"/>`;
+ for(let k=-4;k<=4;k++){const sx=x+k*r*.24;o+=`<path d="M${lpF(sx)} ${lpF(y-r*1.5+Math.abs(k)*r*.06)} Q${lpF(sx+k*r*.06)} ${lpF(y-r*.9)} ${lpF(sx+k*r*.1)} ${lpF(y-r*(.25+Math.abs(k)*.06))}" stroke="${k%2?c:d}" stroke-width="${lpF(r*.22)}" fill="none" stroke-linecap="round"/>`}
+ return o+`<ellipse cx="${lpF(x-r*.2)}" cy="${lpF(y-r*1.45)}" rx="${lpF(r*.5)}" ry="${lpF(r*.25)}" fill="#B5CF86" opacity=".6"/>`}
+function lpRock(x,y,s,c){c=c||'#A8A296';return `<path d="M${lpF(x-6*s)} ${lpF(y)} Q${lpF(x-6*s)} ${lpF(y-4*s)} ${lpF(x-2*s)} ${lpF(y-5*s)} Q${lpF(x+3*s)} ${lpF(y-6*s)} ${lpF(x+6*s)} ${lpF(y-1.5*s)} L${lpF(x+6.5*s)} ${lpF(y)}Z" fill="${c}"/><path d="M${lpF(x-2*s)} ${lpF(y-5*s)} Q${lpF(x+2*s)} ${lpF(y-5.6*s)} ${lpF(x+4*s)} ${lpF(y-3*s)}" stroke="#fff" stroke-width="${lpF(.8*s)}" opacity=".35" fill="none"/>`}
+/* tiny animals (kept out of season recolor) */
+function lpHorse(x,y,s,c,m,o={}){const f=o.flip?-1:1,dk=hexMix(c,'#000000',.3),graze=o.graze;
+ const T=(px,py)=>lpF(x+px*s*f)+' '+lpF(y+py*s);
+ const leg=(px,ang)=>`<path d="M${T(px,-7)} L${T(px+ang,0)}" stroke="${dk}" stroke-width="${lpF(1.5*s)}" stroke-linecap="round"/>`;
+ let g=lpSh(x,y+.5,9*s,1.6*s)+leg(-6,-.6)+leg(5,.6);
+ g+=`<path d="M${T(-8.6,-11.6)} C${T(-11.8,-10.8)} ${T(-12.6,-6)} ${T(-11.4,-3.4)}" stroke="${m}" stroke-width="${lpF(1.8*s)}" fill="none" stroke-linecap="round"/>`;
+ g+=`<path d="M${T(-8.6,-13)} C${T(-4,-14)} ${T(4,-14)} ${T(7.6,-12.6)} C${T(9.4,-11.4)} ${T(9.2,-8.4)} ${T(7.4,-7.2)} C${T(3,-6.4)} ${T(-4,-6.4)} ${T(-8,-7.4)} C${T(-10.4,-8.4)} ${T(-10.6,-12)} ${T(-8.6,-13)}Z" fill="${c}"/>`;
+ g+=graze?`<path d="M${T(6,-12.6)} C${T(9,-10)} ${T(11,-5)} ${T(12,-1.6)} L${T(14.2,-1)} L${T(13.4,-3.8)} C${T(12.6,-7.4)} ${T(10.6,-11.6)} ${T(8.4,-13.4)}Z" fill="${c}"/><path d="M${T(7,-13.6)} C${T(9.6,-11)} ${T(11.4,-7)} ${T(12,-4)}" stroke="${m}" stroke-width="${lpF(1.2*s)}" fill="none"/>`
+  :`<path d="M${T(5.6,-12.8)} C${T(7.6,-15)} ${T(9.4,-18)} ${T(10.6,-20.4)} L${T(14.6,-17.6)} L${T(13.8,-16.2)} L${T(11.4,-17)} C${T(10.4,-15)} ${T(9.6,-12)} ${T(8.6,-10)}Z" fill="${c}"/><path d="M${T(10.4,-20.4)} l${lpF(.4*s*f)} ${lpF(-2.2*s)} l${lpF(.9*s*f)} ${lpF(1.6*s)}" fill="${c}"/><path d="M${T(6.2,-13.6)} C${T(8,-15.6)} ${T(9.4,-18)} ${T(10.4,-20.2)}" stroke="${m}" stroke-width="${lpF(1.3*s)}" fill="none"/>`;
+ g+=leg(-4.4,.5)+leg(6.6,-.5);if(o.rider)g+=`<path d="M${T(-1.4,-13)} L${T(-.4,-19.4)}" stroke="${o.rider}" stroke-width="${lpF(2.6*s)}" stroke-linecap="round"/><circle cx="${T(-.2,-21.6).split(' ')[0]}" cy="${T(-.2,-21.6).split(' ')[1]}" r="${lpF(1.6*s)}" fill="#E2B48C"/><path d="M${T(-2.4,-22.6)} L${T(2,-22.6)} M${T(-1,-23.8)} L${T(.8,-23.8)}" stroke="#6B4A30" stroke-width="${lpF(1.2*s)}" stroke-linecap="round"/><path d="M${T(-.6,-15)} L${T(-1,-10)}" stroke="#2E3A55" stroke-width="${lpF(1.4*s)}" stroke-linecap="round"/>`;
+ return g}
+function lpCow(x,y,s,c,face,o={}){const f=o.flip?-1:1,T=(px,py)=>lpF(x+px*s*f)+' '+lpF(y+py*s),dk=hexMix(c,'#000000',.3);
+ const leg=px=>`<path d="M${T(px,-5)} L${T(px,0)}" stroke="${dk}" stroke-width="${lpF(1.7*s)}" stroke-linecap="round"/>`;
+ return lpSh(x,y+.5,8*s,1.5*s)+leg(-5)+leg(4)+`<path d="M${T(-7.6,-11)} L${T(5,-11.4)} C${T(7,-11.4)} ${T(7.4,-9.6)} ${T(7.2,-7)} L${T(6.8,-5)} L${T(-7.2,-4.8)} C${T(-8.8,-5.4)} ${T(-9,-10)} ${T(-7.6,-11)}Z" fill="${c}"/>`+
+  `<path d="M${T(5.6,-11)} L${T(9.6,-8.4)} L${T(10.6,-5.4)} L${T(8.4,-4.8)} L${T(5.8,-7.4)}Z" fill="${face||c}"/><path d="M${T(6.6,-11.2)} l${lpF(-1*s*f)} ${lpF(-1.6*s)} M${T(8,-10.6)} l${lpF(1.2*s*f)} ${lpF(-1.4*s)}" stroke="#E8DCC0" stroke-width="${lpF(.8*s)}"/><path d="M${T(-7.8,-10)} q${lpF(-2*s*f)} ${lpF(2*s)} ${lpF(-1.6*s*f)} ${lpF(5*s)}" stroke="${dk}" stroke-width="${lpF(.9*s)}" fill="none"/>`+leg(-3)+leg(5.6)}
+function lpSign(x,y,s,txt,c){return `<g transform="translate(${lpF(x)} ${lpF(y)}) scale(${s})"><rect x="-1.6" y="-18" width="3.2" height="18" fill="#6B4A30"/><rect x="-24" y="-31" width="48" height="16" rx="2" fill="#F6F1E4" stroke="${c||'#9A3A2C'}" stroke-width="1.6"/><text x="0" y="-19.8" text-anchor="middle" font-size="8.6" font-weight="800" fill="${c||'#9A3A2C'}" font-family="system-ui,sans-serif">${txt}</text></g>`}
+function lpBarn(x,y,w,h,o={}){/* front-facing barn: x,y = bottom-left */const r=o.c||'#A8442E',rd=hexMix(r,'#000000',.25),tr='#F4EFE4',roof=o.roof||'#5B4B44';
+ const gw=w*.5;let g=lpSh(x+w/2+4,y+1,w*.62,h*.12);
+ g+=`<rect x="${lpF(x)}" y="${lpF(y-h)}" width="${lpF(w)}" height="${lpF(h)}" fill="${r}"/>`;
+ g+=`<path d="M${lpF(x-w*.06)} ${lpF(y-h)} L${lpF(x+w*.14)} ${lpF(y-h*1.42)} L${lpF(x+w/2)} ${lpF(y-h*1.68)} L${lpF(x+w*.86)} ${lpF(y-h*1.42)} L${lpF(x+w*1.06)} ${lpF(y-h)}Z" fill="${roof}"/>`;
+ g+=`<path d="M${lpF(x)} ${lpF(y-h)} L${lpF(x+w*.17)} ${lpF(y-h*1.36)} L${lpF(x+w/2)} ${lpF(y-h*1.6)} L${lpF(x+w*.83)} ${lpF(y-h*1.36)} L${lpF(x+w)} ${lpF(y-h)}Z" fill="${r}"/>`;
+ g+=`<rect x="${lpF(x+w/2-gw/2)}" y="${lpF(y-h*.72)}" width="${lpF(gw)}" height="${lpF(h*.72)}" fill="${rd}"/><path d="M${lpF(x+w/2-gw/2)} ${lpF(y-h*.72)} L${lpF(x+w/2)} ${lpF(y)} M${lpF(x+w/2+gw/2)} ${lpF(y-h*.72)} L${lpF(x+w/2)} ${lpF(y)} M${lpF(x+w/2-gw/2)} ${lpF(y)} L${lpF(x+w/2)} ${lpF(y-h*.72)} L${lpF(x+w/2+gw/2)} ${lpF(y)}" stroke="${tr}" stroke-width="${lpF(w*.022)}"/><rect x="${lpF(x+w/2-gw/2)}" y="${lpF(y-h*.72)}" width="${lpF(gw)}" height="${lpF(h*.72)}" fill="none" stroke="${tr}" stroke-width="${lpF(w*.03)}"/>`;
+ g+=`<rect x="${lpF(x+w/2-w*.09)}" y="${lpF(y-h*1.3)}" width="${lpF(w*.18)}" height="${lpF(h*.24)}" fill="${tr}"/><rect x="${lpF(x+w/2-w*.065)}" y="${lpF(y-h*1.27)}" width="${lpF(w*.13)}" height="${lpF(h*.18)}" fill="#3A3330"/>`;
+ g+=`<rect x="${lpF(x)}" y="${lpF(y-h)}" width="${lpF(w)}" height="${lpF(h)}" fill="none" stroke="${tr}" stroke-width="${lpF(w*.03)}"/>`;
+ if(o.cupola)g+=`<rect x="${lpF(x+w/2-w*.07)}" y="${lpF(y-h*1.86)}" width="${lpF(w*.14)}" height="${lpF(h*.22)}" fill="${tr}"/><path d="M${lpF(x+w/2-w*.1)} ${lpF(y-h*1.86)} L${lpF(x+w/2)} ${lpF(y-h*2.02)} L${lpF(x+w/2+w*.1)} ${lpF(y-h*1.86)}Z" fill="${roof}"/><path d="M${lpF(x+w/2)} ${lpF(y-h*2.02)} v${lpF(-h*.16)}" stroke="#3A3330" stroke-width="${lpF(w*.012)}"/>`;
+ if(o.side){/* long side going back to the left */const d=o.side;g=g.replace(lpSh(x+w/2+4,y+1,w*.62,h*.12),'');g=lpSh(x+w/2-d*.4,y+1,w*.62+d*.5,h*.14)+`<path d="M${lpF(x)} ${lpF(y)} L${lpF(x-d)} ${lpF(y-d*.32)} L${lpF(x-d)} ${lpF(y-h-d*.32)} L${lpF(x)} ${lpF(y-h)}Z" fill="${rd}"/><path d="M${lpF(x-w*.06)} ${lpF(y-h)} L${lpF(x+w*.14)} ${lpF(y-h*1.42)} L${lpF(x+w*.14-d)} ${lpF(y-h*1.42-d*.32)} L${lpF(x-w*.06-d)} ${lpF(y-h-d*.32)}Z" fill="${hexMix(roof,'#000000',.15)}"/>`+(()=>{let wn='';for(let k=1;k<4;k++){const wx=x-d*k/4,wy=y-h*.62-d*.32*k/4;wn+=`<rect x="${lpF(wx-w*.05)}" y="${lpF(wy)}" width="${lpF(w*.1)}" height="${lpF(h*.24)}" fill="#3A3330" stroke="${tr}" stroke-width="${lpF(w*.015)}"/>`}return wn})()+g}
+ return g}
+function lpPoleBarn(x,y,w,h){const roof='#7E8A8E',p='#7A5638';let g=lpSh(x+w/2,y+1,w*.6,h*.14);
+ g+=`<path d="M${lpF(x)} ${lpF(y-h*.15)} L${lpF(x+w)} ${lpF(y-h*.15)} L${lpF(x+w)} ${lpF(y)} L${lpF(x)} ${lpF(y)}Z" fill="#3E3A33" opacity=".35"/>`;
+ for(let k=0;k<3;k++){const bx=x+w*.12+k*w*.27;g+=`<rect x="${lpF(bx)}" y="${lpF(y-h*.48)}" width="${lpF(w*.22)}" height="${lpF(h*.48)}" fill="#D9BE6A"/><path d="M${lpF(bx)} ${lpF(y-h*.32)} h${lpF(w*.22)} M${lpF(bx)} ${lpF(y-h*.16)} h${lpF(w*.22)}" stroke="#B89A48" stroke-width="${lpF(h*.03)}"/>`}
+ for(let k=0;k<4;k++)g+=`<rect x="${lpF(x+k*(w-w*.04)/3)}" y="${lpF(y-h)}" width="${lpF(w*.04)}" height="${lpF(h)}" fill="${p}"/>`;
+ g+=`<path d="M${lpF(x-w*.08)} ${lpF(y-h)} L${lpF(x+w/2)} ${lpF(y-h*1.42)} L${lpF(x+w*1.08)} ${lpF(y-h)}Z" fill="${roof}"/><path d="M${lpF(x-w*.08)} ${lpF(y-h)} L${lpF(x+w*1.08)} ${lpF(y-h)}" stroke="#5E676A" stroke-width="${lpF(h*.08)}"/>`;
+ for(let k=1;k<6;k++)g+=`<path d="M${lpF(x+w/2)} ${lpF(y-h*1.42)} L${lpF(x-w*.08+k*w*1.16/6)} ${lpF(y-h)}" stroke="#A3ADB0" stroke-width="${lpF(h*.025)}" opacity=".6"/>`;
+ return g}
+function lpBale(x,y,s){return `${lpSh(x+2*s,y+.5,7*s,1.6*s)}<rect x="${lpF(x-6*s)}" y="${lpF(y-7*s)}" width="${lpF(10*s)}" height="${lpF(7*s)}" fill="#D9BE6A"/><ellipse cx="${lpF(x+4*s)}" cy="${lpF(y-3.5*s)}" rx="${lpF(2.4*s)}" ry="${lpF(3.5*s)}" fill="#E8D48C"/><ellipse cx="${lpF(x+4*s)}" cy="${lpF(y-3.5*s)}" rx="${lpF(1.2*s)}" ry="${lpF(1.8*s)}" fill="none" stroke="#C2A452" stroke-width="${lpF(.5*s)}"/><path d="M${lpF(x-6*s)} ${lpF(y-7*s)} h${lpF(10*s)}" stroke="#EADBA0" stroke-width="${lpF(.8*s)}"/>`}
+/* rail fence between two points, posts shrink with distance */
+function lpFence(x1,y1,x2,y2,style,n){let g='';const white=style==='white',old=style==='old';const pc=white?'#F7F3EA':old?'#8A7560':'#6B4A30',rc=white?'#F7F3EA':'#7A5638';
+ const pts=[];for(let k=0;k<=n;k++){const t=k/n;pts.push([x1+(x2-x1)*t,y1+(y2-y1)*t])}
+ const ph=p=>8.5*lpDepth(p[1]);
+ if(!old){g+=`<path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*.78)).join(' ')}" stroke="${rc}" stroke-width="${lpF(1.4*lpDepth((y1+y2)/2))}" fill="none"/><path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*.4)).join(' ')}" stroke="${rc}" stroke-width="${lpF(1.4*lpDepth((y1+y2)/2))}" fill="none"/>`}
+ else{g+=`<path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*(.7+((k*7)%3)*.04))).join(' ')}" stroke="#4A4038" stroke-width=".6" fill="none" opacity=".8"/><path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*(.38+((k*5)%3)*.05))).join(' ')}" stroke="#4A4038" stroke-width=".6" fill="none" opacity=".8"/>`}
+ pts.forEach((p,k)=>{const h=ph(p),w=Math.max(1,1.7*lpDepth(p[1])),lean=old?((k*13)%5-2)*.5:0;g+=`<path d="M${lpF(p[0])} ${lpF(p[1])} L${lpF(p[0]+lean)} ${lpF(p[1]-h)}" stroke="${pc}" stroke-width="${lpF(w)}" stroke-linecap="round"/>`});
+ return g}
+function lpRibbon(P,W,fill){/* smooth ribbon along points with widths */const n=P.length,lf=[],rt=[];for(let j=0;j<n;j++){const a=P[Math.max(0,j-1)],b=P[Math.min(n-1,j+1)];const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,w=W[j]/2;lf.push([P[j][0]+nx*w,P[j][1]+ny*w]);rt.push([P[j][0]-nx*w,P[j][1]-ny*w])}
+ const pts=[...lf,...rt.reverse()];let d=`M${lpF(pts[0][0])} ${lpF(pts[0][1])}`;for(let j=1;j<pts.length;j++){const p0=pts[j-1],p1=pts[j];d+=` Q${lpF(p0[0])} ${lpF(p0[1])} ${lpF((p0[0]+p1[0])/2)} ${lpF((p0[1]+p1[1])/2)}`}return `<path d="${d} L${lpF(pts[pts.length-1][0])} ${lpF(pts[pts.length-1][1])}Z" fill="${fill}"/>`}
+function lpSpline(K,n){/* Catmull-Rom through key points */const out=[];for(let i=0;i<K.length-1;i++){const p0=K[Math.max(0,i-1)],p1=K[i],p2=K[i+1],p3=K[Math.min(K.length-1,i+2)];for(let s=0;s<n;s++){const t=s/n,t2=t*t,t3=t2*t;out.push([0,1].map(c=>.5*((2*p1[c])+(-p0[c]+p2[c])*t+(2*p0[c]-5*p1[c]+4*p2[c]-p3[c])*t2+(-p0[c]+3*p1[c]-3*p2[c]+p3[c])*t3)))}}out.push(K[K.length-1]);return out}
+const LP_CREEK=[[700,140],[676,156],[648,170],[618,182],[580,192],[530,202],[484,216],[458,240],[468,262],[452,284],[430,300],[420,314],[414,332]];
+function lpShared(gd){let o=`<path d="${gd}" fill="url(#lpGround)"/>`;
+ let hill='M560 '+lpF(lpBase(560));for(let x=560;x<=940;x+=5)hill+=` L${x} ${lpF(lpHz(x))}`;for(let x=940;x>=560;x-=10)hill+=` L${x} ${lpF(lpBase(x)+26)}`;
+ o+=`<path d="${hill}Z" fill="url(#lpHillV)"/><path d="${hill}Z" fill="url(#lpHillH)"/>`;
+ const C=lpSpline(LP_CREEK,6),W=C.map(p=>Math.max(2,3+(p[1]-184)/148*24));
+ o+=lpRibbon(C,W.map(w=>w+7),'#7E9B5A')+lpRibbon(C,W.map(w=>w+3),'#D8C599')+lpRibbon(C,W,'#7DB2D2');
+ for(let j=2;j<C.length-2;j+=3){const p=C[j],w=W[j];o+=`<path d="M${lpF(p[0]-w*.25)} ${lpF(p[1]-w*.08)} q${lpF(w*.18)} ${lpF(-w*.08)} ${lpF(w*.4)} 0" stroke="#D6ECF6" stroke-width="${lpF(.5+w*.06)}" fill="none" stroke-linecap="round" opacity=".8"/>`}
+ o+=`<ellipse cx="702" cy="140" rx="5" ry="2" fill="#5B92B6"/>`+lpRock(708,141,.6,'#9A968C')+lpRock(694,142,.45,'#A8A296');
+ return o}
+/* ---- parcel scenes ---- */
+function lpMeadow(ok,lv,r){let g='';
+ /* rolling swells */
+ g+=`<path d="M-10 236 C40 218 110 214 170 226 C220 236 260 232 330 220 L330 330 L-10 330Z" fill="#B3C98A" opacity=".55"/><path d="M-10 276 C60 262 140 270 200 280 C250 288 290 282 330 272 L330 330 L-10 330Z" fill="#A2BC78" opacity=".5"/>`;
+ g+=lpTree(150,184,6,'#86AB5A')+lpTree(196,188,5,'#7FA654')+lpTree(240,183,6.5,'#86AB5A')+lpTree(276,190,5,'#7FA654');
+ g+=`<ellipse cx="44" cy="286" rx="30" ry="9" fill="#5B92B6"/><ellipse cx="44" cy="285" rx="27" ry="7" fill="#7DB2D2"/><path d="M28 284 q8 -2.4 14 0 M48 288 q6 -2 12 0" stroke="#D6ECF6" stroke-width="1" fill="none"/>`;
+ for(const [x,y] of [[16,284],[72,282],[20,292]])for(let q=0;q<4;q++)g+=`<path d="M${x+q*2} ${y} q.6 -6 ${q-1.5} -10" stroke="#5E7E3E" stroke-width=".9" fill="none"/>${q%2?'':`<rect x="${x+q*2.6-.9}" y="${y-11.5}" width="1.8" height="3.8" rx=".9" fill="#6B4A30"/>`}`;
+ g+=lpTree(70,214,20,'#7FA654')+lpTree(24,190,9,'#86AB5A')+`<ellipse cx="110" cy="236" rx="9" ry="5" fill="#6E9446"/><ellipse cx="104" cy="234" rx="6" ry="4.4" fill="#7FA654"/><ellipse cx="296" cy="262" rx="10" ry="5.6" fill="#6E9446"/><ellipse cx="290" cy="259" rx="6.4" ry="4.6" fill="#7FA654"/>`+lpRock(126,300,1.2)+lpRock(268,214,.7);
+ const fl=['#FFF6D6','#F2D04B','#B58AD8','#F0A0B8','#FFFFFF'];
+ for(let k=0;k<(ok?120:34);k++){const x=r()*320,y=190+r()*120;if(y>LP.ROAD-2)continue;const s=lpDepth(y);g+=`<circle cx="${lpF(x)}" cy="${lpF(y)}" r="${lpF(1.1*s+.3)}" fill="${fl[k%5]}"/>`}
+ for(let k=0;k<46;k++){const x=r()*325,y=182+r()*130;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#6E8E4A':'#9C9A62')}
+ if(!ok){for(let k=0;k<26;k++){const x=r()*320,y=200+r()*108;if(y>LP.ROAD-2)continue;const s=lpDepth(y)*1.7;g+=lpTuft(x,y,s,'#BDAE74')+lpTuft(x+3*s,y+1,s*.8,'#A8985E')}
+  for(let k=0;k<5;k++){const x=40+r()*240,y=232+r()*60,s=lpDepth(y);g+=`<path d="M${lpF(x)} ${lpF(y)} v${lpF(-9*s)}" stroke="#7A8A56" stroke-width="${lpF(.8*s)}"/><circle cx="${lpF(x)}" cy="${lpF(y-10*s)}" r="${lpF(2.1*s)}" fill="#9A6AB0"/><path d="M${lpF(x-2.2*s)} ${lpF(y-9*s)} h${lpF(4.4*s)}" stroke="#7A8A56" stroke-width="${lpF(.9*s)}"/>`}
+  g+=lpFence(150,236,262,252,'old',6)+`<path d="M268 254 l12 6" stroke="#8A7560" stroke-width="1.6"/>`;return g}
+ if(lv<1){g+='<!--ns-->'+lpHorse(150,262,1.25,'#8A4520','#1C1714',{graze:1})+lpHorse(232,246,1.05,'#C99A55','#211B16',{flip:1})+lpHorse(110,292,1.45,'#25201E','#141110',{graze:1,flip:1})+'<!--/ns-->';
+  g+=`<rect x="200" y="281" width="22" height="6" rx="1.5" fill="#8C969A"/><rect x="201.5" y="281.5" width="19" height="2.2" fill="#7DB2D2"/>`;return g}
+ /* Broodmare Pasture: white board paddock, run-in shed, mares and foals */
+ const Q=[[118,300],[300,300],[282,226],[140,226]];
+ g+=`<path d="M${Q.map(p=>p.join(' ')).join(' L')}Z" fill="#A6C47A" opacity=".55"/>`;
+ g+=lpFence(140,226,282,226,'white',8);
+ /* run-in shed at the back */
+ g+=lpSh(178,229,30,3.5)+`<path d="M150 228 L150 206 L206 206 L206 228Z" fill="#9A3F2C"/><path d="M155 228 L155 211 L201 211 L201 228Z" fill="#3B2C26"/><path d="M144 207 L212 207 L206 197 L150 197Z" fill="#5B4B44"/><path d="M144 207 L212 207" stroke="#F4EFE4" stroke-width="1.4"/><rect x="158" y="220" width="40" height="8" fill="#D9BE6A"/>`;
+ g+=`<rect x="226" y="219" width="20" height="9" fill="#7A5638"/><path d="M226 219 l3 -5 h14 l3 5" fill="#D9BE6A"/><path d="M228 221 v6 M232 221 v6 M236 221 v6 M240 221 v6 M244 221 v6" stroke="#5A4130" stroke-width=".8"/>`;
+ g+=`<rect x="252" y="286" width="24" height="7" rx="1.5" fill="#8C969A"/><rect x="253.5" y="286.6" width="21" height="2.4" fill="#7DB2D2"/>`;
+ g+='<!--ns-->'+lpHorse(176,262,1.25,'#8A4520','#1C1714',{graze:1})+lpHorse(196,268,.78,'#8A4520','#1C1714',{})+lpHorse(246,248,1.15,'#D9AE5E','#F2E8CC',{flip:1})+lpHorse(222,252,.72,'#D9AE5E','#F2E8CC',{flip:1,graze:1})+lpHorse(150,290,1.4,'#B9BAB5','#6E6E6A',{graze:1})+lpHorse(176,296,.82,'#CFCFC9','#8E8E88',{})+'<!--/ns-->';
+ g+=lpFence(118,300,140,226,'white',6)+lpFence(300,300,282,226,'white',6)+lpFence(118,300,300,300,'white',9);
+ g+=`<g transform="translate(102 304)"><rect x="-1.4" y="-15" width="2.8" height="15" fill="#6B4A30"/><rect x="-20" y="-25" width="40" height="11" rx="2" fill="#F6F1E4" stroke="#7A5638" stroke-width="1"/><text x="0" y="-17" text-anchor="middle" font-size="6.6" font-weight="800" fill="#6B4A30" font-family="system-ui,sans-serif">BROODMARES</text></g>`;
+ return g}
+function lpCreekBottom(ok,lv,r){let g='';
+ const C=lpSpline(LP_CREEK,6);
+ /* hay field on the right bank */
+ if(ok){const F=[[478,252],[598,236],[600,306],[490,306]];g+=`<path d="M${F.map(p=>p.join(' ')).join(' L')}Z" fill="#C4C67C"/>`;
+  for(let k=0;k<9;k++){const t=k/8;const x1=478+(490-478)*t*0,ya=252+(236-252)*t,xa=478+(598-478)*t,xb=490+(600-490)*t;g+=`<path d="M${lpF(xa)} ${lpF(ya)} L${lpF(xb)} 306" stroke="${k%2?'#B3B766':'#D6D990'}" stroke-width="${lpF(2+t*1.5)}"/>`}
+  g+=lpBale(520,272,1.1)+lpBale(560,262,.95)+lpBale(574,296,1.4)+lpBale(530,300,1.5)}
+ else{for(let k=0;k<16;k++){const x=480+r()*115,y=236+r()*70,s=lpDepth(y);g+=`<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(7*s)}" ry="${lpF(4*s)}" fill="${k%2?'#8C9A5A':'#7C8A4E'}"/>`}}
+ g+=lpRock(462,248,.7,'#9A968C')+lpRock(445,290,1.1,'#A8A296')+lpRock(438,276,.6,'#8E8A82');
+ /* reeds and cattails along the banks */
+ const reeds=[[500,212],[462,232],[478,258],[440,300],[402,316],[536,203],[474,276]];
+ reeds.forEach(([x,y],k)=>{const s=lpDepth(y)*(ok?1:1.5);for(let q=0;q<(ok?3:6);q++){const dx=(q-1.5)*1.8*s;g+=`<path d="M${lpF(x+dx)} ${lpF(y)} q${lpF(.5*s)} ${lpF(-5*s)} ${lpF(dx*.3)} ${lpF(-9*s)}" stroke="#5E7E3E" stroke-width="${lpF(.7*s)}" fill="none"/>`;if(q%2===0)g+=`<rect x="${lpF(x+dx*1.3-.8*s)}" y="${lpF(y-10.5*s)}" width="${lpF(1.6*s)}" height="${lpF(3.4*s)}" rx="${lpF(.8*s)}" fill="#6B4A30"/>`}});
+ g+=lpWillow(528,212,15)+lpWillow(410,250,13)+(ok?'':lpWillow(500,230,10)+lpWillow(470,300,12));
+ for(let k=0;k<30;k++){const x=330+r()*270,y=190+r()*120;if(y>LP.ROAD-1)continue;const near=C.some(p=>Math.abs(p[0]-x)<18&&Math.abs(p[1]-y)<12);if(near||(ok&&x>474&&y>234))continue;g+=lpTuft(x,y,lpDepth(y)*(ok?1.1:1.6),ok?'#6E8E4A':'#A8985E')}
+ if(!ok){g+=`<path d="M352 300 L386 286" stroke="#7A6248" stroke-width="3.6" stroke-linecap="round"/><path d="M360 296 l-4 -5 M374 291 l3 -6" stroke="#7A6248" stroke-width="1.4"/>`;return g}
+ /* second barn levels on the left bank */
+ if(lv===1)g+=lpPoleBarn(348,226,74,30);
+ else if(lv===2)g+=lpBarn(384,228,50,30,{side:34,cupola:1});
+ else if(lv>=3)g+=lpBarn(426,224,40,25,{side:24,c:'#B24A32'})+lpBarn(368,232,46,29,{side:30,cupola:1});
+ if(lv>=2)g+=`<path d="M410 230 C404 250 392 270 380 296 L392 296 C402 272 414 250 418 230Z" fill="#D1B486" opacity=".9"/>`;
+ if(lv>=1)g+='<!--ns-->'+lpHorse(362,272,1.2,'#A8582A','#8A3F1A',{})+'<!--/ns-->';
+ return g}
+function lpRidge(ok,lv,r){let g='';
+ /* hill body shading */
+ g+=lpRock(762,92,1.6,'#A8A296')+lpRock(780,96,1.1,'#9A968C')+lpRock(740,104,1,'#A8A296');
+ /* trail and gallops */
+ const trail=lpSpline([[700,312],[742,286],[800,262],[748,236],[700,214],[742,190],[790,166],[756,140],[738,120],[760,98]],5);
+ if(ok&&lv>=1){g+=lpRibbon(trail,trail.map(p=>Math.max(1.6,7*lpDepth(p[1]))),'#D1B486')+lpRibbon(trail,trail.map(p=>Math.max(.7,3*lpDepth(p[1]))),'#D8C599')}
+ /* forest: pines over the hill, aspens mixed in */
+ const creek=lpSpline(LP_CREEK,6);const trees=[];for(let k=0;k<230;k++){const x=596+r()*310,top=lpHz(x)+5,bot=Math.min(ok&&lv>=2?236:262,lpBase(x)+70),y=top+r()*Math.max(0,bot-top);if(y>LP.ROAD-8||top>bot)continue;if(ok&&lv>=1&&trail.some(p=>Math.abs(p[0]-x)<10&&Math.abs(p[1]-y)<8))continue;if(creek.some(p=>Math.abs(p[0]-x)<10&&Math.abs(p[1]-y)<7))continue;trees.push([x,y,k])}
+ trees.sort((a,b)=>a[1]-b[1]).forEach(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);g+=(k%6===0)?lpTree(x,y,8*s+1.5,'#9DBE62'):lpPine(x,y,(20+((k*7)%10))*s,k)});
+ for(let k=0;k<30;k++){const x=600+r()*300,y=262+r()*48;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#6E8E4A':'#9C9A62')}
+ if(ok)for(let k=0;k<40;k++){const x=600+r()*300,y=262+r()*48;if(y>LP.ROAD-2)continue;g+=`<circle cx="${lpF(x)}" cy="${lpF(y)}" r="${lpF(1.1*lpDepth(y)+.3)}" fill="${['#FFF6D6','#F2D04B','#B58AD8'][k%3]}"/>`}
+ if(!ok){for(let k=0;k<6;k++){const x=640+r()*240,y=250+r()*50,s=lpDepth(y);g+=`<path d="M${lpF(x)} ${lpF(y)} l${lpF(22*s)} ${lpF(-4*s)}" stroke="#7A6248" stroke-width="${lpF(3.4*s)}" stroke-linecap="round"/><circle cx="${lpF(x+22*s)}" cy="${lpF(y-4*s)}" r="${lpF(1.7*s)}" fill="#C9A87A"/>`}
+  for(let k=0;k<18;k++){const x=612+r()*280,y=244+r()*66,s=lpDepth(y);g+=`<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(8*s)}" ry="${lpF(4.5*s)}" fill="${k%2?'#6E8048':'#7C8C52'}"/>`}return g}
+ if(lv<2){const deer=(x,y,s,f)=>{const T=(px,py)=>lpF(x+px*s*f)+' '+lpF(y+py*s);return lpSh(x,y+.4,6*s,1.2*s)+`<path d="M${T(-4,-6)} L${T(-4.4,0)} M${T(-2.6,-6)} L${T(-2.4,0)} M${T(3,-6)} L${T(3.4,0)} M${T(4.4,-6)} L${T(4.2,0)}" stroke="#6E4A2E" stroke-width="${lpF(.9*s)}"/><path d="M${T(-5,-9.6)} C${T(-2,-10.6)} ${T(3,-10.6)} ${T(5,-9.4)} L${T(5,-6)} L${T(-5,-6)}Z" fill="#9A6A40"/><path d="M${T(4,-9.6)} L${T(6.6,-14)} L${T(8.6,-13.4)} L${T(7,-12.2)} L${T(5.6,-8.6)}Z" fill="#9A6A40"/><path d="M${T(6.6,-14)} l${lpF(-.8*s*f)} ${lpF(-2*s)} M${T(7.2,-14)} l${lpF(.6*s*f)} ${lpF(-2*s)}" stroke="#6E4A2E" stroke-width="${lpF(.7*s)}"/><path d="M${T(-5,-9)} l${lpF(-1.2*s*f)} ${lpF(1*s)}" stroke="#F4EFE4" stroke-width="${lpF(1.2*s)}"/>`};
+  g+='<!--ns-->'+deer(640,266,1.15,1)+deer(664,272,1,-1)+'<!--/ns-->'}
+ if(lv>=1)g+=`<g transform="translate(700 312)"><rect x="-1.2" y="-13" width="2.4" height="13" fill="#6B4A30"/><path d="M-1 -13 L13 -11 L13 -6 L-1 -7Z" fill="#E8B04A"/><text x="5.6" y="-7.8" text-anchor="middle" font-size="4.2" font-weight="800" fill="#5A3A1E" font-family="system-ui,sans-serif">TRAIL</text></g>`+'<!--ns-->'+lpHorse(752,236,.72,'#8A4520','#1C1714',{rider:'#9A3A2C',flip:1})+'<!--/ns-->';
+ if(lv>=2){/* gallop strip along the hill foot and a cross-country water complex */
+  const gal=lpSpline([[612,262],[680,248],[760,246],[840,256],[896,250]],8);g+=lpRibbon(gal,gal.map(p=>9*lpDepth(p[1])),'#E6D3A6')+lpRibbon(gal,gal.map(p=>9*lpDepth(p[1])),'none');
+  for(let k=0;k<gal.length;k+=4){const p=gal[k];g+=`<path d="M${lpF(p[0])} ${lpF(p[1]-4.6*lpDepth(p[1]))} v-3" stroke="#F7F3EA" stroke-width="1"/>`}
+  g+=`<ellipse cx="808" cy="288" rx="44" ry="13" fill="#5B92B6"/><ellipse cx="808" cy="286" rx="40" ry="10.5" fill="#7DB2D2"/><path d="M780 284 q10 -3 20 0 M816 290 q10 -3 18 0" stroke="#D6ECF6" stroke-width="1" fill="none"/>`;
+  g+=`<path d="M760 292 L760 280 L774 280 L778 292Z" fill="#A8A296"/><path d="M760 280 L774 280" stroke="#7A5638" stroke-width="2.6"/>`;
+  g+=`<path d="M842 280 L868 276" stroke="#7A5638" stroke-width="4.4" stroke-linecap="round"/><path d="M846 279 v6 M864 276 v6" stroke="#6B4A30" stroke-width="1.6"/>`;
+  g+=`<path d="M626 296 q8 -10 16 0 q8 -10 16 0Z" fill="#5E7E3E"/><rect x="626" y="295" width="32" height="4" fill="#7A5638"/>`;
+  g+='<!--ns-->'+lpHorse(708,262,.9,'#25201E','#141110',{rider:'#2E5D8C'})+lpHorse(856,278,1.05,'#C99A55','#211B16',{rider:'#4E7A3A'})+'<!--/ns-->'}
+ return g}
+function lpRange(ok,lv,r){let g='';
+ g+=`<path d="M880 200 C960 196 1080 192 1210 196 L1210 330 L880 330Z" fill="#B7CA92" opacity=".45"/><path d="M880 252 C980 246 1100 248 1210 244 L1210 330 L880 330Z" fill="#C3D29C" opacity=".4"/>`;
+ for(let k=0;k<(ok?40:56);k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-2)continue;const s=lpDepth(y);g+=`<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(4.4*s)}" ry="${lpF(2.6*s)}" fill="${k%3?'#8FA07E':'#9DAE8E'}"/>`}
+ for(let k=0;k<40;k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#8A9A58':'#AFA46C')}
+ g+=lpFence(905,204,1205,200,ok?'rail':'old',16);
+ g+=`<path d="M980 192 C1040 198 1090 190 1140 196 C1170 200 1190 198 1210 196" stroke="#C9B98A" stroke-width="5" fill="none" opacity=".6"/>`+lpTree(1150,196,7,'#9DBE62')+lpTree(1172,198,6,'#8DB45E')+lpTree(1124,195,5.5,'#9DBE62');
+ if(ok){for(let k=0;k<7;k++){const x=1010+k*22+((k*7)%5),y=188+(k%3);g+=`<ellipse cx="${x}" cy="${y}" rx="2.4" ry="1.3" fill="${k%2?'#2B2522':'#8A4A2A'}"/>`}g+=`<rect x="990" y="266" width="6" height="5" fill="#E9E4D8"/><rect x="990" y="266" width="6" height="1.4" fill="#F7F3EA"/>`}
+ /* windmill and stock tank */
+ const wm=(x,y,broken)=>{let w=`<path d="M${x-7} ${y} L${x-1.4} ${y-42} L${x+1.4} ${y-42} L${x+7} ${y}" stroke="#6E6A66" stroke-width="1.2" fill="none"/><path d="M${x-5.4} ${y-10} L${x+5.4} ${y-10} M${x-3.6} ${y-22} L${x+3.6} ${y-22} M${x-2} ${y-33} L${x+2} ${y-33} M${x-5.4} ${y-10} L${x+3.6} ${y-22} M${x+5.4} ${y-10} L${x-3.6} ${y-22}" stroke="#6E6A66" stroke-width=".7"/>`;
+  for(let k=0;k<(broken?4:12);k++){const a=k*Math.PI/6+(broken?.3:0);w+=`<path d="M${x} ${y-44} L${lpF(x+Math.cos(a)*9)} ${lpF(y-44+Math.sin(a)*9)}" stroke="#8C9296" stroke-width="1.6"/>`}
+  return w+`<circle cx="${x}" cy="${y-44}" r="1.6" fill="#555"/><path d="M${x+1} ${y-44} l9 -1 l2 4 l-9 1Z" fill="#8C9296"/>`};
+ g+=wm(946,214,!ok)+(ok?`<ellipse cx="966" cy="216" rx="12" ry="3.4" fill="#7E878A"/><ellipse cx="966" cy="215" rx="10" ry="2.4" fill="#7DB2D2"/>`:'');
+ if(!ok){for(let k=0;k<4;k++){const x=900+r()*290,y=230+r()*70,s=lpDepth(y)*1.6;g+=`<circle cx="${lpF(x)}" cy="${lpF(y-3*s)}" r="${lpF(3.2*s)}" fill="none" stroke="#B49A66" stroke-width="${lpF(.7*s)}" stroke-dasharray="${lpF(2*s)} ${lpF(1*s)}"/>`}
+  g+=`<g transform="translate(1110 296)"><circle cx="0" cy="-8" r="8" fill="none" stroke="#7A6248" stroke-width="1.6"/><path d="M0 -16 V0 M-8 -8 H8 M-5.6 -13.6 L5.6 -2.4 M5.6 -13.6 L-5.6 -2.4" stroke="#7A6248" stroke-width=".9"/></g>`;return g}
+ /* cattle on the open range */
+ const herd=[[1000,226,1],[1030,232,0],[1060,224,1],[1176,238,0],[1136,250,1],[1186,272,0],[930,258,1],[1080,300,0]];
+ const show=lv>=1;g+='<!--ns-->';herd.forEach(([x,y,b],k)=>{if(show&&x>895&&x<1165&&y>210)return;const s=lpDepth(y)*1.25;g+=lpCow(x,y,s,b?'#2B2522':'#8A4A2A',b?null:'#F1EBDD',{flip:k%2})});g+='<!--/ns-->';
+ if(!show)return g;
+ /* Home Show Grounds: arena, jumps, bleachers, booth, flags, trailers */
+ const A=[[958,292],[1140,292],[1118,226],[982,226]];
+ g+=`<path d="M${A.map(p=>p.join(' ')).join(' L')}Z" fill="#E6D3A6"/><path d="M970 284 L1146 284 M985 262 L1138 262 M996 244 L1130 244" stroke="#D8C08E" stroke-width="1.2" opacity=".6"/>`;
+ g+=lpFence(982,226,1118,226,'white',10);
+ g+=`<path d="M1060 222 L1060 206 L1090 206 L1090 222Z" fill="#F4EFE4"/><rect x="1065" y="210" width="20" height="6" fill="#3A5A7A"/><path d="M1056 206 L1094 206 L1075 197Z" fill="#9A3A2C"/>`;
+ [[992,'#C0392B'],[1016,'#2E5D8C'],[1096,'#E8B04A'],[1112,'#2E8B57']].forEach(([x,c])=>{g+=`<path d="M${x} 224 V200" stroke="#7E7A74" stroke-width="1"/><path d="M${x} 200 l9 3 l-9 3Z" fill="${c}"/>`});
+ const jump=(x,y,s,c)=>`<path d="M${lpF(x-9*s)} ${y} v${lpF(-9*s)} M${lpF(x+9*s)} ${y} v${lpF(-9*s)}" stroke="#F7F3EA" stroke-width="${lpF(1.6*s)}"/><path d="M${lpF(x-9*s)} ${lpF(y-6*s)} H${lpF(x+9*s)}" stroke="${c}" stroke-width="${lpF(1.8*s)}" stroke-dasharray="${lpF(3*s)} ${lpF(2*s)}"/><path d="M${lpF(x-9*s)} ${lpF(y-6*s)} H${lpF(x+9*s)}" stroke="#F7F3EA" stroke-width="${lpF(1.8*s)}" stroke-dasharray="${lpF(2*s)} ${lpF(3*s)}" stroke-dashoffset="${lpF(-3*s)}"/>`;
+ g+=jump(1012,250,.8,'#C0392B')+jump(1100,246,.75,'#2E5D8C')+jump(1040,282,1.05,'#E8B04A');
+ g+='<!--ns-->'+lpHorse(1066,268,1.2,'#8A4520','#1C1714',{rider:'#1E2A44'})+'<!--/ns-->';
+ g+=lpFence(958,292,982,226,'white',6)+lpFence(1140,292,1118,226,'white',6)+lpFence(958,292,1140,292,'white',12);
+ g+=`<path d="M1150 296 L1150 270 L1186 262 L1186 296Z" fill="#8E959A"/>`;for(let k=0;k<5;k++)g+=`<path d="M1150 ${296-k*6} L1186 ${296-k*6-k*1.6}" stroke="#C9CDD0" stroke-width="2"/>`;g+='<!--ns-->'+[[1156,284,'#C0392B'],[1166,276,'#2E5D8C'],[1176,272,'#E8B04A'],[1162,290,'#2E8B57']].map(([x,y,c])=>`<circle cx="${x}" cy="${y-3}" r="1.6" fill="#E2B48C"/><rect x="${x-1.6}" y="${y-1.6}" width="3.2" height="4" fill="${c}"/>`).join('')+'<!--/ns-->';
+ g+=`<g><rect x="912" y="276" width="30" height="13" rx="2" fill="#F1F1EE"/><rect x="915" y="279" width="7" height="4" fill="#5A7A96"/><circle cx="920" cy="290" r="2.6" fill="#333"/><circle cx="934" cy="290" r="2.6" fill="#333"/><rect x="900" y="282" width="12" height="2" fill="#777"/></g><g><rect x="900" y="248" width="24" height="10" rx="2" fill="#E9E4D8"/><circle cx="906" cy="258.5" r="2" fill="#333"/><circle cx="917" cy="258.5" r="2" fill="#333"/></g>`;
+ g+=`<path d="M968 302 L1060 302 L1060 310 L968 310Z" fill="#9A3A2C"/><text x="1014" y="308.2" text-anchor="middle" font-size="6.4" font-weight="800" fill="#F6F1E4" font-family="system-ui,sans-serif" letter-spacing=".6">HOME SHOW GROUNDS</text>`;
+ return g}
+function landPano(){const W=LP.W,H=LP.H,R=LP.ROAD,own=id=>landOwned(id);
+ let o=`<svg class="landstrip" viewBox="0 0 ${W} ${H}" role="img" aria-label="Neighboring land: North Meadow, Creek Bottom, Timber Ridge and Big Sky Range"><defs>
+  <linearGradient id="lpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FCBEA"/><stop offset=".55" stop-color="#CFE5F2"/><stop offset="1" stop-color="#EEF5F2"/></linearGradient>
+  <linearGradient id="lpGround" x1="0" y1="150" x2="0" y2="330" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9DB57C"/><stop offset=".25" stop-color="#94B06C"/><stop offset="1" stop-color="#A3C072"/></linearGradient>
+  <linearGradient id="lpMtn" x1="0" y1="40" x2="0" y2="170" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8EA3BC"/><stop offset="1" stop-color="#B6C5D3"/></linearGradient>
+  <linearGradient id="lpHillV" x1="0" y1="60" x2="0" y2="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6F9A4E"/><stop offset=".75" stop-color="#7FA458"/><stop offset="1" stop-color="#94B06C" stop-opacity="0"/></linearGradient>
+  <linearGradient id="lpHillH" x1="560" y1="0" x2="940" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#C9DD9A" stop-opacity="0"/><stop offset=".3" stop-color="#C9DD9A" stop-opacity=".28"/><stop offset=".55" stop-color="#4E6E36" stop-opacity="0"/><stop offset=".8" stop-color="#3E5E2C" stop-opacity=".3"/><stop offset="1" stop-color="#3E5E2C" stop-opacity="0"/></linearGradient>
+  <filter id="lpFade"><feColorMatrix type="saturate" values=".38"/></filter>`;
+ const clip=i=>{const L=y=>i===0?-20:lpBx(i,y),Rr=y=>i===3?W+20:lpBx(i+1,y);return `<clipPath id="lpc${i}"><path d="M${lpF(L(-60))} -60 L${lpF(Rr(-60))} -60 L${lpF(Rr(H+10))} ${H+10} L${lpF(L(H+10))} ${H+10}Z"/></clipPath>`};
+ for(let i=0;i<4;i++)o+=clip(i);o+='</defs>';
+ /* sky, sun, clouds, birds */
+ o+=`<rect width="${W}" height="${H}" fill="url(#lpSky)"/><circle cx="1040" cy="40" r="22" fill="#FFF7DA" opacity=".85"/><circle cx="1040" cy="40" r="34" fill="#FFF7DA" opacity=".25"/>`;
+ const cloud=(x,y,s)=>`<g opacity=".92"><ellipse cx="${x}" cy="${y}" rx="${26*s}" ry="${8*s}" fill="#FFFFFF"/><ellipse cx="${x-12*s}" cy="${y-5*s}" rx="${12*s}" ry="${8*s}" fill="#FFFFFF"/><ellipse cx="${x+8*s}" cy="${y-8*s}" rx="${14*s}" ry="${10*s}" fill="#FFFFFF"/><ellipse cx="${x}" cy="${y+3*s}" rx="${24*s}" ry="${4*s}" fill="#DCE9F2"/></g>`;
+ o+=cloud(250,46,1.1)+cloud(560,30,.8)+cloud(860,58,.9)+cloud(1160,92,.7);
+ o+=`<path d="M420 70 q4 -3 8 0 q4 -3 8 0 M444 62 q3 -2.4 6 0 q3 -2.4 6 0" stroke="#4A5560" stroke-width="1" fill="none"/>`;
+ /* one mountain range behind all parcels, tallest over Big Sky */
+ const mtn=[[-10,150],[60,124],[120,136],[200,104],[270,128],[340,112],[420,134],[500,100],[560,120],[640,84],[700,108],[770,92],[850,70],[930,98],[990,40],[1050,82],[1110,54],[1170,90],[1210,74],[1210,175],[-10,175]];
+ o+=`<path d="M${mtn.map(p=>p.join(' ')).join(' L')}Z" fill="url(#lpMtn)"/>`;
+ [[990,40,22],[1110,54,18],[850,70,14],[640,84,10]].forEach(([x,y,s])=>{o+=`<path d="M${x} ${y} L${x-s*.9} ${y+s*.8} L${x-s*.45} ${y+s*.62} L${x-s*.1} ${y+s*.9} L${x+s*.3} ${y+s*.6} L${x+s*.75} ${y+s*.85}Z" fill="#F4F7FA"/>`});
+ o+=`<path d="M990 40 L1004 74 L1020 96 L1000 98Z M1110 54 L1124 82 L1136 96 L1118 96Z" fill="#7C91AA" opacity=".35"/>`;
+ let hills='M-10 175';for(let x=-10;x<=W+10;x+=20)hills+=` L${x} ${lpF(152+8*Math.sin(x/70)+5*Math.sin(x/23+2))}`;hills+=` L${W+10} 190 L-10 190Z`;o+=`<path d="${hills}" fill="#8EAA88" opacity=".85"/>`;
+ for(let x=0;x<W;x+=9){const y=156+8*Math.sin(x/70)+5*Math.sin(x/23+2);o+=`<path d="M${x} ${lpF(y+6)} L${x+3.5} ${lpF(y-4)} L${x+7} ${lpF(y+6)}Z" fill="#6E9076" opacity=".7"/>`}
+ /* ground skyline shared by all parcels */
+ let gd=`M-10 ${H}`;for(let x=-10;x<=W+10;x+=5)gd+=` L${x} ${lpF(lpHz(x))}`;gd+=` L${W+10} ${H}Z`;
+ /* each parcel: same ground, its own scene, faded when it is still for sale */
+ const scenes=[lpMeadow,lpCreekBottom,lpRidge,lpRange];
+ LAND.forEach((x,i)=>{const ok=own(x.id),lv=ok?L(x.unl):0,r=srng(500+i*37);
+  o+=`<g clip-path="url(#lpc${i})"><g${ok?'':' filter="url(#lpFade)"'}>${lpShared(gd)}${scenes[i](ok,lv,r)}</g>${ok?'':`<path d="${gd}" fill="#F3EEE0" opacity=".3"/>`}</g>`});
+ /* property lines: rail fence where both sides are yours, old wire otherwise */
+ for(let i=1;i<4;i++){const a=own(LAND[i-1].id),b=own(LAND[i].id);let yTop=lpHz(lpBx(i,170))+3;if(i===2)yTop=lpHz(600)+6;if(i===3)yTop=Math.max(lpHz(lpBx(3,190))+4,190);
+  o+=lpFence(lpBx(i,R),R,lpBx(i,yTop),yTop,a&&b?'white':(a||b)?'rail':'old',14)}
+ /* ranch road along the front, with a bridge over the creek */
+ o+=`<path d="M-10 ${R} C300 ${R-3} 900 ${R-3} ${W+10} ${R} L${W+10} ${H} L-10 ${H}Z" fill="#D1B486"/><path d="M-10 ${R} C300 ${R-3} 900 ${R-3} ${W+10} ${R}" stroke="#B9996A" stroke-width="1.6" fill="none"/><path d="M-10 ${R+8} C300 ${R+5} 900 ${R+5} ${W+10} ${R+8} M-10 ${R+12} C300 ${R+10} 900 ${R+10} ${W+10} ${R+12}" stroke="#B9996A" stroke-width="1.2" fill="none" opacity=".6"/>`;
+ o+=`<path d="M396 ${R-2} L438 ${R-2} L440 ${H} L394 ${H}Z" fill="#9C7550"/>`;for(let k=0;k<7;k++)o+=`<path d="M${396+k*6.6} ${R-2} L${394+k*7.4} ${H}" stroke="#7A5638" stroke-width=".8"/>`;
+ o+=`<path d="M394 ${R-4} L440 ${R-4}" stroke="#6B4A30" stroke-width="2"/><path d="M394 ${R-4} v-5 M417 ${R-4} v-5 M440 ${R-4} v-5 M394 ${R-8} H440" stroke="#6B4A30" stroke-width="1.6"/>`;
+ /* for sale signs and parcel plaques */
+ o+='<!--ns-->';LAND.forEach((x,i)=>{if(!own(x.id)){const sx=[262,560,868,1150][i];o+=lpSign(sx,R-1,1.15,'FOR SALE')}});
+ LAND.forEach((x,i)=>{const ok=own(x.id),f=FACI[x.unl],lv=ok?L(x.unl):0;const X=i===0?10:lpBx(i,40)+10;
+  const l2=`${x.acres} acres · `+(ok?'yours':'for sale '+money(landCost(x)));const l3=ok?(lv?f.lv[lv].n+(f.lv.length>2?' '+'●'.repeat(lv)+'○'.repeat(f.lv.length-1-lv):''):'Nothing built yet'):'Unlocks '+f.n;
+  const w=Math.min(268,Math.max(x.n.length*8.4,l2.length*6.2,l3.length*6)+20);
+  o+=`<g transform="translate(${lpF(X)} 10)"><rect width="${lpF(w)}" height="54" rx="8" fill="#FBF8F0" opacity=".92" stroke="${ok?'#6E9446':'#D9CFB8'}" stroke-width="1.4"/><text x="10" y="19" font-size="14" font-weight="800" fill="#2B2A26" font-family="system-ui,sans-serif">${esc(x.n)}</text><text x="10" y="34" font-size="11" fill="${ok?'#3F6B2A':'#6B5A3E'}" font-weight="700" font-family="system-ui,sans-serif">${esc(l2)}</text><text x="10" y="47.5" font-size="10.5" fill="#55524A" font-family="system-ui,sans-serif">${esc(l3)}</text></g>`});
+ o+='<!--/ns-->';
+ return o+'</svg>'}
+/*LAND-END*/
 const TAB_ORDER=['stable','breeding','compete','market','tack','boarding','facilities','bank','staff','office','hof','journal'];
 (()=>{let sx=0,sy=0,st=0,ok=false;
   document.addEventListener('touchstart',e=>{ok=!!(UI.screen==='game'&&!UI.modal&&e.touches.length===1&&e.target.closest('#main')&&!e.target.closest('input,select,textarea,.tablewrap,.slider,.mapwrap,.landstrip,[data-noswipe]')&&!hScrollIn(e.target));if(!ok)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
