@@ -1582,8 +1582,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='101';
+const BUILD='102';
 const CHANGELOG=[
+ {b:'102',d:'Nov 15, 2026',t:'New land backdrops for every location',c:[
+  'The Neighboring land picture has new backgrounds drawn just for it, one for each location. Everything in them is far away and small, so nothing looks bigger than your parcels anymore.',
+  'Texas: red mesas, a windmill and a pumpjack. Kentucky: rolling bluegrass hills with black plank fences and a little black barn. Oklahoma: wheat plains, a low mesa and a grain elevator. California: purple mountains over chaparral and eucalyptus. Ohio and Pennsylvania: patchwork farms and woodlots (plus a forested ridge and an Amish buggy in Pennsylvania). Florida: palms, oak hammocks and tall summer clouds. Montana, Wyoming and Alberta: snowy peaks and pine foothills. South Dakota: the dark pine Black Hills. Jalisco: the Tequila volcano, agave fields and a small town with a church.',
+  'Distant fields get snow in winter and the Black Hills pines stay green all year.']},
  {b:'101',d:'Nov 15, 2026',t:'Neighboring land matches your location',c:[
   'The Neighboring land picture now looks like where your ranch is. The background is your location’s own skyline (the same one behind your ranch map), softened by distance: mesas in Texas, bluegrass hills in Kentucky, palms and live oaks in Florida, snowy peaks in Montana, Wyoming and Alberta, and more.',
   'Timber Ridge’s forest and the other trees match the region: junipers and mesquite in Texas, oaks and maples in Kentucky, Ohio and Pennsylvania, slash pines and live oaks with moss in Florida, live oaks and chaparral in California, spruce and aspen in Alberta, and oak and pine in Jalisco.',
@@ -8129,11 +8133,9 @@ function landPano(){const W=LP.W,H=LP.H,R=LP.ROAD,own=id=>landOwned(id);
  const clip=i=>{const L=y=>i===0?-20:lpBx(i,y),Rr=y=>i===3?W+20:lpBx(i+1,y);return `<clipPath id="nlc${i}"><path d="M${lpF(L(-60))} -60 L${lpF(Rr(-60))} -60 L${lpF(Rr(H+10))} ${H+10} L${lpF(L(H+10))} ${H+10}Z"/></clipPath>`};
  for(let i=0;i<4;i++)o+=clip(i);o+='</defs>'+(typeof locDefs==='function'?locDefs():'');
  const LDp=LOCS[locId()]||{};
- if(locId()!=='classic'&&LDp.pano&&typeof locPano==='function'){/* the same skyline as behind your ranch map */
-  o+=`<linearGradient id="nlPMg" x1="0" y1="0" x2="0" y2="1" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="nlPM" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/><rect width="${W}" height="24" fill="#000"/><rect y="12" width="${W}" height="12" fill="url(#nlPMf)"/></mask><linearGradient id="nlPMf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>`;
-  o+=`<rect width="${W}" height="${H}" fill="url(#nlSky)"/><g mask="url(#nlPM)"><g transform="translate(-120 112) scale(1.2)"><!--lt-->${locPano(LDp.pano)}<!--/lt--></g></g>`;
-  o+=`<linearGradient id="nlHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9EFF2" stop-opacity="0"/><stop offset="1" stop-color="#E9EFF2" stop-opacity=".42"/></linearGradient><rect x="0" y="60" width="${W}" height="100" fill="url(#nlHaze)"/>`;
-  o+=`<linearGradient id="nlBlend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57C" stop-opacity="0"/><stop offset="1" stop-color="#9DB57C"/></linearGradient><rect x="0" y="142" width="${W}" height="32" fill="url(#nlBlend)"/>`}
+ if(locId()!=='classic'&&typeof lpBackdrop==='function'&&LOCS[locId()]){/* a backdrop drawn for this picture, so the skyline sits far away behind the parcels */
+  o+=lpBackdrop(locId());
+  o+=`<linearGradient id="nlBlend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57C" stop-opacity="0"/><stop offset="1" stop-color="#9DB57C"/></linearGradient><rect x="0" y="150" width="${W}" height="24" fill="url(#nlBlend)"/>`}
  else{
  /* sky, sun, clouds, birds */
  o+=`<rect width="${W}" height="${H}" fill="url(#nlSky)"/><circle cx="1040" cy="40" r="22" fill="#FFF7DA" opacity=".85"/><circle cx="1040" cy="40" r="34" fill="#FFF7DA" opacity=".25"/>`;
@@ -8170,6 +8172,90 @@ function landPano(){const W=LP.W,H=LP.H,R=LP.ROAD,own=id=>landOwned(id);
  o+='<!--/ns-->';
  return o+'</svg>'}
 /*LAND-END*/
+/*BACK-START*/
+/* Build 102: distant backdrops drawn for the Neighboring land picture, one per location (everything small and far away) */
+function lpBackdrop(id){const W=1200,F=lpF,R=srng(id.length*53+11),SN=typeof snowy==='function'&&snowy(SEAS);let o='';
+ const sky=(a,b,c)=>`<linearGradient id="nlSkyL" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".6" stop-color="${b}"/><stop offset="1" stop-color="${c||b}"/></linearGradient><rect width="${W}" height="330" fill="url(#nlSkyL)"/>`;
+ const sun=(x,y,c='#FFF5D2')=>`<circle cx="${x}" cy="${y}" r="34" fill="${c}" opacity=".25"/><circle cx="${x}" cy="${y}" r="20" fill="${c}" opacity=".9"/>`;
+ const cloud=(x,y,s,tall)=>`<g opacity=".93"><ellipse cx="${F(x)}" cy="${F(y)}" rx="${F(28*s)}" ry="${F(8*s)}" fill="#FFFFFF"/><ellipse cx="${F(x-12*s)}" cy="${F(y-6*s)}" rx="${F(13*s)}" ry="${F(9*s)}" fill="#FFFFFF"/><ellipse cx="${F(x+9*s)}" cy="${F(y-(tall?16:9)*s)}" rx="${F(15*s)}" ry="${F((tall?17:11)*s)}" fill="#FFFFFF"/>${tall?`<ellipse cx="${F(x+2*s)}" cy="${F(y-28*s)}" rx="${F(10*s)}" ry="${F(9*s)}" fill="#FFFFFF"/>`:''}<ellipse cx="${F(x)}" cy="${F(y+3*s)}" rx="${F(26*s)}" ry="${F(4*s)}" fill="#DCE8F0"/></g>`;
+ const clouds=(n,y0,tall,big=1)=>{let c='';for(let i=0;i<n;i++){const x=80+i*(W/n)+R()*80,y=y0+R()*22,s=(.7+R()*.5)*big;c+=cloud(x,y,s,tall&&i%2===0)}return c};
+ const ridge=(y,amp,step,col,seed,sharp)=>{const t=srng(seed);let d=`M-10 ${F(y)}`;for(let x=-10;x<=W+10;x+=step){const yy=y-amp*(.35+t()*.65),ye=y-amp*t()*.3;d+=sharp?` L${F(x+step/2)} ${F(yy)} L${F(x+step)} ${F(ye)}`:` Q${F(x+step/2)} ${F(yy)} ${F(x+step)} ${F(ye)}`}return `<path d="${d} L${W+10} 185 L-10 185Z" fill="${col}"/>`};
+ const flat=(y,col)=>`<rect x="-10" y="${y}" width="${W+20}" height="${185-y}" fill="${col}"/>`;
+ const treeLine=(y,seed,cols,kind,dens=1,sz=1)=>{const t=srng(seed);let g='';
+  if(kind==='pine'){for(let x=-6;x<W+6;x+=5*sz/dens){if(t()<.18)continue;const r=(3+t()*2.6)*sz,c=cols[Math.floor(t()*cols.length)];g+=`<path d="M${F(x)} ${F(y-r*2.6)} L${F(x-r)} ${F(y)} L${F(x+r)} ${F(y)}Z" fill="${c}"/>`}return g}
+  /* leafy trees grow in clumps with open ground between them */
+  let x=-10+t()*20;while(x<W+10){const n=1+Math.floor(t()*5);let cx=x;for(let j=0;j<n;j++){const r=(2+t()*1.8)*sz,c=cols[Math.floor(t()*cols.length)],yy=y+(t()-.5)*1.6*sz;g+=`<ellipse cx="${F(cx)}" cy="${F(yy-r*.6)}" rx="${F(r*1.2)}" ry="${F(r)}" fill="${c}"/>`;cx+=r*(1.3+t()*.6)}x=cx+(10+t()*46)/dens}return g};
+ const fields=(y0,h,cols,seed)=>{const t=srng(seed);let f='',x=-20;while(x<W+20){const w=50+t()*90,c0=cols[Math.floor(t()*cols.length)],c=SN?hexMix(c0,'#F3F6F9',.86):c0;f+=`<path d="M${F(x)} ${F(y0)} L${F(x+w)} ${F(y0+(t()-.5)*1.6)} L${F(x+w+5)} ${F(y0+h)} L${F(x-4)} ${F(y0+h)}Z" fill="${c}"/>`;if(t()<.45)for(let k=1;k<3;k++)f+=`<path d="M${F(x+3)} ${F(y0+k*h/3)} L${F(x+w)} ${F(y0+k*h/3)}" stroke="#000" stroke-opacity=".06"/>`;x+=w}return f};
+ const farm=(x,y,s,barn='#A23E2C',house='#F4F1EA',silo=1)=>`<g transform="translate(${F(x)} ${F(y)}) scale(${s})"><rect x="0" y="-9" width="15" height="9" fill="${barn}"/><path d="M-1 -9 L7.5 -15 L16 -9Z" fill="#5A4A40"/><rect x="20" y="-7" width="9" height="7" fill="${house}"/><path d="M19 -7 L24.5 -11.5 L30 -7Z" fill="#5C636B"/>${silo?`<rect x="15.5" y="-17" width="4" height="17" fill="#C9C2B0"/><path d="M15.5 -17 Q17.5 -20 19.5 -17Z" fill="#8C939A"/>`:''}</g>`;
+ const elevator=(x,y,s,col='#D8D2C4')=>`<g transform="translate(${F(x)} ${F(y)}) scale(${s})"><rect x="0" y="-26" width="14" height="26" fill="${col}"/><rect x="14" y="-18" width="6" height="18" fill="${hexMix(col,'#000000',.12)}"/><rect x="3" y="-31" width="8" height="5" fill="${hexMix(col,'#000000',.12)}"/></g>`;
+ const windmill=(x,y,s)=>`<g transform="translate(${F(x)} ${F(y)}) scale(${s})"><path d="M-3 0 L-.6 -20 M3 0 L.6 -20" stroke="#6E6A66" stroke-width=".9"/>${[0,45,90,135,180,225,270,315].map(a=>`<path d="M0 -21 L${F(5*Math.cos(a*Math.PI/180))} ${F(-21+5*Math.sin(a*Math.PI/180))}" stroke="#7C7468" stroke-width="1"/>`).join('')}</g>`;
+ const pump=(x,y,s)=>`<g transform="translate(${F(x)} ${F(y)}) scale(${s})"><path d="M-6 0 L-1 -9 L1 -9 L6 0" stroke="#3A3A3A" stroke-width="1" fill="none"/><path d="M-10 -10 L9 -13" stroke="#2B2B2B" stroke-width="1.8" stroke-linecap="round"/><path d="M9 -13 q3 1 2 5" stroke="#2B2B2B" stroke-width="1.4" fill="none"/></g>`;
+ const palm=(x,y,s)=>{let g=`<path d="M${F(x)} ${F(y)} C${F(x-1*s)} ${F(y-7*s)} ${F(x)} ${F(y-12*s)} ${F(x+1*s)} ${F(y-16*s)}" stroke="#7A6A54" stroke-width="${F(1*s)}" fill="none"/>`;for(const a of [-160,-120,-70,-30,10,40,190]){const ra=a*Math.PI/180;g+=`<path d="M${F(x+s)} ${F(y-16*s)} q${F(Math.cos(ra)*3*s)} ${F(-2*s)} ${F(Math.cos(ra)*6*s)} ${F(Math.sin(ra)*3*s+2*s)}" stroke="#4E8A3E" stroke-width="${F(1.1*s)}" fill="none" stroke-linecap="round"/>`}return g};
+ const euc=(x,y,s)=>`<path d="M${F(x)} ${F(y)} L${F(x)} ${F(y-10*s)}" stroke="#9A8E80" stroke-width="${F(.8*s)}"/><ellipse cx="${F(x)}" cy="${F(y-14*s)}" rx="${F(2.6*s)}" ry="${F(7*s)}" fill="#7E9478"/>`;
+ const church=(x,y,s)=>`<g transform="translate(${F(x)} ${F(y)}) scale(${s})"><rect x="0" y="-10" width="16" height="10" fill="#EDE3D0"/><rect x="12" y="-24" width="6" height="24" fill="#E8DCC4"/><path d="M11.4 -24 L15 -30 L18.6 -24Z" fill="#B5523A"/><rect x="14" y="-21" width="2" height="3" fill="#6B4A30"/><path d="M-1 -10 L8 -15 L17 -10Z" fill="#B5523A"/></g>`;
+ const town=(x,y,s,n)=>{let g='';for(let i=0;i<n;i++){const w=6+((i*7)%5),h=4+((i*5)%3);g+=`<rect x="${F(x+i*9*s)}" y="${F(y-h*s)}" width="${F(w*s)}" height="${F(h*s)}" fill="${['#F2E6D0','#E8C9A0','#F4F1EA','#D9A27A'][i%4]}"/><rect x="${F(x+i*9*s-.4*s)}" y="${F(y-h*s-1.2*s)}" width="${F((w+.8)*s)}" height="${F(1.4*s)}" fill="#B5523A"/>`}return g};
+ const agave=(y0,h,x0,x1,seed)=>{const t=srng(seed);let g='';for(let r=0;r<5;r++){const yy=y0+r*h/5;for(let x=x0;x<x1;x+=5+r)g+=`<path d="M${F(x)} ${F(yy+h/5*.7)} l1.4 -${F(2+r*.4)} l1.4 ${F(2+r*.4)}" fill="${t()<.5?'#5E8F8A':'#6FA39C'}"/>`}return g};
+ const haze=(y0,y1,c='#EEF3F4',a=.45)=>`<linearGradient id="nlHz2" x1="0" y1="${y0}" x2="0" y2="${y1}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${c}" stop-opacity="0"/><stop offset="1" stop-color="${c}" stop-opacity="${a}"/></linearGradient><rect x="0" y="${y0}" width="${W}" height="${y1-y0}" fill="url(#nlHz2)"/>`;
+ const mtns=(list,base,cols,snow,seed)=>list.map(([x,h,w],i)=>locMtn(x,base,h,w,cols[i%cols.length],seed+i*7,snow?{snow:snow}:{})).join('');
+ const sideL=x=>x<540||x>960;/* keep landmarks clear of Timber Ridge */
+ if(id==='texas'){o+=sky('#86B8E2','#E9E2CC','#F2E6CC')+sun(1060,44)+clouds(3,48);
+  o+=`<path d="M-10 146 L110 145 L140 124 L310 122 L336 144 L470 146 L960 146 L986 128 L1130 126 L1150 145 L1210 146 L1210 185 L-10 185Z" fill="#D7A784"/><path d="M140 124 L310 122 L312 128 L138 130Z M986 128 L1130 126 L1132 132 L984 133Z" fill="#C68F68"/><path d="M420 146 L436 138 L470 137 L484 146Z" fill="#D9AE8E"/>`;
+  o+=ridge(148,5,70,'#C9BC8A',701)+treeLine(150,702,['#8A9A60','#7E9150','#96A66C'],'round',.35,.9)+treeLine(154,704,['#8A9A60','#7E9150'],'round',.25,1)+windmill(1030,149,1.1)+pump(440,151,1.1)+windmill(200,150,.9);
+  o+=ridge(158,4,60,'#BCBC86',703)+haze(100,160)}
+ else if(id==='kentucky'){o+=sky('#94C2E4','#E2EEE6')+clouds(5,36,1,1.25);
+  o+=ridge(128,26,170,'#B9D2AA',711)+treeLine(128,716,['#9DBF8C','#A8C896'],'round',.35)+ridge(140,24,140,'#A4C690',712)+treeLine(141,713,['#6F9A58','#5E8A4A','#7FA866'],'round',.5,1.3)+ridge(150,16,120,'#95BC80',715);
+  for(let i=0;i<6;i++){const x=10+i*210+R()*40;if(!sideL(x)||!sideL(x+150))continue;o+=`<path d="M${F(x)} 148 C${F(x+50)} 146 ${F(x+100)} 149 ${F(x+150)} 147 M${F(x)} 150.5 C${F(x+50)} 148.5 ${F(x+100)} 151.5 ${F(x+150)} 149.5" stroke="#1E1E20" stroke-width=".8" fill="none" opacity=".75"/>`}
+  o+=`<g transform="translate(1030 141) scale(.6)"><rect x="0" y="-14" width="34" height="14" fill="#1E1E20"/><path d="M-3 -14 L17 -23 L37 -14Z" fill="#2A2A2E"/><rect x="14" y="-28" width="6" height="6" fill="#F4F1EA"/><path d="M13 -28 L17 -32 L21 -28Z" fill="#2A2A2E"/><path d="M4 -10 h6 v10 h-6z M24 -10 h6 v10 h-6z" fill="none" stroke="#F4F1EA" stroke-width=".8"/></g>`+farm(240,142,.6,'#1E1E20');
+  o+=haze(100,160)}
+ else if(id==='oklahoma'){o+=sky('#84B7E0','#ECE7D6')+clouds(4,40,1,1.4);
+  o+=`<path d="M-10 136 L180 135 L200 128 L380 127 L398 135 L1210 134 L1210 185 L-10 185Z" fill="#CFC7A8"/>`+ridge(138,5,110,'#C6C690',721)+fields(138,6,['#D9C06A','#C9B060','#A8B870','#B9C47E','#E0C878'],722)+fields(144,8,['#C9A85A','#B3B972','#D4BB66','#A9B46E'],723)+fields(152,10,['#BDBF7E','#C9B468','#A8B66E'],724);
+  o+=elevator(1080,144,.85)+farm(130,145,.6)+farm(1150,146,.55)+pump(380,148,1.1)+windmill(470,146,.9);
+  o+=haze(100,160)}
+ else if(id==='california'){o+=sky('#88BEE8','#F4E9D4')+sun(1050,42)+clouds(3,46);
+  o+=mtns([[60,58,120],[230,70,130],[420,62,120],[600,80,140],[770,96,110],[930,74,130],[1100,62,120],[1220,54,110]],150,['#A6A8C4','#ADAFC8','#A1A4C0'],0,731).replace(/<path/g,'<path')+locMtn(770,150,96,110,'#A9ABC6',780,{snow:.16});
+  o+=haze(60,150,'#F4E9D4',.5)+ridge(154,16,140,'#B3A874',732)+ridge(160,12,110,'#C4AE72',733);
+  {const t=srng(734);for(let i=0;i<90;i++){const x=t()*W,y=146+t()*16;o+=`<ellipse cx="${F(x)}" cy="${F(y)}" rx="${F(1.6+t()*1.2)}" ry="${F(1+t()*.8)}" fill="${['#6E7448','#7A7E4E'][i%2]}" opacity=".75"/>`}}
+  for(let i=0;i<9;i++){const x=40+i*22;o+=euc(x,166,.75)}for(let i=0;i<6;i++){const x=1000+i*26;o+=euc(x,166,.7)}o+=palm(300,166,.9)+palm(320,167,.8)+palm(1190,166,.9);
+  o+=ridge(170,4,80,'#CDB273',735)+haze(120,172,'#F4E9D4',.35)}
+ else if(id==='ohio'){o+=sky('#92C0E2','#E4EEE4')+clouds(5,38,1,1.25);
+  o+=ridge(130,18,180,'#B6CFA4',741)+treeLine(131,746,['#9CBF88','#A8C894'],'round',.35)+fields(134,6,['#A8C888','#CFC487','#97BE7C','#BCD08E'],742)+treeLine(141,743,['#6E9A50','#5E8A44','#7FA65A'],'round',.45,1.2)+fields(141,7,['#9CC27E','#C9C27A','#B3CB86','#D7C98A','#8DB872'],744)+treeLine(149,747,['#6E9A50','#5E8A44'],'round',.3,1.3)+fields(148,9,['#A8C888','#CFC487','#97BE7C'],748);
+  o+=farm(150,147,.62)+farm(1060,148,.58)+farm(420,140,.45,'#A23E2C','#F4F1EA',0);
+  o+=haze(100,160)}
+ else if(id==='florida'){o+=sky('#7FBDEB','#E3F0EE')+clouds(5,64,1,1.6);
+  o+=flat(144,'#A7CB86')+treeLine(145,751,['#4E7A3A','#2f6b3e','#5E8A46'],'round',.8,1.6);
+  for(let i=0;i<16;i++){const x=R()*W;if(!sideL(x))continue;o+=palm(x,147,1+R()*.6)}
+  o+=`<ellipse cx="200" cy="152" rx="80" ry="3.4" fill="#9FCBE0" opacity=".85"/><ellipse cx="1080" cy="153" rx="60" ry="2.8" fill="#9FCBE0" opacity=".75"/>`+treeLine(150,753,['#5E8A46','#4E7A3A'],'round',.25,1.4);
+  o+=haze(96,160,'#EEF6F4',.45)}
+ else if(id==='pennsylvania'){o+=sky('#93BFE0','#E6EEE6')+clouds(4,38,1,1.2);
+  o+=`<path d="M-10 122 C300 114 700 116 1210 112 L1210 185 L-10 185Z" fill="#94B290"/>`+treeLine(122,761,['#6E8E6E','#7A9A78','#86A684'],'round',.8,1.2);
+  o+=ridge(136,10,190,'#AAC890',762);for(let k=0;k<5;k++){const y0=134+k*3.6;o+=fields(y0,3.4,['#9CC27E','#D3C68A','#B6CC86','#C9B87A','#88B46E'],770+k)}
+  o+=treeLine(146,766,['#6E9A50','#5E8A44'],'round',.3,1.2)+fields(148,9,['#A8C888','#CFC487','#97BE7C'],767);
+  o+=farm(170,146,.6,'#F4F1EA','#F4F1EA')+farm(1080,147,.6,'#A23E2C')+`<g transform="translate(330 150) scale(.75)"><rect x="0" y="-6" width="9" height="6" fill="#2B2B2B"/><circle cx="2" cy="0" r="2" fill="none" stroke="#2B2B2B" stroke-width=".8"/><circle cx="8" cy="0" r="2" fill="none" stroke="#2B2B2B" stroke-width=".8"/><path d="M9 -3 L16 -3" stroke="#3A3A3A" stroke-width=".8"/><ellipse cx="18" cy="-4" rx="3.2" ry="2" fill="#4A3426"/></g>`;
+  o+=haze(100,160)}
+ else if(id==='montana'){o+=sky('#8EBEE6','#E4EEF2')+clouds(4,40);
+  o+=mtns([[80,74,130],[280,92,140],[470,84,130],[660,108,150],[860,96,140],[1050,110,150],[1200,84,130]],150,['#8C9CB6','#94A4BC','#8696B0'],.42,791);
+  o+=haze(80,150,'#E4EEF2',.45)+ridge(152,14,130,'#A9B88A',792)+treeLine(156,793,['#2f5d46','#2f6b3e'],'pine',.7);
+  o+=`<path d="M120 160 L150 150 L190 150 L215 160Z M1040 161 L1068 152 L1102 152 L1124 161Z" fill="#C6A27A"/>`+ridge(164,6,90,'#B4BE8E',794)+haze(120,172)}
+ else if(id==='wyoming'){o+=sky('#8CBCE6','#E6EEF0')+sun(1080,40)+clouds(3,44);
+  o+=mtns([[40,80,130],[230,104,150],[440,118,150],[640,96,140],[850,124,160],[1060,108,150],[1220,86,130]],148,['#8E9EB8','#97A6BE','#8898B2'],.5,801);
+  o+=haze(70,148,'#E6EEF0',.42)+ridge(150,18,120,'#9EAE86',802)+treeLine(152,803,['#2f5d46','#2f6b3e','#4e7a3a'],'pine',.5)+ridge(158,8,100,'#B3BA8E',804);
+  {const t=srng(805);for(let i=0;i<60;i++){const x=t()*W,y=156+t()*12;o+=`<ellipse cx="${F(x)}" cy="${F(y)}" rx="2" ry="1.1" fill="#9AA892" opacity=".8"/>`}}o+=haze(120,172)}
+ else if(id==='southdakota'){o+=sky('#90BEE4','#E6EEF0')+clouds(4,38,1,1.2);
+  o+=ridge(118,40,170,'#2f5d46',811)+treeLine(118,816,['#2f5d46','#2f6b3e'],'pine',.5)+ridge(130,34,140,'#2f5d46',812)+treeLine(132,813,['#2f5d46','#2f6b3e'],'pine',.6,1.1);
+  o+=`<path d="M300 104 l3 -16 l3 16 M312 106 l2 -11 l3 11 M1000 106 l3 -18 l3 18 M1014 108 l2 -10 l2 10" stroke="#B4B0A6" stroke-width="2.6" fill="none"/>`+haze(80,140,'#E6EEF0',.36);
+  o+=ridge(142,10,110,'#B4BE8A',814)+ridge(150,6,90,'#AEB884',815)+haze(110,160)}
+ else if(id==='alberta'){o+=sky('#8ABCE6','#E6EEF2')+clouds(3,40);
+  o+=mtns([[50,92,110],[200,118,120],[360,104,110],[520,128,120],[680,112,110],[840,134,130],[1000,116,120],[1160,100,110]],146,['#8696B2','#8E9EBA','#7F8FAC'],.55,821);
+  o+=haze(60,146,'#E6EEF2',.42)+ridge(148,16,110,'#93AA80',822)+treeLine(150,823,['#2f5d46','#2f6b3e'],'pine',.8);
+  o+=fields(156,6,['#E8C83A','#D8BE48','#A9B870','#E0C24A','#B9C47E'],824)+elevator(1100,158,.6,'#B8402E')+farm(180,160,.45,'#A23E2C');
+  o+=ridge(166,5,90,'#A9BE84',825)+haze(120,172)}
+ else if(id==='jalisco'){o+=sky('#8EC0E6','#EFE8D8')+sun(180,46)+clouds(3,48,0,1.1);
+  o+=`<path d="M930 150 C990 124 1030 78 1072 70 C1088 67 1100 69 1116 74 C1150 88 1190 124 1220 140 L1220 150Z" fill="#9C9AB2"/><path d="M1072 70 C1088 67 1100 69 1116 74 L1108 84 L1080 82Z" fill="#8C8AA4"/><path d="M1000 120 C1030 108 1050 96 1066 88" stroke="#8C8AA4" stroke-width="2" fill="none" opacity=".6"/>`;
+  o+=haze(60,150,'#EFE8D8',.4)+ridge(136,14,140,'#A9B07E',831)+agave(134,16,0,540,832)+agave(136,14,960,1210,833);
+  o+=town(250,146,1.1,6)+church(320,146,1)+treeLine(150,834,['#7E9150','#6E8448'],'round',.35,1.2);
+  o+=haze(110,160,'#EFE8D8',.35)}
+ return o}
+/*BACK-END*/
 const TAB_ORDER=['stable','breeding','compete','market','tack','boarding','facilities','bank','staff','office','hof','journal'];
 (()=>{let sx=0,sy=0,st=0,ok=false;
   document.addEventListener('touchstart',e=>{ok=!!(UI.screen==='game'&&!UI.modal&&e.touches.length===1&&e.target.closest('#main')&&!e.target.closest('input,select,textarea,.tablewrap,.slider,.mapwrap,.landstrip,[data-noswipe]')&&!hScrollIn(e.target));if(!ok)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
