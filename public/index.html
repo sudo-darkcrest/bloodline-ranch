@@ -1582,8 +1582,10 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='99';
+const BUILD='100';
 const CHANGELOG=[
+ {b:'100',d:'Nov 15, 2026',t:'Trees on both sides of Timber Ridge',c:[
+  'The forest on Timber Ridge no longer stops at the property lines. Trees continue onto the hill slopes in Big Sky Range and Creek Bottom and thin out toward the bottom of the hill.']},
  {b:'99',d:'Nov 15, 2026',t:'Neighboring land redrawn',c:[
   'The Neighboring land picture is now one connected landscape: the creek starts on Timber Ridge and runs down through Creek Bottom, the ridge slopes into the parcels beside it, and one mountain range stretches behind all four.',
   'Fences mark the property lines (white rail fences between parcels you own, old wire next to land still for sale), and a ranch road with a creek bridge runs along the front.',
@@ -7958,6 +7960,9 @@ function lpShared(gd){let o=`<path d="${gd}" fill="url(#lpGround)"/>`;
  for(let j=2;j<C.length-2;j+=3){const p=C[j],w=W[j];o+=`<path d="M${lpF(p[0]-w*.25)} ${lpF(p[1]-w*.08)} q${lpF(w*.18)} ${lpF(-w*.08)} ${lpF(w*.4)} 0" stroke="#D6ECF6" stroke-width="${lpF(.5+w*.06)}" fill="none" stroke-linecap="round" opacity=".8"/>`}
  o+=`<ellipse cx="702" cy="140" rx="5" ry="2" fill="#5B92B6"/>`+lpRock(708,141,.6,'#9A968C')+lpRock(694,142,.45,'#A8A296');
  return o}
+function lpHillForest(x0,x1,n,seed,ymax,avoid){/* trees on the ridge slopes that spill into the neighboring parcels, thinning toward the hill's edge */
+ const r=srng(seed),t=[];for(let k=0;k<n;k++){const x=x0+r()*(x1-x0),h=lpBase(x)-lpHz(x),q=r();if(h<3||q>Math.min(1,h/26))continue;const top=lpHz(x)+5,bot=Math.min(ymax,lpBase(x)+8+h*1.5);if(bot<=top)continue;const y=top+r()*(bot-top);if(avoid&&avoid(x,y))continue;t.push([x,y,k])}
+ return t.sort((a,b)=>a[1]-b[1]).map(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);return (k%6===0)?lpTree(x,y,8*s+1.5,'#9DBE62'):lpPine(x,y,(20+((k*7)%10))*s,k)}).join('')}
 /* ---- parcel scenes ---- */
 function lpMeadow(ok,lv,r){let g='';
  /* rolling swells */
@@ -7997,6 +8002,7 @@ function lpCreekBottom(ok,lv,r){let g='';
  /* reeds and cattails along the banks */
  const reeds=[[500,212],[462,232],[478,258],[440,300],[402,316],[536,203],[474,276]];
  reeds.forEach(([x,y],k)=>{const s=lpDepth(y)*(ok?1:1.5);for(let q=0;q<(ok?3:6);q++){const dx=(q-1.5)*1.8*s;g+=`<path d="M${lpF(x+dx)} ${lpF(y)} q${lpF(.5*s)} ${lpF(-5*s)} ${lpF(dx*.3)} ${lpF(-9*s)}" stroke="#5E7E3E" stroke-width="${lpF(.7*s)}" fill="none"/>`;if(q%2===0)g+=`<rect x="${lpF(x+dx*1.3-.8*s)}" y="${lpF(y-10.5*s)}" width="${lpF(1.6*s)}" height="${lpF(3.4*s)}" rx="${lpF(.8*s)}" fill="#6B4A30"/>`}});
+ g+=lpHillForest(548,612,60,811,206,(x,y)=>C.some(p=>Math.abs(p[0]-x)<11&&Math.abs(p[1]-y)<8));
  g+=lpWillow(528,212,15)+lpWillow(410,250,13)+(ok?'':lpWillow(500,230,10)+lpWillow(470,300,12));
  for(let k=0;k<30;k++){const x=330+r()*270,y=190+r()*120;if(y>LP.ROAD-1)continue;const near=C.some(p=>Math.abs(p[0]-x)<18&&Math.abs(p[1]-y)<12);if(near||(ok&&x>474&&y>234))continue;g+=lpTuft(x,y,lpDepth(y)*(ok?1.1:1.6),ok?'#6E8E4A':'#A8985E')}
  if(!ok){g+=`<path d="M352 300 L386 286" stroke="#7A6248" stroke-width="3.6" stroke-linecap="round"/><path d="M360 296 l-4 -5 M374 291 l3 -6" stroke="#7A6248" stroke-width="1.4"/>`;return g}
@@ -8036,6 +8042,7 @@ function lpRange(ok,lv,r){let g='';
  g+=`<path d="M880 200 C960 196 1080 192 1210 196 L1210 330 L880 330Z" fill="#B7CA92" opacity=".45"/><path d="M880 252 C980 246 1100 248 1210 244 L1210 330 L880 330Z" fill="#C3D29C" opacity=".4"/>`;
  for(let k=0;k<(ok?40:56);k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-2)continue;const s=lpDepth(y);g+=`<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(4.4*s)}" ry="${lpF(2.6*s)}" fill="${k%3?'#8FA07E':'#9DAE8E'}"/>`}
  for(let k=0;k<40;k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#8A9A58':'#AFA46C')}
+ g+=lpHillForest(846,968,110,733,240,(x,y)=>(lv>=1&&x>894&&y>236)||(Math.abs(x-946)<11&&y>166&&y<216));
  g+=lpFence(905,204,1205,200,ok?'rail':'old',16);
  g+=`<path d="M980 192 C1040 198 1090 190 1140 196 C1170 200 1190 198 1210 196" stroke="#C9B98A" stroke-width="5" fill="none" opacity=".6"/>`+lpTree(1150,196,7,'#9DBE62')+lpTree(1172,198,6,'#8DB45E')+lpTree(1124,195,5.5,'#9DBE62');
  if(ok){for(let k=0;k<7;k++){const x=1010+k*22+((k*7)%5),y=188+(k%3);g+=`<ellipse cx="${x}" cy="${y}" rx="2.4" ry="1.3" fill="${k%2?'#2B2522':'#8A4A2A'}"/>`}g+=`<rect x="990" y="266" width="6" height="5" fill="#E9E4D8"/><rect x="990" y="266" width="6" height="1.4" fill="#F7F3EA"/>`}
