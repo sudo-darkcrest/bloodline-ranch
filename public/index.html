@@ -1582,8 +1582,13 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='100';
+const BUILD='101';
 const CHANGELOG=[
+ {b:'101',d:'Nov 15, 2026',t:'Neighboring land matches your location',c:[
+  'The Neighboring land picture now looks like where your ranch is. The background is your location’s own skyline (the same one behind your ranch map), softened by distance: mesas in Texas, bluegrass hills in Kentucky, palms and live oaks in Florida, snowy peaks in Montana, Wyoming and Alberta, and more.',
+  'Timber Ridge’s forest and the other trees match the region: junipers and mesquite in Texas, oaks and maples in Kentucky, Ohio and Pennsylvania, slash pines and live oaks with moss in Florida, live oaks and chaparral in California, spruce and aspen in Alberta, and oak and pine in Jalisco.',
+  'The barns on Creek Bottom are built in the same style as your home barn (metal, black, shedrow, mission, Quonset, log, gothic and so on), and fences use your location’s fence color, such as black board fences in Kentucky.',
+  'The Classic location looks the same as before.']},
  {b:'100',d:'Nov 15, 2026',t:'Trees on both sides of Timber Ridge',c:[
   'The forest on Timber Ridge no longer stops at the property lines. Trees continue onto the hill slopes in Big Sky Range and Creek Bottom and thin out toward the bottom of the hill.']},
  {b:'99',d:'Nov 15, 2026',t:'Neighboring land redrawn',c:[
@@ -7687,7 +7692,7 @@ for(const f of [
 function landCost(x){return Math.round(x.c*(locFx().build||1)/100)*100}
 function barn2Extra(){return [0,4,8,12][L('barn2')]||0}
 function buyLand(id){const x=LAND.find(l=>l.id===id);if(!x||landOwned(id))return;const c=landCost(x);if(S.money<c)return toast('You need '+money(c)+' for the '+x.n+'.');S.money-=c;S.land=S.land||{};S.land[id]=S.day;pxp('biz',5);log('good','You bought the '+x.n+' ('+x.acres+' acres) for '+money(c)+'. '+x.d);toast('The '+x.n+' is yours!');unlock('landowner');if(LAND.every(l=>landOwned(l.id)))unlock('landbaron')}
-function landArt(){const si=curSeason(),fx=seasonFx(si),li=locId();let m=landPano();if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx==='snow')m=m.replace(/<\/svg>\s*$/,snowFlakes(91,1200,300,110)+'</svg>');return `<div class="landwrap">${m}</div>`}
+function landArt(){const si=curSeason(),fx=seasonFx(si),li=locId();const sv=SEAS;SEAS=si;let m='';try{m=landPano()}finally{SEAS=sv}if(fx)m=seasonize(m,si,fx);if(li!=='classic')m=locTint(m,li);if(fx==='snow')m=m.replace(/<\/svg>\s*$/,snowFlakes(91,1200,300,110)+'</svg>');return `<div class="landwrap">${m}</div>`}
 function f91LandPanel(){return `<div class="section-head" style="margin-top:18px"><h2>Neighboring land</h2><span class="sub">The neighbors are selling. Each parcel brings its own perks and unlocks a new building in the “Your land” group below.</span></div>${landArt()}
   <div class="landgrid" style="margin-bottom:18px">${LAND.map(x=>{const ok=landOwned(x.id),c=landCost(x),b=FACI[x.unl];return `<div class="land ${ok?'own':''}"><h4>${esc(x.n)}</h4><div class="note">${x.acres} acres${ok?' · bought day '+S.land[x.id]:''}</div><p class="note" style="margin:6px 0">${esc(x.d)} Unlocks: <b>${esc(b.n)}</b>.</p>${ok?'<span class="good">✓ Yours</span>':`<button class="btn small primary" data-a="f91land" data-id="${x.id}" ${S.money<c?'disabled':''}>Buy · ${money(c)}</button>`}</div>`}).join('')}</div>`}
 function landLockedCard(f){const x=LAND.find(l=>l.id===f.land);return `<div class="fac" id="fac-${f.id}"><div class="fac-head"><b>${esc(f.n)}</b></div><div class="fac-cur"><span class="note">Needs the ${esc(x.n)}</span><div class="note" style="font-weight:400">${esc(f.lv[1].d)}</div></div><div class="fac-next"><div class="note">Buy the ${esc(x.n)} under Neighboring land above to build this.</div></div></div>`}
@@ -7941,7 +7946,7 @@ function lpPoleBarn(x,y,w,h){const roof='#7E8A8E',p='#7A5638';let g=lpSh(x+w/2,y
  return g}
 function lpBale(x,y,s){return `${lpSh(x+2*s,y+.5,7*s,1.6*s)}<rect x="${lpF(x-6*s)}" y="${lpF(y-7*s)}" width="${lpF(10*s)}" height="${lpF(7*s)}" fill="#D9BE6A"/><ellipse cx="${lpF(x+4*s)}" cy="${lpF(y-3.5*s)}" rx="${lpF(2.4*s)}" ry="${lpF(3.5*s)}" fill="#E8D48C"/><ellipse cx="${lpF(x+4*s)}" cy="${lpF(y-3.5*s)}" rx="${lpF(1.2*s)}" ry="${lpF(1.8*s)}" fill="none" stroke="#C2A452" stroke-width="${lpF(.5*s)}"/><path d="M${lpF(x-6*s)} ${lpF(y-7*s)} h${lpF(10*s)}" stroke="#EADBA0" stroke-width="${lpF(.8*s)}"/>`}
 /* rail fence between two points, posts shrink with distance */
-function lpFence(x1,y1,x2,y2,style,n){let g='';const white=style==='white',old=style==='old';const pc=white?'#F7F3EA':old?'#8A7560':'#6B4A30',rc=white?'#F7F3EA':'#7A5638';
+function lpFence(x1,y1,x2,y2,style,n,col){let g='';const white=style==='white',old=style==='old';const LD=LOCS[locId()]||{};const pc=col?col[1]:white?'#F7F3EA':old?'#8A7560':'#6B4A30',rc=col?col[0]:white?'#F7F3EA':'#7A5638';
  const pts=[];for(let k=0;k<=n;k++){const t=k/n;pts.push([x1+(x2-x1)*t,y1+(y2-y1)*t])}
  const ph=p=>8.5*lpDepth(p[1]);
  if(!old){g+=`<path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*.78)).join(' ')}" stroke="${rc}" stroke-width="${lpF(1.4*lpDepth((y1+y2)/2))}" fill="none"/><path d="${pts.map((p,k)=>(k?'L':'M')+lpF(p[0])+' '+lpF(p[1]-ph(p)*.4)).join(' ')}" stroke="${rc}" stroke-width="${lpF(1.4*lpDepth((y1+y2)/2))}" fill="none"/>`}
@@ -7951,10 +7956,51 @@ function lpFence(x1,y1,x2,y2,style,n){let g='';const white=style==='white',old=s
 function lpRibbon(P,W,fill){/* smooth ribbon along points with widths */const n=P.length,lf=[],rt=[];for(let j=0;j<n;j++){const a=P[Math.max(0,j-1)],b=P[Math.min(n-1,j+1)];const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L,w=W[j]/2;lf.push([P[j][0]+nx*w,P[j][1]+ny*w]);rt.push([P[j][0]-nx*w,P[j][1]-ny*w])}
  const pts=[...lf,...rt.reverse()];let d=`M${lpF(pts[0][0])} ${lpF(pts[0][1])}`;for(let j=1;j<pts.length;j++){const p0=pts[j-1],p1=pts[j];d+=` Q${lpF(p0[0])} ${lpF(p0[1])} ${lpF((p0[0]+p1[0])/2)} ${lpF((p0[1]+p1[1])/2)}`}return `<path d="${d} L${lpF(pts[pts.length-1][0])} ${lpF(pts[pts.length-1][1])}Z" fill="${fill}"/>`}
 function lpSpline(K,n){/* Catmull-Rom through key points */const out=[];for(let i=0;i<K.length-1;i++){const p0=K[Math.max(0,i-1)],p1=K[i],p2=K[i+1],p3=K[Math.min(K.length-1,i+2)];for(let s=0;s<n;s++){const t=s/n,t2=t*t,t3=t2*t;out.push([0,1].map(c=>.5*((2*p1[c])+(-p0[c]+p2[c])*t+(2*p0[c]-5*p1[c]+4*p2[c]-p3[c])*t2+(-p0[c]+3*p1[c]-3*p2[c]+p3[c])*t3)))}}out.push(K[K.length-1]);return out}
+const LP_FLORA={
+ classic:{ridge:['pine','pine','pine','pine','pine','aspen'],leaf:'oak',shrub:'sage'},
+ texas:{ridge:['juniper','juniper','liveoak','mesquite','juniper','liveoak'],leaf:'mesquite',shrub:'sage'},
+ kentucky:{ridge:['oak','maple','oak','oak','pine','maple'],leaf:'oak',shrub:'sage'},
+ oklahoma:{ridge:['oak','juniper','oak','oak','juniper','maple'],leaf:'oak',shrub:'sage'},
+ california:{ridge:['liveoak','chap','liveoak','chap','liveoak','pine'],leaf:'liveoak',shrub:'chap'},
+ ohio:{ridge:['maple','oak','maple','oak','pine','maple'],leaf:'maple',shrub:'sage'},
+ florida:{ridge:['slash','slash','liveoakmoss','palm','slash','liveoakmoss'],leaf:'liveoakmoss',shrub:'palmetto'},
+ pennsylvania:{ridge:['maple','oak','pine','maple','oak','pine'],leaf:'maple',shrub:'sage'},
+ montana:{ridge:['pine','pine','pine','juniper','pine','aspen'],leaf:'cottonwood',shrub:'sage'},
+ wyoming:{ridge:['pine','pine','aspen','pine','juniper','aspen'],leaf:'cottonwood',shrub:'sage'},
+ southdakota:{ridge:['pine','pine','pine','pine','pine','oak'],leaf:'oak',shrub:'sage'},
+ alberta:{ridge:['spruce','spruce','aspen','pine','spruce','aspen'],leaf:'cottonwood',shrub:'sage'},
+ jalisco:{ridge:['oak','pine','oak','mesquite','oak','pine'],leaf:'mesquite',shrub:'agave'}};
+function lpFl(){return LP_FLORA[locId()]||LP_FLORA.classic}
+function lpFlora(kind,x,y,s,k){const F=lpF;
+ if(kind==='pine')return lpPine(x,y,(20+((k*7)%10))*s,k);
+ if(kind==='spruce'){const h=(24+((k*5)%9))*s,w=h*.24,c=['#2f5d46','#2f6b3e'][k%2];let o=lpSh(x+w*.3,y+1,w*.9,h*.06)+`<rect x="${F(x-h*.03)}" y="${F(y-h*.12)}" width="${F(h*.06)}" height="${F(h*.13)}" fill="#5A4130"/>`;for(let i=0;i<4;i++){const yy=y-h*.1-i*h*.21,ww=w*(1-i*.2);o+=`<path d="M${F(x)} ${F(yy-h*.34)} L${F(x+ww)} ${F(yy)} L${F(x-ww)} ${F(yy)}Z" fill="${c}"/><path d="M${F(x)} ${F(yy-h*.34)} L${F(x+ww)} ${F(yy)} L${F(x)} ${F(yy)}Z" fill="#1F3F30" opacity=".3"/>`}return o}
+ if(kind==='juniper'){const h=(12+((k*5)%6))*s,w=h*.36;return lpSh(x+w*.3,y+1,w,h*.08)+`<path d="M${F(x)} ${F(y-h)} C${F(x+w*.8)} ${F(y-h*.6)} ${F(x+w)} ${F(y-h*.15)} ${F(x+w*.6)} ${F(y)} L${F(x-w*.6)} ${F(y)} C${F(x-w)} ${F(y-h*.15)} ${F(x-w*.8)} ${F(y-h*.6)} ${F(x)} ${F(y-h)}Z" fill="#3e6f6a"/><path d="M${F(x)} ${F(y-h)} C${F(x+w*.8)} ${F(y-h*.6)} ${F(x+w)} ${F(y-h*.15)} ${F(x+w*.6)} ${F(y)} L${F(x+w*.1)} ${F(y)}Z" fill="#1F3F30" opacity=".3"/>`}
+ if(kind==='aspen')return lpTree(x,y,8*s+1.5,'#9DBE62');
+ if(kind==='oak')return lpTree(x,y,9*s+1.8,'#6E9A48');
+ if(kind==='maple')return lpTree(x,y,8.6*s+1.6,'#7DAA4E');
+ if(kind==='cottonwood'){const r=9*s+2;return lpSh(x+r*.3,y+1,r*.9,r*.25)+`<path d="M${F(x-r*.1)} ${F(y)} L${F(x-r*.06)} ${F(y-r*.8)} L${F(x+r*.06)} ${F(y-r*.8)} L${F(x+r*.1)} ${F(y)}Z" fill="#5E4532"/><ellipse cx="${F(x)}" cy="${F(y-r*1.55)}" rx="${F(r*.62)}" ry="${F(r*.95)}" fill="#7FA654"/><ellipse cx="${F(x-r*.35)}" cy="${F(y-r*1.2)}" rx="${F(r*.42)}" ry="${F(r*.6)}" fill="#6E9446"/><ellipse cx="${F(x+r*.32)}" cy="${F(y-r*1.25)}" rx="${F(r*.4)}" ry="${F(r*.58)}" fill="#6E9446"/><ellipse cx="${F(x-r*.15)}" cy="${F(y-r*1.9)}" rx="${F(r*.25)}" ry="${F(r*.35)}" fill="#B5CF86" opacity=".6"/>`}
+ if(kind==='liveoak'||kind==='liveoakmoss'){const r=10*s+2;let o=lpSh(x+r*.3,y+1,r*1.2,r*.24)+`<path d="M${F(x-r*.14)} ${F(y)} L${F(x-r*.08)} ${F(y-r*.55)} L${F(x+r*.08)} ${F(y-r*.55)} L${F(x+r*.14)} ${F(y)}Z" fill="#5E4532"/><path d="M${F(x)} ${F(y-r*.5)} q${F(-r*.4)} ${F(-r*.1)} ${F(-r*.8)} ${F(-r*.35)} M${F(x)} ${F(y-r*.5)} q${F(r*.4)} ${F(-r*.1)} ${F(r*.8)} ${F(-r*.3)}" stroke="#5E4532" stroke-width="${F(r*.08)}" fill="none"/>`;
+  for(const [dx,dy,kk,c] of [[-.75,-.85,.48,'#2f6b3e'],[.75,-.82,.46,'#2f6b3e'],[-.3,-1.1,.55,'#4e7a3a'],[.35,-1.1,.52,'#4e7a3a'],[0,-.9,.5,'#4e7a3a']])o+=`<ellipse cx="${F(x+dx*r)}" cy="${F(y+dy*r)}" rx="${F(r*kk*1.15)}" ry="${F(r*kk*.68)}" fill="${c}"/>`;
+  if(kind==='liveoakmoss')for(const dx of [-.85,-.4,.15,.6])o+=`<path d="M${F(x+dx*r)} ${F(y-r*.65)} q${F(-r*.05)} ${F(r*.25)} ${F(r*.03)} ${F(r*.45)} M${F(x+dx*r+r*.12)} ${F(y-r*.7)} q${F(r*.05)} ${F(r*.2)} ${F(-r*.02)} ${F(r*.38)}" stroke="#B9C2A6" stroke-width="${F(r*.06)}" fill="none" opacity=".9"/>`;
+  return o}
+ if(kind==='mesquite'){const r=8*s+1.6;let o=lpSh(x+r*.3,y+1,r,r*.22)+`<path d="M${F(x)} ${F(y)} C${F(x-r*.1)} ${F(y-r*.5)} ${F(x-r*.4)} ${F(y-r*.7)} ${F(x-r*.6)} ${F(y-r*.95)} M${F(x)} ${F(y-r*.3)} C${F(x+r*.2)} ${F(y-r*.6)} ${F(x+r*.4)} ${F(y-r*.8)} ${F(x+r*.6)} ${F(y-r*1)}" stroke="#5A4030" stroke-width="${F(r*.12)}" fill="none"/>`;
+  for(const [dx,dy,kk] of [[-.6,-1.05,.42],[.6,-1.1,.4],[0,-1.3,.45],[-.2,-.9,.35],[.3,-.92,.33]])o+=`<ellipse cx="${F(x+dx*r)}" cy="${F(y+dy*r)}" rx="${F(r*kk*1.25)}" ry="${F(r*kk*.72)}" fill="#7E9150"/><ellipse cx="${F(x+dx*r-r*.06)}" cy="${F(y+dy*r-r*.1)}" rx="${F(r*kk*.8)}" ry="${F(r*kk*.4)}" fill="#9AAB68" opacity=".7"/>`;return o}
+ if(kind==='chap'){const r=5*s+1.2;let o='';for(const [dx,dy,kk,c] of [[-.8,0,.7,'#6E7448'],[.7,0,.65,'#7A7E4E'],[0,-.4,.8,'#666A42'],[.2,.1,.6,'#7A7E4E']])o+=`<ellipse cx="${F(x+dx*r)}" cy="${F(y-r*.5+dy*r)}" rx="${F(r*kk)}" ry="${F(r*kk*.7)}" fill="${c}"/>`;return lpSh(x,y+.5,r*1.4,r*.3)+o}
+ if(kind==='slash'){const h=(30+((k*7)%10))*s,c=['#2f6b3e','#4e7a3a'][k%2];return lpSh(x+h*.12,y+1,h*.22,h*.04)+`<path d="M${F(x)} ${F(y)} L${F(x+h*.02)} ${F(y-h*.78)}" stroke="#6B4A30" stroke-width="${F(h*.04)}"/><path d="M${F(x+h*.01)} ${F(y-h*.6)} l${F(h*.12)} ${F(-h*.08)} M${F(x+h*.01)} ${F(y-h*.7)} l${F(-h*.1)} ${F(-h*.06)}" stroke="#6B4A30" stroke-width="${F(h*.02)}"/><ellipse cx="${F(x+h*.02)}" cy="${F(y-h*.86)}" rx="${F(h*.17)}" ry="${F(h*.1)}" fill="${c}"/><ellipse cx="${F(x+h*.14)}" cy="${F(y-h*.7)}" rx="${F(h*.09)}" ry="${F(h*.06)}" fill="${c}"/><ellipse cx="${F(x-h*.1)}" cy="${F(y-h*.76)}" rx="${F(h*.09)}" ry="${F(h*.06)}" fill="${c}"/><ellipse cx="${F(x-h*.02)}" cy="${F(y-h*.9)}" rx="${F(h*.09)}" ry="${F(h*.04)}" fill="#7FA458" opacity=".6"/>`}
+ if(kind==='palm'){const h=(22+((k*5)%6))*s;let o=lpSh(x+h*.1,y+1,h*.2,h*.04)+`<path d="M${F(x)} ${F(y)} C${F(x-h*.03)} ${F(y-h*.4)} ${F(x+h*.02)} ${F(y-h*.7)} ${F(x+h*.04)} ${F(y-h*.9)}" stroke="#8A7358" stroke-width="${F(h*.06)}" fill="none"/>`;for(const a of [-160,-125,-80,-40,-10,20,170,200]){const ra=a*Math.PI/180,ex=x+h*.04+Math.cos(ra)*h*.32,ey=y-h*.9+Math.sin(ra)*h*.18+h*.08;o+=`<path d="M${F(x+h*.04)} ${F(y-h*.9)} Q${F((x+h*.04+ex)/2)} ${F(y-h*1.0)} ${F(ex)} ${F(ey)}" stroke="${a%20?'#4E8A3E':'#3E7432'}" stroke-width="${F(h*.06)}" fill="none" stroke-linecap="round"/>`}return o}
+ return lpTree(x,y,8*s+1.5,'#7FA654')}
+function lpShrub(kind,x,y,s,k){const F=lpF;
+ if(kind==='agave'){let o='';for(let i=-3;i<=3;i++){const a=(i*20-90)*Math.PI/180,L=(5.6-Math.abs(i)*.5)*s;o+=`<path d="M${F(x)} ${F(y)} L${F(x+Math.cos(a)*L-1*s*Math.sign(i||1)*.3)} ${F(y+Math.sin(a)*L)} L${F(x+Math.cos(a)*L*.4+.8*s)} ${F(y+Math.sin(a)*L*.4)}Z" fill="${i%2?'#5E8F8A':'#6FA39C'}"/>`}return o}
+ if(kind==='palmetto'){let o='';for(let i=-2;i<=2;i++){const a=(i*28-90)*Math.PI/180;o+=`<path d="M${F(x)} ${F(y)} L${F(x+Math.cos(a)*5*s)} ${F(y+Math.sin(a)*4.4*s)}" stroke="#4E7A3A" stroke-width="${F(1.6*s)}" stroke-linecap="round"/>`}return o}
+ if(kind==='chap')return `<ellipse cx="${F(x)}" cy="${F(y)}" rx="${F(4.6*s)}" ry="${F(2.8*s)}" fill="${k%2?'#6E7448':'#7A7E4E'}"/>`;
+ return `<ellipse cx="${F(x)}" cy="${F(y)}" rx="${F(4.4*s)}" ry="${F(2.6*s)}" fill="${k%3?'#8FA07E':'#9DAE8E'}"/>`}
+function lpLocBarn(x,y,sc){/* the home ranch's barn style, scaled into the scene (x,y = bottom centre) */const LD=LOCS[locId()];if(!LD||!LD.barn||typeof locBarn!=='function')return '';
+ const sh=(cx,cy,rx,ry=5)=>`<ellipse cx="${cx}" cy="${(cy-ry*.7).toFixed(1)}" rx="${rx}" ry="${(ry*.75).toFixed(1)}" fill="#24301A" opacity=".25"/>`;
+ return `<!--ns--><g transform="translate(${lpF(x)} ${lpF(y)}) scale(${sc}) translate(-292 -310)">${locBarn(LD.barn,4,{},sh)}</g><!--/ns-->`}
 const LP_CREEK=[[700,140],[676,156],[648,170],[618,182],[580,192],[530,202],[484,216],[458,240],[468,262],[452,284],[430,300],[420,314],[414,332]];
-function lpShared(gd){let o=`<path d="${gd}" fill="url(#lpGround)"/>`;
+function lpShared(gd){let o=`<path d="${gd}" fill="url(#nlGround)"/>`;
  let hill='M560 '+lpF(lpBase(560));for(let x=560;x<=940;x+=5)hill+=` L${x} ${lpF(lpHz(x))}`;for(let x=940;x>=560;x-=10)hill+=` L${x} ${lpF(lpBase(x)+26)}`;
- o+=`<path d="${hill}Z" fill="url(#lpHillV)"/><path d="${hill}Z" fill="url(#lpHillH)"/>`;
+ o+=`<path d="${hill}Z" fill="url(#nlHillV)"/><path d="${hill}Z" fill="url(#nlHillH)"/>`;
  const C=lpSpline(LP_CREEK,6),W=C.map(p=>Math.max(2,3+(p[1]-184)/148*24));
  o+=lpRibbon(C,W.map(w=>w+7),'#7E9B5A')+lpRibbon(C,W.map(w=>w+3),'#D8C599')+lpRibbon(C,W,'#7DB2D2');
  for(let j=2;j<C.length-2;j+=3){const p=C[j],w=W[j];o+=`<path d="M${lpF(p[0]-w*.25)} ${lpF(p[1]-w*.08)} q${lpF(w*.18)} ${lpF(-w*.08)} ${lpF(w*.4)} 0" stroke="#D6ECF6" stroke-width="${lpF(.5+w*.06)}" fill="none" stroke-linecap="round" opacity=".8"/>`}
@@ -7962,15 +8008,15 @@ function lpShared(gd){let o=`<path d="${gd}" fill="url(#lpGround)"/>`;
  return o}
 function lpHillForest(x0,x1,n,seed,ymax,avoid){/* trees on the ridge slopes that spill into the neighboring parcels, thinning toward the hill's edge */
  const r=srng(seed),t=[];for(let k=0;k<n;k++){const x=x0+r()*(x1-x0),h=lpBase(x)-lpHz(x),q=r();if(h<3||q>Math.min(1,h/26))continue;const top=lpHz(x)+5,bot=Math.min(ymax,lpBase(x)+8+h*1.5);if(bot<=top)continue;const y=top+r()*(bot-top);if(avoid&&avoid(x,y))continue;t.push([x,y,k])}
- return t.sort((a,b)=>a[1]-b[1]).map(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);return (k%6===0)?lpTree(x,y,8*s+1.5,'#9DBE62'):lpPine(x,y,(20+((k*7)%10))*s,k)}).join('')}
+ const FR=lpFl().ridge;return t.sort((a,b)=>a[1]-b[1]).map(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);return lpFlora(FR[k%FR.length],x,y,s,k)}).join('')}
 /* ---- parcel scenes ---- */
 function lpMeadow(ok,lv,r){let g='';
  /* rolling swells */
  g+=`<path d="M-10 236 C40 218 110 214 170 226 C220 236 260 232 330 220 L330 330 L-10 330Z" fill="#B3C98A" opacity=".55"/><path d="M-10 276 C60 262 140 270 200 280 C250 288 290 282 330 272 L330 330 L-10 330Z" fill="#A2BC78" opacity=".5"/>`;
- g+=lpTree(150,184,6,'#86AB5A')+lpTree(196,188,5,'#7FA654')+lpTree(240,183,6.5,'#86AB5A')+lpTree(276,190,5,'#7FA654');
+ const LF=lpFl().leaf;g+=lpFlora(LF,150,186,.5,1)+lpFlora(LF,196,190,.42,2)+lpFlora(LF,240,185,.55,3)+lpFlora(LF,276,192,.42,4);
  g+=`<ellipse cx="44" cy="286" rx="30" ry="9" fill="#5B92B6"/><ellipse cx="44" cy="285" rx="27" ry="7" fill="#7DB2D2"/><path d="M28 284 q8 -2.4 14 0 M48 288 q6 -2 12 0" stroke="#D6ECF6" stroke-width="1" fill="none"/>`;
  for(const [x,y] of [[16,284],[72,282],[20,292]])for(let q=0;q<4;q++)g+=`<path d="M${x+q*2} ${y} q.6 -6 ${q-1.5} -10" stroke="#5E7E3E" stroke-width=".9" fill="none"/>${q%2?'':`<rect x="${x+q*2.6-.9}" y="${y-11.5}" width="1.8" height="3.8" rx=".9" fill="#6B4A30"/>`}`;
- g+=lpTree(70,214,20,'#7FA654')+lpTree(24,190,9,'#86AB5A')+`<ellipse cx="110" cy="236" rx="9" ry="5" fill="#6E9446"/><ellipse cx="104" cy="234" rx="6" ry="4.4" fill="#7FA654"/><ellipse cx="296" cy="262" rx="10" ry="5.6" fill="#6E9446"/><ellipse cx="290" cy="259" rx="6.4" ry="4.6" fill="#7FA654"/>`+lpRock(126,300,1.2)+lpRock(268,214,.7);
+ g+=lpFlora(LF,70,214,2.05,5)+lpFlora(LF,24,190,.85,6)+`<ellipse cx="110" cy="236" rx="9" ry="5" fill="#6E9446"/><ellipse cx="104" cy="234" rx="6" ry="4.4" fill="#7FA654"/><ellipse cx="296" cy="262" rx="10" ry="5.6" fill="#6E9446"/><ellipse cx="290" cy="259" rx="6.4" ry="4.6" fill="#7FA654"/>`+lpRock(126,300,1.2)+lpRock(268,214,.7);
  const fl=['#FFF6D6','#F2D04B','#B58AD8','#F0A0B8','#FFFFFF'];
  for(let k=0;k<(ok?120:34);k++){const x=r()*320,y=190+r()*120;if(y>LP.ROAD-2)continue;const s=lpDepth(y);g+=`<circle cx="${lpF(x)}" cy="${lpF(y)}" r="${lpF(1.1*s+.3)}" fill="${fl[k%5]}"/>`}
  for(let k=0;k<46;k++){const x=r()*325,y=182+r()*130;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#6E8E4A':'#9C9A62')}
@@ -7980,15 +8026,15 @@ function lpMeadow(ok,lv,r){let g='';
  if(lv<1){g+='<!--ns-->'+lpHorse(150,262,1.25,'#8A4520','#1C1714',{graze:1})+lpHorse(232,246,1.05,'#C99A55','#211B16',{flip:1})+lpHorse(110,292,1.45,'#25201E','#141110',{graze:1,flip:1})+'<!--/ns-->';
   g+=`<rect x="200" y="281" width="22" height="6" rx="1.5" fill="#8C969A"/><rect x="201.5" y="281.5" width="19" height="2.2" fill="#7DB2D2"/>`;return g}
  /* Broodmare Pasture: white board paddock, run-in shed, mares and foals */
- const Q=[[118,300],[300,300],[282,226],[140,226]];
+ const Q=[[118,300],[300,300],[282,226],[140,226]];const LDb=LOCS[locId()]||{},PC=LDb.rail?[LDb.rail,LDb.post||LDb.rail]:null;
  g+=`<path d="M${Q.map(p=>p.join(' ')).join(' L')}Z" fill="#A6C47A" opacity=".55"/>`;
- g+=lpFence(140,226,282,226,'white',8);
+ g+=lpFence(140,226,282,226,'white',8,PC);
  /* run-in shed at the back */
  g+=lpSh(178,229,30,3.5)+`<path d="M150 228 L150 206 L206 206 L206 228Z" fill="#9A3F2C"/><path d="M155 228 L155 211 L201 211 L201 228Z" fill="#3B2C26"/><path d="M144 207 L212 207 L206 197 L150 197Z" fill="#5B4B44"/><path d="M144 207 L212 207" stroke="#F4EFE4" stroke-width="1.4"/><rect x="158" y="220" width="40" height="8" fill="#D9BE6A"/>`;
  g+=`<rect x="226" y="219" width="20" height="9" fill="#7A5638"/><path d="M226 219 l3 -5 h14 l3 5" fill="#D9BE6A"/><path d="M228 221 v6 M232 221 v6 M236 221 v6 M240 221 v6 M244 221 v6" stroke="#5A4130" stroke-width=".8"/>`;
  g+=`<rect x="252" y="286" width="24" height="7" rx="1.5" fill="#8C969A"/><rect x="253.5" y="286.6" width="21" height="2.4" fill="#7DB2D2"/>`;
  g+='<!--ns-->'+lpHorse(176,262,1.25,'#8A4520','#1C1714',{graze:1})+lpHorse(196,268,.78,'#8A4520','#1C1714',{})+lpHorse(246,248,1.15,'#D9AE5E','#F2E8CC',{flip:1})+lpHorse(222,252,.72,'#D9AE5E','#F2E8CC',{flip:1,graze:1})+lpHorse(150,290,1.4,'#B9BAB5','#6E6E6A',{graze:1})+lpHorse(176,296,.82,'#CFCFC9','#8E8E88',{})+'<!--/ns-->';
- g+=lpFence(118,300,140,226,'white',6)+lpFence(300,300,282,226,'white',6)+lpFence(118,300,300,300,'white',9);
+ g+=lpFence(118,300,140,226,'white',6,PC)+lpFence(300,300,282,226,'white',6,PC)+lpFence(118,300,300,300,'white',9,PC);
  g+=`<g transform="translate(102 304)"><rect x="-1.4" y="-15" width="2.8" height="15" fill="#6B4A30"/><rect x="-20" y="-25" width="40" height="11" rx="2" fill="#F6F1E4" stroke="#7A5638" stroke-width="1"/><text x="0" y="-17" text-anchor="middle" font-size="6.6" font-weight="800" fill="#6B4A30" font-family="system-ui,sans-serif">BROODMARES</text></g>`;
  return g}
 function lpCreekBottom(ok,lv,r){let g='';
@@ -8008,8 +8054,8 @@ function lpCreekBottom(ok,lv,r){let g='';
  if(!ok){g+=`<path d="M352 300 L386 286" stroke="#7A6248" stroke-width="3.6" stroke-linecap="round"/><path d="M360 296 l-4 -5 M374 291 l3 -6" stroke="#7A6248" stroke-width="1.4"/>`;return g}
  /* second barn levels on the left bank */
  if(lv===1)g+=lpPoleBarn(348,226,74,30);
- else if(lv===2)g+=lpBarn(384,228,50,30,{side:34,cupola:1});
- else if(lv>=3)g+=lpBarn(426,224,40,25,{side:24,c:'#B24A32'})+lpBarn(368,232,46,29,{side:30,cupola:1});
+ else if(lv===2)g+=lpLocBarn(392,230,.5)||lpBarn(384,228,50,30,{side:34,cupola:1});
+ else if(lv>=3)g+=(lpLocBarn(446,222,.36)+lpLocBarn(384,234,.46))||(lpBarn(426,224,40,25,{side:24,c:'#B24A32'})+lpBarn(368,232,46,29,{side:30,cupola:1}));
  if(lv>=2)g+=`<path d="M410 230 C404 250 392 270 380 296 L392 296 C402 272 414 250 418 230Z" fill="#D1B486" opacity=".9"/>`;
  if(lv>=1)g+='<!--ns-->'+lpHorse(362,272,1.2,'#A8582A','#8A3F1A',{})+'<!--/ns-->';
  return g}
@@ -8021,7 +8067,7 @@ function lpRidge(ok,lv,r){let g='';
  if(ok&&lv>=1){g+=lpRibbon(trail,trail.map(p=>Math.max(1.6,7*lpDepth(p[1]))),'#D1B486')+lpRibbon(trail,trail.map(p=>Math.max(.7,3*lpDepth(p[1]))),'#D8C599')}
  /* forest: pines over the hill, aspens mixed in */
  const creek=lpSpline(LP_CREEK,6);const trees=[];for(let k=0;k<230;k++){const x=596+r()*310,top=lpHz(x)+5,bot=Math.min(ok&&lv>=2?236:262,lpBase(x)+70),y=top+r()*Math.max(0,bot-top);if(y>LP.ROAD-8||top>bot)continue;if(ok&&lv>=1&&trail.some(p=>Math.abs(p[0]-x)<10&&Math.abs(p[1]-y)<8))continue;if(creek.some(p=>Math.abs(p[0]-x)<10&&Math.abs(p[1]-y)<7))continue;trees.push([x,y,k])}
- trees.sort((a,b)=>a[1]-b[1]).forEach(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);g+=(k%6===0)?lpTree(x,y,8*s+1.5,'#9DBE62'):lpPine(x,y,(20+((k*7)%10))*s,k)});
+ const FR=lpFl().ridge;trees.sort((a,b)=>a[1]-b[1]).forEach(([x,y,k])=>{const s=Math.max(.42,lpDepth(y)*.55+.3);g+=lpFlora(FR[k%FR.length],x,y,s,k)});
  for(let k=0;k<30;k++){const x=600+r()*300,y=262+r()*48;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#6E8E4A':'#9C9A62')}
  if(ok)for(let k=0;k<40;k++){const x=600+r()*300,y=262+r()*48;if(y>LP.ROAD-2)continue;g+=`<circle cx="${lpF(x)}" cy="${lpF(y)}" r="${lpF(1.1*lpDepth(y)+.3)}" fill="${['#FFF6D6','#F2D04B','#B58AD8'][k%3]}"/>`}
  if(!ok){for(let k=0;k<6;k++){const x=640+r()*240,y=250+r()*50,s=lpDepth(y);g+=`<path d="M${lpF(x)} ${lpF(y)} l${lpF(22*s)} ${lpF(-4*s)}" stroke="#7A6248" stroke-width="${lpF(3.4*s)}" stroke-linecap="round"/><circle cx="${lpF(x+22*s)}" cy="${lpF(y-4*s)}" r="${lpF(1.7*s)}" fill="#C9A87A"/>`}
@@ -8040,11 +8086,11 @@ function lpRidge(ok,lv,r){let g='';
  return g}
 function lpRange(ok,lv,r){let g='';
  g+=`<path d="M880 200 C960 196 1080 192 1210 196 L1210 330 L880 330Z" fill="#B7CA92" opacity=".45"/><path d="M880 252 C980 246 1100 248 1210 244 L1210 330 L880 330Z" fill="#C3D29C" opacity=".4"/>`;
- for(let k=0;k<(ok?40:56);k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-2)continue;const s=lpDepth(y);g+=`<ellipse cx="${lpF(x)}" cy="${lpF(y)}" rx="${lpF(4.4*s)}" ry="${lpF(2.6*s)}" fill="${k%3?'#8FA07E':'#9DAE8E'}"/>`}
+ const SH=lpFl().shrub;for(let k=0;k<(ok?40:56);k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-2)continue;g+=lpShrub(SH,x,y,lpDepth(y),k)}
  for(let k=0;k<40;k++){const x=880+r()*325,y=180+r()*132;if(y>LP.ROAD-1)continue;g+=lpTuft(x,y,lpDepth(y)*1.1,ok?'#8A9A58':'#AFA46C')}
  g+=lpHillForest(846,968,110,733,240,(x,y)=>(lv>=1&&x>894&&y>236)||(Math.abs(x-946)<11&&y>166&&y<216));
  g+=lpFence(905,204,1205,200,ok?'rail':'old',16);
- g+=`<path d="M980 192 C1040 198 1090 190 1140 196 C1170 200 1190 198 1210 196" stroke="#C9B98A" stroke-width="5" fill="none" opacity=".6"/>`+lpTree(1150,196,7,'#9DBE62')+lpTree(1172,198,6,'#8DB45E')+lpTree(1124,195,5.5,'#9DBE62');
+ g+=`<path d="M980 192 C1040 198 1090 190 1140 196 C1170 200 1190 198 1210 196" stroke="#C9B98A" stroke-width="5" fill="none" opacity=".6"/>`+lpFlora(lpFl().leaf,1150,196,.6,1)+lpFlora(lpFl().leaf,1172,198,.5,2)+lpFlora(lpFl().leaf,1124,195,.45,3);
  if(ok){for(let k=0;k<7;k++){const x=1010+k*22+((k*7)%5),y=188+(k%3);g+=`<ellipse cx="${x}" cy="${y}" rx="2.4" ry="1.3" fill="${k%2?'#2B2522':'#8A4A2A'}"/>`}g+=`<rect x="990" y="266" width="6" height="5" fill="#E9E4D8"/><rect x="990" y="266" width="6" height="1.4" fill="#F7F3EA"/>`}
  /* windmill and stock tank */
  const wm=(x,y,broken)=>{let w=`<path d="M${x-7} ${y} L${x-1.4} ${y-42} L${x+1.4} ${y-42} L${x+7} ${y}" stroke="#6E6A66" stroke-width="1.2" fill="none"/><path d="M${x-5.4} ${y-10} L${x+5.4} ${y-10} M${x-3.6} ${y-22} L${x+3.6} ${y-22} M${x-2} ${y-33} L${x+2} ${y-33} M${x-5.4} ${y-10} L${x+3.6} ${y-22} M${x+5.4} ${y-10} L${x-3.6} ${y-22}" stroke="#6E6A66" stroke-width=".7"/>`;
@@ -8073,35 +8119,44 @@ function lpRange(ok,lv,r){let g='';
  return g}
 function landPano(){const W=LP.W,H=LP.H,R=LP.ROAD,own=id=>landOwned(id);
  let o=`<svg class="landstrip" viewBox="0 0 ${W} ${H}" role="img" aria-label="Neighboring land: North Meadow, Creek Bottom, Timber Ridge and Big Sky Range"><defs>
-  <linearGradient id="lpSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FCBEA"/><stop offset=".55" stop-color="#CFE5F2"/><stop offset="1" stop-color="#EEF5F2"/></linearGradient>
-  <linearGradient id="lpGround" x1="0" y1="150" x2="0" y2="330" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9DB57C"/><stop offset=".25" stop-color="#94B06C"/><stop offset="1" stop-color="#A3C072"/></linearGradient>
-  <linearGradient id="lpMtn" x1="0" y1="40" x2="0" y2="170" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8EA3BC"/><stop offset="1" stop-color="#B6C5D3"/></linearGradient>
-  <linearGradient id="lpHillV" x1="0" y1="60" x2="0" y2="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6F9A4E"/><stop offset=".75" stop-color="#7FA458"/><stop offset="1" stop-color="#94B06C" stop-opacity="0"/></linearGradient>
-  <linearGradient id="lpHillH" x1="560" y1="0" x2="940" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#C9DD9A" stop-opacity="0"/><stop offset=".3" stop-color="#C9DD9A" stop-opacity=".28"/><stop offset=".55" stop-color="#4E6E36" stop-opacity="0"/><stop offset=".8" stop-color="#3E5E2C" stop-opacity=".3"/><stop offset="1" stop-color="#3E5E2C" stop-opacity="0"/></linearGradient>
-  <filter id="lpFade"><feColorMatrix type="saturate" values=".38"/></filter>`;
- const clip=i=>{const L=y=>i===0?-20:lpBx(i,y),Rr=y=>i===3?W+20:lpBx(i+1,y);return `<clipPath id="lpc${i}"><path d="M${lpF(L(-60))} -60 L${lpF(Rr(-60))} -60 L${lpF(Rr(H+10))} ${H+10} L${lpF(L(H+10))} ${H+10}Z"/></clipPath>`};
- for(let i=0;i<4;i++)o+=clip(i);o+='</defs>';
+  <linearGradient id="nlSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FCBEA"/><stop offset=".55" stop-color="#CFE5F2"/><stop offset="1" stop-color="#EEF5F2"/></linearGradient>
+  <linearGradient id="nlGround" x1="0" y1="150" x2="0" y2="330" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9DB57C"/><stop offset=".25" stop-color="#94B06C"/><stop offset="1" stop-color="#A3C072"/></linearGradient>
+  <linearGradient id="nlMtn" x1="0" y1="40" x2="0" y2="170" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#8EA3BC"/><stop offset="1" stop-color="#B6C5D3"/></linearGradient>
+  <linearGradient id="nlHillV" x1="0" y1="60" x2="0" y2="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6F9A4E"/><stop offset=".75" stop-color="#7FA458"/><stop offset="1" stop-color="#94B06C" stop-opacity="0"/></linearGradient>
+  <linearGradient id="nlHillH" x1="560" y1="0" x2="940" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#C9DD9A" stop-opacity="0"/><stop offset=".3" stop-color="#C9DD9A" stop-opacity=".28"/><stop offset=".55" stop-color="#4E6E36" stop-opacity="0"/><stop offset=".8" stop-color="#3E5E2C" stop-opacity=".3"/><stop offset="1" stop-color="#3E5E2C" stop-opacity="0"/></linearGradient>
+  <radialGradient id="mTree" cx=".35" cy=".3" r=".75"><stop offset="0" stop-color="#8DB866"/><stop offset=".6" stop-color="#5E8C44"/><stop offset="1" stop-color="#3F6A32"/></radialGradient><linearGradient id="mGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4C8"/><stop offset=".6" stop-color="#E9C978"/><stop offset="1" stop-color="#B98F3E"/></linearGradient><linearGradient id="mWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".16"/></linearGradient><pattern id="mSiding" width="6" height="4" patternUnits="userSpaceOnUse"><path d="M0 3.6 H6" stroke="#000" stroke-opacity=".1" stroke-width=".7"/></pattern><pattern id="mBoards" width="5" height="6" patternUnits="userSpaceOnUse"><path d="M4.6 0 V6" stroke="#000" stroke-opacity=".16" stroke-width=".8"/></pattern><pattern id="mShingle" width="8" height="5" patternUnits="userSpaceOnUse"><path d="M0 4.5 H8 M4 0 V4.5" stroke="#000" stroke-opacity=".35" stroke-width=".7"/></pattern><pattern id="mStone" width="6" height="5" patternUnits="userSpaceOnUse"><path d="M0 2.5 H6 M3 0 V2.5 M1 2.5 V5" stroke="#000" stroke-opacity=".2" stroke-width=".6"/></pattern>
+  <filter id="nlFade"><feColorMatrix type="saturate" values=".38"/></filter>`;
+ const clip=i=>{const L=y=>i===0?-20:lpBx(i,y),Rr=y=>i===3?W+20:lpBx(i+1,y);return `<clipPath id="nlc${i}"><path d="M${lpF(L(-60))} -60 L${lpF(Rr(-60))} -60 L${lpF(Rr(H+10))} ${H+10} L${lpF(L(H+10))} ${H+10}Z"/></clipPath>`};
+ for(let i=0;i<4;i++)o+=clip(i);o+='</defs>'+(typeof locDefs==='function'?locDefs():'');
+ const LDp=LOCS[locId()]||{};
+ if(locId()!=='classic'&&LDp.pano&&typeof locPano==='function'){/* the same skyline as behind your ranch map */
+  o+=`<linearGradient id="nlPMg" x1="0" y1="0" x2="0" y2="1" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="nlPM" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#fff"/><rect width="${W}" height="24" fill="#000"/><rect y="12" width="${W}" height="12" fill="url(#nlPMf)"/></mask><linearGradient id="nlPMf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>`;
+  o+=`<rect width="${W}" height="${H}" fill="url(#nlSky)"/><g mask="url(#nlPM)"><g transform="translate(-120 112) scale(1.2)"><!--lt-->${locPano(LDp.pano)}<!--/lt--></g></g>`;
+  o+=`<linearGradient id="nlHaze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9EFF2" stop-opacity="0"/><stop offset="1" stop-color="#E9EFF2" stop-opacity=".42"/></linearGradient><rect x="0" y="60" width="${W}" height="100" fill="url(#nlHaze)"/>`;
+  o+=`<linearGradient id="nlBlend" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9DB57C" stop-opacity="0"/><stop offset="1" stop-color="#9DB57C"/></linearGradient><rect x="0" y="142" width="${W}" height="32" fill="url(#nlBlend)"/>`}
+ else{
  /* sky, sun, clouds, birds */
- o+=`<rect width="${W}" height="${H}" fill="url(#lpSky)"/><circle cx="1040" cy="40" r="22" fill="#FFF7DA" opacity=".85"/><circle cx="1040" cy="40" r="34" fill="#FFF7DA" opacity=".25"/>`;
+ o+=`<rect width="${W}" height="${H}" fill="url(#nlSky)"/><circle cx="1040" cy="40" r="22" fill="#FFF7DA" opacity=".85"/><circle cx="1040" cy="40" r="34" fill="#FFF7DA" opacity=".25"/>`;
  const cloud=(x,y,s)=>`<g opacity=".92"><ellipse cx="${x}" cy="${y}" rx="${26*s}" ry="${8*s}" fill="#FFFFFF"/><ellipse cx="${x-12*s}" cy="${y-5*s}" rx="${12*s}" ry="${8*s}" fill="#FFFFFF"/><ellipse cx="${x+8*s}" cy="${y-8*s}" rx="${14*s}" ry="${10*s}" fill="#FFFFFF"/><ellipse cx="${x}" cy="${y+3*s}" rx="${24*s}" ry="${4*s}" fill="#DCE9F2"/></g>`;
  o+=cloud(250,46,1.1)+cloud(560,30,.8)+cloud(860,58,.9)+cloud(1160,92,.7);
  o+=`<path d="M420 70 q4 -3 8 0 q4 -3 8 0 M444 62 q3 -2.4 6 0 q3 -2.4 6 0" stroke="#4A5560" stroke-width="1" fill="none"/>`;
  /* one mountain range behind all parcels, tallest over Big Sky */
  const mtn=[[-10,150],[60,124],[120,136],[200,104],[270,128],[340,112],[420,134],[500,100],[560,120],[640,84],[700,108],[770,92],[850,70],[930,98],[990,40],[1050,82],[1110,54],[1170,90],[1210,74],[1210,175],[-10,175]];
- o+=`<path d="M${mtn.map(p=>p.join(' ')).join(' L')}Z" fill="url(#lpMtn)"/>`;
+ o+=`<path d="M${mtn.map(p=>p.join(' ')).join(' L')}Z" fill="url(#nlMtn)"/>`;
  [[990,40,22],[1110,54,18],[850,70,14],[640,84,10]].forEach(([x,y,s])=>{o+=`<path d="M${x} ${y} L${x-s*.9} ${y+s*.8} L${x-s*.45} ${y+s*.62} L${x-s*.1} ${y+s*.9} L${x+s*.3} ${y+s*.6} L${x+s*.75} ${y+s*.85}Z" fill="#F4F7FA"/>`});
  o+=`<path d="M990 40 L1004 74 L1020 96 L1000 98Z M1110 54 L1124 82 L1136 96 L1118 96Z" fill="#7C91AA" opacity=".35"/>`;
  let hills='M-10 175';for(let x=-10;x<=W+10;x+=20)hills+=` L${x} ${lpF(152+8*Math.sin(x/70)+5*Math.sin(x/23+2))}`;hills+=` L${W+10} 190 L-10 190Z`;o+=`<path d="${hills}" fill="#8EAA88" opacity=".85"/>`;
  for(let x=0;x<W;x+=9){const y=156+8*Math.sin(x/70)+5*Math.sin(x/23+2);o+=`<path d="M${x} ${lpF(y+6)} L${x+3.5} ${lpF(y-4)} L${x+7} ${lpF(y+6)}Z" fill="#6E9076" opacity=".7"/>`}
+ }
  /* ground skyline shared by all parcels */
  let gd=`M-10 ${H}`;for(let x=-10;x<=W+10;x+=5)gd+=` L${x} ${lpF(lpHz(x))}`;gd+=` L${W+10} ${H}Z`;
  /* each parcel: same ground, its own scene, faded when it is still for sale */
  const scenes=[lpMeadow,lpCreekBottom,lpRidge,lpRange];
  LAND.forEach((x,i)=>{const ok=own(x.id),lv=ok?L(x.unl):0,r=srng(500+i*37);
-  o+=`<g clip-path="url(#lpc${i})"><g${ok?'':' filter="url(#lpFade)"'}>${lpShared(gd)}${scenes[i](ok,lv,r)}</g>${ok?'':`<path d="${gd}" fill="#F3EEE0" opacity=".3"/>`}</g>`});
+  o+=`<g clip-path="url(#nlc${i})"><g${ok?'':' filter="url(#nlFade)"'}>${lpShared(gd)}${scenes[i](ok,lv,r)}</g>${ok?'':`<path d="${gd}" fill="#F3EEE0" opacity=".3"/>`}</g>`});
  /* property lines: rail fence where both sides are yours, old wire otherwise */
  for(let i=1;i<4;i++){const a=own(LAND[i-1].id),b=own(LAND[i].id);let yTop=lpHz(lpBx(i,170))+3;if(i===2)yTop=lpHz(600)+6;if(i===3)yTop=Math.max(lpHz(lpBx(3,190))+4,190);
-  o+=lpFence(lpBx(i,R),R,lpBx(i,yTop),yTop,a&&b?'white':(a||b)?'rail':'old',14)}
+  const LD=LOCS[locId()]||{};o+=lpFence(lpBx(i,R),R,lpBx(i,yTop),yTop,a&&b?'white':(a||b)?'rail':'old',14,a&&b&&LD.rail?[LD.rail,LD.post||LD.rail]:null)}
  /* ranch road along the front, with a bridge over the creek */
  o+=`<path d="M-10 ${R} C300 ${R-3} 900 ${R-3} ${W+10} ${R} L${W+10} ${H} L-10 ${H}Z" fill="#D1B486"/><path d="M-10 ${R} C300 ${R-3} 900 ${R-3} ${W+10} ${R}" stroke="#B9996A" stroke-width="1.6" fill="none"/><path d="M-10 ${R+8} C300 ${R+5} 900 ${R+5} ${W+10} ${R+8} M-10 ${R+12} C300 ${R+10} 900 ${R+10} ${W+10} ${R+12}" stroke="#B9996A" stroke-width="1.2" fill="none" opacity=".6"/>`;
  o+=`<path d="M396 ${R-2} L438 ${R-2} L440 ${H} L394 ${H}Z" fill="#9C7550"/>`;for(let k=0;k<7;k++)o+=`<path d="M${396+k*6.6} ${R-2} L${394+k*7.4} ${H}" stroke="#7A5638" stroke-width=".8"/>`;
