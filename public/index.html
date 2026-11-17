@@ -1582,8 +1582,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='103';
+const BUILD='104';
 const CHANGELOG=[
+ {b:'104',d:'Nov 16, 2026',t:'Ears and forelock redrawn from photos',c:[
+  'Redrawn from real side-on horse photos: the forelock grows from between the ears and its hair now lies in front of the base of the near ear, so the ear rises out of the hair.',
+  'The mane runs right up to the ears and sits behind the near ear.',
+  'The far ear peeks out just behind the near ear instead of in front of it.']},
  {b:'103',d:'Nov 16, 2026',t:'Manes, forelocks and ears sit right',c:[
   'The ears now sit on top of the head instead of poking through the mane.',
   'The mane is short just behind the ears and tapers smoothly into the withers instead of ending in a blunt chunk.',
@@ -3666,7 +3670,7 @@ function horseSVG(h){
   const cp=t=>{const s=t*(crest.length-1),i=Math.min(crest.length-2,Math.floor(s)),u=s-i;return [crest[i][0]+(crest[i+1][0]-crest[i][0])*u,crest[i][1]+(crest[i+1][1]-crest[i][1])*u]};
   const hl=c.grey||mane==='#EFE2BD'||body===WH?'rgba(0,0,0,.18)':'rgba(255,255,255,.2)';
   // mane
-  const mLen=(longMane?40:featherS>=.5?32:wildFull?14:23)*(foal?.75:1);const mlen=(t,i)=>mLen*(.6+.4*Math.sin(Math.PI*Math.min(1,t*1.15)))*(t<.14?.28+.72*Math.pow(t/.14,.8):1)*(t>.8?Math.pow(Math.max(0,1-t)/.2,.85):1)*(i==null?1:.85+((i*37)%10)/40);
+  const mLen=(longMane?40:featherS>=.5?32:wildFull?14:23)*(foal?.75:1);const mlen=(t,i)=>mLen*(.6+.4*Math.sin(Math.PI*Math.min(1,t*1.15)))*(t<.1?.72+.28*(t/.1):1)*(t>.8?Math.pow(Math.max(0,1-t)/.2,.85):1)*(i==null?1:.85+((i*37)%10)/40);
   let maneSVG;
   if(wildFull){maneSVG=S(36,(t,i)=>{const q=cp(t);const l=mLen*(t>.9?(1-t)*8:1);return `<path d="M${q[0].toFixed(1)} ${(q[1]+3).toFixed(1)} L${(q[0]+l*.25).toFixed(1)} ${(q[1]-l).toFixed(1)}" stroke="${i%3?mane:hl}" stroke-width="${i%3?2.2:1}" stroke-linecap="round"/>`});if(fjordS>=.5)maneSVG+=S(30,(t,i)=>{const q=cp(t);const l=mLen*(t>.9?(1-t)*8:1);return `<path d="M${(q[0]+l*.06).toFixed(1)} ${(q[1]-l*.25).toFixed(1)} L${(q[0]+l*.19).toFixed(1)} ${(q[1]-l*.78).toFixed(1)}" stroke="#3A2A1C" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>`})}
   else{const mp=[];for(let i=0;i<=16;i++){const t=i/16;mp.push([cp(t),mlen(t)])}
@@ -3677,7 +3681,7 @@ function horseSVG(h){
   const forelock=wildFull?'':(()=>{const r=srng(h.id*5+11),C=hdHairCols(mane),E0=A.ear,Bw=A.brow,Fc=A.face;
     const pdx=Fc[0]-Bw[0],pdy=Fc[1]-Bw[1],pl=Math.hypot(pdx,pdy)||1,nx=pdy/pl,ny=-pdx/pl,prof=t=>[Bw[0]+pdx*t,Bw[1]+pdy*t];
     const reach=Math.max(.22,(longMane?1:.74)+(shaggyS>=.5?.3:0)-(foal?.3:0));let g='';
-    const one=(w,col,op,lenK,taper)=>{const rt=[E0[0]-1.5+r()*5.5,E0[1]+3+r()*1.6],tt=reach*lenK*(.55+.45*r()),tp=prof(tt),off=(r()-.15)*3.2,tip=[tp[0]+nx*off,tp[1]+ny*off];
+    const one=(w,col,op,lenK,taper)=>{const rt=[E0[0]-4+r()*8,E0[1]+1.5+r()*3],tt=reach*lenK*(.55+.45*r()),tp=prof(tt),off=(r()-.15)*3.2,tip=[tp[0]+nx*off,tp[1]+ny*off];
       const c1=[rt[0]+5+r()*3,rt[1]-3-r()*1.6],c2=[tip[0]+nx*3.2-pdx*.18,tip[1]+ny*3.2-pdy*.42];
       return hdStrand(hdCubic(rt,c1,c2,tip,8),w,u=>u<.15?.75+u*1.7:Math.pow(1-u,taper),col,op)};
     for(let i=0;i<6;i++)g+=one(3.4,C.dk,1,.8,.9);
@@ -3759,7 +3763,7 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   ${boo?`<g clip-path="url(#${id}fh)">${boots}</g><g clip-path="url(#${id}ff)">${boots}</g>`:''}
   <path d="${farH}" fill="#000" opacity=".12"/><path d="${farF}" fill="#000" opacity=".12"/>${HDX.on?hdFarLegs(A,id):''}
   ${hoof('h',16,1)}${hoof('f',-17,1)}${feath('h',16,1)}${feath('f',-17,1)}</g>
- <g class="an-ear2" style="transform-box:view-box;transform-origin:${A.ear[0]+9}px ${A.ear[1]+2}px">${ear(9,-2,1)}</g>
+ <g class="an-ear2" style="transform-box:view-box;transform-origin:${A.ear[0]-6}px ${A.ear[1]+1}px">${ear(-6,-1.5,1)}</g>
  <g class="an-tail" style="transform-box:view-box;transform-origin:${tb[0]}px ${tb[1]}px">${tailSVG}</g>
  <path d="${O}" fill="${body}"/>
  <g clip-path="url(#${id}c)">
@@ -3801,8 +3805,8 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
  <path d="M${N[0]-1.5} ${N[1]-5} C${N[0]-7.5} ${N[1]-5} ${N[0]-9.5} ${N[1]+1} ${N[0]-6.5} ${N[1]+6}" stroke="#fff" stroke-opacity=".18" stroke-width="1.1" fill="none"/>
  ${A.hf?(()=>{const q=(a,b)=>A.hf.L(a,b).slice(0,2).map(v=>v.toFixed(1)).join(' ');return `<path d="M${q(.9,.12)} C${q(.93,.115)} ${q(.955,.11)} ${q(.975,.105)}" stroke="#1a0f0a" stroke-width="1.1" fill="none" opacity=".55" stroke-linecap="round"/>`})():`<path d="M${A.mzB[0]-8} ${A.mzB[1]-4} C${A.mzB[0]-3} ${A.mzB[1]-3} ${A.mzB[0]+2} ${A.mzB[1]-4} ${A.mzF[0]-1} ${A.mzF[1]+4}" stroke="#1a0f0a" stroke-width="1.2" fill="none" opacity=".55"/>`}
  ${blanket}${saddle}
- <g class="an-mane" style="transform-box:view-box;transform-origin:${A.withers[0]}px ${A.withers[1]}px">${maneSVG}</g>${forelock}
- <g class="an-ear" style="transform-box:view-box;transform-origin:${A.ear[0]}px ${A.ear[1]+4}px">${ear(0,0,0)}</g>${bridle}
+ <g class="an-mane" style="transform-box:view-box;transform-origin:${A.withers[0]}px ${A.withers[1]}px">${maneSVG}</g>
+ <g class="an-ear" style="transform-box:view-box;transform-origin:${A.ear[0]}px ${A.ear[1]+4}px">${ear(0,0,0)}</g>${forelock}${bridle}
  ${hoof('h',0,0)}${hoof('f',0,0)}${HDX.on&&featherS<.5?hdHoof(A,'h',0,(mkk.socks[2]||c.tob)?WH:(points||body),!!(mkk.socks[2]||c.tob))+hdHoof(A,'f',0,(mkk.socks[3]||c.tob)?WH:(points||body),!!(mkk.socks[3]||c.tob)):''}${feath('h',0,0)}${feath('f',0,0)}
 </g></g></g></svg>`;
 }
