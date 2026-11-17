@@ -1582,8 +1582,12 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='105';
+const BUILD='106';
 const CHANGELOG=[
+ {b:'106',d:'Nov 17, 2026',t:'Manes line up with the neck',c:[
+  'The mane now follows the exact top line of the neck on every horse, so no strip of coat shows above the mane.',
+  'The top of the neck is one smooth arch from the ears to the withers, without bumps.',
+  'Works in both Detailed and Simple drawings, for every breed, age and body shape.']},
  {b:'105',d:'Nov 16, 2026',t:'Detailed horse drawings everywhere',c:[
   'Every horse now uses the detailed drawing: muscles, coat texture, fuller manes and feathered tails.',
   'You can see how each horse is doing: thin horses show ribs, overweight horses look rounder, and trained horses look more muscled.',
@@ -3413,7 +3417,8 @@ const BODYX={withers:[['back',.5,-.8]],back:[['loin',.5,.8]],loin:[['hip',.55,1.
   thigh:[['gaskB',.32,2.3],['gaskB',.72,-.8]],hock:[['canHB',.45,-.9]],canHB:[['fetHB',.5,.3]],pasHF:[['fetHF',.5,.7]],fetHF:[['canHF',.5,-.35]],canHF:[['hockF',.6,.4]],hockF:[['gaskF',.5,1.2]],
   gaskF:[['stifle',.45,3]],stifle:[['flank',.5,-1.6]],flank:[['belly1',.5,1.5]],belly1:[['belly2',.5,2]],belly2:[['girth',.5,1.4]],girth:[['elbow',.5,-1.4]],
   elbow:[['forB',.22,2.2],['forB',.68,-.9]],forB:[['kneeB',.55,-.5]],kneeB:[['canFB',.35,-.45]],canFB:[['fetFB',.5,.25]],pasFF:[['fetFF',.5,.7]],fetFF:[['canFF',.5,-.3]],
-  canFF:[['kneeF',.55,.45]],kneeF:[['forF',.5,1.5]],forF:[['chest',.5,3.4]],chest:[['neckB',.32,2.2]],crest1:[['crest2',.5,1.8]],crest2:[['crest3',.5,2.2]],crest3:[['withers',.5,1]]};
+  canFF:[['kneeF',.55,.45]],kneeF:[['forF',.5,1.5]],forF:[['chest',.5,3.4]],chest:[['neckB',.32,2.2]]};
+// build 106: no extra bulges between the crest points, so the top of the neck is one smooth arch and the mane can lie along it
 function bodyX(A,k){const L=BODYX[k];if(!L)return [];const a=A[k];return L.map(([to,t,off])=>{const b=A[to];const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1;return [a[0]+dx*t+(-dy/l)*off,a[1]+dy*t+(dx/l)*off,0]})}
 
 /* v73 shading: soft muscle masses and creases, lit from the upper left. Everything is drawn inside the body clip. */
@@ -3676,7 +3681,16 @@ function horseSVG(h){
   const farH=legPath('h',16),farF=legPath('f',-17);
   const S=(n,fn)=>{let o='';for(let i=0;i<n;i++)o+=fn(n>1?i/(n-1):0,i);return o};
   const crest=[A.poll,A.crest1,A.crest2,A.crest3,A.withers];
-  const cp=t=>{const s=t*(crest.length-1),i=Math.min(crest.length-2,Math.floor(s)),u=s-i;return [crest[i][0]+(crest[i+1][0]-crest[i][0])*u,crest[i][1]+(crest[i+1][1]-crest[i][1])*u]};
+  // build 106: the mane follows the real neck outline (the same smooth curve the body is drawn with), not straight lines between crest points
+  const cpSeg=(()=>{const n=pts.length,P=i=>pts[((i%n)+n)%n],ix=crest.map(q=>pts.indexOf(q));if(ix.some(v=>v<0)||ix[4]!==0)return null;ix[4]=n;for(let s=0;s<4;s++)if(!(ix[s+1]>ix[s]))return null;
+    const bz=(i,u)=>{const p0=P(i-1),p1=P(i),p2=P(i+1),p3=P(i+2),k1=p1[2]?0:1/6,k2=p2[2]?0:1/6,c1=[p1[0]+(p2[0]-p0[0])*k1,p1[1]+(p2[1]-p0[1])*k1],c2=[p2[0]-(p3[0]-p1[0])*k2,p2[1]-(p3[1]-p1[1])*k2],v=1-u;
+      return [v*v*v*p1[0]+3*v*v*u*c1[0]+3*v*u*u*c2[0]+u*u*u*p2[0],v*v*v*p1[1]+3*v*v*u*c1[1]+3*v*u*u*c2[1]+u*u*u*p2[1]]};
+    const out=[];for(let s=0;s<4;s++){const L=[[P(ix[s])[0],P(ix[s])[1]]];for(let i=ix[s];i<ix[s+1];i++)for(let k=1;k<=8;k++)L.push(bz(i,k/8));const acc=[0];for(let j=1;j<L.length;j++)acc.push(acc[j-1]+Math.hypot(L[j][0]-L[j-1][0],L[j][1]-L[j-1][1]));out.push([L,acc])}return out})();
+  const cp=t=>{if(!cpSeg){const s=t*(crest.length-1),i=Math.min(crest.length-2,Math.floor(s)),u=s-i;return [crest[i][0]+(crest[i+1][0]-crest[i][0])*u,crest[i][1]+(crest[i+1][1]-crest[i][1])*u]}
+    const sg=Math.min(3,Math.max(0,Math.floor(t*4))),[L,acc]=cpSeg[sg],tot=acc[acc.length-1]||1,d=(t*4-sg)*tot;
+    if(d<=0){const q=L[0],r2=L[1],l=acc[1]||1;return [q[0]+(r2[0]-q[0])*d/l,q[1]+(r2[1]-q[1])*d/l]}
+    if(d>=tot){const m=L.length-1,q=L[m],r2=L[m-1],l=(acc[m]-acc[m-1])||1;return [q[0]+(q[0]-r2[0])*(d-tot)/l,q[1]+(q[1]-r2[1])*(d-tot)/l]}
+    let j=1;while(j<acc.length-1&&acc[j]<d)j++;const w=(d-acc[j-1])/((acc[j]-acc[j-1])||1);return [L[j-1][0]+(L[j][0]-L[j-1][0])*w,L[j-1][1]+(L[j][1]-L[j-1][1])*w]};
   const hl=c.grey||mane==='#EFE2BD'||body===WH?'rgba(0,0,0,.18)':'rgba(255,255,255,.2)';
   // mane
   const mLen=(longMane?40:featherS>=.5?32:wildFull?14:23)*(foal?.75:1);const mlen=(t,i)=>mLen*(.6+.4*Math.sin(Math.PI*Math.min(1,t*1.15)))*(t<.1?.72+.28*(t/.1):1)*(t>.8?Math.pow(Math.max(0,1-t)/.2,.85):1)*(i==null?1:.85+((i*37)%10)/40);
