@@ -1582,8 +1582,16 @@ function wages(){return Math.round(STAFF.reduce((a,x)=>a+(S.staff[x.id]?wageOf(S
 /* ---------- state ---------- */
 const KEY='bloodline-ranch-v1';
 /* ---------- saving, transfer codes, settings ---------- */
-const BUILD='104';
+const BUILD='105';
 const CHANGELOG=[
+ {b:'105',d:'Nov 16, 2026',t:'Detailed horse drawings everywhere',c:[
+  'Every horse now uses the detailed drawing: muscles, coat texture, fuller manes and feathered tails.',
+  'You can see how each horse is doing: thin horses show ribs, overweight horses look rounder, and trained horses look more muscled.',
+  'Hooves that need a trim grow a long, cracked toe.',
+  'Ears show mood: forward when happy, pinned back when grumpy, and droopy with sleepy eyes when tired.',
+  'Older horses get a dipped back and a grey muzzle. Foals have short, fuzzy brush manes.',
+  'Mud on the legs and belly after rain, and damp coats with white lather after a hard day of work.',
+  'New setting: Settings > Horse drawings. Pick Simple if the game feels slow on an older tablet.']},
  {b:'104',d:'Nov 16, 2026',t:'Ears and forelock redrawn from photos',c:[
   'Redrawn from real side-on horse photos: the forelock grows from between the ears and its hair now lies in front of the base of the near ear, so the ear rises out of the hair.',
   'The mane runs right up to the ears and sits behind the near ear.',
@@ -1898,7 +1906,7 @@ const CHANGELOG=[
  {b:'63',d:'Before Oct 27, 2026',t:'The beta build',c:['The version the first beta testers started with.']}];
 function changelogBody(){return CHANGELOG.map((x,i)=>`<details class="clog" ${i===0?'open':''}><summary><b>Build ${x.b}</b> · ${esc(x.t)} <span class="note">${x.d}${x.b===BUILD?' · you are here':''}</span></summary><ul>${x.c.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></details>`).join('')}
 const PKEY=KEY+'-prefs';
-let PREF=(()=>{const d={theme:'auto',watch:1,speed:1};try{return Object.assign(d,JSON.parse(localStorage.getItem(PKEY)||'{}'))}catch(e){return d}})();
+let PREF=(()=>{const d={theme:'auto',watch:1,speed:1,hd:(navigator.deviceMemory&&navigator.deviceMemory<=2)?0:1};try{return Object.assign(d,JSON.parse(localStorage.getItem(PKEY)||'{}'))}catch(e){return d}})();
 function applyTheme(){const r=document.documentElement;if(PREF.theme==='light'||PREF.theme==='dark')r.dataset.theme=PREF.theme;else delete r.dataset.theme}
 function savePref(){try{localStorage.setItem(PKEY,JSON.stringify(PREF))}catch(e){}applyTheme();if(typeof auVolumes==='function')auVolumes()}
 applyTheme();
@@ -2101,6 +2109,7 @@ function settingsPanel(){const seg=(k,opts)=>`<div class="seg">${opts.map(([v,l]
   <div class="setrow"><div><b>Version</b><div class="note">Build ${BUILD}</div></div><button class="btn small" data-a="changelog">What’s new</button></div>
   <div class="setrow"><div><b>Music</b><div class="note">Six tunes take turns: Easy Country Guitar, Prairie Waltz, Campfire Shuffle, Sunset Ballad, Cattle Drive and Lonesome Trail.</div></div>${seg('music',[[0,'Off'],[.2,'Low'],[.35,'Medium'],[.6,'High']])}</div>
   <div class="setrow"><div><b>Song</b><div class="note">Let them rotate, or stick with one favorite.</div></div>${seg('song',[[-1,'Rotate all'],[0,'Country Guitar'],[1,'Prairie Waltz'],[2,'Campfire Shuffle'],[3,'Sunset Ballad (new)'],[4,'Cattle Drive (new)'],[5,'Lonesome Trail (new)']])}</div>
+  <div class="setrow"><div><b>Horse drawings</b><div class="note">Detailed shows muscles, coat texture, fuller manes and tails, and how each horse is doing (weight, hooves, mood, mud and sweat). Simple draws faster on older tablets.</div></div>${seg('hd',[[1,'Detailed'],[0,'Simple']])}</div>
   <div class="setrow"><div><b>Watch events</b><div class="note">Play the race or show before the results.</div></div>${seg('watch',[[1,'Watch'],[0,'Skip']])}</div>
   <div class="setrow"><div><b>Event speed</b><div class="note">How fast events play when you watch.</div></div>${seg('speed',[[1,'1×'],[2,'2×'],[4,'4×']])}</div>
   <div class="setrow"><div><b>Saving</b><div class="note">${S?saveStatus():(()=>{try{localStorage.setItem(KEY+'-t','1');localStorage.removeItem(KEY+'-t');return '<span class="good">✓ This browser can save games.</span>'}catch(e){return '<span class="bad">⚠ This browser is blocking saves.</span> Use save files instead.'}})()}</div></div></div>
@@ -3652,7 +3661,7 @@ function horseSVG(h){
   if(lf('flaxen')>=.5&&c.base==='chestnut')mane='#EFE2BD';if(wildFull&&!c.grey){body='#C89D63';mane='#2A2018';points='#3A2C20'}if(wildFull&&!c.grey&&(bloodOf(h).fjord||0)>=.5){body='#D6B886';mane='#EFE4CB';points='#8C6D49'}
   let spotC=null;if(leoFull){spotC=c.grey?'#7A7A74':(points||body);body=WH;points=null}
   const mkk=lf('clyde')>=.5?{face:'blaze',socks:[1,1,1,1]}:wildFull?{face:'none',socks:[0,0,0,0]}:mk;
-  const {A,bt,sh}=horseAnchors(h,foal,st);
+  let {A,bt,sh}=horseAnchors(h,foal,st);const G=HDX.on?hdState(h,st):null;if(G&&!foal)A=hdAdjust(A,G);
   const dark=hexMix(body,'#000000',body==='#211D1B'?.3:.42),light=hexMix(body,'#ffffff',body==='#211D1B'||body==='#3C322B'?.18:.3);
   const pts0=HORDER.map(k=>A[k]);const fi=HORDER.indexOf('face');
   if(bt.hot>.6)pts0[fi]=[A.face[0]-1.5*bt.hot,A.face[1],0];if(bt.draft>.6)pts0[fi]=[A.face[0]+3*bt.draft,A.face[1]-2,0];
@@ -3676,7 +3685,7 @@ function horseSVG(h){
   else{const mp=[];for(let i=0;i<=16;i++){const t=i/16;mp.push([cp(t),mlen(t)])}
     const base='M'+mp.map(([q])=>`${(q[0]+2).toFixed(1)} ${(q[1]-2.5).toFixed(1)}`).join(' L')+' L'+[...mp].reverse().map(([q,l])=>`${(q[0]-l*.22).toFixed(1)} ${(q[1]+l).toFixed(1)}`).join(' L')+'Z';
     maneSVG=`<path d="${base}" fill="${mane}" filter="url(#${id}b3)"/>`+S(46,(t,i)=>{const q=cp(t);const l=mlen(t,i);const sw=-l*.22-((i*13)%5);const col=i%6===0?hl:i%3===0?'rgba(0,0,0,.3)':mane;
-      return `<path d="M${(q[0]+2).toFixed(1)} ${(q[1]-2).toFixed(1)} C${(q[0]+1).toFixed(1)} ${(q[1]+l*.35).toFixed(1)} ${(q[0]+sw*.5).toFixed(1)} ${(q[1]+l*.75).toFixed(1)} ${(q[0]+sw).toFixed(1)} ${(q[1]+l).toFixed(1)}" stroke="${col}" stroke-width="${i%6===0?.9:1.7}" stroke-linecap="round" fill="none"/>`});if(HDX.on)maneSVG=`<path d="${base}" fill="${hexMix(mane,'#000000',colLum(mane)>.5?.12:.3)}"/>`+hdMane(cp,mlen,mane);
+      return `<path d="M${(q[0]+2).toFixed(1)} ${(q[1]-2).toFixed(1)} C${(q[0]+1).toFixed(1)} ${(q[1]+l*.35).toFixed(1)} ${(q[0]+sw*.5).toFixed(1)} ${(q[1]+l*.75).toFixed(1)} ${(q[0]+sw).toFixed(1)} ${(q[1]+l).toFixed(1)}" stroke="${col}" stroke-width="${i%6===0?.9:1.7}" stroke-linecap="round" fill="none"/>`});if(HDX.on)maneSVG=(foal?'':`<path d="${base}" fill="${hexMix(mane,'#000000',colLum(mane)>.5?.12:.3)}"/>`)+hdMane(cp,mlen,mane,foal);
     if(curlyS>=.5)maneSVG+=`<path d="${base}" fill="url(#${id}cu)"/>`}
   const forelock=wildFull?'':(()=>{const r=srng(h.id*5+11),C=hdHairCols(mane),E0=A.ear,Bw=A.brow,Fc=A.face;
     const pdx=Fc[0]-Bw[0],pdy=Fc[1]-Bw[1],pl=Math.hypot(pdx,pdy)||1,nx=pdy/pl,ny=-pdx/pl,prof=t=>[Bw[0]+pdx*t,Bw[1]+pdy*t];
@@ -3762,15 +3771,15 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   ${legWhite('h',0)!=null?`<g clip-path="url(#${id}fh)"><rect x="0" y="${legWhite('h',0)}" width="400" height="60" fill="#d9d3c6"/></g>`:''}${legWhite('f',1)!=null?`<g clip-path="url(#${id}ff)"><rect x="0" y="${legWhite('f',1)}" width="400" height="60" fill="#d9d3c6"/></g>`:''}
   ${boo?`<g clip-path="url(#${id}fh)">${boots}</g><g clip-path="url(#${id}ff)">${boots}</g>`:''}
   <path d="${farH}" fill="#000" opacity=".12"/><path d="${farF}" fill="#000" opacity=".12"/>${HDX.on?hdFarLegs(A,id):''}
-  ${hoof('h',16,1)}${hoof('f',-17,1)}${feath('h',16,1)}${feath('f',-17,1)}</g>
- <g class="an-ear2" style="transform-box:view-box;transform-origin:${A.ear[0]-6}px ${A.ear[1]+1}px">${ear(-6,-1.5,1)}</g>
+  ${hoof('h',16,1)}${hoof('f',-17,1)}${feath('h',16,1)}${feath('f',-17,1)}${G?hdMud(A,G,id,1):''}</g>
+ <g class="an-ear2" style="transform-box:view-box;transform-origin:${A.ear[0]-6}px ${A.ear[1]+1}px"><g transform="rotate(${G?G.ear:0} ${A.ear[0]-6} ${A.ear[1]+3}) translate(0 ${G?G.earDrop:0})">${ear(-6,-1.5,1)}</g></g>
  <g class="an-tail" style="transform-box:view-box;transform-origin:${tb[0]}px ${tb[1]}px">${tailSVG}</g>
  <path d="${O}" fill="${body}"/>
  <g clip-path="url(#${id}c)">
   ${points?`<rect x="0" y="${pointY-16}" width="400" height="120" fill="url(#${id}pg)"/>`:''}
   ${patches}${white}
   <path d="${O}" fill="url(#${id}t)"/>
-  ${bodyShade(A,id,light,dark)}${HDX.on?hdBody(A,id,{body,dark,light,hot:bt.hot,grey:c.grey,dk:body==='#211D1B'}):''}
+  ${bodyShade(A,id,light,dark)}${HDX.on?hdBody(A,id,{body,dark,light,hot:bt.hot,grey:c.grey,dk:body==='#211D1B',lean:G?G.lean:0,muscle:G?G.muscle:.6})+(G?hdSweat(A,G,id):''):''}
   ${boots}
   <g fill="none" stroke-linecap="round">
    <path d="M${A.kneeB[0]+2} ${A.kneeB[1]-4} C${A.kneeB[0]+6} ${A.kneeB[1]+1} ${A.kneeF[0]-6} ${A.kneeF[1]+3} ${A.kneeF[0]-2} ${A.kneeF[1]-2}" stroke="#000" stroke-opacity=".2" stroke-width="1.4"/>
@@ -3795,10 +3804,11 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
   <circle cx="${E[0]+2.7}" cy="${E[1]-2.3}" r="1.05" fill="#fff" opacity=".95"/><circle cx="${E[0]-3.4}" cy="${E[1]+1.6}" r=".45" fill="#fff" opacity=".45"/>
   <path d="M${X(-3.2,3.1)} C${X(-1,4)} ${X(2,4.1)} ${X(4,3.2)}" stroke="${eyeC[2]}" stroke-width=".9" fill="none" opacity=".45" stroke-linecap="round"/>
   <ellipse cx="${E[0]+6.3}" cy="${E[1]+1.2}" rx=".9" ry=".65" fill="#B5847A" opacity=".75"/>
-  <path d="M${X(-7.2,-.2)} C${X(-4.3,-6.7)} ${X(3.9,-6.9)} ${X(7.3,1)}" stroke="#160e09" stroke-width="1.25" fill="none" stroke-linecap="round"/>
+  ${G&&G.tired?`<path d="M${X(-7.8,-.6)} C${X(-4.4,-7.6)} ${X(4,-7.8)} ${X(7.8,1.1)} C${X(4.2,.4)} ${X(-3.4,-.8)} ${X(-7.8,-.6)}Z" fill="${body}"/><path d="M${X(-6.4,-2.6)} C${X(-3,-6.4)} ${X(3.6,-6.6)} ${X(6.8,-1.2)}" stroke="#000" stroke-opacity=".2" stroke-width="1" fill="none"/>`:''}
+  <path d="${G&&G.tired?`M${X(-7.2,-.4)} C${X(-3.4,-.9)} ${X(4.2,.2)} ${X(7.3,1)}`:`M${X(-7.2,-.2)} C${X(-4.3,-6.7)} ${X(3.9,-6.9)} ${X(7.3,1)}`}" stroke="#160e09" stroke-width="1.25" fill="none" stroke-linecap="round"/>
   <path d="M${X(-5.6,2)} C${X(-2.2,5.1)} ${X(3.4,5.2)} ${X(6.6,2.3)}" stroke="#fff" stroke-opacity=".18" stroke-width=".6" fill="none" stroke-linecap="round"/>
   <path d="M${X(-6.6,-3.6)} C${X(-3,-9)} ${X(4.2,-9.2)} ${X(7.6,-2.4)}" stroke="#000" stroke-opacity=".22" stroke-width=".9" fill="none" stroke-linecap="round"/>
-  ${lash}
+  ${G&&G.tired?`<g transform="translate(0 5.4)">${lash}</g>`:lash}
  </g></g>`})()}
  <ellipse cx="${N[0]-4}" cy="${N[1]+1}" rx="5" ry="6" fill="#000" opacity=".14" filter="url(#${id}b2)"/>
  <path d="M${N[0]-2} ${N[1]-4.5} C${N[0]-6.5} ${N[1]-4} ${N[0]-8} ${N[1]+1} ${N[0]-5.5} ${N[1]+4.5} C${N[0]-4} ${N[1]+2} ${N[0]-3.5} ${N[1]-1} ${N[0]-2} ${N[1]-4.5}Z" fill="#160d08" opacity=".7"/>
@@ -3806,8 +3816,8 @@ ${h.noBg?'':`<g opacity=".5"><path d="M-300 214 C0 200 120 206 220 200 C320 194 
  ${A.hf?(()=>{const q=(a,b)=>A.hf.L(a,b).slice(0,2).map(v=>v.toFixed(1)).join(' ');return `<path d="M${q(.9,.12)} C${q(.93,.115)} ${q(.955,.11)} ${q(.975,.105)}" stroke="#1a0f0a" stroke-width="1.1" fill="none" opacity=".55" stroke-linecap="round"/>`})():`<path d="M${A.mzB[0]-8} ${A.mzB[1]-4} C${A.mzB[0]-3} ${A.mzB[1]-3} ${A.mzB[0]+2} ${A.mzB[1]-4} ${A.mzF[0]-1} ${A.mzF[1]+4}" stroke="#1a0f0a" stroke-width="1.2" fill="none" opacity=".55"/>`}
  ${blanket}${saddle}
  <g class="an-mane" style="transform-box:view-box;transform-origin:${A.withers[0]}px ${A.withers[1]}px">${maneSVG}</g>
- <g class="an-ear" style="transform-box:view-box;transform-origin:${A.ear[0]}px ${A.ear[1]+4}px">${ear(0,0,0)}</g>${forelock}${bridle}
- ${hoof('h',0,0)}${hoof('f',0,0)}${HDX.on&&featherS<.5?hdHoof(A,'h',0,(mkk.socks[2]||c.tob)?WH:(points||body),!!(mkk.socks[2]||c.tob))+hdHoof(A,'f',0,(mkk.socks[3]||c.tob)?WH:(points||body),!!(mkk.socks[3]||c.tob)):''}${feath('h',0,0)}${feath('f',0,0)}
+ <g class="an-ear" style="transform-box:view-box;transform-origin:${A.ear[0]}px ${A.ear[1]+4}px"><g transform="rotate(${G?G.ear:0} ${A.ear[0]} ${A.ear[1]+4}) translate(0 ${G?G.earDrop:0})">${ear(0,0,0)}</g></g>${forelock}${bridle}
+ ${G?hdMud(A,G,id,0):''}${hoof('h',0,0)}${hoof('f',0,0)}${HDX.on&&featherS<.5?hdHoof(A,'h',0,(mkk.socks[2]||c.tob)?WH:(points||body),!!(mkk.socks[2]||c.tob),G?G.long:0)+hdHoof(A,'f',0,(mkk.socks[3]||c.tob)?WH:(points||body),!!(mkk.socks[3]||c.tob),G?G.long:0):''}${feath('h',0,0)}${feath('f',0,0)}
 </g></g></g></svg>`;
 }
 
@@ -8276,7 +8286,43 @@ function lpBackdrop(id){const W=1200,F=lpF,R=srng(id.length*53+11),SN=typeof sno
 /*BACK-END*/
 /*HD-START*/
 /* Build 103 (preview): extra detail layers for the side-view horse. Switched by HDX.on. */
-const HDX={on:false};
+const HDX={_f:null,get on(){return this._f!=null?this._f:!(typeof PREF!=='undefined'&&PREF&&PREF.hd===0)},set on(v){this._f=v}};
+/* what the game says about this horse right now: weight, fitness, hooves, mood, energy, mud and sweat */
+function hdState(h,st){const o={lean:0,fat:0,muscle:.6,long:0,ear:0,earDrop:0,mud:0,sweat:0,senior:st==='Senior',foal:st==='Foal'};
+ if(!h||h.past||typeof S==='undefined'||!S||!S.horses)return o;const own=S.horses.indexOf(h)>=0;
+ try{const b=typeof bcsOf==='function'?bcsOf(h):5;o.lean=Math.max(0,Math.min(1,(4.6-b)/2));o.fat=Math.max(0,Math.min(1,(b-6.4)/2))}catch(e){}
+ try{if(h.tr)o.muscle=Math.max(0,Math.min(1,avg(h.tr)/70))}catch(e){}
+ try{const hf=typeof hoofOf==='function'?hoofOf(h):100;o.long=Math.max(0,Math.min(1,(55-hf)/45))}catch(e){}
+ if(own&&!o.foal){const en=h.energy??100,hp=h.happy??80;
+  if(en<30){o.ear=-34;o.earDrop=2.5;o.tired=1}else if(hp<35){o.ear=-44}else if(hp>=70&&en>=50){o.ear=10}
+  try{if(typeof wxToday==='function'){const w=wxToday();if(!w.off&&(w.k==='rain'||w.k==='storm'||w.f==='muddy'))o.mud=w.f==='muddy'||w.k==='storm'?1:.6}}catch(e){}
+  if(h.acted===S.day&&en<70)o.sweat=Math.max(.35,Math.min(1,(70-en)/40))}
+ return o}
+/* body shape follows weight and age */
+function hdAdjust(A,G){const B=Object.assign({},A),mv=(k,dx,dy)=>{if(!B[k])return;const p=B[k].slice();p[0]+=dx;p[1]+=dy;B[k]=p};
+ if(G.fat){const f=G.fat;mv('belly1',0,6*f);mv('belly2',0,7*f);mv('girth',0,3.5*f);mv('flank',0,3.2*f);mv('crest2',0,-3.6*f);mv('crest3',0,-2.6*f);mv('crest1',0,-1.2*f);mv('buttock',-2.6*f,0);mv('thigh',-2.2*f,0);mv('hip',0,-1.2*f)}
+ if(G.lean){const l=G.lean;mv('flank',0,-3.5*l);mv('belly1',0,-2.5*l);mv('belly2',0,-1.5*l);mv('hip',0,-1.6*l);mv('crest2',0,2*l);mv('crest3',0,1.5*l)}
+ if(G.senior){mv('back',0,5);mv('loin',0,3.4);mv('withers',0,-1.6);mv('hip',0,-.8)}
+ const m=(G.muscle??.5)-.5;if(m){mv('thigh',-2.4*m,0);mv('crest2',0,-2*m);mv('crest3',0,-1.4*m);mv('chest',1.6*m,0);mv('gaskB',-1*m,0)}
+ return B}
+/* mud on the lower legs and belly after rain, clipped to each leg so it reads as caked mud */
+function hdMud(A,G,id,far){if(!G.mud)return '';const f=hdF,r=srng(311+(far?7:0)),c='#5A4430',c2='#6E5539',c3='#3F2F20';let g='';
+ for(const w of ['h','f']){const top=(w==='h'?A.canHB[1]:A.kneeB[1])+4+(1-G.mud)*14,x0=(w==='h'?A.hoofHB[0]:A.hoofFB[0])+(far?(w==='h'?16:-17):0)-16,x1=(w==='h'?A.hoofHF[0]:A.hoofFF[0])+(far?(w==='h'?16:-17):0)+16;
+  let d=`M${f(x0)} 290 L${f(x0)} ${f(top+6)}`;for(let x=x0;x<=x1;x+=2.2)d+=` L${f(x)} ${f(top+(r()-.5)*6+(r()<.28?7+r()*5:0))}`;
+  let blobs='';for(let k=0;k<9;k++){const y=top-3-r()*14;blobs+=`<ellipse cx="${f(x0+r()*(x1-x0))}" cy="${f(y)}" rx="${f(.8+r()*1.8)}" ry="${f(.7+r()*1.2)}" fill="${r()<.5?c2:c}"/>`}
+  let streak='';for(let k=0;k<4;k++){const x=x0+6+r()*(x1-x0-12),y=top+8+r()*10;streak+=`<path d="M${f(x)} ${f(y)} q${f((r()-.5)*2)} 6 ${f((r()-.5)*1.5)} ${f(10+r()*8)}" stroke="${c3}" stroke-width="${f(.8+r()*.8)}" opacity=".45" fill="none" stroke-linecap="round"/>`}
+  const clip=far?(w==='h'?`${id}fh`:`${id}ff`):`${id}c`;
+  g+=`<g clip-path="url(#${clip})" opacity="${far?.7:.9}"><path d="${d} L${f(x1)} 290Z" fill="${c}"/>${streak}${blobs}<path d="${d.replace(/^M[^L]+L/,'M')}" stroke="${c2}" stroke-width="1.2" fill="none" opacity=".7"/></g>`}
+ if(!far){let sp='';for(let k=0;k<14;k++)sp+=`<ellipse cx="${f(A.belly2[0]-36+r()*80)}" cy="${f(A.belly2[1]-2-r()*9)}" rx="${f(.9+r()*2.2)}" ry="${f(.7+r()*1.3)}" fill="${r()<.5?c2:c}" opacity=".75"/>`;g+=`<g clip-path="url(#${id}c)">${sp}</g>`}
+ return g}
+/* sweat after a hard day: darker damp coat with a wet shine, and white lather where tack and legs rub */
+function hdSweat(A,G,id){if(!G.sweat)return '';const f=hdF,s=G.sweat,r=srng(733);
+ const foam=(cx,cy,rx,ry,n)=>{let o=`<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(rx)}" ry="${f(ry)}" fill="#F6F4EE" opacity=".8" filter="url(#${id}b2)"/>`;for(let k=0;k<n;k++){const a=r()*6.28,d=Math.sqrt(r());o+=`<circle cx="${f(cx+Math.cos(a)*rx*d)}" cy="${f(cy+Math.sin(a)*ry*d)}" r="${f(.5+r()*1.3)}" fill="#FFFFFF" opacity="${f(.6+r()*.4)}"/>`}return o};
+ const dark=`<g opacity="${f(.55+.35*s)}" filter="url(#${id}b)"><path d="M${f(A.crest2[0])} ${f(A.crest2[1]+8)} C${f(A.crest3[0]-6)} ${f(A.crest3[1]+12)} ${f(A.throat[0]-10)} ${f(A.throat[1]+8)} ${f(A.neckB[0]-4)} ${f(A.neckB[1]-4)} C${f(A.neckB[0]-26)} ${f(A.neckB[1]+10)} ${f(A.withers[0]-4)} ${f(A.withers[1]+30)} ${f(A.withers[0]+4)} ${f(A.withers[1]+8)}Z" fill="#000" opacity=".34"/><ellipse cx="${f(A.girth[0]-10)}" cy="${f(A.girth[1]-20)}" rx="20" ry="17" fill="#000" opacity=".28"/><ellipse cx="${f(A.flank[0]+2)}" cy="${f(A.flank[1]-12)}" rx="13" ry="15" fill="#000" opacity=".26"/><ellipse cx="${f(A.stifle[0]+4)}" cy="${f(A.stifle[1]-4)}" rx="10" ry="13" fill="#000" opacity=".24"/></g>`;
+ let shine='';for(const [p,q,l] of [[A.neckB[0]-22,A.neckB[1]-24,26],[A.girth[0]-18,A.girth[1]-32,20],[A.flank[0]-4,A.flank[1]-22,14]]){shine+=`<path d="M${f(p)} ${f(q)} q${f(l*.4)} ${f(l*.12)} ${f(l*.8)} ${f(l*.5)}" stroke="#fff" stroke-width="4.5" opacity="${f(.1+.1*s)}" fill="none" stroke-linecap="round"/>`}
+ shine=`<g filter="url(#${id}b2)">${shine}</g>`;let drip='';
+ const lather=s>=.45?`<g opacity="${f(.6+.4*s)}">${foam(A.throat[0]-4,A.throat[1]+6,6.5,3.8,10)}${foam(A.girth[0]-4,A.girth[1]-3,9,3.2,12)}${foam(A.stifle[0]+6,A.stifle[1]+6,5.5,4.2,9)}</g>`:'';
+ return dark+shine+drip+lather}
 function hdF(v){return (Math.round(v*10)/10).toString()}
 function hdCubic(p0,c1,c2,p1,n){const o=[];for(let i=0;i<=n;i++){const t=i/n,u=1-t;o.push([u*u*u*p0[0]+3*u*u*t*c1[0]+3*u*t*t*c2[0]+t*t*t*p1[0],u*u*u*p0[1]+3*u*u*t*c1[1]+3*u*t*t*c2[1]+t*t*t*p1[1]])}return o}
 /* filled hair strand along points with a width profile: thick at the root, pointed at the tip */
@@ -8285,9 +8331,17 @@ function hdStrand(P,w0,prof,col,op){const n=P.length,L=[],R=[];for(let j=0;j<n;j
  return `<path d="${d}Z" fill="${col}"${op!=null&&op<1?` opacity="${op}"`:''}/>`}
 function hdHairCols(c){const light=colLum(c)>.5;return {dk:hexMix(c,'#000000',light?.22:.45),mid:c,hi:light?hexMix(c,'#ffffff',.55):hexMix(c,'#ffffff',.34),light}}
 /* mane: dark under-layer, main layer, fine highlights and a few stray hairs */
-function hdMane(cp,mlen,mane){const C=hdHairCols(mane),r=srng(91);let g='';
+function hdMane(cp,mlen,mane,foal){const C=hdHairCols(mane),r=srng(91);let g='';
+ if(foal){/* foal brush mane: short, soft, upright fuzz with lighter tips */
+  const fz=(t,k,w,col,op)=>{const q=cp(Math.min(.995,Math.max(0,t))),l=mlen(t)*k;if(l<2)return '';const lean=-l*(.15+r()*.3),wob=(r()-.5)*3;
+   return hdStrand(hdCubic([q[0]+.5,q[1]+1],[q[0]+wob*.3,q[1]-l*.4],[q[0]+lean*.6+wob,q[1]-l*.75],[q[0]+lean+wob,q[1]-l*.9],4),w,u=>u<.15?.8+u*1.3:Math.pow(1-u,.6),col,op)};
+  g+=`<path d="${(()=>{let d='';for(let i=0;i<=16;i++){const t=i/16,q=cp(t),l=mlen(t)*.5;d+=(i?' L':'M')+hdF(q[0]-l*.15)+' '+hdF(q[1]-l*.55)}for(let i=16;i>=0;i--){const q=cp(i/16);d+=' L'+hdF(q[0])+' '+hdF(q[1]+1.5)}return d+'Z'})()}" fill="${C.dk}" opacity=".55"/>`;
+  for(let i=0;i<44;i++)g+=fz(i/43+(r()-.5)*.02,.7+r()*.3,1.7,C.dk,.95);
+  for(let i=0;i<40;i++)g+=fz(r(),.6+r()*.35,1.2,C.mid,.9);
+  for(let i=0;i<26;i++)g+=fz(r(),.5+r()*.4,.7,C.hi,.75);
+  return g}
  const strand=(t,k,w,col,op)=>{const q=cp(Math.min(.995,Math.max(0,t))),l=mlen(t)*k;if(l<3)return '';const sw=-l*(.16+r()*.14)-r()*3,curl=(r()-.5)*4;
-  const P=hdCubic([q[0]+2,q[1]-2],[q[0]+1+r()*2,q[1]+l*.35],[q[0]+sw*.5,q[1]+l*.75],[q[0]+sw+curl,q[1]+l],6);
+  const P=foal?hdCubic([q[0]+1,q[1]],[q[0]-l*.1,q[1]-l*.35],[q[0]-l*.2,q[1]-l*.6],[q[0]-l*.25+curl*.3,q[1]-l*.75],5):hdCubic([q[0]+2,q[1]-2],[q[0]+1+r()*2,q[1]+l*.35],[q[0]+sw*.5,q[1]+l*.75],[q[0]+sw+curl,q[1]+l],6);
   return hdStrand(P,w,u=>u<.1?.7+u*3:Math.pow(1-u,.75),col,op)};
  for(let i=0;i<22;i++)g+=strand(i/21+(r()-.5)*.02,1+r()*.12,3.4,C.dk,1);
  for(let i=0;i<26;i++)g+=strand(i/25+(r()-.5)*.02,.86+r()*.18,2.5,C.mid,1);
@@ -8349,7 +8403,7 @@ function hdBody(A,id,o){const f=hdF,P=(k,dx=0,dy=0)=>[A[k][0]+dx,A[k][1]+dy];con
  g+=ln([P('withers',8,16),P('withers',14,26),P('chest',-24,-30)],W,1.3,go*.8);
  g+=ln([P('crest2',4,12),P('crest3',0,12),P('withers',-4,12)],W,1.2,go*.7);
  g+=ln([P('back',-6,6),P('loin',0,5),P('loin',-10,6)],W,1.1,go*.6);
- return `<g filter="url(#${id}hb)">`+g.replace(/<path d="M0 0 H400 V300 H0Z" fill="url\(#[^"]+\)"\/>/,'')+'</g>'+`<path d="M0 0 H400 V300 H0Z" fill="url(#${id}hr)"/><path d="M0 0 H400 V300 H0Z" fill="url(#${id}lg)"/>`}
+ return `<g filter="url(#${id}hb)" opacity="${hdF(Math.min(1,.5+.7*(o.muscle??.5)))}">`+g.replace(/<path d="M0 0 H400 V300 H0Z" fill="url\(#[^"]+\)"\/>/,'')+'</g>'+`<path d="M0 0 H400 V300 H0Z" fill="url(#${id}hr)"/><path d="M0 0 H400 V300 H0Z" fill="url(#${id}lg)"/>`}
 /* legs: tendons, bony fronts, knees, hocks, fetlocks and ergots (near legs, inside the body clip) */
 function hdLegs(A,id,o){const f=hdF,P=(k,dx=0,dy=0)=>[A[k][0]+dx,A[k][1]+dy];const lt=hexMix(o.leg,'#ffffff',.35),dk=hexMix(o.leg,'#000000',.45);
  const ln=(a,b,col,w,op)=>`<path d="M${f(a[0])} ${f(a[1])} L${f(b[0])} ${f(b[1])}" stroke="${col}" stroke-width="${w}" opacity="${op}" stroke-linecap="round"/>`;
@@ -8365,12 +8419,15 @@ function hdLegs(A,id,o){const f=hdF,P=(k,dx=0,dy=0)=>[A[k][0]+dx,A[k][1]+dy];con
 function hdFarLegs(A,id){const f=hdF;const fx=A.kneeB[0]-17+5,fy=A.kneeB[1]-15,hx=A.hockF[0]+16-5,hy=A.hockF[1]+5;
  return `<ellipse cx="${f(fx)}" cy="${f(fy)}" rx="1.8" ry="3.6" fill="#14100c" opacity=".45"/><ellipse cx="${f(fx-.5)}" cy="${f(fy-1.2)}" rx=".8" ry="1.8" fill="#fff" opacity=".12"/><ellipse cx="${f(hx)}" cy="${f(hy)}" rx="1.5" ry="2.8" fill="#14100c" opacity=".4"/>`}
 /* hooves: hairline band at the top, growth rings, a shine down the toe */
-function hdHoof(A,w,dx,legCol,pale){const f=hdF;const b=w==='h'?A.hoofHB:A.hoofFB,fr=w==='h'?A.hoofHF:A.hoofFF;const x0=b[0]+dx-1,x1=fr[0]+dx+1;
+function hdHoof(A,w,dx,legCol,pale,long){const f=hdF;const b=w==='h'?A.hoofHB:A.hoofFB,fr=w==='h'?A.hoofHF:A.hoofFF;const x0=b[0]+dx-1,x1=fr[0]+dx+1;let pre='';if(long){const t=x1+5+7*long,hc=pale?'#7A6A54':'#2A2119',hl=pale?'#9A8A70':'#4A3A2C',up=1.6*long;
+  pre=`<path d="M${f(x1-1.5)} 273 C${f(x1+3)} 275.5 ${f(x1+4+3*long)} 278.4 ${f(t)} ${f(281-up)} L${f(t-2)} 281.2 L${f(x1-1)} 281.2Z" fill="${hc}"/><path d="M${f(x1)} 274.4 C${f(x1+3)} 276.4 ${f(x1+3.5+2.5*long)} 278.6 ${f(t-1.2)} ${f(280.6-up)}" stroke="${hl}" stroke-width="1" fill="none" opacity=".8"/>`;
+  if(long>.35){pre+=`<path d="M${f(x1-6)} 281.2 l.6 -3.2 l-.9 -2.2 l.5 -2.6" stroke="#000" stroke-opacity=".55" stroke-width=".7" fill="none"/><path d="M${f(x1+1.6)} 281 l.4 -2.6 l-.7 -1.6" stroke="#000" stroke-opacity=".5" stroke-width=".6" fill="none"/><path d="M${f(x0+1)} 281.4 h2.2 l-.8 -1 Z M${f(x1-10)} 281.4 h2 l-.6 -1.1Z" fill="#000" opacity=".35"/>`}
+  pre+=`<path d="M${f(x1-1)} 281.3 L${f(t-2)} 281.3" stroke="#000" stroke-opacity=".3" stroke-width=".8"/>`}
  const band=hexMix(legCol,'#ffffff',.18);let g=`<path d="M${f(x0+.5)} 272 Q${f((x0+x1)/2)} 270.6 ${f(x1-1.5)} 272" stroke="${band}" stroke-width="1.6" fill="none" opacity=".9"/>`;
  for(let i=0;i<7;i++){const x=x0+1.5+i*(x1-x0-3)/6;g+=`<path d="M${f(x)} 271.2 l${f(.4+i*.08)} 1.8" stroke="${band}" stroke-width=".55" opacity=".8"/>`}
  g+=`<path d="M${f(x0+1)} 275.4 Q${f((x0+x1)/2)} 274.6 ${f(x1+.8)} 275.6 M${f(x0+.6)} 278.2 Q${f((x0+x1)/2)} 277.4 ${f(x1+2.6)} 278.4" stroke="#000" stroke-opacity="${pale?.14:.22}" stroke-width=".6" fill="none"/>`;
  g+=`<path d="M${f(x1-2.4)} 273.2 L${f(x1+1.8)} 280.2" stroke="#fff" stroke-opacity="${pale?.3:.2}" stroke-width="1.3" stroke-linecap="round"/>`;
- return g}
+ return pre+g}
 /* small soft shadows where each hoof touches the ground */
 function hdContact(A,id){const f=hdF;let g='';for(const [b,fr,dx,op] of [[A.hoofHB,A.hoofHF,16,.3],[A.hoofFB,A.hoofFF,-17,.3],[A.hoofHB,A.hoofHF,0,.42],[A.hoofFB,A.hoofFF,0,.42]]){const cx=(b[0]+fr[0])/2+dx+1,rx=(fr[0]-b[0])/2+5;g+=`<ellipse cx="${f(cx)}" cy="281.2" rx="${f(rx)}" ry="2" fill="#000" opacity="${op}"/>`}return g}
 /* ragged top edge for white socks (hair, not a ruler line) */
